@@ -1,0 +1,9 @@
+body {
+  padding: 0;
+  margin: 0;
+  /* background-color: black; */
+  /* color: white; */
+}
+svg {
+  border: 1px solid black;
+}
