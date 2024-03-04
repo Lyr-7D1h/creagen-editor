@@ -1,21 +1,36 @@
-import { path } from "./svg"
+import { Pane } from 'tweakpane'
+import { path } from './svg'
+import { generateHumanReadableName } from './util'
 
-interface GeneratorOptions {
-  width?: string
-  height?: string
+interface GeneratorSettings {
+  name: string
+  width: string
+  height: string
+}
+function defaultGeneratorSettings(): GeneratorSettings {
+  return {
+    name: generateHumanReadableName(),
+    width: '1000px',
+    height: '1000px',
+  }
 }
 export class Generator {
-  readonly svg: SVGSVGElement
+  private readonly svg: SVGSVGElement
+  private readonly html: HTMLElement
+  // eslint-disable-next-line @typescript-eslint/prefer-readonly
+  private settings: GeneratorSettings
 
-  constructor(opts?: GeneratorOptions) {
-    const main = document.getElementsByTagName('main')[0]!
+  constructor(opts?: Partial<GeneratorSettings>) {
+    this.settings = { ...defaultGeneratorSettings(), ...opts }
+    this.html = document.getElementById('generator')!
     this.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
     this.svg.setAttribute('xlms', 'http://www.w3.org/2000/svg')
-    this.svg.setAttribute('width', opts?.width ?? '1000px')
-    this.svg.setAttribute('height', opts?.height ?? '1000px')
-    this.svg.style.width = '1000px'
-    this.svg.style.height = '1000px'
-    main.appendChild(this.svg)
+    this.svg.setAttribute('width', this.settings.width)
+    this.svg.setAttribute('height', this.settings.height)
+    this.svg.setAttribute('fill', 'black')
+    this.html.appendChild(this.svg)
+
+    this.buildUI()
   }
 
   width(): number {
@@ -30,6 +45,48 @@ export class Generator {
 
   add(element: SVGElement): void {
     this.svg.appendChild(element)
+  }
+
+  buildUI(): void {
+    const pane = new Pane()
+
+    for (let [label, value] of Object.entries(this.settings)) {
+      if (typeof value === 'string') {
+        let parse = (v: string): void => (this.settings[label] = v)
+
+        if (label === 'width' || label === 'height') {
+          parse = (v: string) => {
+            this.svg.setAttribute(label, v)
+            return (this.settings[label] = v)
+          }
+        }
+
+        pane.addBlade({
+          view: 'text',
+          label,
+          parse,
+          value,
+        })
+      }
+    }
+
+    const btn = pane.addButton({
+      title: 'Download',
+    })
+    btn.on('click', () => {
+      const htmlStr = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>${this.svg.outerHTML}`
+      const blob = new Blob([htmlStr], { type: 'image/svg+xml' })
+
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.setAttribute('download', `${this.settings.name}.svg`)
+      a.setAttribute('href', url)
+      a.style.display = 'none'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+    })
   }
 
   toggleGrid(): void {
