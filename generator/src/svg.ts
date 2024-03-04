@@ -9,7 +9,7 @@ export function path(path: string, opt?: PathOptions): SVGPathElement {
   svg.style.strokeWidth = opt?.stroke ?? '0.4'
   return svg
 }
-export function circle(r: number, cx?: number, cy?: number): SVGPathElement {
+export function circle(r: number, cx?: number, cy?: number): SVGCircleElement {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
   svg.setAttribute('r', r.toString())
   if (cx) svg.setAttribute('cx', cx.toString())
