@@ -6,12 +6,14 @@ interface GeneratorSettings {
   name: string
   width: string
   height: string
+  fill: string
 }
 function defaultGeneratorSettings(): GeneratorSettings {
   return {
     name: generateHumanReadableName(),
     width: '1000px',
     height: '1000px',
+    fill: 'none',
   }
 }
 export class Generator {
@@ -27,7 +29,7 @@ export class Generator {
     this.svg.setAttribute('xlms', 'http://www.w3.org/2000/svg')
     this.svg.setAttribute('width', this.settings.width)
     this.svg.setAttribute('height', this.settings.height)
-    this.svg.setAttribute('fill', 'black')
+    this.svg.setAttribute('fill', this.settings.fill)
     this.html.appendChild(this.svg)
 
     this.buildUI()
@@ -50,7 +52,7 @@ export class Generator {
   buildUI(): void {
     const pane = new Pane()
 
-    for (let [label, value] of Object.entries(this.settings)) {
+    for (const [label, value] of Object.entries(this.settings)) {
       if (typeof value === 'string') {
         let parse = (v: string): void => (this.settings[label] = v)
 
