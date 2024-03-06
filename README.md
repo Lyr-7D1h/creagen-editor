@@ -14,6 +14,8 @@
     - https://en.wikipedia.org/wiki/Poisson_distribution
 - add graphs
 - Valid QR that is a link to the creation of the plot
+- Use music/audio as input for art
+  - Use a song as probability distribution
 
 # Roadmap
 

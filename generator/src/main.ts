@@ -5,7 +5,7 @@ import { circle, path } from './svg'
 const gen = new Generator({ width: '1000px', height: '1000px' })
 
 const positions = []
-for (let r = 0; r < 500; r += 1) {
+for (let r = 0; r < 500; r += 0.5) {
   // const theta = boxMuller(0.5, Math.PI / 2, () => Math.random())
   const theta = beta(12.5, 12.5) * 2 * Math.PI
   // const theta = Math.random() * 2 * Math.PI
