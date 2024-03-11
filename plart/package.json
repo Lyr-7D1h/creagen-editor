@@ -1,18 +1,16 @@
 {
-  "name": "generator",
+  "name": "plart",
   "version": "1.0.0",
   "description": "",
+  "main": "build/index.js",
   "scripts": {
-    "start": "vite",
-    "build": "vite build",
-    "format": "prettier -w src/",
-    "lint": "eslint src/**/*"
+    "build": "tsc",
+    "watch": "tsc --watch --preserveWatchOutput"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@tweakpane/core": "^2.0.3",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "eslint": "^8.56.0",
     "eslint-config-standard-with-typescript": "^43.0.1",
@@ -20,12 +18,6 @@
     "eslint-plugin-n": "^16.6.2",
     "eslint-plugin-promise": "^6.1.1",
     "prettier": "3.2.5",
-    "typescript": "^5.3.3",
-    "vite": "^5.0.12"
-  },
-  "dependencies": {
-    "monaco-editor": "^0.47.0",
-    "plart": "file:../plart",
-    "tweakpane": "^4.0.3"
+    "typescript": "^5.3.3"
   }
 }
