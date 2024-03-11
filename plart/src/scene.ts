@@ -1,3 +1,3 @@
-// export function createScene(width: number, height: number) {
-//   
-// }
+export function createScene(width: number, height: number) {
+  
+}

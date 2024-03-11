@@ -9,7 +9,7 @@ import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 
 monaco.languages.typescript.typescriptDefaults.addExtraLib(`
     declare function myCustomFunction(name: string): string;
-`)
+`, "node_modules/@types/external/index.d.ts")
 
 self.MonacoEnvironment = {
   getWorker(_, label) {
