@@ -1,6 +1,6 @@
 import { Pane } from 'tweakpane'
-import { path } from './svg'
 import { generateHumanReadableName } from './util'
+import { Editor } from './editor'
 
 interface GeneratorSettings {
   name: string
@@ -21,18 +21,12 @@ export class Generator {
   private readonly html: HTMLElement
   // eslint-disable-next-line @typescript-eslint/prefer-readonly
   private settings: GeneratorSettings
+  private editor: Editor
 
   constructor(opts?: Partial<GeneratorSettings>) {
     this.settings = { ...defaultGeneratorSettings(), ...opts }
     this.html = document.getElementById('generator')!
-    this.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-    this.svg.setAttribute('xlms', 'http://www.w3.org/2000/svg')
-    this.svg.setAttribute('width', this.settings.width)
-    this.svg.setAttribute('height', this.settings.height)
-    this.svg.setAttribute('fill', this.settings.fill)
-    this.html.appendChild(this.svg)
-
-    this.buildUI()
+    this.editor = new Editor()
   }
 
   width(): number {
@@ -49,8 +43,15 @@ export class Generator {
     this.svg.appendChild(element)
   }
 
+  init(): void {
+    this.buildUI()
+    this.editor.init()
+  }
+
   buildUI(): void {
     const pane = new Pane()
+
+    const folder = pane.addFolder({ title: 'Export', expanded: false })
 
     for (const [label, value] of Object.entries(this.settings)) {
       if (typeof value === 'string') {
@@ -63,7 +64,7 @@ export class Generator {
           }
         }
 
-        pane.addBlade({
+        folder.addBlade({
           view: 'text',
           label,
           parse,
@@ -72,7 +73,7 @@ export class Generator {
       }
     }
 
-    const btn = pane.addButton({
+    const btn = folder.addButton({
       title: 'Download',
     })
     btn.on('click', () => {
@@ -91,14 +92,14 @@ export class Generator {
     })
   }
 
-  toggleGrid(): void {
-    const width = this.width()
-    const height = this.height()
-    const wo = width / 10
-    for (let i = 1; i < 10; i++) {
-      const o = wo * i
-      this.add(path(`M0 ${o} L${width} ${o}Z`))
-      this.add(path(`M${o} 0 L${o} ${height}Z`))
-    }
-  }
+  // toggleGrid(): void {
+  //   const width = this.width()
+  //   const height = this.height()
+  //   const wo = width / 10
+  //   for (let i = 1; i < 10; i++) {
+  //     const o = wo * i
+  //     this.add(path(`M0 ${o} L${width} ${o}Z`))
+  //     this.add(path(`M${o} 0 L${o} ${height}Z`))
+  //   }
+  // }
 }
