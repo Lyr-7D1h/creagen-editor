@@ -4,7 +4,6 @@
   "compilerOptions": {
     "sourceMap": true,
     "inlineSources": true,
-    // "pretty": true,
 
     "declaration": true,
     "outDir": "./build",
@@ -28,7 +27,7 @@
 
     "noImplicitReturns": true,
     "noImplicitOverride": true,
-    "noUnusedLocals": true,
+    "noUnusedLocals": false,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
