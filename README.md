@@ -27,4 +27,5 @@
 
 - https://en.wikipedia.org/wiki/Tessellation
 - https://en.wikipedia.org/wiki/Random_walk
-- https://en.wikipedia.org/wiki/Random_walk
+- https://en.wikipedia.org/wiki/Loop-erased_random_walk
+- http://xahlee.info/math/algorithmic_math_art.html

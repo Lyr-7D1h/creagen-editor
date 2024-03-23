@@ -17,35 +17,16 @@ function defaultGeneratorSettings(): GeneratorSettings {
   }
 }
 export class Generator {
-  private readonly svg: SVGSVGElement
   private readonly html: HTMLElement
   // eslint-disable-next-line @typescript-eslint/prefer-readonly
   private settings: GeneratorSettings
-  private editor: Editor
+  private readonly editor: Editor
 
   constructor(opts?: Partial<GeneratorSettings>) {
     this.settings = { ...defaultGeneratorSettings(), ...opts }
     this.html = document.getElementById('generator')!
     this.editor = new Editor()
-  }
-
-  width(): number {
-    const boundingBox = this.svg.getBoundingClientRect()
-    return boundingBox.width
-  }
-
-  height(): number {
-    const boundingBox = this.svg.getBoundingClientRect()
-    return boundingBox.height
-  }
-
-  add(element: SVGElement): void {
-    this.svg.appendChild(element)
-  }
-
-  init(): void {
     this.buildUI()
-    this.editor.init()
   }
 
   buildUI(): void {
@@ -91,15 +72,4 @@ export class Generator {
       URL.revokeObjectURL(url)
     })
   }
-
-  // toggleGrid(): void {
-  //   const width = this.width()
-  //   const height = this.height()
-  //   const wo = width / 10
-  //   for (let i = 1; i < 10; i++) {
-  //     const o = wo * i
-  //     this.add(path(`M0 ${o} L${width} ${o}Z`))
-  //     this.add(path(`M${o} 0 L${o} ${height}Z`))
-  //   }
-  // }
 }

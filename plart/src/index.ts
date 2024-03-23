@@ -1,7 +1,5 @@
-export * from "./graph"
-export * from "./lagebra"
-// export * from "./random"
-export * from "./svg"
+export * from './graph'
+export * from './lagebra'
+export * as random from './random'
+export * from './svg'
 // export * from "./scene"
-
-// const html = document.getElementById("generator")

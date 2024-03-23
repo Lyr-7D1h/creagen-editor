@@ -3,12 +3,18 @@ export interface PathOptions {
   strokeWidth?: string
 }
 
-export function path(path: string, opt?: PathOptions): SVGPathElement {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-  svg.setAttribute('d', path)
-  svg.style.stroke = opt?.stroke ?? '#000'
-  svg.style.strokeWidth = opt?.stroke ?? '0.4'
-  return svg
+class Path {
+  private readonly inner: string
+
+  constructor(options?: PathOptions) {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    svg.style.stroke = options?.stroke ?? '#000'
+    svg.style.strokeWidth = options?.stroke ?? '0.4'
+    this.inner = ''
+  }
+}
+export function path(options?: PathOptions): Path {
+  return new Path(options)
 }
 
 export function circle(r: number, cx?: number, cy?: number): SVGCircleElement {
@@ -19,15 +25,29 @@ export function circle(r: number, cx?: number, cy?: number): SVGCircleElement {
   return svg
 }
 
-export class Svg extends SVGElement {
-  svg: SVGElement;
+export interface SvgOptions {
+  width?: number
+  height?: number
+  fill?: number
+}
+class Svg extends SVGElement {
+  svg: SVGElement
 
-  constructor(width: number,height: number,fill: number) {
+  constructor(options?: Partial<SvgOptions>) {
+    const opt: SvgOptions = {
+      width: 1000,
+      height: 1000,
+      fill: 1,
+      ...options,
+    }
     super()
     this.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
     this.svg.setAttribute('xlms', 'http://www.w3.org/2000/svg')
-    this.svg.setAttribute('width', `${width}px`)
-    this.svg.setAttribute('height', `${height}px`)
-    this.svg.setAttribute('fill', `${fill}`)
+    this.svg.setAttribute('width', `${opt.width}px`)
+    this.svg.setAttribute('height', `${opt.height}px`)
+    this.svg.setAttribute('fill', `${opt.fill}`)
   }
+}
+export function svg(options?: Partial<SvgOptions>): Svg {
+  return new Svg(options)
 }
