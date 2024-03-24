@@ -8,7 +8,7 @@ const bundlePath = path.resolve(__dirname, 'bundle.d.ts')
 export function generateBundle() {
   dts.bundle({
     name: 'plart',
-    main: '../plart/build/index.d.ts',
+    main: '../library/build/index.d.ts',
     out: bundlePath,
   })
 

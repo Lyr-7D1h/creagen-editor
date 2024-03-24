@@ -19,9 +19,14 @@
 
 # Roadmap
 
+## Editor:
+
+- Save coding projects
+- Typescript support
+## Library:
+
 - Reduce svg size (https://www.svgviewer.dev/)
 - Gcode support
-- Save coding projects
 
 # Resources
 
