@@ -1,4 +1,3 @@
-import * as ts from 'typescript'
 import * as monaco from 'monaco-editor'
 import type * as m from 'monaco-editor/esm/vs/editor/editor.api'
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
@@ -9,8 +8,8 @@ import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 
 import { bundleDefinitions } from '../bundle'
 
-monaco.languages.typescript.typescriptDefaults.addExtraLib(bundleDefinitions)
-monaco.languages.typescript.typescriptDefaults.setModeConfiguration({
+monaco.languages.typescript.javascriptDefaults.addExtraLib(bundleDefinitions)
+monaco.languages.typescript.javascriptDefaults.setModeConfiguration({
   definitions: true,
   completionItems: true,
   documentSymbols: true,
@@ -18,16 +17,17 @@ monaco.languages.typescript.typescriptDefaults.setModeConfiguration({
   diagnostics: true,
   onTypeFormattingEdits: true,
 })
-monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
   noSemanticValidation: false,
   noSyntaxValidation: false,
 })
-monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
   target: monaco.languages.typescript.ScriptTarget.ES2016,
   allowNonTsExtensions: true,
   moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
   module: monaco.languages.typescript.ModuleKind.CommonJS,
   noEmit: true,
+  noLib: true,
 })
 
 self.MonacoEnvironment = {
@@ -52,9 +52,9 @@ export class Editor {
   private readonly editor: m.editor.IStandaloneCodeEditor
 
   constructor() {
-    this.editor = monaco.editor.create(document.getElementById('container')!, {
+    this.editor = monaco.editor.create(document.getElementById('editor')!, {
       value: 'import * as p from "plart"\n\n',
-      language: 'typescript',
+      language: 'javascript',
     })
 
     this.editor.addCommand(
@@ -62,22 +62,22 @@ export class Editor {
       () => {
         const value: string = this.editor.getValue()
 
-        const compiledCode = ts.transpileModule(value, {
-          compilerOptions: {
-            target: ts.ScriptTarget.ES2016,
-            allowImportingTsExtensions: true,
-            moduleResolution:
-              monaco.languages.typescript.ModuleResolutionKind.NodeJs,
-            module: monaco.languages.typescript.ModuleKind.CommonJS,
-            noEmit: true,
-          },
-        })
+        // TODO: add typescript
+        // ts.preProcessFile()
+        // const compiledCode = ts.transpileModule(value, {
+        //   compilerOptions: {
+        //     target: ts.ScriptTarget.ES2016,
+        //     // allowImportingTsExtensions: true,
+        //     // moduleResolution:
+        //     //   monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+        //     module: monaco.languages.typescript.ModuleKind.CommonJS,
+        //     // noEmit: true,
+        //   },
+        // })
 
         // eslint-disable-next-line no-eval
-        eval(compiledCode.outputText)
+        eval(value)
       },
     )
   }
 }
-
-const value = "function hello() {\n\talert('Hello world!');\n}"

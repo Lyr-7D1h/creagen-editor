@@ -1,3 +1,3 @@
 import { Generator } from './generator'
 
-new Generator()
+const _gen = new Generator()
