@@ -1,5 +1,5 @@
-export * from './graph'
-export * from './lagebra'
+export * as graph from './graph'
+export * as lagebra from './lagebra'
 export * as random from './random'
-export * from './svg'
+export * as svg from './svg'
 // export * from "./scene"
