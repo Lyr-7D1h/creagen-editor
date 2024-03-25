@@ -26,7 +26,6 @@
   },
   "dependencies": {
     "monaco-editor": "^0.47.0",
-    "plart": "file:../plart",
     "tweakpane": "^4.0.3"
   }
 }

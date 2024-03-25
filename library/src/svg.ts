@@ -24,10 +24,12 @@ class Path {
 
   moveTo(x: number, y: number) {
     this.path += `M ${x} ${y}`
+    return this
   }
 
   lineTo(x: number, y: number) {
     this.path += `L ${x} ${y}`
+    return this
   }
 }
 export function path(options?: PathOptions): Path {
@@ -42,6 +44,7 @@ export function circle(r: number, cx?: number, cy?: number): SVGCircleElement {
   return svg
 }
 
+export type SvgChild = Path
 export interface SvgOptions {
   width?: number
   height?: number
@@ -49,6 +52,7 @@ export interface SvgOptions {
 }
 class Svg {
   element: SVGElement
+  children: SvgChild[]
 
   constructor(options?: Partial<SvgOptions>) {
     const opt: SvgOptions = {
@@ -62,14 +66,26 @@ class Svg {
     this.element.setAttribute('width', `${opt.width}px`)
     this.element.setAttribute('height', `${opt.height}px`)
     this.element.setAttribute('fill', `${opt.fill}`)
+    this.children = []
   }
 
-  add(element: Path): void {
-    this.element.appendChild(element.html())
+  path(options?: PathOptions) {
+    const p = path(options)
+    this.add(p)
+    return p
+  }
+
+  add(element: SvgChild): void {
+    this.children.push(element)
   }
 
   html(): SVGElement {
-    return this.element
+    const html = this.element.cloneNode(true) as SVGElement
+    console.log(html, this.element)
+    for (const c of this.children) {
+      html.appendChild(c.html())
+    }
+    return html
   }
 }
 export function svg(options?: Partial<SvgOptions>): Svg {

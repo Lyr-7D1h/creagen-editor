@@ -9,8 +9,8 @@
     "declaration": true,
     "outDir": "./build",
 
-    "module": "CommonJS",
-    "target": "es2016",
+    "module": "ESNext",
+    "target": "ESNext",
 
     "moduleResolution": "node",
 

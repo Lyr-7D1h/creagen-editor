@@ -1,4 +1,5 @@
 import * as monaco from 'monaco-editor'
+import * as plart from 'plart'
 import type * as m from 'monaco-editor/esm/vs/editor/editor.api'
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
 import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
@@ -8,6 +9,14 @@ import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 
 import { bundleDefinitions } from '../bundle'
 
+// HACK: make all variables in plart global
+for (const [k, v] of Object.entries(plart)) {
+  window[k] = v
+}
+
+monaco.languages.typescript.javascriptDefaults.addExtraLib(`
+const container: HTMLElement;
+`)
 monaco.languages.typescript.javascriptDefaults.addExtraLib(bundleDefinitions)
 monaco.languages.typescript.javascriptDefaults.setModeConfiguration({
   definitions: true,
@@ -27,7 +36,6 @@ monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
   moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
   module: monaco.languages.typescript.ModuleKind.CommonJS,
   noEmit: true,
-  noLib: true,
 })
 
 self.MonacoEnvironment = {
@@ -47,13 +55,25 @@ self.MonacoEnvironment = {
     return new editorWorker()
   },
 }
+console.log(plart)
 
 export class Editor {
   private readonly editor: m.editor.IStandaloneCodeEditor
 
   constructor() {
     this.editor = monaco.editor.create(document.getElementById('editor')!, {
-      value: 'import * as p from "plart"\n\n',
+      // value: 'import * as p from "plart"\n\n',
+      value: `const s = svg.svg()
+
+s.path()
+.moveTo(250,250)
+.lineTo(250, 100)
+.moveTo(100,250)
+.lineTo(100,100)
+.moveTo(250, 350)
+.lineTo(100,350)
+
+container.appendChild(s.html())`,
       language: 'javascript',
     })
 
@@ -76,7 +96,12 @@ export class Editor {
         // })
 
         // eslint-disable-next-line no-eval
-        eval(value)
+        const container = document.getElementById('generator')!
+        container.innerHTML = ''
+        eval(`
+        const container = document.getElementById('generator')
+        ${value}
+        `)
       },
     )
   }
