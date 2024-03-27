@@ -21,11 +21,15 @@
 
 ## Editor:
 
+- Export
+- Auto formatting
 - Save coding projects
 - Typescript support
+
 ## Library:
 
 - Reduce svg size (https://www.svgviewer.dev/)
+- Treat svg paths as vertex (https://baku89.github.io/pave/guide.html) and allow linear operations on it
 - Gcode support
 
 # Resources
