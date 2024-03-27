@@ -55,7 +55,6 @@ self.MonacoEnvironment = {
     return new editorWorker()
   },
 }
-console.log(plart)
 
 export class Editor {
   private readonly editor: m.editor.IStandaloneCodeEditor
@@ -65,16 +64,12 @@ export class Editor {
       // value: 'import * as p from "plart"\n\n',
       value: `const s = svg.svg()
 
-s.path()
-.moveTo(250,250)
-.lineTo(250, 100)
-.moveTo(100,250)
-.lineTo(100,100)
-.moveTo(250, 350)
-.lineTo(100,350)
+s.
 
 container.appendChild(s.html())`,
       language: 'javascript',
+      minimap: { enabled: false },
+      tabSize: 2,
     })
 
     this.editor.addCommand(
