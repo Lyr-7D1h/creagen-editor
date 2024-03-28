@@ -1,5 +1,6 @@
 export interface GeometricOptions {
   fill?: string
+  fillOpacity?: number | string
   stroke?: string
   strokeWidth?: number
   transform?: string
@@ -7,6 +8,7 @@ export interface GeometricOptions {
 function applyGeometricOptions(element: SVGElement, opts?: GeometricOptions) {
   if (typeof opts === 'undefined') return
   if (opts.fill) element.setAttribute('fill', opts.fill)
+  if (opts.fillOpacity) { element.setAttribute('fill-opacity', opts.fillOpacity.toString()) }
   if (opts.stroke) element.setAttribute('stroke', opts.stroke)
   if (opts.strokeWidth) {
     element.setAttribute('stroke-width', opts.strokeWidth.toString())
@@ -53,10 +55,10 @@ export function path(options?: PathOptions): Path {
 
 export interface TextOptions extends GeometricOptions {
   content?: string
-  x?: number
-  y?: number
-  dx?: number
-  dy?: number
+  x?: number | string
+  y?: number | string
+  dx?: number | string
+  dy?: number | string
   rotate?: number
   textLength?: number
   fontSize?: number
