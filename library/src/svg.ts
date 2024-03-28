@@ -168,6 +168,19 @@ class Svg {
     }
     return html
   }
+
+  grid(): void {
+    const bb = this.element.getBoundingClientRect()
+    const width = bb.width
+    const height = bb.height
+    const wo = width / 10
+
+    for (let i = 1; i < 10; i++) {
+      const o = wo * i
+      this.path().moveTo(o,0).lineTo(width, o)
+      this.path().moveTo(o,0).lineTo(o,height)
+    }
+  }
 }
 export function svg(options?: Partial<SvgOptions>): Svg {
   return new Svg(options)
