@@ -8,7 +8,9 @@ export interface GeometricOptions {
 function applyGeometricOptions(element: SVGElement, opts?: GeometricOptions) {
   if (typeof opts === 'undefined') return
   if (opts.fill) element.setAttribute('fill', opts.fill)
-  if (opts.fillOpacity) { element.setAttribute('fill-opacity', opts.fillOpacity.toString()) }
+  if (opts.fillOpacity) {
+    element.setAttribute('fill-opacity', opts.fillOpacity.toString())
+  }
   if (opts.stroke) element.setAttribute('stroke', opts.stroke)
   if (opts.strokeWidth) {
     element.setAttribute('stroke-width', opts.strokeWidth.toString())
@@ -177,8 +179,8 @@ class Svg {
 
     for (let i = 1; i < 10; i++) {
       const o = wo * i
-      this.path().moveTo(o,0).lineTo(width, o)
-      this.path().moveTo(o,0).lineTo(o,height)
+      this.path().moveTo(o, 0).lineTo(width, o)
+      this.path().moveTo(o, 0).lineTo(o, height)
     }
   }
 }

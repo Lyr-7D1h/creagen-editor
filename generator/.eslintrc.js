@@ -25,7 +25,7 @@ module.exports = {
     '@typescript-eslint/space-before-function-paren': 'off',
     '@typescript-eslint/no-unsafe-argument': 'warn',
     '@typescript-eslint/no-non-null-assertion': 'off',
-    '@typescript-eslint/explicit-function-return-type': 'warn',
+    '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/comma-dangle': 'off',
     '@typescript-eslint/indent': 'off',
     '@typescript-eslint/member-delimiter-style': 'off',

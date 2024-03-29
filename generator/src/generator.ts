@@ -1,75 +1,43 @@
-import { Pane } from 'tweakpane'
-import { generateHumanReadableName } from './util'
+import * as monaco from 'monaco-editor'
 import { Editor } from './editor'
+import { Options } from './options'
 
-interface GeneratorSettings {
-  name: string
-  width: string
-  height: string
-  fill: string
-}
-function defaultGeneratorSettings(): GeneratorSettings {
-  return {
-    name: generateHumanReadableName(),
-    width: '1000px',
-    height: '1000px',
-    fill: 'none',
-  }
-}
 export class Generator {
-  private readonly html: HTMLElement
-  // eslint-disable-next-line @typescript-eslint/prefer-readonly
-  private settings: GeneratorSettings
+  private readonly options: Options
   private readonly editor: Editor
+  private readonly container: HTMLElement
 
-  constructor(opts?: Partial<GeneratorSettings>) {
-    this.settings = { ...defaultGeneratorSettings(), ...opts }
-    this.html = document.getElementById('generator')!
+  constructor() {
+    this.options = new Options()
     this.editor = new Editor()
-    this.buildUI()
+    this.container = document.getElementById('container')!
+    this.setupKeybinds()
   }
 
-  buildUI(): void {
-    const pane = new Pane()
-
-    const folder = pane.addFolder({ title: 'Export', expanded: false })
-
-    for (const [label, value] of Object.entries(this.settings)) {
-      if (typeof value === 'string') {
-        let parse = (v: string): void => (this.settings[label] = v)
-
-        if (label === 'width' || label === 'height') {
-          parse = (v: string) => {
-            this.svg.setAttribute(label, v)
-            return (this.settings[label] = v)
-          }
-        }
-
-        folder.addBlade({
-          view: 'text',
-          label,
-          parse,
-          value,
-        })
+  setupKeybinds() {
+    this.editor.addKeybind(
+      monaco.KeyMod.Shift | monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+      () => {
+        this.render()
+      },
+    )
+    window.addEventListener('keydown', (event) => {
+      if (event.ctrlKey && event.shiftKey && event.key === 'Enter') {
+        this.render()
+        event.preventDefault()
       }
-    }
-
-    const btn = folder.addButton({
-      title: 'Download',
     })
-    btn.on('click', () => {
-      const htmlStr = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>${this.svg.outerHTML}`
-      const blob = new Blob([htmlStr], { type: 'image/svg+xml' })
+  }
 
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.setAttribute('download', `${this.settings.name}.svg`)
-      a.setAttribute('href', url)
-      a.style.display = 'none'
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-      URL.revokeObjectURL(url)
-    })
+  render() {
+    const code = this.editor.getValue()
+    this.container.innerHTML = ''
+    // eslint-disable-next-line no-eval
+    eval(`
+        const container = document.getElementById('container')
+        ${code}
+        `)
+
+    this.options.render(this.container)
   }
 }
