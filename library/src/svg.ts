@@ -128,22 +128,25 @@ export interface SvgOptions {
   height?: number
   fill?: number
 }
+function applySvgOptions(element: SVGElement, opts?: SvgOptions) {
+  if (typeof opts === 'undefined') return
+  if (opts.width) element.setAttribute('width', `${opts.width}px`)
+  if (opts.height) element.setAttribute('height', `${opts.height}px`)
+  if (opts.fill) element.setAttribute('fill', `${opts.fill}`)
+}
 class Svg {
   element: SVGElement
   children: SvgChild[]
 
-  constructor(options?: Partial<SvgOptions>) {
+  constructor(options?: SvgOptions) {
     const opt: SvgOptions = {
       width: 1000,
       height: 1000,
-      fill: 1,
       ...options,
     }
     this.element = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
     this.element.setAttribute('xlms', 'http://www.w3.org/2000/svg')
-    this.element.setAttribute('width', `${opt.width}px`)
-    this.element.setAttribute('height', `${opt.height}px`)
-    this.element.setAttribute('fill', `${opt.fill}`)
+    applySvgOptions(this.element, opt)
     this.children = []
   }
 
@@ -184,6 +187,6 @@ class Svg {
     }
   }
 }
-export function svg(options?: Partial<SvgOptions>): Svg {
+export function svg(options?: SvgOptions): Svg {
   return new Svg(options)
 }

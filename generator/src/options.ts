@@ -71,7 +71,6 @@ export class Options {
 
   /** update options menu based on code ran and content */
   render(container: HTMLElement) {
-    console.log(this.folders)
     for (const c of Array.from(container.children)) {
       switch (c.tagName.toUpperCase()) {
         case 'CANVAS':
@@ -81,6 +80,8 @@ export class Options {
 
           const btn = this.addButton('export', 'Download')
           btn.on('click', () => {
+            // TODO: add metadata https://developer.mozilla.org/en-US/docs/Web/SVG/Element/metadata
+            // plart version, params used, code hash, date generated
             const htmlStr = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>${c.outerHTML}`
             const blob = new Blob([htmlStr], { type: 'image/svg+xml' })
 
