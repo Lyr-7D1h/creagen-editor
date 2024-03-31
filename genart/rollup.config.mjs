@@ -4,9 +4,9 @@ import terser from '@rollup/plugin-terser'
 export default {
   input: 'src/index.ts',
   output: {
-    file: 'dist/plart.js',
+    file: 'dist/genart.js',
     format: 'es',
-    name: 'plart',
+    name: 'genart',
     sourcemap: true,
   },
   plugins: [

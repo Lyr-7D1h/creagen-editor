@@ -1,6 +1,6 @@
 import * as monaco from 'monaco-editor'
-import * as plart from 'plart'
-import type * as m from 'monaco-editor/esm/vs/editor/editor.api'
+import * as genart from '@lyr_7d1h/genart'
+import type * as m from 'monaco-editor'
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
 import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
 import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
@@ -9,8 +9,8 @@ import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 
 import { bundleDefinitions } from '../bundle'
 
-// HACK: make all variables in plart global
-for (const [k, v] of Object.entries(plart)) {
+// HACK: make all variables in genart global
+for (const [k, v] of Object.entries(genart)) {
   window[k] = v
 }
 
@@ -61,7 +61,6 @@ export class Editor {
 
   constructor() {
     this.editor = monaco.editor.create(document.getElementById('editor')!, {
-      // value: 'import * as p from "plart"\n\n',
       value: `const s = svg.svg()
 
 s.text({content: "asdf", x: 10, y: 10})

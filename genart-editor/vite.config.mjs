@@ -2,19 +2,31 @@ import dts from 'dts-bundle'
 import { defineConfig } from 'vite'
 import path from 'path'
 import fs from 'fs'
+import { packages } from './package-lock.json'
 
-const LIBRARY_TYPE_DEFINITIONS_PATH = '../library/dist/build/index.d.ts'
-const LIBRARY_TYPE_DEFINTIONS_OUTPUT = path.resolve(__dirname, 'bundle.d.ts')
+const LIBRARY_TYPE_DEFINITIONS_PATH = '../genart/dist/build/index.d.ts'
+const LIBRARY_TYPE_DEFINTIONS_OUTPUT = path.resolve(__dirname, 'bundle.ts')
+
+const CONSTANTS_OUTPUT = path.resolve(__dirname, 'constants.ts')
+
+export function generateConstants() {
+  fs.writeFileSync(
+    CONSTANTS_OUTPUT,
+    `export const GENART_EDITOR_VERSION = '${process.env.npm_package_version}'
+export const GENART_VERSION = '${packages['node_modules/@lyr_7d1h/genart'].version}'`,
+  )
+}
 
 export function generateTypeDefinitions() {
+  const tmp = `${LIBRARY_TYPE_DEFINTIONS_OUTPUT}.tmp`
   dts.bundle({
-    name: 'plart',
+    name: 'genart',
     main: LIBRARY_TYPE_DEFINITIONS_PATH,
-    out: LIBRARY_TYPE_DEFINTIONS_OUTPUT,
+    out: tmp,
     // outputAsModuleFolder: true,
   })
 
-  let declarations = fs.readFileSync(LIBRARY_TYPE_DEFINTIONS_OUTPUT).toString()
+  let declarations = fs.readFileSync(tmp).toString()
 
   const match = declarations.matchAll(/declare module .*\/(.*)'/gm)
   for (const m of match) {
@@ -28,10 +40,12 @@ export function generateTypeDefinitions() {
     path.resolve(__dirname, 'bundle.ts'),
     `export const bundleDefinitions = \`${lines.join('\n')}\``,
   )
-  fs.rmSync(LIBRARY_TYPE_DEFINTIONS_OUTPUT)
+  fs.rmSync(tmp)
 }
 
 export default defineConfig(async ({ command, mode }) => {
+  generateConstants()
+
   return {
     plugins: [
       {
