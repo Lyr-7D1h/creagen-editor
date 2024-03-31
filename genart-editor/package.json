@@ -1,6 +1,6 @@
 {
-  "name": "generator",
-  "version": "1.0.0",
+  "name": "genart",
+  "version": "0.0.1",
   "description": "",
   "scripts": {
     "start": "vite",
@@ -9,7 +9,7 @@
     "lint": "eslint src/**/*"
   },
   "keywords": [],
-  "author": "",
+  "author": "Lyr",
   "license": "ISC",
   "devDependencies": {
     "@tweakpane/core": "^2.0.3",
@@ -25,6 +25,7 @@
     "vite": "^5.0.12"
   },
   "dependencies": {
+    "@lyr_7d1h/genart": "^0.0.2",
     "monaco-editor": "^0.47.0",
     "tweakpane": "^4.0.3"
   }

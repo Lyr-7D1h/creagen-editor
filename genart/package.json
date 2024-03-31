@@ -1,15 +1,19 @@
 {
-  "name": "plart",
-  "version": "0.0.1",
+  "name": "@lyr_7d1h/genart",
+  "version": "0.0.2",
   "description": "",
+  "main": "./dist/genart.js",
+  "module": "./dist/genart.js",
   "typings": "./dist/build/index.d.ts",
-  "module": "./dist/plart.js",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "rollup -c",
     "watch": "rollup -c --watch"
   },
   "keywords": [],
-  "author": "",
+  "author": "Lyr",
   "license": "ISC",
   "devDependencies": {
     "@rollup/plugin-terser": "^0.4.4",

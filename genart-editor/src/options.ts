@@ -1,5 +1,6 @@
 import { type FolderApi, Pane, type ButtonApi } from 'tweakpane'
 import { generateHumanReadableName } from './util'
+import { GENART_VERSION, GENART_EDITOR_VERSION } from '../constants'
 
 interface Folder {
   folder: FolderApi
@@ -80,9 +81,20 @@ export class Options {
 
           const btn = this.addButton('export', 'Download')
           btn.on('click', () => {
-            // TODO: add metadata https://developer.mozilla.org/en-US/docs/Web/SVG/Element/metadata
-            // plart version, params used, code hash, date generated
-            const htmlStr = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>${c.outerHTML}`
+            const svg = c.cloneNode(true) as SVGElement
+
+            // TODO: add params used, code hash, date generated
+            const metadata = document.createElementNS(
+              'http://www.w3.org/2000/svg',
+              'metadata',
+            )
+            const genart = document.createElement('genart')
+            genart.setAttribute('version', GENART_VERSION)
+            genart.setAttribute('editor-version', GENART_EDITOR_VERSION)
+            metadata.appendChild(genart)
+            svg.appendChild(metadata)
+
+            const htmlStr = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>${svg.outerHTML}`
             const blob = new Blob([htmlStr], { type: 'image/svg+xml' })
 
             const url = URL.createObjectURL(blob)
