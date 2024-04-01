@@ -1,3 +1,4 @@
+import * as genart from '@lyr_7d1h/genart'
 import * as monaco from 'monaco-editor'
 import { Editor } from './editor'
 import { Options } from './options'
@@ -5,13 +6,32 @@ import { Options } from './options'
 export class Generator {
   private readonly options: Options
   private readonly editor: Editor
-  private readonly container: HTMLIFrameElement
+  private readonly sandbox: HTMLIFrameElement
 
   constructor() {
     this.options = new Options()
     this.editor = new Editor()
-    this.container = document.getElementById('container')! as HTMLIFrameElement
+    this.sandbox = document.getElementById('sandbox')! as HTMLIFrameElement
     this.setupKeybinds()
+    this.setupSandbox()
+  }
+
+  setupSandbox() {
+    const window = this.sandbox.contentWindow!
+
+    window.document.body.style.margin = '0'
+
+    const container = window.document.createElement('div')
+    container.id = 'container'
+    container.setAttribute('style', 'width: 100%; height: 100%;')
+    window.document.body.appendChild(container)
+
+    for (const [k, v] of Object.entries(genart)) {
+      window[k] = v
+    }
+    window.load = (element: Node) => {
+      container.appendChild(element)
+    }
   }
 
   setupKeybinds() {
@@ -30,27 +50,20 @@ export class Generator {
   }
 
   render() {
-    console.log('render')
+    console.debug('rendering code')
     const code = this.editor.getValue()
-    const doc = this.container.contentDocument!
-    doc.open()
-    doc.write(
-      `<script>
-      console.log(document.body)
-      document.body.appendChild(document.createElement("div"))
-      ${code}
-    <script>
-    `,
-    )
-    doc.close()
-    this.container.contentWindow?.location.reload()
 
-    // eslint-disable-next-line no-eval
-    // eval(`
-    //     const container = document.getElementById('container')
-    //     ${code}
-    //     `)
+    const doc = this.sandbox.contentDocument!
 
-    this.options.render(this.container)
+    doc.getElementById('container')!.innerHTML = ''
+
+    doc.getElementById('script')?.remove()
+    const script = doc.createElement('script')
+    script.type = 'module'
+    script.id = 'script'
+    script.innerHTML = code
+    doc.body.appendChild(script)
+
+    this.options.render(this.sandbox)
   }
 }

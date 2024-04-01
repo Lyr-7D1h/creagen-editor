@@ -1,5 +1,4 @@
 import * as monaco from 'monaco-editor'
-import * as genart from '@lyr_7d1h/genart'
 import type * as m from 'monaco-editor'
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
 import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
@@ -9,13 +8,9 @@ import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 
 import { bundleDefinitions } from '../bundle'
 
-// HACK: make all variables in genart global
-for (const [k, v] of Object.entries(genart)) {
-  window[k] = v
-}
-
 monaco.languages.typescript.javascriptDefaults.addExtraLib(`
 const container: HTMLElement;
+function load(element: Node): void;
 `)
 monaco.languages.typescript.javascriptDefaults.addExtraLib(bundleDefinitions)
 monaco.languages.typescript.javascriptDefaults.setModeConfiguration({
@@ -61,11 +56,12 @@ export class Editor {
 
   constructor() {
     this.editor = monaco.editor.create(document.getElementById('editor')!, {
-      value: `const s = svg.svg()
-
-s.text({content: "asdf", x: 10, y: 10})
-
-container.appendChild(s.html())`,
+      value: "console.log('asdf')",
+      //       value: `const s = svg.svg()
+      //
+      // s.text({content: "asdf", x: 10, y: 10})
+      //
+      // container.appendChild(s.html())`,
       language: 'javascript',
       minimap: { enabled: false },
       tabSize: 2,
