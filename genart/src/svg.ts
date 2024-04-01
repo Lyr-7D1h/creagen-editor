@@ -146,7 +146,7 @@ class Svg {
     }
     this.element = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
     this.element.setAttribute('xlms', 'http://www.w3.org/2000/svg')
-    applySvgOptions(this.element, opt)
+    applySvgOptions(this.element, { width: 1000, height: 1000, ...opt })
     this.children = []
   }
 
