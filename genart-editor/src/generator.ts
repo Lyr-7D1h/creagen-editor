@@ -5,12 +5,12 @@ import { Options } from './options'
 export class Generator {
   private readonly options: Options
   private readonly editor: Editor
-  private readonly container: HTMLElement
+  private readonly container: HTMLIFrameElement
 
   constructor() {
     this.options = new Options()
     this.editor = new Editor()
-    this.container = document.getElementById('container')!
+    this.container = document.getElementById('container')! as HTMLIFrameElement
     this.setupKeybinds()
   }
 
@@ -30,13 +30,26 @@ export class Generator {
   }
 
   render() {
+    console.log('render')
     const code = this.editor.getValue()
-    this.container.innerHTML = ''
+    const doc = this.container.contentDocument!
+    doc.open()
+    doc.write(
+      `<script>
+      console.log(document.body)
+      document.body.appendChild(document.createElement("div"))
+      ${code}
+    <script>
+    `,
+    )
+    doc.close()
+    this.container.contentWindow?.location.reload()
+
     // eslint-disable-next-line no-eval
-    eval(`
-        const container = document.getElementById('container')
-        ${code}
-        `)
+    // eval(`
+    //     const container = document.getElementById('container')
+    //     ${code}
+    //     `)
 
     this.options.render(this.container)
   }
