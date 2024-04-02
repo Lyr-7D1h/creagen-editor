@@ -37,7 +37,7 @@ class Path {
   }
 
   html(): SVGPathElement {
-    this.element.setAttribute('d', this.path)
+    this.element.setAttribute('d', this.path + 'Z')
     return this.element
   }
 
@@ -49,6 +49,17 @@ class Path {
   lineTo(x: number, y: number) {
     this.path += `L ${x} ${y}`
     return this
+  }
+
+  /** Quadratic Bezier Curve */
+  qCurve(x: number, y: number, dx: number, dy: number) {
+    this.path += `Q ${x} ${y} ${dx} ${dy}`
+    return {
+      ...this,
+      tCurve: (x: number, y: number) => {
+        this.path += `T ${x} ${y}`
+      },
+    }
   }
 }
 export function path(options?: PathOptions): Path {
@@ -139,6 +150,7 @@ class Svg {
   children: SvgChild[]
 
   constructor(options?: SvgOptions) {
+    console.log('ASDF')
     const opt: SvgOptions = {
       width: 1000,
       height: 1000,
@@ -167,6 +179,7 @@ class Svg {
   }
 
   html(): SVGElement {
+    console.log(this.children)
     const html = this.element.cloneNode(true) as SVGElement
     for (const c of this.children) {
       html.appendChild(c.html())
