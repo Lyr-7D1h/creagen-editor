@@ -44,8 +44,6 @@ export function generateTypeDefinitions() {
 }
 
 export default defineConfig(async ({ command, mode }) => {
-  generateConstants()
-
   return {
     plugins: [
       {
@@ -54,6 +52,7 @@ export default defineConfig(async ({ command, mode }) => {
           generateTypeDefinitions()
         },
         buildStart: async () => {
+          generateConstants()
           generateTypeDefinitions()
         },
       },
