@@ -1,4 +1,4 @@
-# PLotter ART
+# Genart
 
 # Ideas
 
