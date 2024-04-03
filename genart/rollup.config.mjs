@@ -9,8 +9,5 @@ export default {
     name: 'genart',
     sourcemap: true,
   },
-  plugins: [
-    typescript(),
-    terser(), // Optionally, for minification
-  ],
+  plugins: [typescript({ noEmitOnError: false }), terser()],
 }
