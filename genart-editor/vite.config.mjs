@@ -1,3 +1,4 @@
+import fg from 'fast-glob'
 import dts from 'dts-bundle'
 import { defineConfig } from 'vite'
 import path from 'path'
@@ -54,6 +55,15 @@ export default defineConfig(async ({ command, mode }) => {
         buildStart: async () => {
           generateConstants()
           generateTypeDefinitions()
+        },
+      },
+      {
+        name: 'watch-external', // https://stackoverflow.com/questions/63373804/rollup-watch-include-directory/63548394#63548394
+        async buildStart() {
+          const files = await fg(['src/**/*', '../genart/src/**/*'])
+          for (const file of files) {
+            this.addWatchFile(file)
+          }
         },
       },
     ],

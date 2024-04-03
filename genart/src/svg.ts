@@ -37,7 +37,7 @@ class Path {
   }
 
   html(): SVGPathElement {
-    this.element.setAttribute('d', this.path + 'Z')
+    this.element.setAttribute('d', `${this.path}Z`)
     return this.element
   }
 
@@ -137,7 +137,7 @@ export type SvgChild = Path | Text
 export interface SvgOptions {
   width?: number
   height?: number
-  fill?: number
+  fill?: string
 }
 function applySvgOptions(element: SVGElement, opts?: SvgOptions) {
   if (typeof opts === 'undefined') return
@@ -150,7 +150,6 @@ class Svg {
   children: SvgChild[]
 
   constructor(options?: SvgOptions) {
-    console.log('ASDF')
     const opt: SvgOptions = {
       width: 1000,
       height: 1000,
@@ -193,6 +192,8 @@ class Svg {
     const height = bb.height
     const wo = width / 10
 
+    console.log(width, height)
+
     for (let i = 1; i < 10; i++) {
       const o = wo * i
       this.path().moveTo(o, 0).lineTo(width, o)
@@ -203,3 +204,4 @@ class Svg {
 export function svg(options?: SvgOptions): Svg {
   return new Svg(options)
 }
+console.log('asdf')
