@@ -2,6 +2,8 @@ import * as genart from '@lyr_7d1h/genart'
 import * as monaco from 'monaco-editor'
 import { Editor } from './editor'
 import { Options } from './options'
+import { error } from './error'
+import { IDFromString, IDToString, createID } from './id'
 
 export class Generator {
   private readonly options: Options
@@ -38,21 +40,22 @@ export class Generator {
     this.editor.addKeybind(
       monaco.KeyMod.Shift | monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
       () => {
-        this.render()
+        this.render().catch(error)
       },
     )
     window.addEventListener('keydown', (event) => {
       if (event.ctrlKey && event.shiftKey && event.key === 'Enter') {
-        this.render()
+        this.render().catch(error)
         event.preventDefault()
       }
     })
   }
 
-  render() {
+  async render() {
     console.debug('rendering code')
     const code = this.editor.getValue()
 
+    const id = await createID(code)
     const doc = this.sandbox.contentDocument!
 
     doc.getElementById('container')!.innerHTML = ''

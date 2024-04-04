@@ -6,12 +6,12 @@ export interface GeometricOptions {
   transform?: string
 }
 function applyGeometricOptions(element: SVGElement, opts?: GeometricOptions) {
+  element.setAttribute('stroke', opts?.stroke ?? 'black')
   if (typeof opts === 'undefined') return
   if (opts.fill) element.setAttribute('fill', opts.fill)
   if (opts.fillOpacity) {
     element.setAttribute('fill-opacity', opts.fillOpacity.toString())
   }
-  if (opts.stroke) element.setAttribute('stroke', opts.stroke)
   if (opts.strokeWidth) {
     element.setAttribute('stroke-width', opts.strokeWidth.toString())
   }
@@ -135,29 +135,33 @@ export function text(options?: TextOptions): Text {
 
 export type SvgChild = Path | Text
 export interface SvgOptions {
-  width?: number
-  height?: number
+  width?: number | string
+  height?: number | string
   fill?: string
 }
 function applySvgOptions(element: SVGElement, opts?: SvgOptions) {
   if (typeof opts === 'undefined') return
-  if (opts.width) element.setAttribute('width', `${opts.width}px`)
-  if (opts.height) element.setAttribute('height', `${opts.height}px`)
+  element.setAttribute(
+    'width',
+    typeof opts?.width !== 'undefined' ? opts.width.toString() : '1000px',
+  )
+  element.setAttribute(
+    'height',
+    typeof opts?.height !== 'undefined' ? opts.height.toString() : '1000px',
+  )
   if (opts.fill) element.setAttribute('fill', `${opts.fill}`)
 }
 class Svg {
   element: SVGElement
   children: SvgChild[]
 
+  private readonly options?: SvgOptions
+
   constructor(options?: SvgOptions) {
-    const opt: SvgOptions = {
-      width: 1000,
-      height: 1000,
-      ...options,
-    }
     this.element = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
     this.element.setAttribute('xlms', 'http://www.w3.org/2000/svg')
-    applySvgOptions(this.element, { width: 1000, height: 1000, ...opt })
+    applySvgOptions(this.element, options)
+    this.options = options
     this.children = []
   }
 
@@ -178,7 +182,6 @@ class Svg {
   }
 
   html(): SVGElement {
-    console.log(this.children)
     const html = this.element.cloneNode(true) as SVGElement
     for (const c of this.children) {
       html.appendChild(c.html())
@@ -186,22 +189,41 @@ class Svg {
     return html
   }
 
-  grid(): void {
-    const bb = this.element.getBoundingClientRect()
-    const width = bb.width
-    const height = bb.height
-    const wo = width / 10
+  width(): number | null {
+    if (typeof this.options?.width !== 'undefined') {
+      if (typeof this.options?.width === 'number') {
+        return this.options.width
+      }
+      return null
+    }
+    return 1000
+  }
 
-    console.log(width, height)
+  height(): number | null {
+    if (typeof this.options?.width !== 'undefined') {
+      if (typeof this.options?.width === 'number') {
+        return this.options.width
+      }
+      return null
+    }
+    return 1000
+  }
+
+  grid(): void {
+    const width = this.width()
+    const height = this.height()
+    if (width === null || height === null) {
+      throw Error("Can't draw grid if width and height are not numeric")
+    }
+    const wo = width / 10
 
     for (let i = 1; i < 10; i++) {
       const o = wo * i
-      this.path().moveTo(o, 0).lineTo(width, o)
       this.path().moveTo(o, 0).lineTo(o, height)
+      this.path().moveTo(0, o).lineTo(width, o)
     }
   }
 }
 export function svg(options?: SvgOptions): Svg {
   return new Svg(options)
 }
-console.log('asdf')
