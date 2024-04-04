@@ -54,14 +54,9 @@ self.MonacoEnvironment = {
 export class Editor {
   private readonly editor: m.editor.IStandaloneCodeEditor
 
-  constructor() {
+  constructor(options?: { value?: string }) {
     this.editor = monaco.editor.create(document.getElementById('editor')!, {
-      value: "console.log('asdf')",
-      //       value: `const s = svg.svg()
-      //
-      // s.text({content: "asdf", x: 10, y: 10})
-      //
-      // container.appendChild(s.html())`,
+      value: options?.value ?? '',
       language: 'javascript',
       minimap: { enabled: false },
       tabSize: 2,

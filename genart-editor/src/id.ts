@@ -45,7 +45,11 @@ export function IDToString(id: ID): string {
   )
 }
 
-export function IDFromString(id: string): ID {
+// TODO: handle error
+export function IDFromString(id: string): ID | null {
+  if (!/^[0-9a-f]+$/g.test(id)) {
+    return null
+  }
   const hash = id.substring(0, 64)
   const ext = fromhex(id.substring(64)).split(':')
 

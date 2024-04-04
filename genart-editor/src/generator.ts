@@ -4,15 +4,25 @@ import { Editor } from './editor'
 import { Options } from './options'
 import { error } from './error'
 import { IDFromString, IDToString, createID } from './id'
+import { LocalStorage } from './storage'
 
 export class Generator {
   private readonly options: Options
   private readonly editor: Editor
   private readonly sandbox: HTMLIFrameElement
+  private readonly storage: LocalStorage
 
   constructor() {
     this.options = new Options()
-    this.editor = new Editor()
+    this.storage = new LocalStorage()
+
+    // TODO: handle error
+    const id = IDFromString(window.location.pathname.replace('/', ''))
+    if (id === null) error('invalid id given')
+
+    const value = id ? this.storage.load(id)?.code ?? undefined : undefined
+
+    this.editor = new Editor({ value })
     this.sandbox = document.getElementById('sandbox')! as HTMLIFrameElement
     this.setupKeybinds()
     this.setupSandbox()
@@ -55,7 +65,11 @@ export class Generator {
     console.debug('rendering code')
     const code = this.editor.getValue()
 
+    // store code and change url
     const id = await createID(code)
+    this.storage.store(id, { code })
+    window.history.pushState('Genart', '', IDToString(id))
+
     const doc = this.sandbox.contentDocument!
 
     doc.getElementById('container')!.innerHTML = ''
