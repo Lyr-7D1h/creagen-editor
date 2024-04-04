@@ -2,8 +2,8 @@ import * as genart from '@lyr_7d1h/genart'
 import * as monaco from 'monaco-editor'
 import { Editor } from './editor'
 import { Options } from './options'
-import { error } from './error'
-import { IDFromString, IDToString, createID } from './id'
+import { error, warn } from './error'
+import { type ID, IDFromString, IDToString, createID } from './id'
 import { LocalStorage } from './storage'
 
 export class Generator {
@@ -11,21 +11,38 @@ export class Generator {
   private readonly editor: Editor
   private readonly sandbox: HTMLIFrameElement
   private readonly storage: LocalStorage
+  private active_id?: ID
 
   constructor() {
     this.options = new Options()
     this.storage = new LocalStorage()
 
-    // TODO: handle error
-    const id = IDFromString(window.location.pathname.replace('/', ''))
-    if (id === null) error('invalid id given')
-
-    const value = id ? this.storage.load(id)?.code ?? undefined : undefined
-
-    this.editor = new Editor({ value })
+    this.editor = new Editor()
     this.sandbox = document.getElementById('sandbox')! as HTMLIFrameElement
     this.setupKeybinds()
     this.setupSandbox()
+
+    // allow for going back to previous code using browser history
+    addEventListener('popstate', () => {
+      this.loadCode()
+    })
+    // load initial code
+    this.loadCode()
+  }
+
+  loadCode() {
+    const id = IDFromString(window.location.pathname.replace('/', ''))
+    if (id === null) {
+      error('invalid id given')
+      return
+    }
+    const value = this.storage.load(id)
+    if (value === null) {
+      warn(`${IDToString(id)} not found in storage`)
+      return
+    }
+    this.editor.setValue(value.code)
+    this.active_id = id
   }
 
   setupSandbox() {
@@ -68,7 +85,10 @@ export class Generator {
     // store code and change url
     const id = await createID(code)
     this.storage.store(id, { code })
-    window.history.pushState('Genart', '', IDToString(id))
+    if (id.hash !== this.active_id?.hash) {
+      window.history.pushState('Genart', '', IDToString(id))
+      this.active_id = id
+    }
 
     const doc = this.sandbox.contentDocument!
 

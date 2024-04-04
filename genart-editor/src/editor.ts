@@ -70,4 +70,8 @@ export class Editor {
   getValue() {
     return this.editor.getValue()
   }
+
+  setValue(value: string) {
+    this.editor.setValue(value)
+  }
 }

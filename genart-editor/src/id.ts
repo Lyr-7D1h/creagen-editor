@@ -1,6 +1,7 @@
 import { GENART_EDITOR_VERSION, GENART_VERSION } from '../constants'
 
 export interface ID {
+  /** Hash of the code. Used for comparing changes between code and storing versions locally */
   hash: string
   libVersion: string
   editorVersion: string
@@ -45,7 +46,6 @@ export function IDToString(id: ID): string {
   )
 }
 
-// TODO: handle error
 export function IDFromString(id: string): ID | null {
   if (!/^[0-9a-f]+$/g.test(id)) {
     return null
@@ -55,6 +55,7 @@ export function IDFromString(id: string): ID | null {
 
   return {
     hash,
+    // TODO: handle error
     libVersion: ext[0]!,
     editorVersion: ext[1]!,
     date: new Date(Number(ext[2]!)),
