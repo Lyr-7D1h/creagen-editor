@@ -4,6 +4,7 @@ import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
 import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 
 import { bundleDefinitions } from '../bundle'
+import { initVimMode } from 'monaco-vim'
 
 monaco.languages.typescript.javascriptDefaults.addExtraLib(`
 const container: HTMLElement;
@@ -37,6 +38,34 @@ monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
   noEmit: true,
 })
 
+// https://github.com/brijeshb42/monaco-themes/tree/master
+monaco.editor.defineTheme('genart', {
+  base: 'vs-dark',
+  inherit: true,
+  colors: {
+    // 'editor.background': '#00000088',
+    'editor.foreground': '#ffffffff',
+  },
+  rules: [
+    {
+      token: 'identifier',
+      foreground: '#ffffff',
+    },
+    {
+      foreground: '#57a2ff',
+      token: 'keyword',
+    },
+    // {
+    //   token: 'identifier.function',
+    //   foreground: '#DCDCAA',
+    // },
+    // {
+    //   token: 'type',
+    //   foreground: '#1AAFB0',
+    // },
+  ],
+})
+
 self.MonacoEnvironment = {
   getWorker(_, label) {
     if (label === 'typescript' || label === 'javascript') {
@@ -55,7 +84,12 @@ export class Editor {
       language: 'javascript',
       minimap: { enabled: false },
       tabSize: 2,
+      theme: 'genart',
     })
+    const _vimMode = initVimMode(
+      this.editor,
+      document.getElementById('my-statusbar'),
+    )
   }
 
   addKeybind(keybinding: number, handler: (...args: any[]) => void) {

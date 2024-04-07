@@ -27,6 +27,7 @@
   "dependencies": {
     "@lyr_7d1h/genart": "^0.0.2",
     "monaco-editor": "^0.47.0",
+    "monaco-vim": "^0.4.1",
     "tweakpane": "^4.0.3"
   }
 }
