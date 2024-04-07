@@ -51,16 +51,27 @@ class Image {
     return this.pixeldata
   }
 
-  get(x: number, y: number): Uint8ClampedArray
-  get(x: number, y: number, dx?: number, dy?: number): Uint8ClampedArray[] {
-    if (!this.pixelsLoaded) return new Error('pixels not loaded')
-    const width = this.img.width
-    const r = []
-    const pixels = this.pixels()
-    for (let i = y * width; i < (y + dy) * width; i += width) {
-      r.push(pixels.slice(i + x, i + x + dx * 3))
+  get(
+    x: number,
+    y: number,
+    dx?: number,
+    dy?: number,
+  ): Uint8ClampedArray | Uint8ClampedArray[] {
+    if (!this.pixelsLoaded) throw new Error('pixels not loaded')
+
+    if (typeof dx !== 'undefined' && typeof dy !== 'undefined') {
+      const width = this.img.width
+      const r = []
+      const pixels = this.pixels()
+      for (let i = y * width; i < (y + dy) * width; i += width) {
+        r.push(pixels.slice(i + x, i + x + dx * 4))
+      }
+      return r
     }
-    return r
+
+    const width = this.img.width
+    const i = y * width * 4 + x * 4
+    return this.pixels().slice(i, i + 4)
   }
 
   html() {

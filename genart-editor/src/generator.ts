@@ -63,7 +63,6 @@ export class Generator {
 
     const container = window.document.createElement('div')
     container.id = 'container'
-    container.setAttribute('style', 'width: 100%; height: 100%;')
     window.document.body.appendChild(container)
 
     for (const [k, v] of Object.entries(genart)) {
@@ -96,6 +95,7 @@ export class Generator {
   async render() {
     console.debug('rendering code')
     const code = this.editor.getValue()
+    console.log(code)
 
     // store code and change url
     const id = await createID(code)
