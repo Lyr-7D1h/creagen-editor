@@ -4,7 +4,7 @@ import { Editor } from './editor'
 import { Options } from './options'
 import { error, warn } from './error'
 import { type ID, IDFromString, IDToString, createID } from './id'
-import { LocalStorage } from './storage'
+import { IndexDB, type LocalStorage } from './storage'
 
 export type LoadableObject =
   | Node
@@ -16,12 +16,12 @@ export class Generator {
   private readonly options: Options
   private readonly editor: Editor
   private readonly sandbox: HTMLIFrameElement
-  private readonly storage: LocalStorage
+  private readonly storage: LocalStorage | IndexDB
   private active_id?: ID
 
   constructor() {
     this.options = new Options()
-    this.storage = new LocalStorage()
+    this.storage = new IndexDB()
 
     this.editor = new Editor()
     this.sandbox = document.getElementById('sandbox')! as HTMLIFrameElement
@@ -30,13 +30,13 @@ export class Generator {
 
     // allow for going back to previous code using browser history
     addEventListener('popstate', () => {
-      this.loadCode()
+      this.loadCode().catch(error)
     })
     // load initial code
-    this.loadCode()
+    this.loadCode().catch(error)
   }
 
-  loadCode() {
+  async loadCode() {
     const path = window.location.pathname.replace('/', '')
 
     if (path.length === 0) return
@@ -47,7 +47,7 @@ export class Generator {
       error('invalid id given')
       return
     }
-    const value = this.storage.load(id)
+    const value = await this.storage.get(id)
     if (value === null) {
       warn(`${IDToString(id)} not found in storage`)
       return
@@ -99,7 +99,7 @@ export class Generator {
 
     // store code and change url
     const id = await createID(code)
-    this.storage.store(id, { code })
+    await this.storage.set(id, { code })
     if (id.hash !== this.active_id?.hash) {
       window.history.pushState('Genart', '', IDToString(id))
       this.active_id = id
