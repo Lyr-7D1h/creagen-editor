@@ -6,6 +6,12 @@ import { error, warn } from './error'
 import { type ID, IDFromString, IDToString, createID } from './id'
 import { LocalStorage } from './storage'
 
+export type LoadableObject =
+  | Node
+  | {
+      html: () => Node
+    }
+
 export class Generator {
   private readonly options: Options
   private readonly editor: Editor
@@ -31,7 +37,12 @@ export class Generator {
   }
 
   loadCode() {
-    const id = IDFromString(window.location.pathname.replace('/', ''))
+    const path = window.location.pathname.replace('/', '')
+
+    if (path.length === 0) return
+
+    const id = IDFromString(path)
+
     if (id === null) {
       error('invalid id given')
       return
@@ -58,8 +69,12 @@ export class Generator {
     for (const [k, v] of Object.entries(genart)) {
       window[k] = v
     }
-    window.load = (element: Node) => {
-      container.appendChild(element)
+    window.load = (obj: LoadableObject) => {
+      if (obj instanceof Node) {
+        container.appendChild(obj)
+      } else {
+        container.appendChild(obj.html())
+      }
     }
   }
 

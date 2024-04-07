@@ -1,5 +1,7 @@
 import { type ID } from './id'
 
+// TODO: look into indexed db https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API
+
 export interface Item {
   code: string
 }
