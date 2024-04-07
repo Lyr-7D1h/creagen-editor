@@ -23,7 +23,9 @@
 
 - Export
 - Auto formatting
+- Transparent editor
 - Save coding projects
+- Import code using ID `import('a123487e...')
 - Typescript support
 
 ## Library:

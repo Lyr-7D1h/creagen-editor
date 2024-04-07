@@ -1,16 +1,18 @@
 import * as monaco from 'monaco-editor'
 import type * as m from 'monaco-editor'
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
-import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
-import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
-import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker'
 import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 
 import { bundleDefinitions } from '../bundle'
 
 monaco.languages.typescript.javascriptDefaults.addExtraLib(`
 const container: HTMLElement;
-function load(element: Node): void;
+type LoadableObject =
+  | Node
+  | {
+      html: () => Node
+    }
+function load(obj: LoadableObject): void;
 `)
 monaco.languages.typescript.javascriptDefaults.addExtraLib(bundleDefinitions)
 monaco.languages.typescript.javascriptDefaults.setModeConfiguration({
@@ -24,6 +26,8 @@ monaco.languages.typescript.javascriptDefaults.setModeConfiguration({
 monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
   noSemanticValidation: false,
   noSyntaxValidation: false,
+  // 1378,1375: allow await on top level
+  diagnosticCodesToIgnore: [1375, 1378],
 })
 monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
   target: monaco.languages.typescript.ScriptTarget.ES2016,
@@ -35,15 +39,6 @@ monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
 
 self.MonacoEnvironment = {
   getWorker(_, label) {
-    if (label === 'json') {
-      return new jsonWorker()
-    }
-    if (label === 'css' || label === 'scss' || label === 'less') {
-      return new cssWorker()
-    }
-    if (label === 'html' || label === 'handlebars' || label === 'razor') {
-      return new htmlWorker()
-    }
     if (label === 'typescript' || label === 'javascript') {
       return new tsWorker()
     }

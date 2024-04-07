@@ -66,6 +66,45 @@ export function path(options?: PathOptions): Path {
   return new Path(options)
 }
 
+export interface RectangleOptions extends GeometricOptions {
+  x?: number | string
+  y?: number | string
+  rx?: number
+  ry?: number
+}
+function applyRectangleOptions(element: SVGElement, opts?: RectangleOptions) {
+  if (typeof opts === 'undefined') return
+  applyGeometricOptions(element, opts)
+  if (opts.x) element.setAttribute('x', opts.x.toString())
+  if (opts.y) element.setAttribute('y', opts.y.toString())
+  if (opts.rx) element.setAttribute('rx', opts.rx.toString())
+  if (opts.ry) element.setAttribute('ry', opts.ry.toString())
+}
+class Rectangle {
+  private readonly element: SVGRectElement
+
+  constructor(width: number, height: number, options?: RectangleOptions) {
+    this.element = document.createElementNS(
+      'http://www.w3.org/2000/svg',
+      'rect',
+    )
+    this.element.setAttribute('width', width.toString())
+    this.element.setAttribute('height', height.toString())
+    applyRectangleOptions(this.element, options)
+  }
+
+  html() {
+    return this.element
+  }
+}
+export function rect(
+  width: number,
+  height: number,
+  options?: RectangleOptions,
+): Rectangle {
+  return new Rectangle(width, height, options)
+}
+
 export interface TextOptions extends GeometricOptions {
   content?: string
   x?: number | string
@@ -133,7 +172,7 @@ export function text(options?: TextOptions): Text {
 //   return svg
 // }
 
-export type SvgChild = Path | Text
+export type SvgChild = Path | Text | Rectangle
 export interface SvgOptions {
   width?: number | string
   height?: number | string
@@ -167,6 +206,12 @@ class Svg {
 
   path(options?: PathOptions) {
     const p = path(options)
+    this.add(p)
+    return p
+  }
+
+  rect(width: number, height: number, options?: RectangleOptions) {
+    const p = rect(width, height, options)
     this.add(p)
     return p
   }
