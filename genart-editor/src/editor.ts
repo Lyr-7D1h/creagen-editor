@@ -1,10 +1,12 @@
 import * as monaco from 'monaco-editor'
 import type * as m from 'monaco-editor'
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
+import { type editor } from 'monaco-editor/esm/vs/editor/editor.api'
 import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 
 import { bundleDefinitions } from '../bundle'
 import { initVimMode } from 'monaco-vim'
+import { rgbtohex } from '@lyr_7d1h/genart/dist/build/color'
 
 monaco.languages.typescript.javascriptDefaults.addExtraLib(`
 const container: HTMLElement;
@@ -39,32 +41,26 @@ monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
 })
 
 // https://github.com/brijeshb42/monaco-themes/tree/master
-monaco.editor.defineTheme('genart', {
-  base: 'vs-dark',
+const genartTheme: editor.IStandaloneThemeData = {
+  base: 'vs',
   inherit: true,
   colors: {
     // 'editor.background': '#00000088',
-    'editor.foreground': '#ffffffff',
+    // 'editor.foreground': '#ffffffff',
   },
   rules: [
-    {
-      token: 'identifier',
-      foreground: '#ffffff',
-    },
-    {
-      foreground: '#57a2ff',
-      token: 'keyword',
-    },
     // {
-    //   token: 'identifier.function',
-    //   foreground: '#DCDCAA',
+    //   token: 'identifier',
+    //   foreground: '#ffffff',
     // },
     // {
-    //   token: 'type',
-    //   foreground: '#1AAFB0',
+    //   foreground: '#57a2ff',
+    //   token: 'keyword',
     // },
+    // {
   ],
-})
+}
+monaco.editor.defineTheme('genart', genartTheme)
 
 self.MonacoEnvironment = {
   getWorker(_, label) {
@@ -75,10 +71,16 @@ self.MonacoEnvironment = {
   },
 }
 
+export interface EditorSettings {
+  value?: string
+  vimMode?: boolean
+}
+
 export class Editor {
   private readonly editor: m.editor.IStandaloneCodeEditor
+  private vimMode: m.editor.IStandaloneCodeEditor | null
 
-  constructor(options?: { value?: string }) {
+  constructor(options?: EditorSettings) {
     this.editor = monaco.editor.create(document.getElementById('editor')!, {
       value: options?.value ?? '',
       language: 'javascript',
@@ -86,14 +88,33 @@ export class Editor {
       tabSize: 2,
       theme: 'genart',
     })
-    const _vimMode = initVimMode(
-      this.editor,
-      document.getElementById('my-statusbar'),
-    )
+    this.vimMode = null
+    if (options?.vimMode) this.setVimMode(options.vimMode)
   }
 
   addKeybind(keybinding: number, handler: (...args: any[]) => void) {
     this.editor.addCommand(keybinding, handler)
+  }
+
+  setVimMode(value: boolean) {
+    if (value && this.vimMode === null) {
+      this.vimMode = initVimMode(this.editor, document.getElementById('status'))
+    } else if (!value && this.vimMode !== null) {
+      this.vimMode.dispose()
+      this.vimMode = null
+    }
+  }
+
+  setOpacity(opacity: number) {
+    const h = Math.round(opacity).toString(16)
+    const hex = h.length === 1 ? '0' + h : h
+
+    monaco.editor.defineTheme('genart', {
+      ...genartTheme,
+      colors: {
+        'editor.background': `#000000${hex}`,
+      },
+    })
   }
 
   getValue() {

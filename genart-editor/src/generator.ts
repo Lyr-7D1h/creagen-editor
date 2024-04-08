@@ -27,6 +27,7 @@ export class Generator {
     this.sandbox = document.getElementById('sandbox')! as HTMLIFrameElement
     this.setupKeybinds()
     this.setupSandbox()
+    this.setupOptions()
 
     // allow for going back to previous code using browser history
     addEventListener('popstate', () => {
@@ -77,6 +78,21 @@ export class Generator {
     }
   }
 
+  setupOptions() {
+    this.options.addParam(
+      'Editor',
+      'opacity',
+      1,
+      (v) => {
+        this.editor.setOpacity(v)
+      },
+      { min: 0, max: 1 },
+    )
+    this.options.addParam('Editor', 'vim', false, (v) => {
+      this.editor.setVimMode(v)
+    })
+  }
+
   setupKeybinds() {
     this.editor.addKeybind(
       monaco.KeyMod.Shift | monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
@@ -116,6 +132,6 @@ export class Generator {
     script.innerHTML = code
     doc.body.appendChild(script)
 
-    this.options.render(this.sandbox)
+    this.options.updateRenderOptions(this.sandbox)
   }
 }
