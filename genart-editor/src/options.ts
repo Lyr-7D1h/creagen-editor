@@ -1,65 +1,82 @@
-import { type FolderApi, Pane, type ButtonApi } from 'tweakpane'
+import {
+  type FolderApi,
+  Pane,
+  type ButtonApi,
+  type BindingParams,
+} from 'tweakpane'
 import { generateHumanReadableName } from './util'
 import { GENART_VERSION, GENART_EDITOR_VERSION } from '../constants'
 
 interface Folder {
   folder: FolderApi
   params: Record<string, any>
+  handlers: Record<string, (v: any) => void>
   buttons: Record<string, ButtonApi>
 }
 
 export class Options {
-  private readonly options: Pane
+  private readonly pane: Pane
   private readonly folders: Record<string, Folder>
 
   constructor() {
-    this.options = new Pane()
-    this.options.hidden = true
+    this.pane = new Pane()
+    this.pane.hidden = true
     this.folders = {}
   }
 
   createFolder(key: string) {
-    this.options.hidden = false
+    this.pane.hidden = false
     this.folders[key] = {
-      folder: this.options.addFolder({
+      folder: this.pane.addFolder({
         title: key,
         expanded: true,
       }),
       params: {},
       buttons: {},
+      handlers: {},
     }
   }
 
   /** add a parameter if it did not already exist */
-  addParam(key: string, name: string, defaultValue: any): Folder {
+  addParam<T>(
+    folder: string,
+    name: string,
+    value: T,
+    onChange?: (value: T) => void,
+    options?: BindingParams,
+  ): Folder {
     // create params under a key if not exists
-    if (!(key in this.folders)) {
-      this.createFolder(key)
+    if (!(folder in this.folders)) {
+      this.createFolder(folder)
     }
 
-    const p = this.folders[key]!
+    const p = this.folders[folder]!
 
     // add if param does not exists already
     if (!(name in p.params)) {
-      p.params[name] = defaultValue
-      p.folder.addBlade({
-        view: 'text',
-        label: name,
-        value: p.params[name],
-        parse: (v: any) => (p.params[name] = v),
-      })
+      p.params[name] = value
+      if (onChange) p.handlers[name] = onChange
+      const param = p.folder.addBinding(p.params, name, options)
+
+      if (onChange) {
+        param.on('change', (e) => {
+          if (typeof e.value !== 'undefined') {
+            onChange(e.value)
+          }
+        })
+      }
     }
 
     return p
   }
 
   /** create a new button, removing any older ones */
-  addButton(key: string, title: string): ButtonApi {
-    if (!(key in this.folders)) {
-      this.createFolder(key)
+  addButton(folder: string, title: string): ButtonApi {
+    if (!(folder in this.folders)) {
+      this.createFolder(folder)
     }
 
-    const f = this.folders[key]!
+    const f = this.folders[folder]!
 
     if (title in f.buttons) {
       f.buttons[title]?.dispose()
@@ -71,15 +88,15 @@ export class Options {
   }
 
   /** update options menu based on code ran and content */
-  render(container: HTMLElement) {
+  updateRenderOptions(container: HTMLElement) {
     for (const c of Array.from(container.children)) {
       switch (c.tagName.toUpperCase()) {
         case 'CANVAS':
           return
         case 'SVG': {
-          this.addParam('export', 'Name', generateHumanReadableName())
+          this.addParam('Export', 'Name', generateHumanReadableName())
 
-          const btn = this.addButton('export', 'Download')
+          const btn = this.addButton('Export', 'Download')
           btn.on('click', () => {
             const svg = c.cloneNode(true) as SVGElement
 
