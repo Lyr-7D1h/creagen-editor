@@ -8,9 +8,8 @@ import { generateHumanReadableName } from './util'
 import { GENART_VERSION, GENART_EDITOR_VERSION } from '../constants'
 
 interface Folder {
-  folder: FolderApi
+  self: FolderApi
   params: Record<string, any>
-  handlers: Record<string, (v: any) => void>
   buttons: Record<string, ButtonApi>
 }
 
@@ -24,16 +23,19 @@ export class Options {
     this.folders = {}
   }
 
+  folder(folder: string) {
+    return this.folders[folder]!
+  }
+
   createFolder(key: string) {
     this.pane.hidden = false
     this.folders[key] = {
-      folder: this.pane.addFolder({
+      self: this.pane.addFolder({
         title: key,
-        expanded: true,
+        expanded: false,
       }),
       params: {},
       buttons: {},
-      handlers: {},
     }
   }
 
@@ -55,8 +57,7 @@ export class Options {
     // add if param does not exists already
     if (!(name in p.params)) {
       p.params[name] = value
-      if (onChange) p.handlers[name] = onChange
-      const param = p.folder.addBinding(p.params, name, options)
+      const param = p.self.addBinding(p.params, name, options)
 
       if (onChange) {
         param.on('change', (e) => {
@@ -82,7 +83,7 @@ export class Options {
       f.buttons[title]?.dispose()
     }
 
-    f.buttons[title] = f.folder.addButton({ title })
+    f.buttons[title] = f.self.addButton({ title })
 
     return f.buttons[title]!
   }
@@ -118,7 +119,7 @@ export class Options {
             const a = document.createElement('a')
             a.setAttribute(
               'download',
-              `${this.folders['export']!.params['Name']}.svg`,
+              `${this.folders['Export']!.params['Name']}.svg`,
             )
             a.setAttribute('href', url)
             a.style.display = 'none'

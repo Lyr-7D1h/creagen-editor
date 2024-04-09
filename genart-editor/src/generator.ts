@@ -1,6 +1,6 @@
 import * as genart from '@lyr_7d1h/genart'
 import * as monaco from 'monaco-editor'
-import { Editor } from './editor'
+import { Editor, type EditorSettings } from './editor'
 import { Options } from './options'
 import { error, warn } from './error'
 import { type ID, IDFromString, IDToString, createID } from './id'
@@ -11,6 +11,10 @@ export type LoadableObject =
   | {
       html: () => Node
     }
+
+export interface Settings {
+  editor: EditorSettings
+}
 
 export class Generator {
   private readonly options: Options
@@ -28,6 +32,7 @@ export class Generator {
     this.setupKeybinds()
     this.setupSandbox()
     this.setupOptions()
+    this.setupResizer()
 
     // allow for going back to previous code using browser history
     addEventListener('popstate', () => {
@@ -108,13 +113,44 @@ export class Generator {
     })
   }
 
+  setupResizer() {
+    const editor = this.editor
+    const sandbox = this.sandbox
+
+    const resizer = document.getElementById('resizer')!
+    function move(e: MouseEvent) {
+      const editorWidth = e.clientX
+      sandbox.style.left =
+        resizer.style.left =
+        editor.html().style.width =
+          editorWidth + 'px'
+      sandbox.style.width = screen.width - editorWidth + 'px'
+    }
+    function up() {
+      document.removeEventListener('mouseup', up, false)
+      document.removeEventListener('mousemove', move, false)
+    }
+    resizer.addEventListener(
+      'mousedown',
+      () => {
+        document.addEventListener('mouseup', up, false)
+        document.addEventListener('mousemove', move, false)
+      },
+      false,
+    )
+  }
+
   async render() {
     console.debug('rendering code')
     const code = this.editor.getValue()
 
     // store code and change url
     const id = await createID(code)
-    await this.storage.set(id, { code })
+    await this.storage.set(id, {
+      code,
+      createdOn: id.date,
+      previous: this.active_id,
+    })
     if (id.hash !== this.active_id?.hash) {
       window.history.pushState('Genart', '', IDToString(id))
       this.active_id = id
@@ -129,8 +165,13 @@ export class Generator {
     script.type = 'module'
     script.id = 'script'
     script.innerHTML = code
+    // TODO: wait for execution
     doc.body.appendChild(script)
 
-    this.options.updateRenderOptions(this.sandbox)
+    setTimeout(() => {
+      this.options.updateRenderOptions(
+        this.sandbox.contentDocument!.getElementById('container')!,
+      )
+    }, 300)
   }
 }

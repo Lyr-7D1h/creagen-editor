@@ -87,9 +87,19 @@ export class Editor {
       minimap: { enabled: false },
       tabSize: 2,
       theme: 'genart',
+      autoIndent: 'full',
+      formatOnPaste: true,
+      formatOnType: true,
+      // allow for resizing
+      automaticLayout: true,
     })
     this.vimMode = null
+
     if (options?.vimMode) this.setVimMode(options.vimMode)
+  }
+
+  html() {
+    return document.getElementById('editor')!
   }
 
   addKeybind(keybinding: number, handler: (...args: any[]) => void) {
