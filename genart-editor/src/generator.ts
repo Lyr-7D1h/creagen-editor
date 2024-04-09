@@ -1,7 +1,7 @@
 import * as genart from '@lyr_7d1h/genart'
 import * as monaco from 'monaco-editor'
-import { Editor, type EditorSettings } from './editor'
-import { Options } from './options'
+import { Editor } from './editor'
+import { Settings } from './settings'
 import { error, warn } from './error'
 import { type ID, IDFromString, IDToString, createID } from './id'
 import { IndexDB, type LocalStorage } from './storage'
@@ -12,26 +12,24 @@ export type LoadableObject =
       html: () => Node
     }
 
-export interface Settings {
-  editor: EditorSettings
-}
-
 export class Generator {
-  private readonly options: Options
+  private readonly settings: Settings
   private readonly editor: Editor
   private readonly sandbox: HTMLIFrameElement
+  private readonly resizer: HTMLElement
   private readonly storage: LocalStorage | IndexDB
   private active_id?: ID
 
   constructor() {
-    this.options = new Options()
+    this.settings = new Settings()
     this.storage = new IndexDB()
 
     this.editor = new Editor()
     this.sandbox = document.getElementById('sandbox')! as HTMLIFrameElement
+    this.resizer = document.getElementById('resizer')!
     this.setupKeybinds()
     this.setupSandbox()
-    this.setupOptions()
+    this.setupSettings()
     this.setupResizer()
 
     // allow for going back to previous code using browser history
@@ -83,18 +81,25 @@ export class Generator {
     }
   }
 
-  setupOptions() {
-    this.options.addParam(
-      'Editor',
-      'opacity',
-      1,
-      (v) => {
-        this.editor.setOpacity(v)
-      },
-      { min: 0, max: 1 },
-    )
-    this.options.addParam('Editor', 'vim', false, (v) => {
+  setupSettings() {
+    this.settings.addParam('Editor', 'vim', false, (v) => {
       this.editor.setVimMode(v)
+    })
+    this.settings.addParam('Editor', 'fullscreen', false, (v) => {
+      if (v) {
+        this.resizer.style.display = 'none'
+        this.editor.html().style.width = '100vw'
+        this.sandbox.style.width = '100vw'
+        this.sandbox.style.left = '0'
+        this.editor.setOpacity(0.95)
+      } else {
+        this.resizer.style.display = 'block'
+        this.resizer.style.left = '30vw'
+        this.editor.html().style.width = '30vw'
+        this.sandbox.style.width = '70vw'
+        this.sandbox.style.left = '30vw'
+        this.editor.setOpacity(1)
+      }
     })
   }
 
@@ -114,10 +119,10 @@ export class Generator {
   }
 
   setupResizer() {
+    const resizer = this.resizer
     const editor = this.editor
     const sandbox = this.sandbox
 
-    const resizer = document.getElementById('resizer')!
     function move(e: MouseEvent) {
       const editorWidth = e.clientX
       sandbox.style.left =
@@ -169,7 +174,7 @@ export class Generator {
     doc.body.appendChild(script)
 
     setTimeout(() => {
-      this.options.updateRenderOptions(
+      this.settings.updateRenderSettings(
         this.sandbox.contentDocument!.getElementById('container')!,
       )
     }, 300)

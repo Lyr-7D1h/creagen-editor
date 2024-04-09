@@ -87,6 +87,7 @@ export class Editor {
       minimap: { enabled: false },
       tabSize: 2,
       theme: 'genart',
+      // TODO: formatting
       autoIndent: 'full',
       formatOnPaste: true,
       formatOnType: true,
@@ -118,13 +119,16 @@ export class Editor {
   setOpacity(opacity: number) {
     const h = Math.round(opacity).toString(16)
     const hex = h.length === 1 ? '0' + h : h
+    console.log(hex)
 
     monaco.editor.defineTheme('genart', {
       ...genartTheme,
       colors: {
-        'editor.background': `#000000${hex}`,
+        'editor.background': `#333333${hex}`,
       },
     })
+    monaco.editor.setTheme('vs')
+    monaco.editor.setTheme('genart')
   }
 
   getValue() {

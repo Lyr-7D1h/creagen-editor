@@ -13,12 +13,14 @@ interface Folder {
   buttons: Record<string, ButtonApi>
 }
 
-export class Options {
+export class Settings {
+  private readonly html: HTMLElement
   private readonly pane: Pane
   private readonly folders: Record<string, Folder>
 
   constructor() {
-    this.pane = new Pane()
+    this.html = document.getElementById('settings')!
+    this.pane = new Pane({ container: this.html })
     this.pane.hidden = true
     this.folders = {}
   }
@@ -37,6 +39,15 @@ export class Options {
       params: {},
       buttons: {},
     }
+  }
+
+  set(folder: string, name: string, value: any) {
+    this.folders[folder]!.params[name] = value
+    this.pane.refresh()
+  }
+
+  get(folder: string, name: string) {
+    return this.folders[folder]!.params[name]
   }
 
   /** add a parameter if it did not already exist */
@@ -71,6 +82,10 @@ export class Options {
     return p
   }
 
+  export() {
+    this.pane.exportState()
+  }
+
   /** create a new button, removing any older ones */
   addButton(folder: string, title: string): ButtonApi {
     if (!(folder in this.folders)) {
@@ -89,7 +104,7 @@ export class Options {
   }
 
   /** update options menu based on code ran and content */
-  updateRenderOptions(container: HTMLElement) {
+  updateRenderSettings(container: HTMLElement) {
     for (const c of Array.from(container.children)) {
       switch (c.tagName.toUpperCase()) {
         case 'CANVAS':
