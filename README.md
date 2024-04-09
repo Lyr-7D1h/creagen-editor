@@ -26,6 +26,7 @@
 - Transparent editor
 - Save coding projects
 - Import code using ID `import('a123487e...')
+- Crop, compress and convert dropped images to base64 string
 - Typescript support
 
 ## Library:

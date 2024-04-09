@@ -37,7 +37,7 @@ class Path {
   }
 
   html(): SVGPathElement {
-    this.element.setAttribute('d', `${this.path}Z`)
+    this.element.setAttribute('d', `${this.path}`)
     return this.element
   }
 
