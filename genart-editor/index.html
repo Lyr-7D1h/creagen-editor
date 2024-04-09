@@ -34,6 +34,12 @@
         position: absolute;
         left: 30vw;
       }
+      #settings {
+        z-index: 1002;
+        position: absolute;
+        right: 10px;
+        top: 10px;
+      }
     </style>
   </head>
 
@@ -46,11 +52,10 @@
       <iframe
         id="sandbox"
         title="Sandbox"
-        width="60vw"
-        height="100vh"
         sandbox="allow-same-origin allow-scripts"
       ></iframe>
     </div>
+    <div id="settings"></div>
     <script type="module" src="./src/main.ts"></script>
   </body>
 </html>
