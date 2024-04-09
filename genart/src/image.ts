@@ -54,6 +54,16 @@ class Image {
   get(
     x: number,
     y: number,
+  ): Uint8ClampedArray
+  get(
+    x: number,
+    y: number,
+    dx: number,
+    dy: number,
+  ): Uint8ClampedArray[]
+  get(
+    x: number,
+    y: number,
     dx?: number,
     dy?: number,
   ): Uint8ClampedArray | Uint8ClampedArray[] {
