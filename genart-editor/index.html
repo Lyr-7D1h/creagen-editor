@@ -5,27 +5,52 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Genart</title>
     <link rel="stylesheet" type="text/css" href="./main.css" />
-  </head>
-
-  <body>
-    <div
-      style="width: 30vw; height: 100%; position: absolute; z-index: 1000"
-      id="editor"
-    ></div>
-    <iframe
-      id="sandbox"
-      title="Sandbox"
-      style="
+    <style>
+      #editor {
+        position: absolute;
+        width: 30vw;
+        height: 100vh;
+        z-index: 1000;
+      }
+      #resizer {
+        top: 0;
+        z-index: 1001;
+        left: 30vw;
+        width: 200px;
+        position: absolute;
+        height: 100vh;
+        position: relative;
+      }
+      #resizer-cursor {
+        cursor: e-resize;
+        height: 100%;
+        width: 3px;
+      }
+      #sandbox {
+        top: 0;
         width: 70vw;
         min-height: 100vh;
         border: none;
         position: absolute;
         left: 30vw;
-      "
-      width="60vw"
-      height="100vh"
-      sandbox="allow-same-origin allow-scripts"
-    ></iframe>
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="generator">
+      <div id="editor"></div>
+      <div id="resizer">
+        <div id="resizer-cursor"></div>
+      </div>
+      <iframe
+        id="sandbox"
+        title="Sandbox"
+        width="60vw"
+        height="100vh"
+        sandbox="allow-same-origin allow-scripts"
+      ></iframe>
+    </div>
     <script type="module" src="./src/main.ts"></script>
   </body>
 </html>
