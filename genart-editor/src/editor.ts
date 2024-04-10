@@ -1,12 +1,10 @@
 import * as monaco from 'monaco-editor'
 import type * as m from 'monaco-editor'
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
-import { type editor } from 'monaco-editor/esm/vs/editor/editor.api'
 import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 
 import { bundleDefinitions } from '../bundle'
 import { initVimMode } from 'monaco-vim'
-import { rgbtohex } from '@lyr_7d1h/genart/dist/build/color'
 
 monaco.languages.typescript.javascriptDefaults.addExtraLib(`
 const container: HTMLElement;
@@ -41,26 +39,23 @@ monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
 })
 
 // https://github.com/brijeshb42/monaco-themes/tree/master
-const genartTheme: editor.IStandaloneThemeData = {
+const genartLightTheme: m.editor.IStandaloneThemeData = {
   base: 'vs',
   inherit: true,
-  colors: {
-    // 'editor.background': '#00000088',
-    // 'editor.foreground': '#ffffffff',
-  },
-  rules: [
-    // {
-    //   token: 'identifier',
-    //   foreground: '#ffffff',
-    // },
-    // {
-    //   foreground: '#57a2ff',
-    //   token: 'keyword',
-    // },
-    // {
-  ],
+  colors: {},
+  rules: [],
 }
-monaco.editor.defineTheme('genart', genartTheme)
+const genartDarkTheme: m.editor.IStandaloneThemeData = {
+  base: 'hc-black',
+  inherit: true,
+  colors: {
+    'editor.selectionBackground': '#ffffff',
+    'editor.lineHighlightBackground': '#00000088',
+    'editorCursor.foreground': '#ffffff',
+  },
+  rules: [],
+}
+monaco.editor.defineTheme('genart', genartLightTheme)
 
 self.MonacoEnvironment = {
   getWorker(_, label) {
@@ -79,6 +74,7 @@ export interface EditorSettings {
 export class Editor {
   private readonly editor: m.editor.IStandaloneCodeEditor
   private vimMode: m.editor.IStandaloneCodeEditor | null
+  private fullscreendecorators: m.editor.IEditorDecorationsCollection | null
 
   constructor(options?: EditorSettings) {
     this.editor = monaco.editor.create(document.getElementById('editor')!, {
@@ -95,6 +91,7 @@ export class Editor {
       automaticLayout: true,
     })
     this.vimMode = null
+    this.fullscreendecorators = null
 
     if (options?.vimMode) this.setVimMode(options.vimMode)
   }
@@ -116,20 +113,41 @@ export class Editor {
     }
   }
 
-  setOpacity(opacity: number) {
-    const h = Math.round(opacity).toString(16)
-    const hex = h.length === 1 ? '0' + h : h
-    console.log(hex)
-
-    monaco.editor.defineTheme('genart', {
-      ...genartTheme,
-      colors: {
-        'editor.background': `#333333${hex}`,
-      },
-    })
-    monaco.editor.setTheme('vs')
-    monaco.editor.setTheme('genart')
+  /** set background transparent and make code highly visable */
+  setFullscreenMode(value: boolean) {
+    if (value) {
+      monaco.editor.defineTheme('genart', {
+        ...genartDarkTheme,
+        colors: { 'editor.background': '#ffffff00' },
+      })
+      this.fullscreendecorators = this.editor.createDecorationsCollection([
+        {
+          range: new monaco.Range(0, 0, 100, 100),
+          options: {
+            inlineClassName: 'fullscreen',
+          },
+        },
+      ])
+    } else {
+      if (this.fullscreendecorators) this.fullscreendecorators.clear()
+      this.fullscreendecorators = null
+      monaco.editor.defineTheme('genart', genartLightTheme)
+    }
   }
+
+  // setOpacity(opacity: number) {
+  //   const h = Math.round(opacity).toString(16)
+  //   const hex = h.length === 1 ? '0' + h : h
+
+  //   monaco.editor.defineTheme('genart', {
+  //     ...genartLightTheme,
+  //     colors: {
+  //       'editor.background': `#333333${hex}`,
+  //     },
+  //   })
+  //   monaco.editor.setTheme('vs')
+  //   monaco.editor.setTheme('genart')
+  // }
 
   getValue() {
     return this.editor.getValue()
