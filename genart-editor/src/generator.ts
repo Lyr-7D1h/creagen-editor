@@ -91,14 +91,14 @@ export class Generator {
         this.editor.html().style.width = '100vw'
         this.sandbox.style.width = '100vw'
         this.sandbox.style.left = '0'
-        this.editor.setOpacity(0.95)
+        this.editor.setFullscreenMode(v)
       } else {
         this.resizer.style.display = 'block'
         this.resizer.style.left = '30vw'
         this.editor.html().style.width = '30vw'
         this.sandbox.style.width = '70vw'
         this.sandbox.style.left = '30vw'
-        this.editor.setOpacity(1)
+        this.editor.setFullscreenMode(v)
       }
     })
   }
