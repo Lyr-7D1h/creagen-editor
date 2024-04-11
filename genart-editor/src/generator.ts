@@ -4,7 +4,7 @@ import { Editor } from './editor'
 import { Settings } from './settings'
 import { error, warn } from './error'
 import { type ID, IDFromString, IDToString, createID } from './id'
-import { IndexDB, type LocalStorage } from './storage'
+import { IndexDB, LocalStorage } from './storage'
 
 export type LoadableObject =
   | Node
@@ -17,19 +17,20 @@ export class Generator {
   private readonly editor: Editor
   private readonly sandbox: HTMLIFrameElement
   private readonly resizer: HTMLElement
-  private readonly storage: LocalStorage | IndexDB
+
+  private readonly localStorage: LocalStorage
+  private readonly indexdb: IndexDB
   private active_id?: ID
 
   constructor() {
     this.settings = new Settings()
-    this.storage = new IndexDB()
-
+    this.indexdb = new IndexDB()
+    this.localStorage = new LocalStorage()
     this.editor = new Editor()
     this.sandbox = document.getElementById('sandbox')! as HTMLIFrameElement
     this.resizer = document.getElementById('resizer')!
     this.setupKeybinds()
     this.setupSandbox()
-    this.setupSettings()
     this.setupResizer()
 
     // allow for going back to previous code using browser history
@@ -37,8 +38,14 @@ export class Generator {
       this.loadCode().catch(error)
     })
     // load initial code
-    this.loadCode().catch(error)
+    this.loadCode()
+      .then(() => {
+        this.setupSettings()
+      })
+      .catch(error)
   }
+
+  async load() {}
 
   async loadCode() {
     const path = window.location.pathname.replace('/', '')
@@ -51,7 +58,7 @@ export class Generator {
       error('invalid id given')
       return
     }
-    const value = await this.storage.get(id)
+    const value = await this.indexdb.get(id)
     if (value === null) {
       warn(`${IDToString(id)} not found in storage`)
       return
@@ -92,6 +99,8 @@ export class Generator {
         this.sandbox.style.width = '100vw'
         this.sandbox.style.left = '0'
         this.editor.setFullscreenMode(v)
+
+        this.localStorage.set('settings', this.settings.export())
       } else {
         this.resizer.style.display = 'block'
         this.resizer.style.left = '30vw'
@@ -99,8 +108,15 @@ export class Generator {
         this.sandbox.style.width = '70vw'
         this.sandbox.style.left = '30vw'
         this.editor.setFullscreenMode(v)
+
+        this.localStorage.set('settings', this.settings.export())
       }
     })
+
+    const state = this.localStorage.get('settings')
+    if (state) {
+      this.settings.import(state)
+    }
   }
 
   setupKeybinds() {
@@ -151,7 +167,7 @@ export class Generator {
 
     // store code and change url
     const id = await createID(code)
-    await this.storage.set(id, {
+    await this.indexdb.set(id, {
       code,
       createdOn: id.date,
       previous: this.active_id,

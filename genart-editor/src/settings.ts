@@ -6,6 +6,7 @@ import {
 } from 'tweakpane'
 import { generateHumanReadableName } from './util'
 import { GENART_VERSION, GENART_EDITOR_VERSION } from '../constants'
+import { type BladeState } from '@tweakpane/core'
 
 interface Folder {
   self: FolderApi
@@ -82,8 +83,12 @@ export class Settings {
     return p
   }
 
+  import(state: BladeState) {
+    this.pane.importState(state)
+  }
+
   export() {
-    this.pane.exportState()
+    return this.pane.exportState()
   }
 
   /** create a new button, removing any older ones */

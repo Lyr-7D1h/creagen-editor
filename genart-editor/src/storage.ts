@@ -1,6 +1,5 @@
-import { IDToString, type ID } from './id'
-
-// TODO: look into indexed db https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API
+import { type BladeState } from '@tweakpane/core'
+import { type ID } from './id'
 
 export interface Generation {
   code: string
@@ -9,12 +8,12 @@ export interface Generation {
 }
 
 export class LocalStorage {
-  set(id: ID, item: Generation) {
-    localStorage.setItem(id.hash, JSON.stringify(item))
+  set(id: 'settings', item: BladeState) {
+    localStorage.setItem(id, JSON.stringify(item))
   }
 
-  get(id: ID): Generation | null {
-    const v = localStorage.getItem(id.hash)
+  get(id: 'settings'): BladeState | null {
+    const v = localStorage.getItem(id)
     if (v === null) return null
     return JSON.parse(v)
   }

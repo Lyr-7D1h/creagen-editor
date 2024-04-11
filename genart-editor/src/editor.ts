@@ -45,10 +45,11 @@ const genartLightTheme: m.editor.IStandaloneThemeData = {
   colors: {},
   rules: [],
 }
-const genartDarkTheme: m.editor.IStandaloneThemeData = {
+const genartFullscreenTheme: m.editor.IStandaloneThemeData = {
   base: 'hc-black',
   inherit: true,
   colors: {
+    'editor.background': '#ffffff00',
     'editor.selectionBackground': '#ffffff',
     'editor.lineHighlightBackground': '#00000088',
     'editorCursor.foreground': '#ffffff',
@@ -56,6 +57,7 @@ const genartDarkTheme: m.editor.IStandaloneThemeData = {
   rules: [],
 }
 monaco.editor.defineTheme('genart', genartLightTheme)
+monaco.editor.defineTheme('genart-fullscreen', genartFullscreenTheme)
 
 self.MonacoEnvironment = {
   getWorker(_, label) {
@@ -68,7 +70,6 @@ self.MonacoEnvironment = {
 
 export interface EditorSettings {
   value?: string
-  vimMode?: boolean
 }
 
 export class Editor {
@@ -92,8 +93,6 @@ export class Editor {
     })
     this.vimMode = null
     this.fullscreendecorators = null
-
-    if (options?.vimMode) this.setVimMode(options.vimMode)
   }
 
   html() {
@@ -116,13 +115,10 @@ export class Editor {
   /** set background transparent and make code highly visable */
   setFullscreenMode(value: boolean) {
     if (value) {
-      monaco.editor.defineTheme('genart', {
-        ...genartDarkTheme,
-        colors: { 'editor.background': '#ffffff00' },
-      })
+      monaco.editor.setTheme('genart-fullscreen')
       this.fullscreendecorators = this.editor.createDecorationsCollection([
         {
-          range: new monaco.Range(0, 0, 100, 100),
+          range: new monaco.Range(0, 0, 500, 500),
           options: {
             inlineClassName: 'fullscreen',
           },
@@ -131,7 +127,7 @@ export class Editor {
     } else {
       if (this.fullscreendecorators) this.fullscreendecorators.clear()
       this.fullscreendecorators = null
-      monaco.editor.defineTheme('genart', genartLightTheme)
+      monaco.editor.setTheme('genart')
     }
   }
 
