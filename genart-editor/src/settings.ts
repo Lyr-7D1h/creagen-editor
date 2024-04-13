@@ -6,7 +6,7 @@ import {
 } from 'tweakpane'
 import { generateHumanReadableName } from './util'
 import { GENART_VERSION, GENART_EDITOR_VERSION } from '../constants'
-import { type BladeState } from '@tweakpane/core'
+import { type BindingApi, type BladeState } from '@tweakpane/core'
 
 interface Folder {
   self: FolderApi
@@ -14,74 +14,137 @@ interface Folder {
   buttons: Record<string, ButtonApi>
 }
 
-export class Settings {
+export type SettingsConfig = Record<
+  string,
+  | {
+      type: 'folder'
+      title: string
+    }
+  | {
+      type: 'param'
+      label: string
+      value: any
+      opts?: BindingParams
+    }
+>
+
+type Params<T extends SettingsConfig> = {
+  [K in keyof T]: T[K] extends {
+    type: 'param'
+    label: string
+    value?: any
+    opts?: BindingParams
+  }
+    ? K
+    : never
+}[keyof T]
+
+export class Settings<Conf extends SettingsConfig> {
   private readonly html: HTMLElement
   private readonly pane: Pane
-  private readonly folders: Record<string, Folder>
+  private readonly params: Record<Params<Conf>, any>
+  private readonly settings: Record<keyof Conf, FolderApi | BindingApi>
 
-  constructor() {
+  constructor(config: Conf) {
     this.html = document.getElementById('settings')!
     this.pane = new Pane({ container: this.html })
     this.pane.hidden = true
-    this.folders = {}
-  }
 
-  folder(folder: string) {
-    return this.folders[folder]!
-  }
+    this.params = {}
+    this.settings = {}
+    const keys = Object.keys(config) as [keyof Conf]
+    console.log(keys)
+    keys.sort((a, b) => (config[a]?.type === 'folder' ? -1 : 0))
 
-  createFolder(key: string) {
-    this.pane.hidden = false
-    this.folders[key] = {
-      self: this.pane.addFolder({
-        title: key,
-        expanded: false,
-      }),
-      params: {},
-      buttons: {},
+    for (const key of keys) {
+      const entry = config[key]!
+      switch (entry.type) {
+        case 'folder':
+          this.createFolder(key, entry.title)
+          break
+        case 'param': {
+          const parts = key.split('.')
+          parts.pop()
+          for (const key of parts) {
+            this.createFolder(key, key)
+          }
+          this.params[key] = entry.value
+          if (parts.length === 0) {
+            this.settings[key] = this.pane.addBinding(
+              this.params,
+              key,
+              entry.opts,
+            )
+          }
+          break
+        }
+      }
+      console.log(key)
     }
   }
 
+  folder(folder: string) {
+    return this.settings[folder]!
+  }
+
+  createFolder(key: keyof Conf, title: string) {
+    if (key in this.settings) {
+      return
+    }
+    this.settings[key] = this.pane.addFolder({
+      title,
+      expanded: false,
+    })
+  }
+
   set(folder: string, name: string, value: any) {
-    this.folders[folder]!.params[name] = value
+    this.settings[folder]!.params[name] = value
     this.pane.refresh()
   }
 
   get(folder: string, name: string) {
-    return this.folders[folder]!.params[name]
+    return this.settings[folder]!.params[name]
+  }
+
+  onChange<K extends Params<Conf>>(
+    key: Params<Conf>,
+    onChange?: (value: K) => void,
+  ) {
+    this.settings[key].on('change', onChange)
   }
 
   /** add a parameter if it did not already exist */
-  addParam<T>(
-    folder: string,
-    name: string,
-    value: T,
-    onChange?: (value: T) => void,
-    options?: BindingParams,
-  ): Folder {
-    // create params under a key if not exists
-    if (!(folder in this.folders)) {
-      this.createFolder(folder)
-    }
+  // addParam<T>(
+  //   key: string,
+  //   folder: string,
+  //   name: string,
+  //   value: T,
+  //   onChange?: (value: T) => void,
+  //   options?: BindingParams,
+  // ): Folder {
+  //   // create params under a key if not exists
+  //   if (!(folder in this.settings)) {
+  //     this.createFolder(folder)
+  //   }
 
-    const p = this.folders[folder]!
+  //   const p = this.settings[folder]!
 
-    // add if param does not exists already
-    if (!(name in p.params)) {
-      p.params[name] = value
-      const param = p.self.addBinding(p.params, name, options)
+  //   // add if param does not exists already
+  //   if (!(name in p.params)) {
+  //     p.params[name] = value
+  //     const param = p.self.addBinding(p.params, name, options)
 
-      if (onChange) {
-        param.on('change', (e) => {
-          if (typeof e.value !== 'undefined') {
-            onChange(e.value)
-          }
-        })
-      }
-    }
+  //     if (onChange) {
+  //       param.on('change', (e) => {
+  //         if (typeof e.value !== 'undefined') {
+  //           onChange(e.value)
+  //         }
+  //       })
+  //     }
+  //   }
 
-    return p
-  }
+  //   return p
+  // }
 
   import(state: BladeState) {
     this.pane.importState(state)
@@ -93,11 +156,11 @@ export class Settings {
 
   /** create a new button, removing any older ones */
   addButton(folder: string, title: string): ButtonApi {
-    if (!(folder in this.folders)) {
+    if (!(folder in this.settings)) {
       this.createFolder(folder)
     }
 
-    const f = this.folders[folder]!
+    const f = this.settings[folder]!
 
     if (title in f.buttons) {
       f.buttons[title]?.dispose()
@@ -139,7 +202,7 @@ export class Settings {
             const a = document.createElement('a')
             a.setAttribute(
               'download',
-              `${this.folders['Export']!.params['Name']}.svg`,
+              `${this.settings['Export']!.params.Name}.svg`,
             )
             a.setAttribute('href', url)
             a.style.display = 'none'

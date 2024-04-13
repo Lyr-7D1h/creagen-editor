@@ -13,3 +13,7 @@ export function warn(error: Error | string) {
     console.warn(error)
   }
 }
+
+export function debug(message?: any, ...optionalParams: any[]) {
+  console.debug(message, ...optionalParams)
+}

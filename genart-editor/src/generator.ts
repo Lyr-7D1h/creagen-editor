@@ -1,8 +1,8 @@
 import * as genart from '@lyr_7d1h/genart'
 import * as monaco from 'monaco-editor'
 import { Editor } from './editor'
-import { Settings } from './settings'
-import { error, warn } from './error'
+import { Settings, type SettingsConfig } from './settings'
+import { debug, error, warn } from './error'
 import { type ID, IDFromString, IDToString, createID } from './id'
 import { IndexDB, LocalStorage } from './storage'
 
@@ -12,8 +12,30 @@ export type LoadableObject =
       html: () => Node
     }
 
+const generatorSettingsConfig: SettingsConfig = {
+  editor: {
+    type: 'folder',
+    title: 'Editor',
+  },
+  'editor.format_on_render': {
+    type: 'param',
+    label: 'Format on render',
+    value: false,
+  },
+  'editor.fullscreen': {
+    type: 'param',
+    label: 'Fullscreen',
+    value: false,
+  },
+  'editor.vim': {
+    type: 'param',
+    label: 'Vim',
+    value: false,
+  },
+}
+
 export class Generator {
-  private readonly settings: Settings
+  private readonly settings: Settings<typeof generatorSettingsConfig>
   private readonly editor: Editor
   private readonly sandbox: HTMLIFrameElement
   private readonly resizer: HTMLElement
@@ -23,7 +45,7 @@ export class Generator {
   private active_id?: ID
 
   constructor() {
-    this.settings = new Settings()
+    this.settings = new Settings(generatorSettingsConfig)
     this.indexdb = new IndexDB()
     this.localStorage = new LocalStorage()
     this.editor = new Editor()
@@ -44,8 +66,6 @@ export class Generator {
       })
       .catch(error)
   }
-
-  async load() {}
 
   async loadCode() {
     const path = window.location.pathname.replace('/', '')
@@ -89,34 +109,43 @@ export class Generator {
   }
 
   setupSettings() {
-    this.settings.addParam('Editor', 'vim', false, (v) => {
-      this.editor.setVimMode(v)
-    })
-    this.settings.addParam('Editor', 'fullscreen', false, (v) => {
-      if (v) {
-        this.resizer.style.display = 'none'
-        this.editor.html().style.width = '100vw'
-        this.sandbox.style.width = '100vw'
-        this.sandbox.style.left = '0'
-        this.editor.setFullscreenMode(v)
-
-        this.localStorage.set('settings', this.settings.export())
-      } else {
-        this.resizer.style.display = 'block'
-        this.resizer.style.left = '30vw'
-        this.editor.html().style.width = '30vw'
-        this.sandbox.style.width = '70vw'
-        this.sandbox.style.left = '30vw'
-        this.editor.setFullscreenMode(v)
-
-        this.localStorage.set('settings', this.settings.export())
-      }
-    })
-
-    const state = this.localStorage.get('settings')
-    if (state) {
-      this.settings.import(state)
-    }
+    // this.settings.addParam(
+    //   'format_on_render',
+    //   'Editor',
+    //   'Format on Render',
+    //   true,
+    //   (v) => {
+    //     this.editor.setVimMode(v)
+    //   },
+    // )
+    // this.settings.onChange('vim', 'Editor', 'Vim', false, (v) => {
+    //   this.editor.setVimMode(v)
+    // })
+    // this.settings.addParam('fullscreen', 'Editor', 'Fullscreen', false, (v) => {
+    //   if (v) {
+    //     this.resizer.style.display = 'none'
+    //     this.editor.html().style.width = '100vw'
+    //     this.sandbox.style.width = '100vw'
+    //     this.sandbox.style.left = '0'
+    //     this.editor.setFullscreenMode(v)
+    //
+    //     this.localStorage.set('settings', this.settings.export())
+    //   } else {
+    //     this.resizer.style.display = 'block'
+    //     this.resizer.style.left = '30vw'
+    //     this.editor.html().style.width = '30vw'
+    //     this.sandbox.style.width = '70vw'
+    //     this.sandbox.style.left = '30vw'
+    //     this.editor.setFullscreenMode(v)
+    //
+    //     this.localStorage.set('settings', this.settings.export())
+    //   }
+    // })
+    //
+    // const state = this.localStorage.get('settings')
+    // if (state) {
+    //   this.settings.import(state)
+    // }
   }
 
   setupKeybinds() {
@@ -162,7 +191,9 @@ export class Generator {
   }
 
   async render() {
-    console.debug('rendering code')
+    debug('rendering code')
+    await this.editor.format()
+
     const code = this.editor.getValue()
 
     // store code and change url

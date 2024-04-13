@@ -5,6 +5,7 @@ import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 
 import { bundleDefinitions } from '../bundle'
 import { initVimMode } from 'monaco-vim'
+import { error } from './error'
 
 monaco.languages.typescript.javascriptDefaults.addExtraLib(`
 const container: HTMLElement;
@@ -16,14 +17,6 @@ type LoadableObject =
 function load(obj: LoadableObject): void;
 `)
 monaco.languages.typescript.javascriptDefaults.addExtraLib(bundleDefinitions)
-monaco.languages.typescript.javascriptDefaults.setModeConfiguration({
-  definitions: true,
-  completionItems: true,
-  documentSymbols: true,
-  codeActions: true,
-  diagnostics: true,
-  onTypeFormattingEdits: true,
-})
 monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
   noSemanticValidation: false,
   noSyntaxValidation: false,
@@ -88,11 +81,16 @@ export class Editor {
       autoIndent: 'full',
       formatOnPaste: true,
       formatOnType: true,
+
       // allow for resizing
       automaticLayout: true,
     })
     this.vimMode = null
     this.fullscreendecorators = null
+  }
+
+  async format() {
+    await this.editor.getAction('editor.action.formatDocument')!.run()
   }
 
   html() {
