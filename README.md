@@ -2,6 +2,7 @@
 
 # Ideas
 
+- Art made out of mathematical equations, which are also applied in the artwork
 - Vector fields
 - Flocking
 - coloring
