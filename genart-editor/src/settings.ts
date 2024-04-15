@@ -8,143 +8,157 @@ import { generateHumanReadableName } from './util'
 import { GENART_VERSION, GENART_EDITOR_VERSION } from '../constants'
 import { type BindingApi, type BladeState } from '@tweakpane/core'
 
-interface Folder {
-  self: FolderApi
-  params: Record<string, any>
-  buttons: Record<string, ButtonApi>
+export interface Folder {
+  type: 'folder'
+  title: string
 }
 
-export type SettingsConfig = Record<
+export interface Button {
+  type: 'button'
+  label: string
+}
+
+export interface Param {
+  type: 'param'
+  label: string
+  value: any
+  opts?: BindingParams
+}
+
+type Generic<T> = {
+  [K in keyof T]: K extends 'type' ? string : T[K]
+}
+
+type GenericSettingsConfig = Record<
   string,
-  | {
-      type: 'folder'
-      title: string
-    }
-  | {
-      type: 'param'
-      label: string
-      value: any
-      opts?: BindingParams
-    }
+  Generic<Param> | Generic<Folder> | Generic<Button>
 >
 
-type Params<T extends SettingsConfig> = {
-  [K in keyof T]: T[K] extends {
-    type: 'param'
-    label: string
-    value?: any
-    opts?: BindingParams
-  }
-    ? K
-    : never
+export type SettingsConfig<T extends GenericSettingsConfig> = {
+  [K in keyof T]: T[K] extends { value: any }
+    ? Param
+    : T[K] extends { label: string }
+      ? Button
+      : Folder
+}
+
+export type Params<T extends SettingsConfig<T>> = {
+  [K in keyof T]: T[K] extends Param ? K : never
+}[keyof T]
+export type Folders<T extends SettingsConfig<T>> = {
+  [K in keyof T]: T[K] extends Folder ? K : never
+}[keyof T]
+export type Buttons<T extends SettingsConfig<T>> = {
+  [K in keyof T]: T[K] extends Button ? K : never
 }[keyof T]
 
-export class Settings<Conf extends SettingsConfig> {
+export class Settings<T extends SettingsConfig<T>> {
   private readonly html: HTMLElement
   private readonly pane: Pane
-  private readonly params: Record<Params<Conf>, any>
-  private readonly settings: Record<keyof Conf, FolderApi | BindingApi>
+  private values: Record<Params<T> | string, any>
+  private readonly params: Record<Params<T> | string, BindingApi>
+  private folders: Record<Folders<T> | string, FolderApi>
+  private readonly buttons: Record<Buttons<T> | string, ButtonApi>
 
-  constructor(config: Conf) {
+  constructor(config: T) {
     this.html = document.getElementById('settings')!
     this.pane = new Pane({ container: this.html })
-    this.pane.hidden = true
 
+    this.values = {}
     this.params = {}
-    this.settings = {}
-    const keys = Object.keys(config) as [keyof Conf]
-    console.log(keys)
-    keys.sort((a, b) => (config[a]?.type === 'folder' ? -1 : 0))
+    this.buttons = {}
+    this.folders = {}
 
-    for (const key of keys) {
-      const entry = config[key]!
+    const entries: Array<[string, Param | Folder]> = Object.entries(config)
+    entries.sort(([k, v]) => (v.type === 'folder' ? -k.split('.').length : 0))
+
+    for (const [key, entry] of entries) {
       switch (entry.type) {
         case 'folder':
-          this.createFolder(key, entry.title)
+          this.addFolders(key, entry.title)
           break
         case 'param': {
-          const parts = key.split('.')
-          parts.pop()
-          for (const key of parts) {
-            this.createFolder(key, key)
-          }
-          this.params[key] = entry.value
-          if (parts.length === 0) {
-            this.settings[key] = this.pane.addBinding(
-              this.params,
-              key,
-              entry.opts,
-            )
-          }
+          this.addParam(key, entry.label, entry.value, entry.opts)
           break
         }
       }
-      console.log(key)
     }
   }
 
-  folder(folder: string) {
-    return this.settings[folder]!
+  folder(key: Folders<T>) {
+    return this.folders[key]
   }
 
-  createFolder(key: keyof Conf, title: string) {
-    if (key in this.settings) {
+  set(key: Params<T>, value: any) {
+    this.values[key] = value
+    this.pane.refresh()
+  }
+
+  get(key: Params<T>) {
+    return this.values[key]
+  }
+
+  onChange(key: Params<T>, handler: (value: any) => void) {
+    this.params[key].on('change', (e) => {
+      handler(e.value)
+    })
+  }
+
+  onClick(key: Buttons<T> | string, handler: () => void) {
+    this.buttons[key].on('click', () => {
+      handler()
+    })
+  }
+
+  /** create folders recursively */
+  addFolders(key: string, title?: string) {
+    if (key in this.folders) {
       return
     }
-    this.settings[key] = this.pane.addFolder({
-      title,
+
+    const parts = key.split('.')
+    const lastFolderIndex = parts.pop()!
+    const prev = []
+    for (const p of parts) {
+      prev.push(p)
+      const key = prev.join('.')
+      this.addFolders(key, key)
+    }
+
+    this.folders[key] = this.pane.addFolder({
+      title: title ?? lastFolderIndex,
       expanded: false,
     })
   }
 
-  set(folder: string, name: string, value: any) {
-    this.settings[folder]!.params[name] = value
-    this.pane.refresh()
-  }
-
-  get(folder: string, name: string) {
-    return this.settings[folder]!.params[name]
-  }
-
-  onChange<K extends Params<Conf>>(
-    key: Params<Conf>,
-    onChange?: (value: K) => void,
-  ) {
-    this.settings[key].on('change', onChange)
-  }
-
   /** add a parameter if it did not already exist */
-  // addParam<T>(
-  //   key: string,
-  //   folder: string,
-  //   name: string,
-  //   value: T,
-  //   onChange?: (value: T) => void,
-  //   options?: BindingParams,
-  // ): Folder {
-  //   // create params under a key if not exists
-  //   if (!(folder in this.settings)) {
-  //     this.createFolder(folder)
-  //   }
+  addParam<T>(key: string, label: string, value: T, opts?: BindingParams) {
+    // add if param does not exists already
+    const parts = key.split('.')
+    parts.pop()
+    const folder = parts.join('.')
+    this.addFolders(folder, folder)
 
-  //   const p = this.settings[folder]!
+    this.values[key] = value
+    this.params[key] = this.folders[folder]!.addBinding(this.values, key, {
+      label,
+      ...opts,
+    })
+  }
 
-  //   // add if param does not exists already
-  //   if (!(name in p.params)) {
-  //     p.params[name] = value
-  //     const param = p.self.addBinding(p.params, name, options)
+  /** create a new button, removing any older ones */
+  addButton(key: string, title: string) {
+    const parts = key.split('.')
+    parts.pop()
+    const folder = parts.join('.')
+    this.addFolders(folder, folder)
 
-  //     if (onChange) {
-  //       param.on('change', (e) => {
-  //         if (typeof e.value !== 'undefined') {
-  //           onChange(e.value)
-  //         }
-  //       })
-  //     }
-  //   }
+    if (key in this.buttons) {
+      this.buttons[key]?.dispose()
+    }
 
-  //   return p
-  // }
+    this.buttons[key] = this.folders[folder]!.addButton({ title })
+  }
 
   import(state: BladeState) {
     this.pane.importState(state)
@@ -154,23 +168,6 @@ export class Settings<Conf extends SettingsConfig> {
     return this.pane.exportState()
   }
 
-  /** create a new button, removing any older ones */
-  addButton(folder: string, title: string): ButtonApi {
-    if (!(folder in this.settings)) {
-      this.createFolder(folder)
-    }
-
-    const f = this.settings[folder]!
-
-    if (title in f.buttons) {
-      f.buttons[title]?.dispose()
-    }
-
-    f.buttons[title] = f.self.addButton({ title })
-
-    return f.buttons[title]!
-  }
-
   /** update options menu based on code ran and content */
   updateRenderSettings(container: HTMLElement) {
     for (const c of Array.from(container.children)) {
@@ -178,10 +175,11 @@ export class Settings<Conf extends SettingsConfig> {
         case 'CANVAS':
           return
         case 'SVG': {
-          this.addParam('Export', 'Name', generateHumanReadableName())
+          this.addFolders('export', 'Export')
+          this.addParam('export.name', 'Name', generateHumanReadableName())
 
-          const btn = this.addButton('Export', 'Download')
-          btn.on('click', () => {
+          this.addButton('export.download', 'Download')
+          this.onClick('export.download', () => {
             const svg = c.cloneNode(true) as SVGElement
 
             // TODO: add params used, code hash, date generated
@@ -200,10 +198,7 @@ export class Settings<Conf extends SettingsConfig> {
 
             const url = URL.createObjectURL(blob)
             const a = document.createElement('a')
-            a.setAttribute(
-              'download',
-              `${this.settings['Export']!.params.Name}.svg`,
-            )
+            a.setAttribute('download', `${this.values['export.name']}.svg`)
             a.setAttribute('href', url)
             a.style.display = 'none'
             document.body.appendChild(a)

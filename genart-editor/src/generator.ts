@@ -12,7 +12,7 @@ export type LoadableObject =
       html: () => Node
     }
 
-const generatorSettingsConfig: SettingsConfig = {
+const generatorSettingsConfig = {
   editor: {
     type: 'folder',
     title: 'Editor',
@@ -35,7 +35,10 @@ const generatorSettingsConfig: SettingsConfig = {
 }
 
 export class Generator {
-  private readonly settings: Settings<typeof generatorSettingsConfig>
+  private readonly settings: Settings<
+    SettingsConfig<typeof generatorSettingsConfig>
+  >
+
   private readonly editor: Editor
   private readonly sandbox: HTMLIFrameElement
   private readonly resizer: HTMLElement
@@ -45,7 +48,9 @@ export class Generator {
   private active_id?: ID
 
   constructor() {
-    this.settings = new Settings(generatorSettingsConfig)
+    this.settings = new Settings(
+      generatorSettingsConfig as SettingsConfig<typeof generatorSettingsConfig>,
+    )
     this.indexdb = new IndexDB()
     this.localStorage = new LocalStorage()
     this.editor = new Editor()
@@ -109,43 +114,37 @@ export class Generator {
   }
 
   setupSettings() {
-    // this.settings.addParam(
-    //   'format_on_render',
-    //   'Editor',
-    //   'Format on Render',
-    //   true,
-    //   (v) => {
-    //     this.editor.setVimMode(v)
-    //   },
-    // )
-    // this.settings.onChange('vim', 'Editor', 'Vim', false, (v) => {
-    //   this.editor.setVimMode(v)
-    // })
-    // this.settings.addParam('fullscreen', 'Editor', 'Fullscreen', false, (v) => {
-    //   if (v) {
-    //     this.resizer.style.display = 'none'
-    //     this.editor.html().style.width = '100vw'
-    //     this.sandbox.style.width = '100vw'
-    //     this.sandbox.style.left = '0'
-    //     this.editor.setFullscreenMode(v)
-    //
-    //     this.localStorage.set('settings', this.settings.export())
-    //   } else {
-    //     this.resizer.style.display = 'block'
-    //     this.resizer.style.left = '30vw'
-    //     this.editor.html().style.width = '30vw'
-    //     this.sandbox.style.width = '70vw'
-    //     this.sandbox.style.left = '30vw'
-    //     this.editor.setFullscreenMode(v)
-    //
-    //     this.localStorage.set('settings', this.settings.export())
-    //   }
-    // })
-    //
-    // const state = this.localStorage.get('settings')
-    // if (state) {
-    //   this.settings.import(state)
-    // }
+    this.settings.onChange('editor.vim', (v) => {
+      this.editor.setVimMode(v)
+    })
+    this.settings.onChange('editor.format_on_render', (v) => {
+      this.editor.setVimMode(v)
+    })
+    this.settings.onChange('editor.fullscreen', (v) => {
+      if (v) {
+        this.resizer.style.display = 'none'
+        this.editor.html().style.width = '100vw'
+        this.sandbox.style.width = '100vw'
+        this.sandbox.style.left = '0'
+        this.editor.setFullscreenMode(v)
+
+        this.localStorage.set('settings', this.settings.export())
+      } else {
+        this.resizer.style.display = 'block'
+        this.resizer.style.left = '30vw'
+        this.editor.html().style.width = '30vw'
+        this.sandbox.style.width = '70vw'
+        this.sandbox.style.left = '30vw'
+        this.editor.setFullscreenMode(v)
+
+        this.localStorage.set('settings', this.settings.export())
+      }
+    })
+
+    const state = this.localStorage.get('settings')
+    if (state) {
+      this.settings.import(state)
+    }
   }
 
   setupKeybinds() {
