@@ -42,8 +42,10 @@ npm start
   - View history of sketch
 - Import code using ID `import('a123487e...')
 - Crop, compress and convert dropped images to base64 string
-- Typescript support
 - P5 support
+- Make Settings moveable
+- Typescript support
+- Show only sandbox keybind/setting
 
 ## Library:
 
@@ -52,7 +54,9 @@ npm start
 - Gcode support
 
 # Resources
-
+**Library**
+- https://github.com/anvaka/fieldplay
+**Reading**
 - https://en.wikipedia.org/wiki/Tessellation
 - https://en.wikipedia.org/wiki/Random_walk
 - https://en.wikipedia.org/wiki/Loop-erased_random_walk
