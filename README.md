@@ -1,5 +1,19 @@
 # Genart
 
+# Usage
+
+```sh
+cd genart
+npm install
+npm run build
+npm link
+
+cd ../genart-editor
+npm install
+npm link @lyr_7d1h/genart
+npm start
+```
+
 # Ideas
 
 - Art made out of mathematical equations, which are also applied in the artwork

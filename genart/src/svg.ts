@@ -164,22 +164,43 @@ export function text(options?: TextOptions): Text {
   return new Text(options)
 }
 
-// export function circle(r: number, cx?: number, cy?: number): SVGCircleElement {
-//   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
-//   svg.setAttribute('r', r.toString())
-//   if (cx) svg.setAttribute('cx', cx.toString())
-//   if (cy) svg.setAttribute('cy', cy.toString())
-//   return svg
-// }
+export interface CircleOptions extends GeometricOptions {
+  cx?: number
+  cy?: number
+}
+function applyCircleOptions(element: SVGElement, opts?: CircleOptions) {
+  if (typeof opts === 'undefined') return
+  applyGeometricOptions(element, opts)
+  if (opts.cx) element.setAttribute('cx', opts.cx.toString())
+  if (opts.cy) element.setAttribute('cy', opts.cy.toString())
+}
+class Circle {
+  private readonly element: SVGCircleElement
 
-export type SvgChild = Path | Text | Rectangle
+  constructor(r: number | string, options?: CircleOptions) {
+    this.element = document.createElementNS(
+      'http://www.w3.org/2000/svg',
+      'circle',
+    )
+    this.element.setAttribute('r', r.toString())
+    applyCircleOptions(this.element, options)
+  }
+
+  html(): SVGCircleElement {
+    return this.element
+  }
+}
+export function circle(r: number | string, options?: CircleOptions) {
+  return new Circle(r, options)
+}
+
+export type SvgChild = Path | Text | Rectangle | Circle
 export interface SvgOptions {
   width?: number | string
   height?: number | string
   fill?: string
 }
 function applySvgOptions(element: SVGElement, opts?: SvgOptions) {
-  if (typeof opts === 'undefined') return
   element.setAttribute(
     'width',
     typeof opts?.width !== 'undefined' ? opts.width.toString() : '1000px',
@@ -188,6 +209,7 @@ function applySvgOptions(element: SVGElement, opts?: SvgOptions) {
     'height',
     typeof opts?.height !== 'undefined' ? opts.height.toString() : '1000px',
   )
+  if (typeof opts === 'undefined') return
   if (opts.fill) element.setAttribute('fill', `${opts.fill}`)
 }
 class Svg {
@@ -206,6 +228,12 @@ class Svg {
 
   path(options?: PathOptions) {
     const p = path(options)
+    this.add(p)
+    return p
+  }
+
+  circle(r: number | string, options?: CircleOptions) {
+    const p = circle(r, options)
     this.add(p)
     return p
   }
