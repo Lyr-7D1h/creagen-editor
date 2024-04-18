@@ -144,7 +144,8 @@ export class Settings<T extends SettingsConfig<T>> {
 
   /** add a parameter if it did not already exist */
   addParam<T>(key: string, label: string, value: T, opts?: BindingParams) {
-    // add if param does not exists already
+    if (key in this.params) return
+
     const parts = key.split('.')
     parts.pop()
     const folder = parts.join('.')
@@ -172,7 +173,34 @@ export class Settings<T extends SettingsConfig<T>> {
   }
 
   import(state: BladeState) {
-    // FIXME: only import settings from which the label, type of value, has remained the same
+    // filter out settings that don't exist or got changed
+    const folders = []
+    if ('children' in state && Array.isArray(state['children'])) {
+      for (const folder of state.children) {
+        if (
+          typeof Object.values(this.folders).find(
+            (f) => f.title === folder.title,
+          ) !== 'undefined'
+        ) {
+          const items = []
+          for (const item of folder.children) {
+            if ('binding' in item) {
+              const { key, value } = item.binding
+              if (
+                typeof this.values[key] === typeof value &&
+                typeof key !== 'undefined'
+              ) {
+                items.push(item)
+              }
+            }
+          }
+          folder.children = items
+          folders.push(folder)
+        }
+      }
+    }
+    state.children = folders
+
     this.pane.importState(state)
   }
 
