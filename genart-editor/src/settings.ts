@@ -98,9 +98,20 @@ export class Settings<T extends SettingsConfig<T>> {
     return this.values[key]
   }
 
-  onChange(key: Params<T>, handler: (value: any) => void) {
-    this.params[key].on('change', (e) => {
-      handler(e.value)
+  onChange(handler: () => void): void
+  onChange(key: Params<T>, handler: (value: any) => void): void
+  onChange(
+    key: Params<T> | (() => void),
+    handler?: (value: any) => void,
+  ): void {
+    if (typeof key !== 'function') {
+      this.params[key].on('change', (e) => {
+        handler!(e.value)
+      })
+      return
+    }
+    this.pane.on('change', () => {
+      key()
     })
   }
 

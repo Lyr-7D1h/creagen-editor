@@ -117,9 +117,6 @@ export class Generator {
     this.settings.onChange('editor.vim', (v) => {
       this.editor.setVimMode(v)
     })
-    this.settings.onChange('editor.format_on_render', (v) => {
-      this.editor.setVimMode(v)
-    })
     this.settings.onChange('editor.fullscreen', (v) => {
       if (v) {
         this.resizer.style.display = 'none'
@@ -127,8 +124,6 @@ export class Generator {
         this.sandbox.style.width = '100vw'
         this.sandbox.style.left = '0'
         this.editor.setFullscreenMode(v)
-
-        this.localStorage.set('settings', this.settings.export())
       } else {
         this.resizer.style.display = 'block'
         this.resizer.style.left = '30vw'
@@ -136,15 +131,19 @@ export class Generator {
         this.sandbox.style.width = '70vw'
         this.sandbox.style.left = '30vw'
         this.editor.setFullscreenMode(v)
-
-        this.localStorage.set('settings', this.settings.export())
       }
     })
 
+    // load stored settings
     const state = this.localStorage.get('settings')
     if (state) {
       this.settings.import(state)
     }
+
+    // save settings on change
+    this.settings.onChange(() => {
+      this.localStorage.set('settings', this.settings.export())
+    })
   }
 
   setupKeybinds() {
@@ -191,7 +190,9 @@ export class Generator {
 
   async render() {
     debug('rendering code')
-    await this.editor.format()
+    if (this.settings.get('editor.format_on_render')) {
+      await this.editor.format()
+    }
 
     const code = this.editor.getValue()
 
