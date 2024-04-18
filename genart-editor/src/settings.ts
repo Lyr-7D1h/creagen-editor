@@ -172,6 +172,7 @@ export class Settings<T extends SettingsConfig<T>> {
   }
 
   import(state: BladeState) {
+    // FIXME: only import settings from which the label, type of value, has remained the same
     this.pane.importState(state)
   }
 
