@@ -22,13 +22,14 @@
 
 ## Editor:
 
-- Export
-- Auto formatting
-- Transparent editor
-- Save coding projects
+- Project management
+  - List sketches
+  - Name sketches
+  - View history of sketch
 - Import code using ID `import('a123487e...')
 - Crop, compress and convert dropped images to base64 string
 - Typescript support
+- P5 support
 
 ## Library:
 
@@ -43,3 +44,4 @@
 - https://en.wikipedia.org/wiki/Loop-erased_random_walk
 - http://xahlee.info/math/algorithmic_math_art.html
 - https://en.wikipedia.org/wiki/OpenSimplex_noise
+
