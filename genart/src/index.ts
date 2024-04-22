@@ -1,6 +1,6 @@
 export * as graph from './graph'
 export * as lagebra from './lagebra'
-export * as random from './random'
+export * as random from './random/index'
 export * as svg from './svg'
 export * as image from './image'
 export * as color from './color'
