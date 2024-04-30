@@ -51,16 +51,8 @@ class Image {
     return this.pixeldata
   }
 
-  get(
-    x: number,
-    y: number,
-  ): Uint8ClampedArray
-  get(
-    x: number,
-    y: number,
-    dx: number,
-    dy: number,
-  ): Uint8ClampedArray[]
+  get(x: number, y: number): Uint8ClampedArray
+  get(x: number, y: number, dx: number, dy: number): Uint8ClampedArray[]
   get(
     x: number,
     y: number,
