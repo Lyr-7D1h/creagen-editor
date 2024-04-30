@@ -1,3 +1,4 @@
+export * as math from './math'
 export * as graph from './graph'
 export * as lagebra from './lagebra'
 export * as random from './random/index'

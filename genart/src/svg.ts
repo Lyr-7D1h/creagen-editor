@@ -282,18 +282,24 @@ class Svg {
     return 1000
   }
 
-  grid(): void {
-    const width = this.width()
-    const height = this.height()
-    if (width === null || height === null) {
+  /** Create a grid onto your svg with boxes of width and height */
+  grid(size: number): void
+  grid(width: number, height: number): void
+  grid(width: number, height?: number): void {
+    if (typeof height === 'undefined') {
+      height = width
+    }
+    const w = this.width()
+    const h = this.height()
+    if (w === null || h === null) {
       throw Error("Can't draw grid if width and height are not numeric")
     }
-    const wo = width / 10
-
-    for (let i = 1; i < 10; i++) {
-      const o = wo * i
-      this.path().moveTo(o, 0).lineTo(o, height)
-      this.path().moveTo(0, o).lineTo(width, o)
+    const p = this.path()
+    for (let x = width; x < w; x += width) {
+      p.moveTo(x, 0).lineTo(x, h)
+    }
+    for (let y = height; y < h; y += width) {
+      p.moveTo(0, y).lineTo(w, y)
     }
   }
 }
