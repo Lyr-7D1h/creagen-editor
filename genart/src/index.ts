@@ -1,6 +1,6 @@
 export * as math from './math'
 export * as graph from './graph'
-export * as lagebra from './lagebra'
+export * as lin from './lin'
 export * as random from './random/index'
 export * as svg from './svg'
 export * as image from './image'

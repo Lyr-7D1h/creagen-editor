@@ -1,30 +1,14 @@
-export function vec2(x: number, y: number) {
-  return new Vector<2>(x, y)
-}
-
-class Vector<N> {
-  private readonly vec: number[]
-
-  constructor(...args: number[]) {
-    this.vec = args
-  }
-
-  sub(vec: Vector<N>) {
-    for (const i of vec.vec) {
-      this.vec[i] -= vec.vec[i]!
-    }
-  }
-}
-
 export type Data = TypedArray | number[]
 // wrapper around any array type to make it more user friendly
 // https://github.com/scijs/ndarray
+// http://victorjs.org/
+/** N Dimensional Array */
 class NArray {
   data: Data
   constructor(data: Data) {
     this.data = data
 
-    return new Proxy(this, {
+    const proxy = new Proxy(this, {
       get(target, prop) {
         if (typeof Number(prop) === 'number' && !(prop in target)) {
           return target.get(prop)
@@ -32,22 +16,70 @@ class NArray {
         return target[prop]
       },
     })
+    return proxy
   }
 
   [index: number]: number
-
-  get length() {
-    return this.data.length
-  }
 
   private get(index: any) {
     return this.data[index]
   }
 
+  /** Get the dimensions of this array */
+  dim() {
+    return this.data.length
+  }
+
+  add(b: NArray) {
+    if (this.dim() !== b.dim()) {
+      throw Error('can only add arrays with same length')
+    }
+    for (let i = 0; i < this.dim(); i++) {
+      this[i] += b[i]!
+    }
+  }
+
+  /** Multiply by scalar or number */
+  mul(b: NArray): NArray
+  mul(scalar: number): NArray
+  mul(b: NArray | number) {
+    if (typeof b === 'number') {
+      for (let i = 0; i < this.dim(); i++) {
+        this[i] *= b
+      }
+      return this
+    }
+
+    if (this.dim() !== b.dim()) {
+      throw Error('can only add arrays with same length')
+    }
+    for (let i = 0; i < this.dim(); i++) {
+      this[i] *= b[i]!
+    }
+    return this
+  }
+
+  /** Normalize array */
+  norm() {
+    let normalizer = 0
+    for (const v of this.data) {
+      normalizer += Math.pow(v, 2)
+    }
+
+    normalizer = Math.sqrt(normalizer)
+
+    if (normalizer === 0) return this
+
+    for (let i = 0; i < this.dim(); i++) {
+      this[i] /= normalizer
+    }
+    return this
+  }
+
   max() {
     let max = this[0]
     if (typeof max === 'undefined') return undefined
-    for (let i = 2; i < this.length; i++) {
+    for (let i = 2; i < this.dim(); i++) {
       if (this[i]! > max) {
         max = this[i]!
       }
@@ -58,7 +90,7 @@ class NArray {
   min() {
     let min = this[0]
     if (typeof min === 'undefined') return undefined
-    for (let i = 2; i < this.length; i++) {
+    for (let i = 2; i < this.dim(); i++) {
       if (this[i]! < min) {
         min = this[i]!
       }
@@ -93,6 +125,6 @@ type TypedArray =
 //   : T extends bigint
 //     ? GenericArray<T> | T[] | MaybeBigInt64Array | MaybeBigUint64Array
 //     : GenericArray<T> | T[]
-export function ndarray(data: Data) {
+export function narray(data: Data) {
   return new NArray(data)
 }
