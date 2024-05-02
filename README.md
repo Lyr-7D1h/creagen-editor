@@ -14,24 +14,6 @@ npm link @lyr_7d1h/genart
 npm start
 ```
 
-# Ideas
-
-- Art made out of mathematical equations, which are also applied in the artwork
-- Vector fields
-- Flocking
-- coloring
-  - different color layers of an image each with a small offset
-- 3d space
-- randomization
-  - different probability distributions (PMFs)
-    - https://en.wikipedia.org/wiki/Binomial_distribution
-    - https://en.wikipedia.org/wiki/Hypergeometric_distribution
-    - https://en.wikipedia.org/wiki/Poisson_distribution
-- add graphs
-- Valid QR that is a link to the creation of the plot
-- Use music/audio as input for art
-  - Use a song as probability distribution
-
 # Roadmap
 
 ## Editor:

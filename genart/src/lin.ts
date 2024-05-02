@@ -10,6 +10,9 @@ class NArray {
 
     const proxy = new Proxy(this, {
       get(target, prop) {
+        if (typeof prop === 'symbol') {
+          return target[prop]
+        }
         if (typeof Number(prop) === 'number' && !(prop in target)) {
           return target.get(prop)
         }
@@ -23,6 +26,15 @@ class NArray {
 
   private get(index: any) {
     return this.data[index]
+  }
+
+  [Symbol.iterator]() {
+    let index = -1
+    const data = this.data
+
+    return {
+      next: () => ({ value: data[++index], done: !(index in data) }),
+    }
   }
 
   /** Get the dimensions of this array */
@@ -57,6 +69,26 @@ class NArray {
       this[i] *= b[i]!
     }
     return this
+  }
+
+  /** Take the average of all the values */
+  average() {
+    let sum = 0
+    for (const v of this) {
+      sum += v!
+    }
+    return sum / this.dim()
+  }
+
+  /** Calculate the average difference from the average */
+  spread() {
+    const average = this.average()
+    let spread = 0
+    for (const v of this) {
+      spread += Math.pow(v! - average, 2)
+    }
+
+    return Math.sqrt(spread / (this.dim() * average))
   }
 
   /** Normalize array */
