@@ -209,10 +209,6 @@ function applySvgOptions(element: SVGElement, opts?: SvgOptions) {
     'height',
     typeof opts?.height !== 'undefined' ? opts.height.toString() : '1000px',
   )
-  element.setAttribute(
-    'fill',
-    typeof opts?.fill !== 'undefined' ? opts.fill : 'none',
-  )
 }
 class Svg {
   element: SVGElement

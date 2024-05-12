@@ -88,7 +88,7 @@ class NArray {
       spread += Math.pow(v! - average, 2)
     }
 
-    return Math.sqrt(spread / (this.dim() * average))
+    return Math.sqrt(spread / this.dim())
   }
 
   /** Normalize array */
