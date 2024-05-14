@@ -1,3 +1,5 @@
+// TODO: implement same distributions https://jstat.github.io/distributions.html
+
 /** TODO: https://en.wikipedia.org/wiki/Linear_congruential_generator */
 // export function lcg(): number {}
 

@@ -65,8 +65,8 @@ class Image {
       const width = this.img.width
       const r = []
       const pixels = this.pixels()
-      for (let i = y * width; i < (y + dy) * width; i += width) {
-        r.push(pixels.slice(i + x, i + x + dx * 4))
+      for (let o = y * width; o < (y + dy) * width; o += width) {
+        r.push(pixels.slice(o + x, o + x + dx * 4))
       }
       return r
     }
