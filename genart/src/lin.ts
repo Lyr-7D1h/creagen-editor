@@ -66,8 +66,7 @@ class NDArray {
         }
         const n = Number(prop)
         if (typeof n === 'number' && !(prop in target)) {
-          target.get(n)
-          return
+          return target.get(n)
         }
         return target[prop as any]
       },
@@ -116,10 +115,14 @@ class NDArray {
           next: () => {
             index[last]++
             if (index[last]! >= this.array._shape[last]!) {
-              index[last] = 0
+              // if 1d then stop
+              if (index.length === 1) return { value: 0, done: true }
 
+              // if more than 1d then reduce a lower index and reset last index
+              index[last] = 0
               let i = 1
               index[last - i]++
+              // keep resetting and lowering indexes until the lowest index is too big
               while (index[last - i]! >= this.array._shape[last - i]!) {
                 if (last - i === 0) return { value: 0, done: true }
                 index[last - i] = 0
@@ -186,15 +189,15 @@ class NDArray {
   }
 
   /** Calculate the average difference from the average */
-  // spread() {
-  //   const average = this.average()
-  //   let spread = 0
-  //   for (const v of this) {
-  //     spread += Math.pow(v - average, 2)
-  //   }
+  spread() {
+    const average = this.average()
+    let spread = 0
+    for (const v of this.all()) {
+      spread += Math.pow(v - average, 2)
+    }
 
-  //   return Math.sqrt(spread / this.dim())
-  // }
+    return Math.sqrt(spread / this.count())
+  }
 
   // /** Normalize array */
   // norm() {

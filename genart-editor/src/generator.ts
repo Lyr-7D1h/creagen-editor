@@ -32,6 +32,11 @@ const generatorSettingsConfig = {
     label: 'Vim',
     value: false,
   },
+  'editor.relative_lines': {
+    type: 'param',
+    label: 'Relative Lines',
+    value: false,
+  },
 }
 
 export class Generator {
@@ -132,6 +137,9 @@ export class Generator {
         this.sandbox.style.left = '30vw'
         this.editor.setFullscreenMode(v)
       }
+    })
+    this.settings.onChange('editor.relative_lines', (v) => {
+      this.editor.updateOptions({ lineNumbers: 'relative' })
     })
 
     // load stored settings
