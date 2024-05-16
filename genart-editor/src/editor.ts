@@ -5,7 +5,6 @@ import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 
 import { bundleDefinitions } from '../bundle'
 import { initVimMode } from 'monaco-vim'
-import { error } from './error'
 
 monaco.languages.typescript.javascriptDefaults.addExtraLib(`
 const container: HTMLElement;
@@ -108,6 +107,12 @@ export class Editor {
       this.vimMode.dispose()
       this.vimMode = null
     }
+  }
+
+  updateOptions(
+    options: m.editor.IEditorOptions & m.editor.IGlobalEditorOptions,
+  ) {
+    this.editor.updateOptions(options)
   }
 
   /** set background transparent and make code highly visable */
