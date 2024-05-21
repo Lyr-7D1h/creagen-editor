@@ -1,4 +1,7 @@
 // use p5 as ref https://p5js.org/reference/#/p5.Image
+
+import { ndarray, type NDArray } from './lin'
+
 // https://github.dev/ronikaufman/poetical_computer_vision/blob/main/days01-10/day01/day01.pde
 class Image {
   private readonly img: HTMLImageElement
@@ -48,27 +51,32 @@ class Image {
 
   pixels() {
     if (!this.pixelsLoaded) throw new Error('pixels not loaded')
-    return this.pixeldata
+    return ndarray(this.pixeldata)
   }
 
-  get(x: number, y: number): Uint8ClampedArray
-  get(x: number, y: number, dx: number, dy: number): Uint8ClampedArray[]
+  get(x: number, y: number): NDArray<Uint8ClampedArray>
+  get(
+    x: number,
+    y: number,
+    dx: number,
+    dy: number,
+  ): NDArray<Uint8ClampedArray[]>
   get(
     x: number,
     y: number,
     dx?: number,
     dy?: number,
-  ): Uint8ClampedArray | Uint8ClampedArray[] {
+  ): NDArray<Uint8ClampedArray> | NDArray<Uint8ClampedArray[]> {
     if (!this.pixelsLoaded) throw new Error('pixels not loaded')
 
     if (typeof dx !== 'undefined' && typeof dy !== 'undefined') {
       const width = this.img.width
-      const r = []
+      const r = ndarray()
       const pixels = this.pixels()
       for (let o = y * width; o < (y + dy) * width; o += width) {
         r.push(pixels.slice(o + x, o + x + dx * 4))
       }
-      return r
+      return ndarray(r)
     }
 
     const width = this.img.width
@@ -78,6 +86,10 @@ class Image {
 
   html() {
     return this.img
+  }
+
+  t() {
+    return ndarray([1, 2, 3])
   }
 }
 
