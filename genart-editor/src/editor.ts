@@ -17,8 +17,8 @@ function load(obj: LoadableObject): void;
 `)
 monaco.languages.typescript.javascriptDefaults.addExtraLib(bundleDefinitions)
 monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
-  noSemanticValidation: false,
-  noSyntaxValidation: false,
+  // noSemanticValidation: false,
+  // noSyntaxValidation: false,
   // 1378,1375: allow await on top level
   diagnosticCodesToIgnore: [1375, 1378],
 })

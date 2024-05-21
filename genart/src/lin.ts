@@ -13,6 +13,7 @@
 //   ? GenericArray<T> | T[] | TypedArray
 //   : T extends bigint
 //     ? GenericArray<T> | T[] | MaybeBigInt64Array | MaybeBigUint64Array
+
 //     : GenericArray<T> | T[]
 type TypedArray =
   | Int8Array
@@ -25,6 +26,19 @@ type TypedArray =
   | Float32Array
   | Float64Array
 export type Data = TypedArray | number[] | Data[]
+
+function isTypedArray(value: Data): value is TypedArray {
+  return (
+    value instanceof Int8Array ||
+    value instanceof Int16Array ||
+    value instanceof Int32Array ||
+    value instanceof Uint8Array ||
+    value instanceof Uint16Array ||
+    value instanceof Uint32Array ||
+    value instanceof Float32Array ||
+    value instanceof Float64Array
+  )
+}
 
 function getShape(data: Data): number[] {
   const shape = []
@@ -51,33 +65,36 @@ function getShape(data: Data): number[] {
 /**
  * N Dimensional Array - a wrapper around Array<number> and TypedArrays
  */
-class NDArray {
-  private readonly data: Data
+export class NDArray<I extends Data> {
+  private readonly _data: I
   private readonly _shape: number[]
 
-  constructor(data: Data) {
+  constructor(data: I) {
     this._shape = getShape(data)
-    this.data = data
+    this._data = data
 
-    const proxy = new Proxy(this, {
-      get(target, prop) {
-        if (typeof prop === 'symbol') {
-          return target[prop as any]
-        }
-        const n = Number(prop)
-        if (typeof n === 'number' && !(prop in target)) {
-          return target.get(n)
-        }
-        return target[prop as any]
-      },
-    })
-    return proxy
+    // const proxy = new Proxy(this, {
+    //   get(target, prop) {
+    //     if (typeof prop === 'symbol') {
+    //       return target[prop as any]
+    //     }
+    //     const n = Number(prop)
+    //     if (typeof n === 'number' && !(prop in target)) {
+    //       return target.get(n)
+    //     }
+    //     return target[prop as any]
+    //   },
+    // })
+    // return proxy
   }
 
   [index: number]: number
 
   get(...index: number[]): number {
-    let r: any = this.data
+    if (index.length > this._shape.length) {
+      throw Error('invalid coordinates given')
+    }
+    let r: any = this._data
     for (const i of index) {
       r = r[i]!
     }
@@ -87,23 +104,49 @@ class NDArray {
 
   set(x: number, value: number): void
   set(...index: number[]) {
-    const i = this._shape.reduce((a, v, i) => a + v * index[i]!)
     if (index.length - 1 > this._shape.length) {
       throw Error('invalid coordinates given')
     }
-    this.data[i] = index[index.length - 1]!
+    let r: any = this._data
+    for (const i of index) {
+      r = r[i]!
+    }
+    if (typeof r !== 'number') throw Error('invalid index given')
+    r = index[index.length - 1]
+  }
+
+  data(): I {
+    return this._data
   }
 
   [Symbol.iterator]() {
     let index = -1
-    const data = this.data
+    const data = this._data
 
     return {
       next: () => ({ value: data[++index]!, done: !(index in data) }),
     }
   }
 
-  all(): Iterator {
+  map(
+    callbackfn: (value: number, index: number, ...args: any[]) => number,
+  ): NDArray<I>
+  map(callbackfn: (value: any, index: number, ...args: any[]) => number): this {
+    this._data.map(callbackfn)
+    return this
+  }
+
+  slice(start?: number, end?: number): NDArray<I>
+  slice(start?: number, end?: number): NDArray<I> {
+    if (isTypedArray(this._data)) {
+      return ndarray(this._data.subarray(start, end)) as NDArray<I>
+    }
+    return ndarray(this._data.slice(start, end)) as NDArray<I>
+  }
+
+  extend() {}
+
+  all(): Iterator<I> {
     return {
       array: this,
       [Symbol.iterator]() {
@@ -239,12 +282,12 @@ class NDArray {
   }
 }
 
-export function ndarray(data: Data) {
+export function ndarray<I extends Data>(data: I): NDArray<I> {
   return new NDArray(data)
 }
 
-export interface Iterator {
-  array: NDArray
+export interface Iterator<I extends Data> {
+  array: NDArray<I>
   [Symbol.iterator]: () => {
     next: () => {
       value: number
