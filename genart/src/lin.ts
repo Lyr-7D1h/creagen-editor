@@ -57,7 +57,7 @@ function getShape(data: Data): number[] {
   return shape
 }
 
-// wrapper around any array type to make it more user friendly
+// wrapper around any array type for llnear algebra functionality
 // https://github.com/scijs/ndarray
 // http://victorjs.org/
 // https://github.com/nicolaspanel/numjs/blob/master/src/ndarray.js

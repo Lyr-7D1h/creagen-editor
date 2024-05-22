@@ -24,22 +24,25 @@ export function generateTypeDefinitions() {
     name: 'genart',
     main: LIBRARY_TYPE_DEFINITIONS_PATH,
     out: tmp,
-    // outputAsModuleFolder: true,
+    outputAsModuleFolder: false,
   })
 
-  let declarations = fs.readFileSync(tmp).toString()
+  const declarations = fs.readFileSync(tmp).toString()
 
-  const match = declarations.matchAll(/declare module .*\/(.*)'/gm)
+  const match = declarations.matchAll(/declare module '(.*\/(.*))'/gm)
+  const namespaces = []
   for (const m of match) {
-    declarations = declarations.replace(m[0], `namespace ${m[1]}`)
+    namespaces.push(`namespace ${m[2]} {
+    export * from "${m[1]}"
+}`)
   }
 
-  const lines = declarations.split('\n')
-  lines.splice(0, 2)
+  // const lines = declarations.split('\n')
+  // lines.splice(0, 2)
   // TODO: delete global module declaration
   fs.writeFileSync(
     path.resolve(__dirname, 'bundle.ts'),
-    `export const bundleDefinitions = \`${lines.join('\n')}\``,
+    `export const bundleDefinitions = \`${declarations}\n${namespaces.join('\n')}\``,
   )
   fs.rmSync(tmp)
 }
