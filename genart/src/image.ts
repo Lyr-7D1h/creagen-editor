@@ -60,18 +60,18 @@ class Image {
     y: number,
     dx: number,
     dy: number,
-  ): NDArray<Uint8ClampedArray[]>
+  ): NDArray<Array<NDArray<Uint8ClampedArray>>>
   get(
     x: number,
     y: number,
     dx?: number,
     dy?: number,
-  ): NDArray<Uint8ClampedArray> | NDArray<Uint8ClampedArray[]> {
+  ): NDArray<Uint8ClampedArray> | NDArray<Array<NDArray<Uint8ClampedArray>>> {
     if (!this.pixelsLoaded) throw new Error('pixels not loaded')
 
     if (typeof dx !== 'undefined' && typeof dy !== 'undefined') {
       const width = this.img.width
-      const r = ndarray()
+      const r = []
       const pixels = this.pixels()
       for (let o = y * width; o < (y + dy) * width; o += width) {
         r.push(pixels.slice(o + x, o + x + dx * 4))

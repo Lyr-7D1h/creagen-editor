@@ -25,7 +25,7 @@ type TypedArray =
   | Uint32Array
   | Float32Array
   | Float64Array
-export type Data = TypedArray | number[] | Data[]
+export type Data = NDArray<Data> | TypedArray | number[] | Data[]
 
 function isTypedArray(value: Data): value is TypedArray {
   return (
@@ -113,6 +113,10 @@ export class NDArray<I extends Data> {
     }
     if (typeof r !== 'number') throw Error('invalid index given')
     r = index[index.length - 1]
+  }
+
+  get length() {
+    return this.count()
   }
 
   data(): I {
