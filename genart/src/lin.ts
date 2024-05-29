@@ -47,7 +47,7 @@ function getShape(data: Data): number[] {
     if (typeof row[0] === 'number') {
       shape.push(row.length)
       break
-    } else if (Array.isArray(row)) {
+    } else if ('length' in row) {
       shape.push(row.length)
       row = row[0]
     } else {
@@ -90,13 +90,18 @@ export class NDArray<I extends Data> {
 
   [index: number]: number
 
+  /** Synonym to get */
+  at(...index: number[]): number {
+    return this.get(...index)
+  }
+
   get(...index: number[]): number {
     if (index.length > this._shape.length) {
       throw Error('invalid coordinates given')
     }
     let r: any = this._data
     for (const i of index) {
-      r = r[i]!
+      r = r.at(i) // using at to support both Arrays and NDArrays
     }
     if (typeof r !== 'number') throw Error('invalid index given')
     return r
@@ -132,14 +137,6 @@ export class NDArray<I extends Data> {
     }
   }
 
-  map(
-    callbackfn: (value: number, index: number, ...args: any[]) => number,
-  ): NDArray<I>
-  map(callbackfn: (value: any, index: number, ...args: any[]) => number): this {
-    this._data.map(callbackfn)
-    return this
-  }
-
   slice(start?: number, end?: number): NDArray<I>
   slice(start?: number, end?: number): NDArray<I> {
     if (isTypedArray(this._data)) {
@@ -147,8 +144,6 @@ export class NDArray<I extends Data> {
     }
     return ndarray(this._data.slice(start, end)) as NDArray<I>
   }
-
-  extend() {}
 
   all(): Iterator<I> {
     return {
