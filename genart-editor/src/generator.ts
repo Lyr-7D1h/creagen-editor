@@ -110,10 +110,10 @@ export class Generator {
       window[k] = v
     }
     window.load = (obj: LoadableObject) => {
-      if (obj instanceof Node) {
-        container.appendChild(obj)
-      } else {
+      if ('html' in obj) {
         container.appendChild(obj.html())
+      } else {
+        container.appendChild(obj)
       }
     }
   }
