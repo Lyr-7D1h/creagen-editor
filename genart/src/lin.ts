@@ -241,7 +241,7 @@ export class NDArray<I extends Data> {
     return Math.sqrt(spread / this.count())
   }
 
-  // /** Normalize array */
+  /** Normalize array */
   // norm() {
   //   let normalizer = 0
   //   for (const v of this.data) {
