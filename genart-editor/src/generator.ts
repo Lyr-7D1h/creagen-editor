@@ -2,7 +2,7 @@ import * as genart from '@lyr_7d1h/genart'
 import * as monaco from 'monaco-editor'
 import { Editor } from './editor'
 import { Settings, type SettingsConfig } from './settings'
-import { debug, error, warn } from './error'
+import log from './log'
 import { type ID, IDFromString, IDToString, createID } from './id'
 import { IndexDB, LocalStorage } from './storage'
 
@@ -67,14 +67,14 @@ export class Generator {
 
     // allow for going back to previous code using browser history
     addEventListener('popstate', () => {
-      this.loadCode().catch(error)
+      this.loadCode().catch(log.error)
     })
     // load initial code
     this.loadCode()
       .then(() => {
         this.setupSettings()
       })
-      .catch(error)
+      .catch(log.error)
   }
 
   async loadCode() {
@@ -85,12 +85,12 @@ export class Generator {
     const id = IDFromString(path)
 
     if (id === null) {
-      error('invalid id given')
+      log.error('invalid id given')
       return
     }
     const value = await this.indexdb.get(id)
     if (value === null) {
-      warn(`${IDToString(id)} not found in storage`)
+      log.warn(`${IDToString(id)} not found in storage`)
       return
     }
     this.editor.setValue(value.code)
@@ -105,6 +105,11 @@ export class Generator {
     const container = window.document.createElement('div')
     container.id = 'container'
     window.document.body.appendChild(container)
+
+    window.onerror = (e) => {
+      // document.body.innerHTML += JSON.stringify(e)
+      log.error(e)
+    }
 
     for (const [k, v] of Object.entries(genart)) {
       window[k] = v
@@ -158,12 +163,12 @@ export class Generator {
     this.editor.addKeybind(
       monaco.KeyMod.Shift | monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
       () => {
-        this.render().catch(error)
+        this.render().catch(log.error)
       },
     )
     window.addEventListener('keydown', (event) => {
       if (event.ctrlKey && event.shiftKey && event.key === 'Enter') {
-        this.render().catch(error)
+        this.render().catch(log.error)
         event.preventDefault()
       }
     })
@@ -197,7 +202,7 @@ export class Generator {
   }
 
   async render() {
-    debug('rendering code')
+    log.debug('rendering code')
     if (this.settings.get('editor.format_on_render')) {
       await this.editor.format()
     }
@@ -221,13 +226,14 @@ export class Generator {
     doc.getElementById('container')!.innerHTML = ''
 
     doc.getElementById('script')?.remove()
+    console.log(code)
     const script = doc.createElement('script')
     script.type = 'module'
     script.id = 'script'
     script.innerHTML = code
-    // TODO: wait for execution
     doc.body.appendChild(script)
 
+    // TODO: wait for execution
     setTimeout(() => {
       this.settings.updateRenderSettings(
         this.sandbox.contentDocument!.getElementById('container')!,

@@ -19,3 +19,22 @@ export function min(array: ArrayLike<number>) {
   }
   return min
 }
+
+export function gcd(a: number, b: number) {
+  if (b === 0) return a
+  return gcd(b, a % b)
+}
+
+export function mod(n: number, m: number) {
+  return ((n % m) + m) % m
+}
+
+export function roundToDec(n: number, dec?: number) {
+  if (
+    typeof window.genart.config.precision === 'undefined' &&
+    typeof dec === 'undefined'
+  ) {
+    return n
+  }
+  return parseFloat(n.toFixed(dec ?? window.genart.config.precision))
+}
