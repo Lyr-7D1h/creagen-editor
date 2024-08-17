@@ -44,3 +44,69 @@ button {
   --tp-monitor-background-color: hsla(230, 15%, 30%, 0.1);
   --tp-monitor-foreground-color: hsla(230, 10%, 30%, 0.5);
 }
+
+#editor {
+  position: absolute;
+  width: 30vw;
+  height: 100vh;
+  z-index: 1000;
+}
+#resizer {
+  top: 0;
+  z-index: 1001;
+  left: 30vw;
+  width: 200px;
+  position: absolute;
+  height: 100vh;
+  position: relative;
+}
+#resizer-cursor {
+  cursor: e-resize;
+  height: 100%;
+  width: 3px;
+}
+#sandbox {
+  top: 0;
+  width: 70vw;
+  min-height: 100vh;
+  border: none;
+  position: absolute;
+  left: 30vw;
+}
+#settings {
+  z-index: 1002;
+  position: fixed;
+  right: 10px;
+  top: 10px;
+}
+
+#messages {
+  z-index: 1000;
+  position: absolute;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  width: 100svw;
+  justify-content: center;
+}
+.message {
+  font-size: 1.2em;
+  border: solid;
+  border-width: 1px;
+  padding: 5px;
+  margin: auto;
+  margin-bottom: 10px;
+  margin-top: 10px;
+}
+.message-error {
+  background-color: rgba(255, 0, 0, 0.5);
+  border-color: darkred;
+}
+.message-warn {
+  background-color: rgba(255, 255, 0, 0.5);
+  border-color: darkorange;
+}
+.message-info {
+  background-color: rgba(0, 0, 255, 0.5);
+  border-color: darkblue;
+}

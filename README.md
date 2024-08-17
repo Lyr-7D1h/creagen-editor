@@ -28,6 +28,7 @@ npm start
 - Make Settings moveable
 - Typescript support
 - Show only sandbox keybind/setting
+- Html meta tags
 
 ## Library:
 
