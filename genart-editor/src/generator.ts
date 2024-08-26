@@ -1,16 +1,10 @@
-import * as genart from '@lyr_7d1h/genart'
 import * as monaco from 'monaco-editor'
 import { Editor } from './editor'
 import { Settings, type SettingsConfig } from './settings'
 import log from './log'
 import { type ID, IDFromString, IDToString, createID } from './id'
 import { IndexDB, LocalStorage } from './storage'
-
-export type LoadableObject =
-  | Node
-  | {
-      html: () => Node
-    }
+import { Sandbox } from './sandbox'
 
 const generatorSettingsConfig = {
   editor: {
@@ -45,7 +39,7 @@ export class Generator {
   >
 
   private readonly editor: Editor
-  private readonly sandbox: HTMLIFrameElement
+  private readonly sandbox: Sandbox
   private readonly resizer: HTMLElement
 
   private readonly localStorage: LocalStorage
@@ -59,10 +53,9 @@ export class Generator {
     this.indexdb = new IndexDB()
     this.localStorage = new LocalStorage()
     this.editor = new Editor()
-    this.sandbox = document.getElementById('sandbox')! as HTMLIFrameElement
+    this.sandbox = new Sandbox()
     this.resizer = document.getElementById('resizer')!
     this.setupKeybinds()
-    this.setupSandbox()
     this.setupResizer()
 
     // allow for going back to previous code using browser history
@@ -97,32 +90,6 @@ export class Generator {
     this.active_id = id
   }
 
-  setupSandbox() {
-    const window = this.sandbox.contentWindow!
-
-    window.document.body.style.margin = '0'
-
-    const container = window.document.createElement('div')
-    container.id = 'container'
-    window.document.body.appendChild(container)
-
-    window.onerror = (e) => {
-      // document.body.innerHTML += JSON.stringify(e)
-      log.error(e)
-    }
-
-    for (const [k, v] of Object.entries(genart)) {
-      window[k] = v
-    }
-    window.load = (obj: LoadableObject) => {
-      if ('html' in obj) {
-        container.appendChild(obj.html())
-      } else {
-        container.appendChild(obj)
-      }
-    }
-  }
-
   setupSettings() {
     this.settings.onChange('editor.vim', (v) => {
       this.editor.setVimMode(v)
@@ -130,16 +97,16 @@ export class Generator {
     this.settings.onChange('editor.fullscreen', (v) => {
       if (v) {
         this.resizer.style.display = 'none'
-        this.editor.html().style.width = '100vw'
-        this.sandbox.style.width = '100vw'
-        this.sandbox.style.left = '0'
+        this.editor.html().style.width = '100%'
+        this.sandbox.html.style.width = '100%'
+        this.sandbox.html.style.left = '0'
         this.editor.setFullscreenMode(v)
       } else {
         this.resizer.style.display = 'block'
-        this.resizer.style.left = '30vw'
-        this.editor.html().style.width = '30vw'
-        this.sandbox.style.width = '70vw'
-        this.sandbox.style.left = '30vw'
+        this.resizer.style.left = '30%'
+        this.editor.html().style.width = '30%'
+        this.sandbox.html.style.width = '70%'
+        this.sandbox.html.style.left = '30%'
         this.editor.setFullscreenMode(v)
       }
     })
@@ -181,11 +148,11 @@ export class Generator {
 
     function move(e: MouseEvent) {
       const editorWidth = e.clientX
-      sandbox.style.left =
+      sandbox.html.style.left =
         resizer.style.left =
         editor.html().style.width =
           editorWidth + 'px'
-      sandbox.style.width = screen.width - editorWidth + 'px'
+      sandbox.html.style.width = screen.width - editorWidth + 'px'
     }
     function up() {
       document.removeEventListener('mouseup', up, false)
@@ -202,7 +169,7 @@ export class Generator {
   }
 
   async render() {
-    log.debug('rendering code')
+    const info = log.info('rendering code')
     if (this.settings.get('editor.format_on_render')) {
       await this.editor.format()
     }
@@ -221,23 +188,13 @@ export class Generator {
       this.active_id = id
     }
 
-    const doc = this.sandbox.contentDocument!
+    this.sandbox.runScript(code)
 
-    doc.getElementById('container')!.innerHTML = ''
-
-    doc.getElementById('script')?.remove()
-    console.log(code)
-    const script = doc.createElement('script')
-    script.type = 'module'
-    script.id = 'script'
-    script.innerHTML = code
-    doc.body.appendChild(script)
+    info.remove()
 
     // TODO: wait for execution
     setTimeout(() => {
-      this.settings.updateRenderSettings(
-        this.sandbox.contentDocument!.getElementById('container')!,
-      )
+      this.settings.updateRenderSettings(this.sandbox.container)
     }, 300)
   }
 }

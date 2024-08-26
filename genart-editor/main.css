@@ -47,31 +47,43 @@ button {
 
 #editor {
   position: absolute;
-  width: 30vw;
-  height: 100vh;
+  width: 30%;
+  height: 100%;
   z-index: 1000;
 }
 #resizer {
   top: 0;
   z-index: 1001;
-  left: 30vw;
+  left: 30%;
   width: 200px;
-  position: absolute;
   height: 100vh;
   position: relative;
 }
 #resizer-cursor {
-  cursor: e-resize;
+  cursor: ew-resize;
   height: 100%;
   width: 3px;
 }
+#hresizer {
+  top: 0;
+  z-index: 1001;
+  left: 30%;
+  height: 50px;
+  width: 100%;
+}
+#hresizer-cursor {
+  cursor: ns-resize;
+  height: 100%;
+  height: 5px;
+}
+
 #sandbox {
   top: 0;
-  width: 70vw;
-  min-height: 100vh;
+  width: 70%;
+  height: 100%;
   border: none;
   position: absolute;
-  left: 30vw;
+  left: 30%;
 }
 #settings {
   z-index: 1002;

@@ -1,0 +1,86 @@
+import * as genart from '@lyr_7d1h/genart'
+import log from './log'
+
+export const sandboxTypeDefinitions = `
+const container: HTMLElement;
+type LoadableObject =
+  | Node
+  | {
+      html: () => Node
+    }
+function load(obj: LoadableObject): void;
+/** 
+ * Call a drawing function every 1/60 seconds
+ * @param fn draw callback
+ * */
+function draw(fn: () => void): void;`
+
+export type LoadableObject =
+  | Node
+  | {
+      html: () => Node
+    }
+
+export class Sandbox {
+  html: HTMLIFrameElement
+  /** Html element that holds code rendered by load() */
+  container: HTMLDivElement
+
+  constructor() {
+    this.html = document.getElementById('sandbox')! as HTMLIFrameElement
+
+    const window = this.html.contentWindow!
+
+    window.document.body.style.margin = '0'
+
+    this.container = window.document.createElement('div')
+    this.container.id = 'container'
+    window.document.body.appendChild(this.container)
+
+    window.onerror = (e) => {
+      log.error(e)
+    }
+
+    // setup global functions
+    for (const [k, v] of Object.entries(genart)) {
+      window[k] = v
+    }
+    window.load = (obj: LoadableObject) => {
+      if ('html' in obj) {
+        this.container.appendChild(obj.html())
+      } else {
+        this.container.appendChild(obj)
+      }
+    }
+    window.console.log = (msg) => {
+      log.info(msg)
+    }
+    window.draw = (fn: () => void) => {
+      let then = Date.now()
+      function animate() {
+        requestAnimationFrame(animate)
+
+        const now = Date.now()
+        if (now - then > 16.6) {
+          fn()
+        }
+        then = now
+      }
+      animate()
+    }
+  }
+
+  runScript(code: string) {
+    const doc = this.html.contentDocument!
+
+    doc.getElementById('container')!.innerHTML = ''
+
+    doc.getElementById('script')?.remove()
+    const script = doc.createElement('script')
+    script.type = 'module'
+    script.id = 'script'
+
+    script.innerHTML = code
+    doc.body.appendChild(script)
+  }
+}

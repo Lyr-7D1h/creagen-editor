@@ -14,7 +14,7 @@ type GrowToSize<
   L extends number = A['length'],
 > = L extends N ? A : L extends 999 ? T[] : GrowToSize<T, N, [...A, T]>
 
-export type FixedArray<N extends number> = GrowToSize<number, N, number[]>
+// type FixedArray<N extends number> = GrowToSize<number, N, number[]>
 
 export class Vector<N extends number> extends Array<number> {
   constructor(...items: [number[] & { length: N }])
