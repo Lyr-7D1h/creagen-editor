@@ -20,28 +20,28 @@ export function message(
 }
 
 function info(msg: any, permanent?: boolean): HTMLElement {
+  console.info(msg)
   if (typeof msg !== 'string') {
     msg = JSON.stringify(msg)
   }
-  console.info(msg)
   return message('info', msg as string, permanent === true ? undefined : 8)
 }
 
 function warn(msg: any, permanent?: boolean): HTMLElement {
+  console.warn(msg)
   if (typeof msg !== 'string') {
     msg = JSON.stringify(msg)
   }
-  console.warn(msg)
   return message('warn', msg as string, permanent === true ? undefined : 8)
 }
 
-function error(msg: any, permanent?: boolean): HTMLElement {
+export function error(msg: any, permanent?: boolean): HTMLElement {
+  console.error(msg)
   if (msg instanceof Error) {
     msg = msg.message
   } else if (typeof msg !== 'string') {
     msg = JSON.stringify(msg)
   }
-  console.error(msg)
   return message('error', msg as string, permanent === true ? undefined : 8)
 }
 

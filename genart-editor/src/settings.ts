@@ -211,10 +211,10 @@ export class Settings<T extends SettingsConfig<T>> {
   /** update options menu based on code ran and content */
   updateRenderSettings(container: HTMLElement) {
     for (const c of Array.from(container.children)) {
-      switch (c.tagName.toUpperCase()) {
-        case 'CANVAS':
+      switch (c.tagName.toLocaleLowerCase()) {
+        case 'canvas':
           return
-        case 'SVG': {
+        case 'svg': {
           this.addFolders('export', 'Export')
           this.addParam('export.name', 'Name', generateHumanReadableName())
 

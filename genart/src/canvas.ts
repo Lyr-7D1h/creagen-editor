@@ -1,3 +1,10 @@
+import { type Color } from './color'
+import { Vector } from './vec'
+
+export interface GeometricOptions {
+  fill?: Color
+}
+
 class Canvas {
   canvas: HTMLCanvasElement
   ctx: CanvasRenderingContext2D
@@ -9,14 +16,39 @@ class Canvas {
     this.ctx = this.canvas.getContext('2d')!
   }
 
+  get width() {
+    return this.canvas.width
+  }
+
+  get height() {
+    return this.canvas.height
+  }
+
   circle() {
     this.ctx.beginPath()
     this.ctx.arc(95, 50, 40, 0, 2 * Math.PI)
     this.ctx.stroke()
   }
 
-  point(x: number, y: number) {
-    this.ctx.fillRect(x, y, 1, 1)
+  rectangle(p: Vector<2>, size: number): void
+  rectangle(p: Vector<2>, width: number, height: number): void
+  rectangle(x: number, y: number, size: number): void
+  rectangle(
+    x: number | Vector<2>,
+    y: number,
+    width: number,
+    height?: number,
+  ): void
+  rectangle(x: number | Vector<2>, y: number, width?: number, height?: number) {
+    if (x instanceof Vector) {
+      this.rectangle(x.x, x.y, y, width)
+      return
+    }
+    if (typeof height !== 'undefined') {
+      this.ctx.fillRect(x, y, width!, height)
+      return
+    }
+    this.ctx.fillRect(x, y, width!, width!)
   }
 
   clear() {

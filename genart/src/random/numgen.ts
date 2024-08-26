@@ -1,14 +1,18 @@
 // TODO: implement same distributions https://jstat.github.io/distributions.html
 
+import { RandomNumberGenerator } from '.'
+
 /** TODO: https://en.wikipedia.org/wiki/Linear_congruential_generator */
 // export function lcg(): number {}
 
-let SEED = 50
-export function xorshift(): number {
-  SEED ^= SEED << 13
-  SEED ^= SEED >> 17
-  SEED ^= SEED << 5
-  return SEED
+export function xorshift() {
+  let SEED = 50
+  return new RandomNumberGenerator(() => {
+    SEED ^= SEED << 13
+    SEED ^= SEED >> 17
+    SEED ^= SEED << 5
+    return SEED
+  })
 }
 
 /** https://en.wikipedia.org/wiki/Beta_distribution */

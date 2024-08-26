@@ -5,17 +5,12 @@ import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 
 import { bundleDefinitions } from '../bundle'
 import { initVimMode } from 'monaco-vim'
+import { sandboxTypeDefinitions } from './sandbox'
 
-// genart-editor type definitions
-monaco.languages.typescript.javascriptDefaults.addExtraLib(`
-const container: HTMLElement;
-type LoadableObject =
-  | Node
-  | {
-      html: () => Node
-    }
-function load(obj: LoadableObject): void;
-`)
+// Sandbox type definitions
+monaco.languages.typescript.javascriptDefaults.addExtraLib(
+  sandboxTypeDefinitions,
+)
 // genart type definitions
 monaco.languages.typescript.javascriptDefaults.addExtraLib(bundleDefinitions)
 monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
