@@ -14,7 +14,7 @@ type GrowToSize<
   L extends number = A['length'],
 > = L extends N ? A : L extends 999 ? T[] : GrowToSize<T, N, [...A, T]>
 
-// type FixedArray<N extends number> = GrowToSize<number, N, number[]>
+type FixedArray<T, N extends number> = GrowToSize<T, N, [], 0>
 
 export class Vector<N extends number> extends Array<number> {
   constructor(...items: [number[] & { length: N }])
@@ -152,6 +152,20 @@ export class Vector<N extends number> extends Array<number> {
       m += this.get(i) ** 2
     }
     return m
+  }
+
+  wraparound(limits: FixedArray<[number, number], N>) {
+    for (let i = 0; i < this.length; i++) {
+      const [start, stop] = (limits as any)[i] as [number, number]
+      const diff = stop - start
+      const v = this[i]!
+      if (v < start) {
+        this[i] = stop - ((start - v) % diff)
+      }
+      if (v > stop) {
+        this[i] = start + ((v - stop) % diff)
+      }
+    }
   }
 
   sum(): number {
