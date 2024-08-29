@@ -43,10 +43,12 @@ export class Sandbox {
     window.console.log = (msg) => {
       log.info(msg)
     }
+
     this.drawFns = []
     window.draw = (fn: () => void) => {
       this.drawFns.push(fn)
     }
+    this.drawLoop()
   }
 
   /** try to run a draw loop that runs drawFns every 1/60 seconds */
