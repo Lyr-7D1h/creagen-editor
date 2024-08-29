@@ -1,20 +1,6 @@
 import * as genart from '@lyr_7d1h/genart'
 import log from './log'
 
-export const sandboxTypeDefinitions = `
-const container: HTMLElement;
-type LoadableObject =
-  | Node
-  | {
-      html: () => Node
-    }
-function load(obj: LoadableObject): void;
-/** 
- * Call a drawing function every 1/60 seconds
- * @param fn draw callback
- * */
-function draw(fn: () => void): void;`
-
 export type LoadableObject =
   | Node
   | {
@@ -25,6 +11,8 @@ export class Sandbox {
   html: HTMLIFrameElement
   /** Html element that holds code rendered by load() */
   container: HTMLDivElement
+
+  drawFns: Array<() => void>
 
   constructor() {
     this.html = document.getElementById('sandbox')! as HTMLIFrameElement
@@ -55,22 +43,49 @@ export class Sandbox {
     window.console.log = (msg) => {
       log.info(msg)
     }
+    this.drawFns = []
     window.draw = (fn: () => void) => {
-      let then = Date.now()
-      function animate() {
-        requestAnimationFrame(animate)
-
-        const now = Date.now()
-        if (now - then > 16.6) {
-          fn()
-        }
-        then = now
-      }
-      animate()
+      this.drawFns.push(fn)
     }
   }
 
+  /** try to run a draw loop that runs drawFns every 1/60 seconds */
+  drawLoop() {
+    let then = Date.now()
+    const draw = () => {
+      requestAnimationFrame(draw)
+
+      const now = Date.now()
+      if (now - then > 16.6) {
+        this.drawFns.forEach((fn) => {
+          fn()
+        })
+      }
+      then = now
+    }
+    draw()
+  }
+
+  globalTypings(): string {
+    return `
+const container: HTMLElement;
+type LoadableObject =
+  | Node
+  | {
+      html: () => Node
+    }
+function load(obj: LoadableObject): void;
+/** 
+ * Call a drawing function every 1/60 seconds
+ * @param fn draw callback
+ * */
+function draw(fn: () => void): void;`
+  }
+
   runScript(code: string) {
+    // reset draw functions
+    this.drawFns = []
+
     const doc = this.html.contentDocument!
 
     doc.getElementById('container')!.innerHTML = ''

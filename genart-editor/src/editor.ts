@@ -8,11 +8,6 @@ import { initVimMode } from 'monaco-vim'
 import { sandboxTypeDefinitions } from './sandbox'
 
 // Sandbox type definitions
-monaco.languages.typescript.javascriptDefaults.addExtraLib(
-  sandboxTypeDefinitions,
-)
-// genart type definitions
-monaco.languages.typescript.javascriptDefaults.addExtraLib(bundleDefinitions)
 monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
   noSemanticValidation: false,
   noSyntaxValidation: false,
@@ -110,6 +105,10 @@ export class Editor {
     options: m.editor.IEditorOptions & m.editor.IGlobalEditorOptions,
   ) {
     this.editor.updateOptions(options)
+  }
+
+  addTypings(typings: string) {
+    monaco.languages.typescript.javascriptDefaults.addExtraLib(typings)
   }
 
   /** set background transparent and make code highly visable */

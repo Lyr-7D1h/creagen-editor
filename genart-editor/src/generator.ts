@@ -5,6 +5,7 @@ import log from './log'
 import { type ID, IDFromString, IDToString, createID } from './id'
 import { IndexDB, LocalStorage } from './storage'
 import { Sandbox } from './sandbox'
+import { bundleDefinitions } from '../bundle'
 
 const generatorSettingsConfig = {
   editor: {
@@ -52,8 +53,11 @@ export class Generator {
     )
     this.indexdb = new IndexDB()
     this.localStorage = new LocalStorage()
-    this.editor = new Editor()
     this.sandbox = new Sandbox()
+    this.editor = new Editor()
+    this.editor.addTypings(this.sandbox.globalTypings())
+    this.editor.addTypings(bundleDefinitions)
+
     this.resizer = document.getElementById('resizer')!
     this.setupKeybinds()
     this.setupResizer()
