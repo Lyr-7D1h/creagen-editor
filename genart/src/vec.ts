@@ -157,12 +157,12 @@ export class Vector<N extends number> extends Array<number> {
   wraparound(limits: FixedArray<[number, number], N>) {
     for (let i = 0; i < this.length; i++) {
       const [start, stop] = (limits as any)[i] as [number, number]
-      const diff = stop - start
       const v = this[i]!
       if (v < start) {
+        const diff = stop - start
         this[i] = stop - ((start - v) % diff)
-      }
-      if (v > stop) {
+      } else if (v > stop) {
+        const diff = stop - start
         this[i] = start + ((v - stop) % diff)
       }
     }
