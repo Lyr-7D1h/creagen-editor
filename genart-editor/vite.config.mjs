@@ -53,9 +53,9 @@ export default defineConfig(async ({ command, mode }) => {
   process.env = {
     ...process.env,
     ...loadEnv(mode, process.cwd()),
-    VITE_DEBUG: false,
-    GENART_EDITOR_VERSION: process.env.npm_package_version,
-    GENART_VERSION: packages['node_modules/@lyr_7d1h/genart'].version,
+    VITE_DEBUG: true,
+    VITE_GENART_EDITOR_VERSION: process.env.npm_package_version,
+    VITE_GENART_VERSION: packages['node_modules/@lyr_7d1h/genart'].version,
   }
 
   return {

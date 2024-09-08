@@ -5,7 +5,7 @@ import log from './log'
 import { type ID, IDFromString, IDToString, createID } from './id'
 import { IndexDB, LocalStorage } from './storage'
 import { Sandbox } from './sandbox'
-import { DEBUG, GENART_VERSION } from './env'
+import { DEBUG, GENART_EDITOR_VERSION, GENART_VERSION } from './env'
 import { Importer } from './importer'
 
 const generatorSettingsConfig = {
@@ -38,12 +38,20 @@ const generatorSettingsConfig = {
 const debugSettingsConfig = {
   debug: {
     type: 'folder',
-    title: 'Rebug',
+    title: 'Debug',
   },
-  'debug.version': {
+  'debug.package': {
     type: 'param',
-    label: 'Version',
-    value: GENART_VERSION,
+    label: 'Package',
+    value: `genart@${GENART_VERSION}`,
+    opts: {
+      readonly: true,
+    },
+  },
+  'debug.editor': {
+    type: 'param',
+    label: 'Editor Version',
+    value: `${GENART_EDITOR_VERSION}`,
     opts: {
       readonly: true,
     },
@@ -71,7 +79,7 @@ export class Generator {
     if (DEBUG) {
       const config = {
         ...debugSettingsConfig,
-        // ...generatorSettingsConfig,
+        ...generatorSettingsConfig,
       }
       this.settings = new Settings(config as SettingsConfig<typeof config>)
     } else {
