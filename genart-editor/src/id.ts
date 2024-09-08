@@ -1,4 +1,4 @@
-import { GENART_EDITOR_VERSION, GENART_VERSION } from '../constants'
+import { GENART_EDITOR_VERSION, GENART_VERSION } from './env'
 
 export interface ID {
   /** Hash of the code. Used for comparing changes between code and storing versions locally */

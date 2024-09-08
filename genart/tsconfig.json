@@ -1,5 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
+  "include": ["src/**/*"],
 
   "compilerOptions": {
     "sourceMap": true,
@@ -7,6 +8,7 @@
     // "pretty": true,
 
     "declaration": true,
+    "declarationDir": "./dist/types",
     "outDir": "./build",
 
     "module": "ESNext",
@@ -24,10 +26,11 @@
 
     "resolveJsonModule": true,
 
-    "strict": true,
+    "strict": false,
 
     "noImplicitReturns": true,
     "noImplicitOverride": true,
+    "noImplicitAny": false,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,

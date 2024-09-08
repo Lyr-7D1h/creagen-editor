@@ -40,8 +40,8 @@ export class Sandbox {
         this.container.appendChild(obj)
       }
     }
-    window.console.log = (msg) => {
-      log.info(msg)
+    window.console.log = (...msg: any[]) => {
+      log.info(...msg)
     }
 
     this.drawFns = []
@@ -82,6 +82,14 @@ function load(obj: LoadableObject): void;
  * @param fn draw callback
  * */
 function draw(fn: () => void): void;`
+  }
+
+  loadLib(code: string) {
+    // TODO: load lib
+    const doc = this.html.contentDocument!
+    const script = doc.createElement('script')
+    script.innerHTML = code
+    doc.body.appendChild(script)
   }
 
   runScript(code: string) {

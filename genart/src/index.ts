@@ -5,8 +5,9 @@ export * as random from './random/index'
 export * as svg from './svg'
 export * as image from './image'
 export * as color from './color'
-export * as canvas from './canvas'
-export * as vec from './vec'
+// export * from './canvas'
+export { canvas } from './canvas'
+export { vec } from './vec'
 
 declare global {
   interface Window {

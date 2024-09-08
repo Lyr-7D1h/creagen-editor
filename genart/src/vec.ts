@@ -166,6 +166,7 @@ export class Vector<N extends number> extends Array<number> {
         this[i] = start + ((v - stop) % diff)
       }
     }
+    return this
   }
 
   sum(): number {

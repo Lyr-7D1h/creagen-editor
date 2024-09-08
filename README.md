@@ -29,6 +29,8 @@ npm start
 - Typescript support
 - Show only sandbox keybind/setting
 - Html meta tags
+- Autoimport libraries 
+  - Import typings from npm https://lukasbach.github.io/monaco-editor-auto-typings/docs/
 
 ## Library:
 

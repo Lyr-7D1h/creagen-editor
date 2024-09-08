@@ -1,11 +1,10 @@
+import AutoImport, { regexTokeniser } from '@kareemkermad/monaco-auto-import'
 import * as monaco from 'monaco-editor'
 import type * as m from 'monaco-editor'
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
 import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 
-import { bundleDefinitions } from '../bundle'
 import { initVimMode } from 'monaco-vim'
-import { sandboxTypeDefinitions } from './sandbox'
 
 // Sandbox type definitions
 monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
@@ -18,6 +17,7 @@ monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
   target: monaco.languages.typescript.ScriptTarget.ES2016,
   allowNonTsExtensions: true,
   moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+  esModuleInterop: true,
   module: monaco.languages.typescript.ModuleKind.CommonJS,
   noEmit: true,
 })
@@ -58,13 +58,14 @@ export interface EditorSettings {
 
 export class Editor {
   private readonly editor: m.editor.IStandaloneCodeEditor
+  private readonly autoimport: AutoImport
   private vimMode: m.editor.IStandaloneCodeEditor | null
   private fullscreendecorators: m.editor.IEditorDecorationsCollection | null
 
   constructor(options?: EditorSettings) {
     this.editor = monaco.editor.create(document.getElementById('editor')!, {
       value: options?.value ?? '',
-      language: 'javascript',
+      language: 'typescript',
       minimap: { enabled: false },
       tabSize: 2,
       theme: 'genart',
@@ -75,6 +76,14 @@ export class Editor {
 
       // allow for resizing
       automaticLayout: true,
+    })
+    this.autoimport = new AutoImport({
+      monaco,
+      editor: this.editor,
+      spacesBetweenBraces: true,
+      doubleQuotes: true,
+      semiColon: true,
+      alwaysApply: false,
     })
     this.vimMode = null
     this.fullscreendecorators = null
@@ -107,8 +116,20 @@ export class Editor {
     this.editor.updateOptions(options)
   }
 
-  addTypings(typings: string) {
-    monaco.languages.typescript.javascriptDefaults.addExtraLib(typings)
+  clearTypings() {
+    monaco.languages.typescript.javascriptDefaults.setExtraLibs([])
+  }
+
+  addTypings(typings: string, uri: string, packageName?: string) {
+    // monaco.languages.typescript.javascriptDefaults.addExtraLib(typings, uri)
+    if (typeof packageName === 'string') {
+      this.autoimport.imports.saveFile({
+        path: packageName,
+        aliases: [packageName],
+        imports: regexTokeniser(typings),
+      })
+    }
+    monaco.editor.createModel(typings, 'typescript', monaco.Uri.parse(uri))
   }
 
   /** set background transparent and make code highly visable */

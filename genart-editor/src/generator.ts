@@ -5,7 +5,8 @@ import log from './log'
 import { type ID, IDFromString, IDToString, createID } from './id'
 import { IndexDB, LocalStorage } from './storage'
 import { Sandbox } from './sandbox'
-import { bundleDefinitions } from '../bundle'
+import { DEBUG, GENART_VERSION } from './env'
+import { Importer } from './importer'
 
 const generatorSettingsConfig = {
   editor: {
@@ -34,12 +35,31 @@ const generatorSettingsConfig = {
   },
 }
 
+const debugSettingsConfig = {
+  debug: {
+    type: 'folder',
+    title: 'Rebug',
+  },
+  'debug.version': {
+    type: 'param',
+    label: 'Version',
+    value: GENART_VERSION,
+    opts: {
+      readonly: true,
+    },
+  },
+}
+
 export class Generator {
   private readonly settings: Settings<
-    SettingsConfig<typeof generatorSettingsConfig>
+    SettingsConfig<
+      | typeof generatorSettingsConfig
+      | (typeof generatorSettingsConfig & typeof debugSettingsConfig)
+    >
   >
 
   private readonly editor: Editor
+  private readonly importer: Importer
   private readonly sandbox: Sandbox
   private readonly resizer: HTMLElement
 
@@ -48,15 +68,31 @@ export class Generator {
   private active_id?: ID
 
   constructor() {
-    this.settings = new Settings(
-      generatorSettingsConfig as SettingsConfig<typeof generatorSettingsConfig>,
-    )
+    if (DEBUG) {
+      const config = {
+        ...debugSettingsConfig,
+        // ...generatorSettingsConfig,
+      }
+      this.settings = new Settings(config as SettingsConfig<typeof config>)
+    } else {
+      this.settings = new Settings(
+        generatorSettingsConfig as SettingsConfig<
+          typeof generatorSettingsConfig
+        >,
+      )
+    }
+
     this.indexdb = new IndexDB()
     this.localStorage = new LocalStorage()
     this.sandbox = new Sandbox()
+    this.importer = new Importer()
     this.editor = new Editor()
-    this.editor.addTypings(this.sandbox.globalTypings())
-    this.editor.addTypings(bundleDefinitions)
+    this.editor.addTypings(this.sandbox.globalTypings(), 'ts:sandbox.d.ts')
+    const libraryDefinitions = this.importer.getLibrary(
+      'genart',
+      GENART_VERSION,
+    )
+    this.editor.addTypings(libraryDefinitions, 'ts:genart.d.ts', 'genart')
 
     this.resizer = document.getElementById('resizer')!
     this.setupKeybinds()
@@ -108,9 +144,9 @@ export class Generator {
       } else {
         this.resizer.style.display = 'block'
         this.resizer.style.left = '30%'
-        this.editor.html().style.width = '30%'
         this.sandbox.html.style.width = '70%'
         this.sandbox.html.style.left = '30%'
+        this.editor.html().style.width = '30%'
         this.editor.setFullscreenMode(v)
       }
     })
@@ -173,6 +209,7 @@ export class Generator {
   }
 
   async render() {
+    log.clear()
     const info = log.info('rendering code')
     if (this.settings.get('editor.format_on_render')) {
       await this.editor.format()
