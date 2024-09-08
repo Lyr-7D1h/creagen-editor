@@ -10,59 +10,50 @@ export function message(
   const html = document.getElementById('messages')
   html?.appendChild(messageElement)
 
-  if (timeout !== undefined) {
-    setTimeout(() => {
+  setTimeout(
+    () => {
       messageElement.remove()
-    }, timeout * 1000)
-  }
+    },
+    typeof timeout !== 'undefined' ? timeout * 1000 : 6000,
+  )
 
   return messageElement
 }
 
-function info(msg: any, permanent?: boolean): HTMLElement {
-  console.info(msg)
-  if (typeof msg !== 'string') {
-    msg = JSON.stringify(msg)
-  }
-  return message('info', msg as string, permanent === true ? undefined : 8)
+function formatMsg(msg: any[]): string {
+  return msg
+    .map((m) => {
+      if (m instanceof Error) {
+        return m.message
+      } else if (typeof m !== 'string') {
+        return JSON.stringify(m)
+      } else {
+        return m
+      }
+    })
+    .join(' ')
 }
 
-function warn(msg: any, permanent?: boolean): HTMLElement {
-  console.warn(msg)
-  if (typeof msg !== 'string') {
-    msg = JSON.stringify(msg)
-  }
-  return message('warn', msg as string, permanent === true ? undefined : 8)
+function info(...msg: any[]): HTMLElement {
+  console.info(...msg)
+  return message('info', formatMsg(msg))
+}
+function warn(...msg: any[]): HTMLElement {
+  console.warn(...msg)
+  return message('warn', formatMsg(msg))
+}
+function error(...msg: any[]): HTMLElement {
+  console.error(...msg)
+  return message('error', formatMsg(msg))
 }
 
-export function error(msg: any, permanent?: boolean): HTMLElement {
-  console.error(msg)
-  if (msg instanceof Error) {
-    msg = msg.message
-  } else if (typeof msg !== 'string') {
-    msg = JSON.stringify(msg)
-  }
-  return message('error', msg as string, permanent === true ? undefined : 8)
+function clear() {
+  const html = document.getElementById('messages')!
+  html.innerHTML = ''
 }
 
-// function error(error: Error | string) {
-//   if (typeof error === 'string') {
-//     console.error(new Error(error))
-//   } else {
-//     console.error(error)
-//   }
-// }
-
-// function warn(error: Error | string) {
-//   if (typeof error === 'string') {
-//     console.warn(new Error(error))
-//   } else {
-//     console.warn(error)
-//   }
-// }
-
-function debug(message?: any, ...optionalParams: any[]) {
-  console.debug(message, ...optionalParams)
+function debug(...msg: any[]) {
+  console.debug(msg)
 }
 
-export default { info, error, warn, debug }
+export default { info, error, warn, debug, clear }

@@ -5,7 +5,7 @@ import {
   type BindingParams,
 } from 'tweakpane'
 import { generateHumanReadableName } from './util'
-import { GENART_VERSION, GENART_EDITOR_VERSION } from '../constants'
+import { GENART_VERSION, GENART_EDITOR_VERSION } from './env'
 import { type BindingApi, type BladeState } from '@tweakpane/core'
 
 export interface Folder {
@@ -15,7 +15,7 @@ export interface Folder {
 
 export interface Button {
   type: 'button'
-  label: string
+  title: string
 }
 
 export interface Param {
@@ -24,6 +24,8 @@ export interface Param {
   value: any
   opts?: BindingParams
 }
+
+export type Entry = Folder | Button | Param
 
 type Generic<T> = {
   [K in keyof T]: K extends 'type' ? string : T[K]
@@ -69,7 +71,7 @@ export class Settings<T extends SettingsConfig<T>> {
     this.buttons = {}
     this.folders = {}
 
-    const entries: Array<[string, Param | Folder]> = Object.entries(config)
+    const entries: Array<[string, Entry]> = Object.entries(config)
     entries.sort(([k, v]) => (v.type === 'folder' ? -k.split('.').length : 0))
 
     for (const [key, entry] of entries) {
@@ -80,6 +82,9 @@ export class Settings<T extends SettingsConfig<T>> {
         case 'param': {
           this.addParam(key, entry.label, entry.value, entry.opts)
           break
+        }
+        case 'button': {
+          this.addButton(key, entry.title)
         }
       }
     }
@@ -100,19 +105,15 @@ export class Settings<T extends SettingsConfig<T>> {
 
   onChange(handler: () => void): void
   onChange(key: Params<T>, handler: (value: any) => void): void
-  onChange(
-    key: Params<T> | (() => void),
-    handler?: (value: any) => void,
-  ): void {
-    if (typeof key !== 'function') {
-      this.params[key].on('change', (e) => {
-        handler!(e.value)
+  onChange(x1: Params<T> | (() => void), x2?: (value: any) => void): void {
+    if (typeof x1 !== 'function') {
+      this.params[x1].on('change', (e) => {
+        x2!(e.value)
       })
       return
     }
-    this.pane.on('change', () => {
-      key()
-    })
+    this.pane.on('change', x1)
+    this.html.onclick = x1
   }
 
   onClick(key: Buttons<T> | string, handler: () => void) {
