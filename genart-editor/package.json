@@ -21,7 +21,6 @@
   },
   "dependencies": {
     "@kareemkermad/monaco-auto-import": "^1.1.6",
-    "@lyr_7d1h/genart": "^0.0.2",
     "monaco-editor": "^0.51.0",
     "monaco-vim": "^0.4.1",
     "tweakpane": "^4.0.4"

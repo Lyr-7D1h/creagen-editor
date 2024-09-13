@@ -1,4 +1,3 @@
-import * as genart from '@lyr_7d1h/genart'
 import log from './log'
 
 export type LoadableObject =
@@ -35,9 +34,6 @@ export class Sandbox {
     }
 
     // setup global functions
-    for (const [k, v] of Object.entries(genart)) {
-      window[k] = v
-    }
     window.load = (obj: LoadableObject) => {
       if ('html' in obj) {
         this.container.appendChild(obj.html())
@@ -87,14 +83,6 @@ function load(obj: LoadableObject): void;
  * @param fn draw callback
  * */
 function draw(fn: () => void): void;`
-  }
-
-  loadLib(code: string) {
-    // TODO: load lib
-    const doc = this.html.contentDocument!
-    const script = doc.createElement('script')
-    script.innerHTML = code
-    doc.body.appendChild(script)
   }
 
   runScript(code: string) {

@@ -1,14 +1,22 @@
-import { GENART_EDITOR_VERSION, GENART_VERSION } from './env'
+import { GENART_EDITOR_VERSION } from './env'
+import { Library } from './importer'
 
+/**
+ * ID: [64 byte hash][hex encoded Extension]
+ *
+ * Extension: [editorVersion]:[date]:[libs]
+ */
 export interface ID {
   /** Hash of the code. Used for comparing changes between code and storing versions locally */
   hash: string
-  libVersion: string
   editorVersion: string
+  /** Current time stamp in case of hash collisions */
   date: Date
+  /** libraries used for generating code */
+  libs: string[]
 }
 
-export async function createID(code: string): Promise<ID> {
+export async function createID(code: string, libs: Library[]): Promise<ID> {
   const data = new TextEncoder().encode(code)
   const hashBuffer = await crypto.subtle.digest('SHA-256', data)
   // convert hash buffer to hexidecimal string
@@ -17,7 +25,7 @@ export async function createID(code: string): Promise<ID> {
 
   return {
     hash,
-    libVersion: GENART_VERSION,
+    libs: libs.map((lib) => `${lib.name}@${lib.version}`),
     editorVersion: GENART_EDITOR_VERSION,
     date: new Date(),
   }
@@ -42,7 +50,9 @@ function fromhex(string: string) {
 export function IDToString(id: ID): string {
   return (
     id.hash +
-    tohex(id.libVersion + ':' + id.editorVersion + ':' + id.date.valueOf())
+    tohex(
+      `${id.editorVersion}:${id.date.valueOf()}:[${id.libs.map((l) => `"${l}"`).join(',')}]`,
+    )
   )
 }
 
@@ -52,12 +62,19 @@ export function IDFromString(id: string): ID | null {
   }
   const hash = id.substring(0, 64)
   const ext = fromhex(id.substring(64)).split(':')
-
+  const libs = JSON.parse(ext[2]!)
+  if (
+    !Array.isArray(libs) ||
+    libs.length === 0 ||
+    libs.some((lib) => typeof lib !== 'string')
+  ) {
+    throw Error(`Invalid libs: ${libs}`)
+  }
   return {
     hash,
     // TODO: handle error
-    libVersion: ext[0]!,
-    editorVersion: ext[1]!,
-    date: new Date(Number(ext[2]!)),
+    editorVersion: ext[0]!,
+    date: new Date(Number(ext[1]!)),
+    libs,
   }
 }

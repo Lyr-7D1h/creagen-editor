@@ -88,7 +88,6 @@ export class Settings<T extends SettingsConfig<T>> {
         }
       }
     }
-    console.log(this.folders, this.values)
   }
 
   folder(key: Folders<T>) {
@@ -108,7 +107,6 @@ export class Settings<T extends SettingsConfig<T>> {
   onChange(key: Params<T>, handler: (value: any) => void): void
   onChange(x1: Params<T> | (() => void), x2?: (value: any) => void): void {
     if (typeof x1 !== 'function') {
-      console.log(x1)
       this.params[x1].on('change', (e) => {
         x2!(e.value)
       })

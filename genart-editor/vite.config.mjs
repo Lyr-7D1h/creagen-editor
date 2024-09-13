@@ -2,21 +2,8 @@ import fg from 'fast-glob'
 import { defineConfig, loadEnv } from 'vite'
 import path from 'path'
 import fs from 'fs'
-import { packages } from './package-lock.json'
 
 const LIBRARY_PATH = '../genart'
-const LIBRARY_TYPE_DEFINITIONS_PATH = `${LIBRARY_PATH}/dist/genart.d.ts`
-const LIBRARY_TYPE_DEFINTIONS_OUTPUT = path.resolve(
-  __dirname,
-  'genartTypings.ts',
-)
-function generateTypeDefinitions() {
-  const typings = fs.readFileSync(LIBRARY_TYPE_DEFINITIONS_PATH).toString()
-  fs.writeFileSync(
-    LIBRARY_TYPE_DEFINTIONS_OUTPUT,
-    `export const genartTypings = \`${typings}\``,
-  )
-}
 
 /** Serve local build of genart library */
 function localLibrary() {
@@ -25,13 +12,15 @@ function localLibrary() {
     configureServer(server) {
       return () => {
         server.middlewares.use(async (req, res, next) => {
-          console.log(req.originalUrl)
-          if (req.originalUrl === '/genart.js') {
+          if (
+            req.originalUrl === '/genart.js' ||
+            req.originalUrl === '/genart.d.ts'
+          ) {
             res.setHeader('Content-Type', 'text/javascript; charset=utf-8')
             res.writeHead(200)
             res.write(
               fs.readFileSync(
-                path.join(__dirname, `${LIBRARY_PATH}/dist/genart.js`),
+                path.join(__dirname, `${LIBRARY_PATH}/dist/${req.originalUrl}`),
               ),
             )
             res.end()
@@ -60,15 +49,6 @@ export default defineConfig(async ({ command, mode }) => {
   return {
     plugins: [
       localLibrary(),
-      {
-        name: 'generate-bundle',
-        handleHotUpdate: async () => {
-          generateTypeDefinitions()
-        },
-        buildStart: async () => {
-          generateTypeDefinitions()
-        },
-      },
       {
         name: 'watch-external',
         async buildStart() {

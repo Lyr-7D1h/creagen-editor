@@ -5,8 +5,8 @@ import log from './log'
 import { type ID, IDFromString, IDToString, createID } from './id'
 import { IndexDB, LocalStorage } from './storage'
 import { Sandbox } from './sandbox'
-import { DEBUG, GENART_EDITOR_VERSION, GENART_VERSION } from './env'
-import { Importer } from './importer'
+import { DEBUG, GENART_EDITOR_VERSION, GENART_VERSION, MODE } from './env'
+import { Importer, Library } from './importer'
 
 const generatorSettingsConfig = {
   editor: {
@@ -40,6 +40,14 @@ const debugSettingsConfig = {
     type: 'folder',
     title: 'Debug',
   },
+  'debug.mode': {
+    type: 'param',
+    label: 'Mode',
+    value: `${MODE}`,
+    opts: {
+      readonly: true,
+    },
+  },
   'debug.package': {
     type: 'param',
     label: 'Package',
@@ -66,13 +74,14 @@ export class Generator {
     >
   >
 
-  private readonly editor: Editor
-  private readonly importer: Importer
-  private readonly sandbox: Sandbox
-  private readonly resizer: HTMLElement
+  private readonly libraries: Library[] = []
+  private readonly editor: Editor = new Editor()
+  private readonly importer: Importer = new Importer()
+  private readonly sandbox: Sandbox = new Sandbox()
+  private readonly resizer: HTMLElement = document.getElementById('resizer')!
 
-  private readonly localStorage: LocalStorage
-  private readonly indexdb: IndexDB
+  private readonly localStorage: LocalStorage = new LocalStorage()
+  private readonly indexdb: IndexDB = new IndexDB()
   private active_id?: ID
 
   constructor() {
@@ -90,19 +99,12 @@ export class Generator {
       )
     }
 
-    this.indexdb = new IndexDB()
-    this.localStorage = new LocalStorage()
-    this.sandbox = new Sandbox()
-    this.importer = new Importer()
-    this.editor = new Editor()
+    // add global sandbox functions
     this.editor.addTypings(this.sandbox.globalTypings(), 'ts:sandbox.d.ts')
-    const libraryDefinitions = this.importer.getLibrary(
-      'genart',
-      GENART_VERSION,
-    )
-    this.editor.addTypings(libraryDefinitions, 'ts:genart.d.ts', 'genart')
 
-    this.resizer = document.getElementById('resizer')!
+    // use latest genart library by default
+    this.addLibrary('genart')
+
     this.setupKeybinds()
     this.setupResizer()
 
@@ -118,6 +120,18 @@ export class Generator {
       .catch(log.error)
   }
 
+  async addLibrary(name: string, version?: string) {
+    if (this.libraries.some((lib) => lib.name === name)) {
+      log.warn(`Library ${name} already added`)
+      return
+    }
+    const library = this.importer.getLibrary(name, version)
+    const typings = await library.typings()
+    this.editor.addTypings(typings, `ts:${library.name}.d.ts`, library.name)
+    this.libraries.push(library)
+  }
+
+  /** Get code id from path and load code from indexdb */
   async loadCode() {
     const path = window.location.pathname.replace('/', '')
 
@@ -223,10 +237,10 @@ export class Generator {
       await this.editor.format()
     }
 
-    const code = this.editor.getValue()
+    let code = this.editor.getValue()
 
     // store code and change url
-    const id = await createID(code)
+    const id = await createID(code, this.libraries)
     await this.indexdb.set(id, {
       code,
       createdOn: id.date,
@@ -237,6 +251,8 @@ export class Generator {
       this.active_id = id
     }
 
+    code = this.parseCode(code)
+
     this.sandbox.runScript(code)
 
     info.remove()
@@ -245,5 +261,19 @@ export class Generator {
     setTimeout(() => {
       this.settings.updateRenderSettings(this.sandbox.container)
     }, 300)
+  }
+
+  /** change imports to the library version it uses */
+  parseCode(code: string) {
+    for (const { name, importPath } of this.libraries) {
+      const regex = new RegExp(
+        `import( *{.*} *from)? *["'](${name})["'];?`,
+        'gm',
+      )
+      code = code.replace(regex, (m, _p1, p2) => {
+        return m.replace(p2, importPath)
+      })
+    }
+    return code
   }
 }
