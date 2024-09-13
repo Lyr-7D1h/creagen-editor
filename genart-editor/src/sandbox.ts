@@ -9,6 +9,8 @@ export type LoadableObject =
 
 export class Sandbox {
   html: HTMLIFrameElement
+  /** Where js libraries are stored */
+  libraries: HTMLDivElement
   /** Html element that holds code rendered by load() */
   container: HTMLDivElement
 
@@ -24,6 +26,9 @@ export class Sandbox {
     this.container = window.document.createElement('div')
     this.container.id = 'container'
     window.document.body.appendChild(this.container)
+
+    this.libraries = document.createElement('div')
+    this.libraries.id = 'libraries'
 
     window.onerror = (e) => {
       log.error(e)

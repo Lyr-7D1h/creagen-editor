@@ -4,39 +4,8 @@ import path from 'path'
 import fs from 'fs'
 import { packages } from './package-lock.json'
 
-// const LIBRARY_TYPE_DEFINITIONS_PATH = '../genart/dist/types/index.d.ts'
-// const LIBRARY_TYPE_DEFINTIONS_OUTPUT = path.resolve(__dirname, 'bundle.ts')
-
-// export function generateTypeDefinitions() {
-//   const tmp = `${LIBRARY_TYPE_DEFINTIONS_OUTPUT}.tmp`
-//   dts.bundle({
-//     name: 'genart',
-//     main: LIBRARY_TYPE_DEFINITIONS_PATH,
-//     out: tmp,
-//     outputAsModuleFolder: false,
-//   })
-
-//   const declarations = fs.readFileSync(tmp).toString()
-
-//   const match = declarations.matchAll(/declare module '(.*\/(.*))'/gm)
-//   const namespaces = []
-//   for (const m of match) {
-//     namespaces.push(`namespace ${m[2]} {
-//     export * from "${m[1]}"
-// }`)
-//   }
-
-//   // const lines = declarations.split('\n')
-//   // lines.splice(0, 2)
-//   // TODO: delete global module declaration
-//   fs.writeFileSync(
-//     path.resolve(__dirname, 'bundle.ts'),
-//     `export const bundleDefinitions = \`${declarations}\n${namespaces.join('\n')}\``,
-//   )
-//   fs.rmSync(tmp)
-// }
-
-const LIBRARY_TYPE_DEFINITIONS_PATH = '../genart/dist/genart.d.ts'
+const LIBRARY_PATH = '../genart'
+const LIBRARY_TYPE_DEFINITIONS_PATH = `${LIBRARY_PATH}/dist/genart.d.ts`
 const LIBRARY_TYPE_DEFINTIONS_OUTPUT = path.resolve(
   __dirname,
   'genartTypings.ts',
@@ -49,17 +18,48 @@ function generateTypeDefinitions() {
   )
 }
 
+/** Serve local build of genart library */
+function localLibrary() {
+  return {
+    apply: 'serve',
+    configureServer(server) {
+      return () => {
+        server.middlewares.use(async (req, res, next) => {
+          console.log(req.originalUrl)
+          if (req.originalUrl === '/genart.js') {
+            res.setHeader('Content-Type', 'text/javascript; charset=utf-8')
+            res.writeHead(200)
+            res.write(
+              fs.readFileSync(
+                path.join(__dirname, `${LIBRARY_PATH}/dist/genart.js`),
+              ),
+            )
+            res.end()
+          }
+
+          next()
+        })
+      }
+    },
+    name: 'genart-library',
+  }
+}
+
 export default defineConfig(async ({ command, mode }) => {
   process.env = {
     ...process.env,
     ...loadEnv(mode, process.cwd()),
     VITE_DEBUG: true,
     VITE_GENART_EDITOR_VERSION: process.env.npm_package_version,
-    VITE_GENART_VERSION: packages['node_modules/@lyr_7d1h/genart'].version,
+    // use the latest local version by default
+    VITE_GENART_VERSION: JSON.parse(
+      fs.readFileSync(path.join(__dirname, `${LIBRARY_PATH}/package.json`)),
+    ).version,
   }
 
   return {
     plugins: [
+      localLibrary(),
       {
         name: 'generate-bundle',
         handleHotUpdate: async () => {
@@ -70,7 +70,7 @@ export default defineConfig(async ({ command, mode }) => {
         },
       },
       {
-        name: 'watch-external', // https://stackoverflow.com/questions/63373804/rollup-watch-include-directory/63548394#63548394
+        name: 'watch-external',
         async buildStart() {
           const files = await fg(['src/**/*', '../genart/src/**/*'])
           for (const file of files) {
