@@ -120,6 +120,7 @@ export class Editor {
     monaco.languages.typescript.javascriptDefaults.setExtraLibs([])
   }
 
+  /** If `packageName` given will also add autoimports */
   addTypings(typings: string, uri: string, packageName?: string) {
     // monaco.languages.typescript.javascriptDefaults.addExtraLib(typings, uri)
     if (typeof packageName === 'string') {
