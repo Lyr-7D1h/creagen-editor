@@ -47,12 +47,32 @@ export default defineConfig(async ({ command, mode }) => {
   }
 
   return {
+    server: {
+      fs: {
+        allow: [
+          path.resolve(__dirname, `${LIBRARY_PATH}/dist/genart.d.ts`),
+          path.resolve(__dirname, `${LIBRARY_PATH}/dist/genart.js`),
+          ...(await fg(['src/**/*', `${LIBRARY_PATH}/src/**/*`])),
+          'node_modules',
+          'main.css',
+        ],
+      },
+      watch: {
+        paths: [
+          path.resolve(__dirname, `${LIBRARY_PATH}/dist/genart.d.ts`),
+          path.resolve(__dirname, `${LIBRARY_PATH}/dist/genart.js`),
+        ],
+        ignored: ['**/node_modules/**'],
+        usePolling: true,
+        interval: 100,
+      },
+    },
     plugins: [
       localLibrary(),
       {
         name: 'watch-external',
         async buildStart() {
-          const files = await fg(['src/**/*', '../genart/src/**/*'])
+          const files = await fg(['src/**/*', `${LIBRARY_PATH}/src/**/*`])
           for (const file of files) {
             this.addWatchFile(file)
           }
