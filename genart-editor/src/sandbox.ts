@@ -42,8 +42,8 @@ export class Sandbox {
       }
     }
     window.console.log = (...msg: any[]) => {
-      console.log('asdf')
-      log.info(...msg)
+      console.log(...msg)
+      // log.info(...msg)
     }
 
     this.drawFns = []

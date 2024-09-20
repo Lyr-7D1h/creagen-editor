@@ -164,34 +164,36 @@ export function text(options?: TextOptions): Text {
   return new Text(options)
 }
 
-export interface CircleOptions extends GeometricOptions {
-  cx?: number
-  cy?: number
-}
-function applyCircleOptions(element: SVGElement, opts?: CircleOptions) {
-  if (typeof opts === 'undefined') return
-  applyGeometricOptions(element, opts)
-  if (opts.cx) element.setAttribute('cx', opts.cx.toString())
-  if (opts.cy) element.setAttribute('cy', opts.cy.toString())
-}
 class Circle {
   private readonly element: SVGCircleElement
 
-  constructor(r: number | string, options?: CircleOptions) {
+  constructor(
+    r: number | string,
+    cx: number,
+    cy: number,
+    options?: GeometricOptions,
+  ) {
     this.element = document.createElementNS(
       'http://www.w3.org/2000/svg',
       'circle',
     )
     this.element.setAttribute('r', r.toString())
-    applyCircleOptions(this.element, options)
+    this.element.setAttribute('cx', cx.toString())
+    this.element.setAttribute('cy', cy.toString())
+    applyGeometricOptions(this.element, options)
   }
 
   html(): SVGCircleElement {
     return this.element
   }
 }
-export function circle(r: number | string, options?: CircleOptions) {
-  return new Circle(r, options)
+export function circle(
+  r: number | string,
+  cx: number,
+  cy: number,
+  options?: GeometricOptions,
+) {
+  return new Circle(r, cx, cy, options)
 }
 
 export type SvgChild = Path | Text | Rectangle | Circle
@@ -230,8 +232,13 @@ class Svg {
     return p
   }
 
-  circle(r: number | string, options?: CircleOptions) {
-    const p = circle(r, options)
+  circle(
+    r: number | string,
+    cx: number,
+    cy: number,
+    options?: GeometricOptions,
+  ) {
+    const p = circle(r, cx, cy, options)
     this.add(p)
     return p
   }
@@ -271,9 +278,9 @@ class Svg {
   }
 
   height(): number | null {
-    if (typeof this.options?.width !== 'undefined') {
-      if (typeof this.options?.width === 'number') {
-        return this.options.width
+    if (typeof this.options?.height !== 'undefined') {
+      if (typeof this.options?.height === 'number') {
+        return this.options.height
       }
       return null
     }
