@@ -7,13 +7,13 @@ import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 import { initVimMode } from 'monaco-vim'
 
 // Sandbox type definitions
-monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
+monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
   noSemanticValidation: false,
   noSyntaxValidation: false,
   // 1378,1375: allow await on top level
   diagnosticCodesToIgnore: [1375, 1378],
 })
-monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
+monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
   target: monaco.languages.typescript.ScriptTarget.ES2016,
   allowNonTsExtensions: true,
   moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,

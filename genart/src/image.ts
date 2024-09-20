@@ -1,5 +1,12 @@
 // use p5 as ref https://p5js.org/reference/#/p5.Image
 
+/** @param input url or base64 string with image data */
+export async function image(input: string) {
+  const img = new Image(input)
+  await img.loadPixels()
+  return img
+}
+
 // https://github.dev/ronikaufman/poetical_computer_vision/blob/main/days01-10/day01/day01.pde
 class Image {
   private readonly img: HTMLImageElement
@@ -29,7 +36,7 @@ class Image {
 
         this.pixeldata = ctx.getImageData(
           0,
-          0,
+          20,
           canvas.width,
           canvas.height,
         ).data
@@ -81,11 +88,4 @@ class Image {
   html() {
     return this.img
   }
-}
-
-/** @param input url or base64 string with image data */
-export async function image(input: string) {
-  const img = new Image(input)
-  await img.loadPixels()
-  return img
 }
