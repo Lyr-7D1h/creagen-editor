@@ -14,8 +14,8 @@ export class Color {
     return new Color(v)
   }
 
-  constructor(r: number, g: number, b: number, a?: number)
-  constructor(color: number[] | Uint8ClampedArray)
+  // constructor(r: number, g: number, b: number, a?: number)
+  // constructor(color: number[] | Uint8ClampedArray)
   constructor(
     r: number | number[] | Uint8ClampedArray,
     g?: number,
@@ -150,4 +150,15 @@ function hex(x: number) {
   if (x > 255 || x < 0) throw Error('rgb value must be between 0 and 255')
   const hex = Math.round(x).toString(16)
   return hex.length === 1 ? '0' + hex : hex
+}
+
+export function color(r: number, g: number, b: number, a?: number): Color
+export function color(color: number[] | Uint8ClampedArray): Color
+export function color(
+  r: number | number[] | Uint8ClampedArray,
+  g?: number,
+  b?: number,
+  a?: number,
+): Color {
+  return new Color(r, g, b, a)
 }

@@ -73,6 +73,12 @@ class Image {
       const width = this.img.width * 4
       const r = []
       const pixels = this.pixels()
+      if ((x + dx) * 4 > pixels.length) {
+        throw Error('x is out of bounds')
+      }
+      if ((y + dy) * width > pixels.length) {
+        throw Error('y is out of bounds')
+      }
       for (let o = y * width; o < (y + dy) * width; o += width) {
         r.push(pixels.slice(o + x * 4, o + (x + dx) * 4))
         o += width

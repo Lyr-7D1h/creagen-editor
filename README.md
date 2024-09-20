@@ -50,3 +50,6 @@ Math:
 - http://xahlee.info/math/algorithmic_math_art.html
 - https://en.wikipedia.org/wiki/OpenSimplex_noise
 
+# Useful urls
+PNG to Base64:
+https://base64.guru/converter/encode/image/png
