@@ -61,6 +61,27 @@ class Path {
       },
     }
   }
+
+  /** Cubic Bezier Curve */
+  cCurve(
+    dx1: number,
+    dy1: number,
+    dx2: number,
+    dy2: number,
+    x: number,
+    y: number,
+  ) {
+    this.path += `C ${dx1} ${dy1} ${dx2} ${dy2} ${x} ${y}`
+    return {
+      ...this,
+      sCurve(dx2: number, dy2: number, x: number, y: number) {
+        this.path += `S ${dx2} ${dy2} ${x} ${y}`
+      },
+    }
+  }
+  sCurve(dx2: number, dy2: number, x: number, y: number) {
+    this.path += `S ${dx2} ${dy2} ${x} ${y}`
+  }
 }
 export function path(options?: PathOptions): Path {
   return new Path(options)

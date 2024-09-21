@@ -1,7 +1,7 @@
 export * as math from './math'
 export * as graph from './graph'
 export * as lin from './lin'
-export * as random from './random/index'
+export * from './random/index'
 export { svg } from './svg'
 export { image } from './image'
 export { color } from './color'

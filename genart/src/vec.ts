@@ -154,6 +154,27 @@ export class Vector<N extends number> extends Array<number> {
     return m
   }
 
+  /** Calculate the average difference from the average */
+  spread() {
+    return Math.sqrt(this.spread2())
+  }
+
+  /** Calculate the average difference from the average squared */
+  spread2() {
+    const average = this.average()
+    let spread = 0
+    for (let i = 0; i < this.length; i++) {
+      spread += Math.pow(this.get(i) - average, 2)
+    }
+
+    return spread / this.length
+  }
+
+  withinLimits(limits: FixedArray<[number, number], N>) {
+    // TODO: impl
+  }
+
+  /** if a number is above or below a limit it correct it so it is within the boundary limits */
   wraparound(limits: FixedArray<[number, number], N>) {
     for (let i = 0; i < this.length; i++) {
       const [start, stop] = (limits as any)[i] as [number, number]

@@ -5,7 +5,7 @@ export class PMF {
   p: number[]
 
   /** create pmf from non normalized list of numbers */
-  fromWeights(values: number[]) {
+  static fromWeights(values: number[]) {
     const sum = values.reduce((partialSum, a) => partialSum + a, 0)
     const f = values.map((v) => v / sum)
     return new PMF(f)
