@@ -14,7 +14,7 @@ monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
   diagnosticCodesToIgnore: [1375, 1378],
 })
 monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
-  target: monaco.languages.typescript.ScriptTarget.ES2016,
+  target: monaco.languages.typescript.ScriptTarget.ESNext,
   allowNonTsExtensions: true,
   moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
   esModuleInterop: true,
