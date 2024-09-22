@@ -2,6 +2,7 @@ export * as math from './math'
 export * as graph from './graph'
 export * as lin from './lin'
 export * from './random/index'
+export { SpatialMap } from './spatialmap'
 export { svg } from './svg'
 export { image } from './image'
 export { color } from './color'
@@ -15,6 +16,7 @@ declare global {
       config: {
         precision?: number
         asserts: boolean
+        debug: boolean
       }
     }
   }
@@ -23,5 +25,6 @@ declare global {
 window.genart = {
   config: {
     asserts: false,
+    debug: false,
   },
 }
