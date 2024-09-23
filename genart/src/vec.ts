@@ -170,8 +170,18 @@ export class Vector<N extends number> extends Array<number> {
     return spread / this.length
   }
 
-  withinLimits(limits: FixedArray<[number, number], N>) {
-    // TODO: impl
+  chunk(size: number): Vector<any>[] {
+    if (size < 0 || !Number.isFinite(size)) {
+      throw Error('size must be a positive number')
+    }
+    var index = 0,
+      resIndex = 0,
+      result = Array(Math.ceil(this.length / size))
+
+    while (index < this.length) {
+      result[resIndex++] = this.slice(index, (index += size))
+    }
+    return result
   }
 
   /** if a number is above or below a limit it correct it so it is within the boundary limits */
