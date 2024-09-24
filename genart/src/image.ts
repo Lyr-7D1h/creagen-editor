@@ -36,7 +36,7 @@ class Image {
 
         this.pixeldata = ctx.getImageData(
           0,
-          20,
+          0,
           canvas.width,
           canvas.height,
         ).data
