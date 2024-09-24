@@ -5,7 +5,7 @@ export interface GeometricOptions {
   fill?: Color
 }
 
-class Canvas {
+export class Canvas {
   canvas: HTMLCanvasElement
   ctx: CanvasRenderingContext2D
 
