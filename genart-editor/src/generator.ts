@@ -1,5 +1,6 @@
 import * as monaco from 'monaco-editor'
-import { Editor } from './editor'
+import ts from 'typescript'
+import { Editor, typescriptCompilerOptions } from './editor'
 import { Settings, type SettingsConfig } from './settings'
 import log from './log'
 import { type ID, IDFromString, IDToString, createID } from './id'
@@ -274,6 +275,6 @@ export class Generator {
         return m.replace(p2, importPath)
       })
     }
-    return code
+    return ts.transpile(code, typescriptCompilerOptions)
   }
 }

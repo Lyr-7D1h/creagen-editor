@@ -6,21 +6,28 @@ import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 
 import { initVimMode } from 'monaco-vim'
 
-// Sandbox type definitions
-monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
-  noSemanticValidation: false,
-  noSyntaxValidation: false,
-  // 1378,1375: allow await on top level
-  diagnosticCodesToIgnore: [1375, 1378],
-})
-monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
-  target: monaco.languages.typescript.ScriptTarget.ESNext,
-  allowNonTsExtensions: true,
-  moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
-  esModuleInterop: true,
-  module: monaco.languages.typescript.ModuleKind.CommonJS,
-  noEmit: true,
-})
+export const typescriptDiagnosticsOptions: monaco.languages.typescript.DiagnosticsOptions =
+  {
+    noSemanticValidation: false,
+    noSyntaxValidation: false,
+    // 1378,1375: allow await on top level
+    diagnosticCodesToIgnore: [1375, 1378],
+  }
+export const typescriptCompilerOptions: monaco.languages.typescript.CompilerOptions =
+  {
+    target: monaco.languages.typescript.ScriptTarget.ESNext,
+    allowNonTsExtensions: true,
+    moduleResolution: monaco.languages.typescript.ModuleResolutionKind.Classic,
+    esModuleInterop: true,
+    module: monaco.languages.typescript.ModuleKind.ESNext,
+    noEmit: true,
+  }
+monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions(
+  typescriptDiagnosticsOptions,
+)
+monaco.languages.typescript.typescriptDefaults.setCompilerOptions(
+  typescriptCompilerOptions,
+)
 
 // https://github.com/brijeshb42/monaco-themes/tree/master
 const genartLightTheme: m.editor.IStandaloneThemeData = {
