@@ -7,8 +7,8 @@ export { svg } from './svg'
 export { image } from './image'
 export { color } from './color'
 // export * from './canvas'
-export { canvas } from './canvas'
-export { vec } from './vec'
+export { canvas, Canvas } from './canvas'
+export { vec, Vector } from './vec'
 
 declare global {
   interface Window {
