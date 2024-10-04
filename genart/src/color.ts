@@ -133,6 +133,11 @@ export class Color {
     return this.normalize()
   }
 
+  /** Return the relative luminance value https://en.wikipedia.org/wiki/Relative_luminance */
+  luminance() {
+    return 0.2126 * this.r + 0.7152 * this.g + 0.0722 * this.b
+  }
+
   rgb() {
     return `rgb(${this.r}, ${this.g}, ${this.b})`
   }

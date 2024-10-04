@@ -14,7 +14,7 @@ type GrowToSize<
   L extends number = A['length'],
 > = L extends N ? A : L extends 999 ? T[] : GrowToSize<T, N, [...A, T]>
 
-type FixedArray<T, N extends number> = GrowToSize<T, N, [], 0>
+export type FixedArray<T, N extends number> = GrowToSize<T, N, [], 0>
 
 export class Vector<N extends number> extends Array<number> {
   constructor(...items: [number[] & { length: N }])
@@ -107,6 +107,14 @@ export class Vector<N extends number> extends Array<number> {
     return this
   }
 
+  /** Linear interpolation towards `target` in steps of `alpha`% */
+  lerp(target: Vector<N>, alpha: number) {
+    for (let i = 0; i < this.length; i++) {
+      this[i] = (1 - alpha) * this[i]! + alpha * target[i]!
+    }
+    return this
+  }
+
   round() {
     for (let i = 0; i < this.length; i++) {
       this[i] = Math.round(this[i]!)
@@ -117,6 +125,13 @@ export class Vector<N extends number> extends Array<number> {
   mul(s: number) {
     for (let i = 0; i < this.length; i++) {
       this[i] *= s
+    }
+    return this
+  }
+
+  div(s: number) {
+    for (let i = 0; i < this.length; i++) {
+      this[i] /= s
     }
     return this
   }

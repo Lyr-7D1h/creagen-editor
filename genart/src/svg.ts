@@ -1,3 +1,5 @@
+import { FixedArray, Vector } from './vec'
+
 export interface GeometricOptions {
   fill?: string
   fillOpacity?: number | string
@@ -85,6 +87,32 @@ class Path {
 }
 export function path(options?: PathOptions): Path {
   return new Path(options)
+}
+
+class Polygon {
+  private readonly element: SVGPolygonElement
+
+  constructor(points: [number, number][], options?: GeometricOptions) {
+    this.element = document.createElementNS(
+      'http://www.w3.org/2000/svg',
+      'polygon',
+    )
+    this.element.setAttribute(
+      'points',
+      points.map((p) => p.join(',')).join(' '),
+    )
+    applyRectangleOptions(this.element, options)
+  }
+
+  html() {
+    return this.element
+  }
+}
+export function polygon(
+  points: [number, number][],
+  options?: GeometricOptions,
+): Polygon {
+  return new Polygon(points, options)
 }
 
 export interface RectangleOptions extends GeometricOptions {
@@ -217,7 +245,7 @@ export function circle(
   return new Circle(r, cx, cy, options)
 }
 
-export type SvgChild = Path | Text | Rectangle | Circle
+export type SvgChild = Path | Text | Rectangle | Circle | Polygon
 export interface SvgOptions {
   width?: number | string
   height?: number | string
@@ -306,6 +334,21 @@ class Svg {
       return null
     }
     return 1000
+  }
+
+  polygon(points: [number, number][], options?: GeometricOptions) {
+    const p = polygon(points, options)
+    this.add(p)
+    return p
+  }
+
+  triangle(points: FixedArray<Vector<2>, 3>, opts?: PathOptions) {
+    const p = this.path(opts)
+    p.moveTo(points[0].x, points[0].y)
+      .lineTo(points[1].x, points[1].y)
+      .lineTo(points[2].x, points[2].y)
+      .lineTo(points[0].x, points[0].y)
+    return this
   }
 
   /** Create a grid onto your svg with boxes of width and height */

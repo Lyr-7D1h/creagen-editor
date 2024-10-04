@@ -1,6 +1,8 @@
 import typescript from '@rollup/plugin-typescript'
 import terser from '@rollup/plugin-terser'
 import { dts } from 'rollup-plugin-dts'
+import { nodeResolve } from '@rollup/plugin-node-resolve'
+import commonjs from '@rollup/plugin-commonjs'
 
 export default [
   {
@@ -11,7 +13,12 @@ export default [
       name: 'genart',
       sourcemap: true,
     },
-    plugins: [typescript({ noEmitOnError: false }), terser()],
+    plugins: [
+      nodeResolve(),
+      commonjs(),
+      typescript({ noEmitOnError: false }),
+      terser(),
+    ],
   },
   {
     input: 'dist/types/index.d.ts',
@@ -20,6 +27,6 @@ export default [
       file: 'dist/genart.d.ts',
       format: 'es',
     },
-    plugins: [dts()],
+    plugins: [, dts()],
   },
 ]
