@@ -1,5 +1,7 @@
 // use p5 as ref https://p5js.org/reference/#/p5.Image
 
+import { Color } from './color'
+
 /** @param input url or base64 string with image data */
 export async function image(input: string) {
   const img = new Image(input)
@@ -59,14 +61,14 @@ class Image {
     return this.pixeldata
   }
 
-  get(x: number, y: number): Uint8ClampedArray
+  get(x: number, y: number): Color
   get(x: number, y: number, dx: number, dy: number): Uint8ClampedArray[]
   get(
     x: number,
     y: number,
     dx?: number,
     dy?: number,
-  ): Uint8ClampedArray | Uint8ClampedArray[] {
+  ): Uint8ClampedArray | Uint8ClampedArray[] | Color {
     if (!this.pixelsLoaded) throw new Error('pixels not loaded')
 
     if (typeof dx !== 'undefined' && typeof dy !== 'undefined') {
@@ -88,7 +90,7 @@ class Image {
 
     const width = this.img.width
     const i = y * width * 4 + x * 4
-    return this.pixels().slice(i, i + 4)
+    return new Color(this.pixels().slice(i, i + 4))
   }
 
   html() {

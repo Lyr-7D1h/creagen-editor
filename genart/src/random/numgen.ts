@@ -15,7 +15,8 @@ export class RandomNumberGenerator {
     this.randomFn = random
   }
 
-  integer(start: number): number
+  /** generate a random number until and including `stop` */
+  integer(stop: number): number
   integer(start: number, stop: number): number
   integer(x1: number, x2?: number) {
     if (typeof x2 === 'undefined') {
