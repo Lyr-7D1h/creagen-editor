@@ -55,13 +55,18 @@ class Path {
 
   /** Quadratic Bezier Curve */
   qCurve(x: number, y: number, dx: number, dy: number) {
-    this.path += `Q ${x} ${y} ${dx} ${dy}`
+    this.path += ` Q ${x} ${y}, ${dx} ${dy}`
     return {
       ...this,
       tCurve: (x: number, y: number) => {
         this.path += `T ${x} ${y}`
       },
     }
+  }
+  /** Extend your quadratic curve with a new point */
+  tCurve(x: number, y: number) {
+    this.path += `T ${x} ${y}`
+    return this
   }
 
   /** Cubic Bezier Curve */
@@ -275,6 +280,11 @@ class Svg {
     this.children = []
   }
 
+  clear() {
+    this.children = []
+    this.element.innerHTML = ''
+  }
+
   path(options?: PathOptions) {
     const p = path(options)
     this.add(p)
@@ -305,6 +315,7 @@ class Svg {
   }
 
   add(element: SvgChild): void {
+    this.element.appendChild(element.html())
     this.children.push(element)
   }
 

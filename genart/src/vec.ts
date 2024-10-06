@@ -55,6 +55,15 @@ export class Vector<N extends number> extends Array<number> {
     )
   }
 
+  /** Squared euclidean distance to another vector */
+  dist2(v: Vector<N>) {
+    let dist = 0
+    for (let i = 0; i < this.length; i++) {
+      dist += (this[i]! - v[i]!) ** 2
+    }
+    return dist
+  }
+
   /** mutable mapping oftor values */
   mutmap(
     callbackfn: (value: number, index: number, array: number[]) => number,

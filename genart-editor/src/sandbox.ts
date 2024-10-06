@@ -57,15 +57,17 @@ export class Sandbox {
   drawLoop() {
     let then = Date.now()
     const draw = () => {
-      requestAnimationFrame(draw)
-
       const now = Date.now()
-      if (now - then > 16.6) {
+      const diff = 16.6 - now - then
+      if (diff > 0) {
         this.drawFns.forEach((fn) => {
           fn()
         })
       }
       then = now
+      setTimeout(() => {
+        requestAnimationFrame(draw)
+      }, Math.ceil(diff))
     }
     draw()
   }

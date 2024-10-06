@@ -20,12 +20,18 @@
     "@rollup/plugin-node-resolve": "^15.3.0",
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^11.1.6",
+    "@types/kd-tree-javascript": "^1.0.3",
+    "d3-quadtree": "^3.0.1",
     "prettier": "3.3.3",
     "rollup": "^4.21.2",
     "rollup-plugin-dts": "^6.1.1",
     "typescript": "^5.5.4"
   },
   "dependencies": {
-    "d3-delaunay": "^6.0.4"
+    "d3-delaunay": "^6.0.4",
+    "kd-tree-javascript": "^1.0.3",
+    "kdbush": "^4.0.2",
+    "knn": "^0.0.2",
+    "rbush": "^4.0.1"
   }
 }
