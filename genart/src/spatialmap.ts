@@ -1,31 +1,61 @@
 import { vec, Vector } from './vec'
 
+// TEST SCRIPT
+// import { SpatialMap, svg, vec } from 'genart'
+
+// const width = 1000
+// const height = 1000
+// const spacing = 50
+// const range = 100
+// const s = svg({ width: width, height })
+// s.grid(spacing)
+
+// const positions = [
+//   vec(30, 30),
+//   vec(40, 40),
+//   vec(50, 975),
+//   // vec(970, 970), vec(100, 200), vec(150, 150), vec(300, 400), vec(500, 600)
+// ]
+// const map = new SpatialMap(width, height, spacing, positions)
+
+// console.log([...map.nearestNeighbors(0, range)])
+// for (const p of positions) {
+//   s.rect(range * 2, range * 2, { x: p.x - range, y: p.y - range, fillOpacity: '0.2' })
+//   s.circle(2, p.x, p.y)
+// }
+
+// load(s)
+
 /**
- * Map that uses spatial 'hashing' for efficiently dealing with creature interaction
+ * Spatial map that uses hash mapping for efficiently finding nearest neighbors
  * Inspired by https://github.com/matthias-research/pages/blob/master/tenMinutePhysics/11-hashing.html#L293
  */
 export class SpatialMap {
-  cellStart: Int32Array
-  cellEntries: Int32Array
-  queryIds: Int32Array
-  querySize: number
-  spacing: number
+  private wrap: boolean
 
-  positionsSize: number
-  positions: Vector<2>[]
+  private cellStart: Int32Array
+  private cellEntries: Int32Array
+  private queryIds: Int32Array
+  private querySize: number
+  private spacing: number
 
-  width: number
-  height: number
+  private positionsSize: number
+  private positions: Vector<2>[]
 
-  rowLength: number
-  columnLength: number
+  private width: number
+  private height: number
+
+  private rowLength: number
+  private columnLength: number
 
   constructor(
     width: number,
     height: number,
     spacing: number,
     positions: Vector<2>[],
+    opts?: { wrap: boolean },
   ) {
+    this.wrap = typeof opts?.wrap === 'undefined' ? false : opts.wrap
     this.width = width
     this.height = height
     this.spacing = spacing
@@ -41,8 +71,10 @@ export class SpatialMap {
     this.querySize = 0
     this.positionsSize = 0
     this.positions = positions
+    this.update()
   }
 
+  /** Update the spatial map with changed positions */
   update() {
     // create new entries array with different size
     if (this.positions.length > this.positionsSize) {
@@ -73,12 +105,21 @@ export class SpatialMap {
 
   /** get the index of a tile from normal cartesian coordiantes */
   getIndex({ x, y }: Vector<2>) {
-    // wrap coords
-    if (x < 0) x = this.width + x
-    if (x > this.width - 1) x = x % this.width
-    if (y < 0) y = this.height + y
-    if (y > this.height - 1) {
-      y = y % this.height
+    if (this.wrap) {
+      // wrap coords
+      if (x < 0) x = this.width + x
+      if (x > this.width - 1) x = x % this.width
+      if (y < 0) y = this.height + y
+      if (y > this.height - 1) {
+        y = y % this.height
+      }
+    } else {
+      if (x < 0) x = 0
+      if (x > this.width - 1) x = this.width - 1
+      if (y < 0) y = 0
+      if (y > this.height - 1) {
+        y = this.height - 1
+      }
     }
     return (
       Math.floor(x / this.spacing) +
@@ -88,12 +129,21 @@ export class SpatialMap {
 
   /** get the index of a tile given row and column wrapping if it is outside of range */
   get(i: number, j: number) {
-    // wrap coords
-    if (i < 0) i = this.rowLength + i
-    if (i >= this.rowLength) i = i % this.rowLength
-    if (j < 0) j = this.columnLength + j
-    if (j >= this.columnLength) {
-      j = j % this.columnLength
+    if (this.wrap) {
+      // wrap coords
+      if (i < 0) i = this.rowLength + i
+      if (i >= this.rowLength) i = i % this.rowLength
+      if (j < 0) j = this.columnLength + j
+      if (j >= this.columnLength) {
+        j = j % this.columnLength
+      }
+    } else {
+      if (i < 0) i = 0
+      if (i >= this.rowLength) i = this.rowLength
+      if (j < 0) j = 0
+      if (j >= this.columnLength) {
+        j = this.columnLength
+      }
     }
     return i + j * this.rowLength
   }
@@ -106,19 +156,23 @@ export class SpatialMap {
     ]
   }
 
-  /** Strictly all nearest neighbors within a distance */
+  /**
+   * Strictly all nearest neighbors within a distance
+   * returns an iterator with [index of position, direction, distance^2]
+   * */
   nearestNeighbors(
     i: number,
     distance: number,
   ): Iterator<[number, Vector<2>, number]> {
-    const creatures = this.positions
-    const c = this.positions[i]!
+    const positions = this.positions
+    const p = this.positions[i]!
 
     // can at maximum be in the top right corner which is (distance + start of block) * 2*sqrt(2) (~2.82)
     const distanceSquared = distance ** 2
     const maxDistance = ((distance + this.spacing) * 2.83) ** 2
 
     const neigbors = this.nearestNeighborsFromGrid(i, distance)
+    console.log(neigbors)
     const w = this.width
     const h = this.height
     return {
@@ -136,33 +190,19 @@ export class SpatialMap {
             }
           }
           const ni = this.ids[i]!
-          const cn = creatures[ni]!
+          const cn = positions[ni]!
           const pn = cn
 
-          let dir = pn.clone().sub(c)
+          let dir = pn.clone().sub(p)
           // update direction of attraction if direction to neighbor is wrapped around in space
-          if (dir.mag2() > maxDistance) {
-            const qc = quadrant(w, h, c)
+          if (this.wrap && dir.mag2() > maxDistance) {
+            const qc = quadrant(w, h, p)
             const qn = quadrant(w, h, cn)
             // correct neighbor position to mirror the location
-            try {
-              dir = pn
-                .clone()
-                .add(getWrapCorrection(w, h, qc, qn))
-                .sub(c)
-            } catch (e) {
-              console.error(
-                'Error in wrap correction',
-                qc,
-                qn,
-                c,
-                cn,
-                dir,
-                dir.mag2(),
-                distance,
-              )
-              throw e
-            }
+            dir = pn
+              .clone()
+              .add(getWrapCorrection(w, h, qc, qn))
+              .sub(p)
           }
 
           const dirMag2 = dir.mag2()
@@ -185,16 +225,27 @@ export class SpatialMap {
     }
   }
 
-  /** all nearest neighbor within the spacing of the grid (might be outside distance), returns an iterator with all the ids */
+  /**
+   * all nearest neighbor within the spacing of the grid (might be outside distance),
+   *
+   * returns an iterator with all the ids
+   * */
   nearestNeighborsFromGrid(i: number, distance: number): Iterator<number> {
     const { x, y } = this.positions[i]!
     this.querySize = 0
 
-    const x0 = Math.floor((x - distance) / this.spacing)
-    const y0 = Math.floor((y - distance) / this.spacing)
+    let x0 = Math.floor((x - distance) / this.spacing)
+    let y0 = Math.floor((y - distance) / this.spacing)
 
-    const x1 = Math.floor((x + distance) / this.spacing)
-    const y1 = Math.floor((y + distance) / this.spacing)
+    let x1 = Math.floor((x + distance) / this.spacing)
+    let y1 = Math.floor((y + distance) / this.spacing)
+
+    if (!this.wrap) {
+      if (x0 < 0) x0 = 0
+      if (y0 < 0) y0 = 0
+      if (x1 > this.rowLength) x0 = this.rowLength
+      if (y1 > this.columnLength) y1 = this.columnLength
+    }
 
     for (let yi = y0; yi <= y1; yi++) {
       for (let xi = x0; xi <= x1; xi++) {
@@ -206,7 +257,7 @@ export class SpatialMap {
           j++
         ) {
           const ci = this.cellEntries[j]!
-          // skip current cell
+          // // skip current cell
           if (ci === i) continue
           this.queryIds[this.querySize] = ci
           this.querySize++
