@@ -268,7 +268,7 @@ export class Generator {
   parseCode(code: string) {
     for (const { name, importPath } of this.libraries) {
       const regex = new RegExp(
-        `import( *{.*} *from)? *["'](${name})["'];?`,
+        `import(.*{[^]*}[^]*from)? *["'](${name})["'];?`,
         'gm',
       )
       code = code.replace(regex, (m, _p1, p2) => {
