@@ -124,6 +124,14 @@ export class Vector<N extends number> extends Array<number> {
     return this
   }
 
+  dot(v: Vector<N>) {
+    let a = 0
+    for (let i = 0; i < this.length; i++) {
+      a += this[i]! * v[i]!
+    }
+    return a
+  }
+
   round() {
     for (let i = 0; i < this.length; i++) {
       this[i] = Math.round(this[i]!)
@@ -167,6 +175,11 @@ export class Vector<N extends number> extends Array<number> {
   /** airthmetic average */
   average(): number {
     return this.sum() / this.length
+  }
+
+  /** magnitude squared */
+  mag(): number {
+    return Math.sqrt(this.mag2())
   }
 
   /** magnitude squared */
