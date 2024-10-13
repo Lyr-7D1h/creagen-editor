@@ -87,6 +87,7 @@ export class SpatialMap {
 
     for (const p of this.positions) {
       const i = this.getIndex(p)
+
       this.cellStart[i] += 1
     }
 
@@ -172,7 +173,7 @@ export class SpatialMap {
     const maxDistance = ((distance + this.spacing) * 2.83) ** 2
 
     const neigbors = this.nearestNeighborsFromGrid(i, distance)
-    console.log(neigbors)
+
     const w = this.width
     const h = this.height
     return {
