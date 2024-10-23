@@ -219,6 +219,22 @@ export class Settings<T extends SettingsConfig<T>> {
           return
         case 'svg': {
           this.addFolders('export', 'Export')
+
+          // add svg information
+          const { paths, circles, rects } = analyzeSvg(c)
+          this.addParam('export.paths', 'Paths', paths, {
+            readonly: true,
+            format: (v) => v.toString(),
+          })
+          this.addParam('export.circles', 'Circles', circles, {
+            readonly: true,
+            format: (v) => v.toString(),
+          })
+          this.addParam('export.rects', 'Rects', rects, {
+            readonly: true,
+            format: (v) => v.toString(),
+          })
+
           this.addParam('export.name', 'Name', generateHumanReadableName())
 
           this.addButton('export.download', 'Download')
@@ -254,4 +270,37 @@ export class Settings<T extends SettingsConfig<T>> {
       }
     }
   }
+}
+
+function analyzeSvg(html: Element) {
+  let paths = 0
+  let circles = 0
+  let rects = 0
+  for (const c of Array.from(html.children)) {
+    switch (c.tagName.toLocaleLowerCase()) {
+      case 'path':
+        const d = c.getAttribute('d')
+        if (d === null || d.length === 0) {
+          console.warn('Path has no d attribute, removing...')
+          c.remove()
+          continue
+        }
+        paths++
+        break
+      case 'circle':
+        circles++
+        break
+      case 'rect':
+        rects++
+        break
+    }
+
+    const { paths: p, circles: ci, rects: r } = analyzeSvg(c)
+
+    paths += p
+    circles += ci
+    rects += r
+  }
+
+  return { paths, circles, rects }
 }
