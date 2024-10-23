@@ -43,7 +43,13 @@ class Path {
     return this.element
   }
 
-  moveTo(x: number, y: number) {
+  moveTo(x: number, y: number)
+  moveTo(x: Vector<2>)
+  moveTo(x: number | Vector<2>, y?: number) {
+    if (typeof x !== 'number') {
+      y = x.y
+      x = x.x
+    }
     this.path += `M ${x} ${y}`
     return this
   }
@@ -315,7 +321,6 @@ class Svg {
   }
 
   add(element: SvgChild): void {
-    this.element.appendChild(element.html())
     this.children.push(element)
   }
 
@@ -363,8 +368,11 @@ class Svg {
   }
 
   curve(points: Vector<2>[], opts?: PathOptions) {
+    if (points.length < 2) {
+      throw Error('Need at least 2 points to draw a curve')
+    }
     const path = this.path(opts)
-    path.moveTo(points[0][0], points[0][1])
+    path.moveTo(points[0])
     let i = 0
     for (i; i < points.length - 2; i++) {
       const { x, y } = points[i]
@@ -375,25 +383,6 @@ class Svg {
     }
     path.qCurve(points[i].x, points[i].y, points[i + 1].x, points[i + 1].y)
   }
-  // curve(
-  //   points: [number, number][],
-  //   tension?: number,
-  //   isClosed?: boolean,
-  //   numOfSegments?: number,
-  // ) {
-  //   const newPoints = getCurvePoints(points, tension, isClosed, numOfSegments)
-  //   const path = this.path()
-  //   console.log(newPoints)
-  //   path.moveTo(newPoints[0], newPoints[1])
-  //   for (let i = 2; i < newPoints.length - 1; i += 2) {
-  //     // const [x, y] = newPoints[i]
-  //     path.lineTo(newPoints[i], newPoints[i + 1])
-  //   }
-  //   // for (let i = 1; i < newPoints.length; i += 1) {
-  //   //   const [x, y] = newPoints[i]
-  //   //   path.lineTo(x, y)
-  //   // }
-  // }
 
   /** Create a grid onto your svg with boxes of width and height */
   grid(size: number): void
@@ -418,88 +407,4 @@ class Svg {
 }
 export function svg(options?: SvgOptions): Svg {
   return new Svg(options)
-}
-
-function getCurvePoints(
-  points: [number, number][],
-  tension?: number,
-  isClosed?: boolean,
-  numOfSegments?: number,
-): number[] {
-  // use input value if provided, or use a default value
-  tension = typeof tension != 'undefined' ? tension : 0.5
-  isClosed = isClosed ? isClosed : false
-  numOfSegments = numOfSegments ? numOfSegments : 16
-
-  let _pts = [],
-    res = [], // clone array
-    x,
-    y, // our x,y coords
-    t1x,
-    t2x,
-    t1y,
-    t2y, // tension vectors
-    c1,
-    c2,
-    c3,
-    c4, // cardinal points
-    st,
-    t,
-    i // steps based on num. of segments
-
-  // clone array so we don't change the original
-  //
-  _pts = points.slice(0).flat()
-
-  // The algorithm require a previous and next point to the actual point array.
-  // Check if we will draw closed or open curve.
-  // If closed, copy end points to beginning and first points to end
-  // If open, duplicate first points to befinning, end points to end
-  if (isClosed) {
-    _pts.unshift(points[points.length - 1])
-    _pts.unshift(points[points.length - 2])
-    _pts.unshift(points[points.length - 1])
-    _pts.unshift(points[points.length - 2])
-    _pts.push(points[0])
-    _pts.push(points[1])
-  } else {
-    _pts.unshift(points[1]) //copy 1. point and insert at beginning
-    _pts.unshift(points[0])
-    _pts.push(points[points.length - 2]) //copy last point and append
-    _pts.push(points[points.length - 1])
-  }
-
-  // ok, lets start..
-
-  // 1. loop goes through point array
-  // 2. loop goes through each segment between the 2 pts + 1e point before and after
-  for (i = 2; i < _pts.length - 4; i += 2) {
-    for (t = 0; t <= numOfSegments; t++) {
-      // calc tension vectors
-      t1x = (_pts[i + 2] - _pts[i - 2]) * tension
-      t2x = (_pts[i + 4] - _pts[i]) * tension
-
-      t1y = (_pts[i + 3] - _pts[i - 1]) * tension
-      t2y = (_pts[i + 5] - _pts[i + 1]) * tension
-
-      // calc step
-      st = t / numOfSegments
-
-      // calc cardinals
-      c1 = 2 * Math.pow(st, 3) - 3 * Math.pow(st, 2) + 1
-      c2 = -(2 * Math.pow(st, 3)) + 3 * Math.pow(st, 2)
-      c3 = Math.pow(st, 3) - 2 * Math.pow(st, 2) + st
-      c4 = Math.pow(st, 3) - Math.pow(st, 2)
-
-      // calc x and y cords with common control vectors
-      x = c1 * _pts[i] + c2 * _pts[i + 2] + c3 * t1x + c4 * t2x
-      y = c1 * _pts[i + 1] + c2 * _pts[i + 3] + c3 * t1y + c4 * t2y
-
-      //store points in array
-      res.push(x)
-      res.push(y)
-    }
-  }
-
-  return res
 }
