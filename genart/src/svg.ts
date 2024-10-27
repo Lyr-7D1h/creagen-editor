@@ -1,4 +1,4 @@
-import { FixedArray, Vector } from './vec'
+import { FixedArray, Vector } from './Vector'
 
 export interface GeometricOptions {
   fill?: string
@@ -43,8 +43,8 @@ class Path {
     return this.element
   }
 
-  moveTo(x: number, y: number)
-  moveTo(x: Vector<2>)
+  moveTo(x: number, y: number): Path
+  moveTo(x: Vector<2>): Path
   moveTo(x: number | Vector<2>, y?: number) {
     if (typeof x !== 'number') {
       y = x.y
@@ -54,7 +54,13 @@ class Path {
     return this
   }
 
-  lineTo(x: number, y: number) {
+  lineTo(x: number, y: number): Path
+  lineTo(x: Vector<2>): Path
+  lineTo(x: number | Vector<2>, y?: number) {
+    if (typeof x !== 'number') {
+      y = x.y
+      x = x.x
+    }
     this.path += `L ${x} ${y}`
     return this
   }

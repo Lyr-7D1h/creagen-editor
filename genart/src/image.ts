@@ -2,20 +2,20 @@
 
 import { Color } from './color'
 
-/** @param input url or base64 string with image data */
-export async function image(input: string) {
-  const img = new Image(input)
-  await img.loadPixels()
-  return img
-}
-
 // https://github.dev/ronikaufman/poetical_computer_vision/blob/main/days01-10/day01/day01.pde
-class Image {
+export class Image {
   private readonly img: HTMLImageElement
   private pixeldata: Uint8ClampedArray
   private pixelsLoaded: boolean
 
-  constructor(input: string) {
+  static async create(input: string) {
+    const image = new Image(input)
+    await image.loadPixels()
+    return image
+  }
+
+  /** @param input url or base64 string with image data */
+  private constructor(input: string) {
     this.img = new globalThis.Image()
     this.img.src = input
 

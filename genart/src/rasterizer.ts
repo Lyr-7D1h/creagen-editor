@@ -1,5 +1,5 @@
 import { type Color } from './color'
-import { type Vector } from './vec'
+import { type Vector } from './Vector'
 
 // https://github.dev/ronikaufman/poetical_computer_vision/blob/main/days01-10/day01/day01.pde
 export class Rasterizer {
