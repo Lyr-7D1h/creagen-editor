@@ -270,6 +270,7 @@ export interface Vector<N extends number> {
   create(...items: [number[] & { length: N }]): Vector<N>
 }
 
+/** Short hand for `Vector.create()` */
 export function vec<N extends number>(
   ...items: [number[] & { length: N }]
 ): Vector<N>

@@ -278,13 +278,17 @@ function applySvgOptions(element: SVGElement, opts?: SvgOptions) {
     typeof opts?.height !== 'undefined' ? opts.height.toString() : '1000px',
   )
 }
-class Svg {
+export class Svg {
   element: SVGElement
   children: SvgChild[]
 
   private readonly options?: SvgOptions
 
-  constructor(options?: SvgOptions) {
+  static create(options?: SvgOptions) {
+    return new Svg(options)
+  }
+
+  private constructor(options?: SvgOptions) {
     this.element = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
     this.element.setAttribute('xlms', 'http://www.w3.org/2000/svg')
     applySvgOptions(this.element, options)
@@ -410,7 +414,4 @@ class Svg {
       p.moveTo(0, y).lineTo(w, y)
     }
   }
-}
-export function svg(options?: SvgOptions): Svg {
-  return new Svg(options)
 }

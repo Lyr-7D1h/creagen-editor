@@ -8,8 +8,9 @@ import { vec, Vector } from './Vector'
 export class Voronoi {
   delaunay: any
   voronoi: any
-  points: [number, number][] | Vector<2>[]
   bounds: [number, number, number, number]
+  points: [number, number][] | Vector<2>[]
+  stippledPoints: Vector<2>[] | undefined
 
   static create(
     points: [number, number][] | Vector<2>[],
@@ -22,7 +23,10 @@ export class Voronoi {
     points: [number, number][] | Vector<2>[],
     bounds: [number, number, number, number],
   ) {
+    // clone points
     this.points = points
+    this.stippledPoints = undefined
+
     this.bounds = bounds
     this.delaunay = Delaunay.from(points)
     this.voronoi = this.delaunay.voronoi(bounds)
@@ -38,17 +42,27 @@ export class Voronoi {
     return this.voronoi.cellPolygons()
   }
 
-  /** Voronoi Weighted Stippling https://www.cs.ubc.ca/labs/imager/tr/2002/secord2002b/secord.2002b.pdf */
+  /**
+   * Update the current set of `points` according to Voronoi Weighted Stippling (https://www.cs.ubc.ca/labs/imager/tr/2002/secord2002b/secord.2002b.pdf)
+   * save and return this updated set of points
+   * */
   weightedStippling(
     value: (x, y) => number,
     interpolationStep: number,
   ): Vector<2>[] {
-    const points = this.points
+    let stippledPoints = this.stippledPoints
+    // clone from original points
+    if (stippledPoints === undefined) {
+      stippledPoints = this.stippledPoints = new Array(this.points.length)
+      for (let i = 0; i < this.points.length; i++) {
+        stippledPoints[i] = vec(this.points[i])
+      }
+    }
 
     // weighted centroids
-    const weights = new Array(points.length).fill(0)
-    const centroids: Vector<2>[] = new Array(points.length)
-    for (let i = 0; i < points.length; i++) {
+    const weights = new Array(stippledPoints.length).fill(0)
+    const centroids: Vector<2>[] = new Array(stippledPoints.length)
+    for (let i = 0; i < stippledPoints.length; i++) {
       centroids[i] = vec(0, 0)
     }
 
@@ -68,18 +82,17 @@ export class Voronoi {
     for (let i = 0; i < centroids.length; i++) {
       const weight = weights[i]
       if (weight === 0) {
-        centroids[i] = vec<2>(...points[i])
+        centroids[i] = vec<2>(...stippledPoints[i])
         continue
       }
       centroids[i].div(weight)
     }
 
-    const res = []
-    for (let i = 0; i < points.length; i++) {
-      res.push(vec(points[i]).lerp(centroids[i], interpolationStep).round())
+    for (let i = 0; i < stippledPoints.length; i++) {
+      stippledPoints[i].lerp(centroids[i], interpolationStep).round()
     }
 
-    return res
+    return stippledPoints
   }
 }
 
