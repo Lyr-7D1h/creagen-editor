@@ -6,12 +6,12 @@ export { SpatialMap } from './spatialmap'
 export { KDTree } from './kdtree'
 export { QuadTree } from './quadtree'
 export { svg } from './svg'
-export { image } from './image'
+export { Image } from './image'
 export { color } from './color'
-export { voronoi } from './voronoi'
+export { Voronoi } from './voronoi'
 // export * from './canvas'
 export { canvas, Canvas } from './canvas'
-export { vec, Vector } from './vec'
+export { vec, Vector } from './Vector'
 
 declare global {
   interface Window {

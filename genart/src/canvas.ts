@@ -1,5 +1,5 @@
 import { type Color } from './color'
-import { Vector } from './vec'
+import { Vector } from './Vector'
 
 export interface GeometricOptions {
   fill?: Color

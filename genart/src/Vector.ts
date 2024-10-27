@@ -17,11 +17,10 @@ type GrowToSize<
 export type FixedArray<T, N extends number> = GrowToSize<T, N, [], 0>
 
 export class Vector<N extends number> extends Array<number> {
-  constructor(...items: [number[] & { length: N }])
-  constructor(...items: number[] & { length: N })
-  // constructor(...items: [number[]])
-  constructor(...items: number[])
-  constructor(
+  private constructor(...items: [number[] & { length: N }])
+  private constructor(...items: number[] & { length: N })
+  private constructor(...items: number[])
+  private constructor(
     ...items: [number[] & { length: N }] | (number[] & { length: N })
   ) {
     if (typeof items[0] === 'undefined') {
@@ -33,6 +32,12 @@ export class Vector<N extends number> extends Array<number> {
       super(...(items[0] as number[]))
     }
     Object.setPrototypeOf(this, Vector.prototype)
+  }
+
+  static create<N extends number>(
+    ...items: [number[] & { length: N }] | (number[] & { length: N })
+  ) {
+    return new Vector<N>(...(items as number[]))
   }
 
   override get length(): N {
@@ -258,6 +263,13 @@ export class Vector<N extends number> extends Array<number> {
   }
 }
 
+export interface Vector<N extends number> {
+  create(...items: [number[] & { length: N }]): Vector<N>
+  create(...items: number[] & { length: N }): Vector<N>
+  create(...items: number[]): Vector<N>
+  create(...items: [number[] & { length: N }]): Vector<N>
+}
+
 export function vec<N extends number>(
   ...items: [number[] & { length: N }]
 ): Vector<N>
@@ -267,7 +279,6 @@ export function vec<N extends number>(
 export function vec<N extends number>(...items: [...number[]]): Vector<N>
 export function vec<N extends number>(
   ...items: [number[] & { length: N }] | (number[] & { length: N })
-) {
-  // : (Vector<N> & FixedArray<N>) | Vector<N>
-  return new Vector<N>(...(items as number[])) // as Vector<N> & FixedArray<N>
+): Vector<N> {
+  return Vector.create<N>(...(items as number[]))
 }

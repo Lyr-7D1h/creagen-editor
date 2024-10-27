@@ -1,4 +1,4 @@
-import { vec, Vector } from './vec'
+import { vec, Vector } from './Vector'
 
 // TEST SCRIPT
 // import { SpatialMap, svg, vec } from 'genart'
