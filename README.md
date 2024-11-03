@@ -53,3 +53,5 @@ Math:
 # Useful urls
 PNG to Base64:
 https://base64.guru/converter/encode/image/png
+Sanitize svg's:
+https://www.svgviewer.dev

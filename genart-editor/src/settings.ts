@@ -4,7 +4,7 @@ import {
   type ButtonApi,
   type BindingParams,
 } from 'tweakpane'
-import { generateHumanReadableName } from './util'
+import { generateHumanReadableName, isNumeric, roundToDec } from './util'
 import { GENART_VERSION, GENART_EDITOR_VERSION } from './env'
 import { type BindingApi, type BladeState } from '@tweakpane/core'
 
@@ -179,7 +179,7 @@ export class Settings<T extends SettingsConfig<T>> {
     // filter out settings that don't exist or got changed
     const folders = []
     if ('children' in state && Array.isArray(state['children'])) {
-      for (const folder of state.children) {
+      for (const folder of state['children']) {
         if (
           typeof Object.values(this.folders).find(
             (f) => f.title === folder.title,
@@ -202,7 +202,7 @@ export class Settings<T extends SettingsConfig<T>> {
         }
       }
     }
-    state.children = folders
+    state['children'] = folders
 
     this.pane.importState(state)
   }
@@ -221,7 +221,7 @@ export class Settings<T extends SettingsConfig<T>> {
           this.addFolders('export', 'Export')
 
           // add svg information
-          const { paths, circles, rects } = analyzeSvg(c)
+          const { paths, circles, rects, opts: props } = analyzeSvg(c)
           this.addParam('export.paths', 'Paths', paths, {
             readonly: true,
             format: (v) => v.toString(),
@@ -237,9 +237,15 @@ export class Settings<T extends SettingsConfig<T>> {
 
           this.addParam('export.name', 'Name', generateHumanReadableName())
 
+          this.addParam('export.optimize', 'Optimize', true)
+
           this.addButton('export.download', 'Download')
           this.onClick('export.download', () => {
-            const svg = c.cloneNode(true) as SVGElement
+            let svg = c.cloneNode(true) as SVGElement
+
+            if (this.values['export.optimize']) {
+              optimizeSvg(svg, props)
+            }
 
             // TODO: add params used, code hash, date generated
             const metadata = document.createElementNS(
@@ -272,7 +278,82 @@ export class Settings<T extends SettingsConfig<T>> {
   }
 }
 
-function analyzeSvg(html: Element) {
+interface SvgProps {
+  width?: number
+  height?: number
+}
+function optimizeSvg(html: Element, opts: SvgProps) {
+  for (const c of Array.from(html.children)) {
+    switch (c.tagName.toLocaleLowerCase()) {
+      case 'path':
+        if (optimizePath(c as SVGPathElement, opts)) {
+          c.remove()
+        }
+        break
+      case 'circle':
+        break
+      case 'rect':
+        break
+    }
+
+    optimizeSvg(c, opts)
+  }
+}
+
+/**
+ * Makes all coordinates fixed to two decimal
+ * and removes non sensical paths.
+ * Will also remove coordinates outside of svg bounds
+ *
+ * return `true` if should be removed
+ * */
+function optimizePath(el: SVGPathElement, opts: SvgProps) {
+  const d = el.getAttribute('d')
+  if (d === null || d.length === 0) {
+    return true
+  }
+  const m = d.matchAll(/(\w) ?((?:[\d|\.]*(,? |(?<=\w)))+)/gi)
+  let nd = ''
+  for (const match of m) {
+    const cmd = match[1]!
+    const args = match[2]!
+      .split(' ')
+      .filter((a) => a !== ' ' && a !== '')
+      .map((a) => a.replace(',', ''))
+    if (args.length < 2) {
+      return true
+    }
+    nd += cmd
+    const nargs = []
+    // round numbers
+    for (let i = 0; i < args.length; i += 2) {
+      const x = roundToDec(Number(args[i]), 2)
+      const y = roundToDec(Number(args[i + 1]), 2)
+      if (
+        (typeof opts.width !== 'undefined' && x > opts.width) ||
+        x < 0 ||
+        (typeof opts.height !== 'undefined' && y > opts.height) ||
+        y < 0
+      ) {
+        continue
+      }
+
+      nargs.push(x)
+      nargs.push(y)
+    }
+    nd += nargs.join(' ')
+  }
+  el.setAttribute('d', nd)
+  return false
+}
+
+function analyzeSvg(html: Element, opts: SvgProps = {}) {
+  if (html.tagName === 'svg') {
+    opts = {
+      height: Number(html.getAttribute('height')) ?? undefined,
+      width: Number(html.getAttribute('width')) ?? undefined,
+    }
+  }
   let paths = 0
   let circles = 0
   let rects = 0
@@ -281,8 +362,8 @@ function analyzeSvg(html: Element) {
       case 'path':
         const d = c.getAttribute('d')
         if (d === null || d.length === 0) {
-          console.warn('Path has no d attribute, removing...')
-          c.remove()
+          console.warn('Path has no d attribute')
+          // c.remove()
           continue
         }
         paths++
@@ -302,5 +383,5 @@ function analyzeSvg(html: Element) {
     rects += r
   }
 
-  return { paths, circles, rects }
+  return { paths, circles, rects, opts }
 }
