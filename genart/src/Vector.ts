@@ -281,5 +281,5 @@ export function vec<N extends number>(...items: [...number[]]): Vector<N>
 export function vec<N extends number>(
   ...items: [number[] & { length: N }] | (number[] & { length: N })
 ): Vector<N> {
-  return Vector.create<N>(...(items as number[]))
+  return Vector.create<N>(...(items as any))
 }
