@@ -126,7 +126,11 @@ export class Generator {
       log.warn(`Library ${name} already added`)
       return
     }
-    const library = this.importer.getLibrary(name, version)
+    const library = await this.importer.getLibrary(name, version)
+    if (library === null) {
+      log.warn(`Library ${name} not found`)
+      return
+    }
     const typings = await library.typings()
     this.editor.addTypings(typings, `ts:${library.name}.d.ts`, library.name)
     this.libraries.push(library)

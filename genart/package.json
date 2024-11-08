@@ -1,10 +1,10 @@
 {
   "name": "@lyr_7d1h/genart",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "",
   "main": "./dist/genart.js",
   "module": "./dist/genart.js",
-  "typings": "./dist/build/index.d.ts",
+  "typings": "./dist/genart.d.ts",
   "files": [
     "dist"
   ],

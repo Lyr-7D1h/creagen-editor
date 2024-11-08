@@ -13,21 +13,48 @@ export interface Library {
 // TODO: use https://unpkg.com/
 export class Importer {
   /** Get a library, latest if version is not given */
-  getLibrary(packageName: string, version?: string): Library {
+  async getLibrary(
+    packageName: string,
+    version?: string,
+  ): Promise<Library | null> {
     console.log('getLibrary', packageName, MODE)
     // get local version of genart
     if (packageName === 'genart' && MODE === 'dev') {
-      return {
-        name: packageName,
-        version: GENART_VERSION,
-        importPath: './genart.js',
-        typings: async () => {
-          const res = await fetch('./genart.d.ts')
-          const typings = await res.text()
-          return `declare module 'genart' {${typings}}`
-        },
+      if (MODE === 'dev') {
+        return {
+          name: packageName,
+          version: GENART_VERSION,
+          importPath: './genart.js',
+          typings: async () => {
+            const res = await fetch('./genart.d.ts')
+            const typings = await res.text()
+            return `declare module 'genart' {${typings}}`
+          },
+        }
       }
     }
-    throw Error('Not implemented')
+
+    const url = `https://unpkg.com/${packageName}${version ? `@${version}` : ''}`
+    let res = await fetch(`${url}/package.json`)
+    const pkg = await res.json()
+
+    version = pkg.version
+    if (typeof version === 'undefined') throw Error('No version found')
+
+    const typings = pkg.typings
+    if (typeof typings === 'undefined') throw Error('No typings found')
+
+    return {
+      name: packageName,
+      version,
+      importPath: `https://unpkg.com/${packageName}${version ? `@${version}` : ''}`,
+      typings: async () => {
+        res = await fetch(
+          `https://unpkg.com/${packageName}${version ? `@${version}` : ''}/${typings}`,
+        )
+        let body = await res.text()
+        return `declare module '${packageName}' {${body}}`
+      },
+    }
   }
 }
