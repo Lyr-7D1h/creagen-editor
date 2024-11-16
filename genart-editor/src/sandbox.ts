@@ -1,3 +1,4 @@
+import { GeneratorSettings } from './generator'
 import log from './log'
 
 export type LoadableObject =
@@ -13,10 +14,13 @@ export class Sandbox {
   /** Html element that holds code rendered by load() */
   container: HTMLDivElement
 
-  drawFns: Array<() => void>
+  settings: GeneratorSettings
 
-  constructor() {
+  drawFns: Array<(dt: number) => void>
+
+  constructor(settings: GeneratorSettings) {
     this.html = document.getElementById('sandbox')! as HTMLIFrameElement
+    this.settings = settings
 
     const window = this.html.contentWindow!
 
@@ -47,7 +51,15 @@ export class Sandbox {
     }
 
     this.drawFns = []
-    window.draw = (fn: () => void) => {
+    window.draw = (fn: (dt: number) => void) => {
+      console.log(this.settings.get('debug.fps'))
+      if (this.settings.get('debug.fps') === undefined) {
+        this.settings.addParam('debug.fps', 'FPS', 0, {
+          format: (v: number) => `${v.toFixed(0)} fps`,
+          readonly: true,
+        })
+      }
+
       this.drawFns.push(fn)
     }
     this.drawLoop()
@@ -55,21 +67,26 @@ export class Sandbox {
 
   /** try to run a draw loop that runs drawFns every 1/60 seconds */
   drawLoop() {
-    let then = Date.now()
-    const draw = () => {
-      const now = Date.now()
-      const diff = 16.6 - now - then
-      if (diff > 0) {
-        this.drawFns.forEach((fn) => {
-          fn()
-        })
+    let t0 = (document.timeline.currentTime as number) ?? 0
+    let frames = 0
+    let s = 0
+    const draw = (t1: DOMHighResTimeStamp) => {
+      // const t1 = performance.now()
+      frames += 1
+      if (t1 - s >= 1000) {
+        this.settings.set('debug.fps', frames)
+        s += 1000
+        frames = 0
       }
-      then = now
-      setTimeout(() => {
-        requestAnimationFrame(draw)
-      }, Math.ceil(diff))
+      const dt = t1 - t0
+
+      this.drawFns.forEach((fn) => {
+        fn(dt)
+      })
+      t0 = t1
+      requestAnimationFrame(draw)
     }
-    draw()
+    requestAnimationFrame(draw)
   }
 
   globalTypings(): string {
@@ -85,7 +102,7 @@ function load(obj: LoadableObject): void;
  * Call a drawing function every 1/60 seconds
  * @param fn draw callback
  * */
-function draw(fn: () => void): void;`
+function draw(fn: (dt: number) => void): void;`
   }
 
   runScript(code: string) {

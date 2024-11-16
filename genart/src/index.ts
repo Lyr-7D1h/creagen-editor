@@ -1,17 +1,18 @@
 export * as math from './math'
 export * as graph from './graph'
 export * as lin from './lin'
+export { Canvas } from './Canvas'
 export * from './random/index'
 export { SpatialMap } from './spatialmap'
 export { KDTree } from './kdtree'
 export { QuadTree } from './quadtree'
 export { Svg } from './svg'
-export { Image } from './image'
-export { color } from './color'
+export { Image } from './Image'
+export { Color } from './color'
 export { Voronoi } from './Voronoi'
 // export * from './canvas'
-export { canvas, Canvas } from './canvas'
 export { vec, Vector } from './Vector'
+export { SignalProcessing } from './SignalProcessing'
 
 declare global {
   interface Window {

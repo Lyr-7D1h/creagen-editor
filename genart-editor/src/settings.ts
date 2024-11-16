@@ -4,7 +4,7 @@ import {
   type ButtonApi,
   type BindingParams,
 } from 'tweakpane'
-import { generateHumanReadableName, isNumeric, roundToDec } from './util'
+import { generateHumanReadableName, roundToDec } from './util'
 import { GENART_VERSION, GENART_EDITOR_VERSION } from './env'
 import { type BindingApi, type BladeState } from '@tweakpane/core'
 
@@ -59,17 +59,17 @@ export class Settings<T extends SettingsConfig<T>> {
   private readonly pane: Pane
   private values: Record<Params<T> | string, any>
   private readonly params: Record<Params<T> | string, BindingApi>
-  private folders: Record<Folders<T> | string, FolderApi>
   private readonly buttons: Record<Buttons<T> | string, ButtonApi>
+  private folders: Record<Folders<T> | string, FolderApi>
 
   constructor(config: T) {
     this.html = document.getElementById('settings')!
     this.pane = new Pane({ container: this.html })
 
-    this.values = {}
-    this.params = {}
-    this.buttons = {}
-    this.folders = {}
+    this.values = {} as Record<Params<T> | string, any>
+    this.params = {} as Record<Params<T> | string, BindingApi>
+    this.buttons = {} as Record<Buttons<T> | string, ButtonApi>
+    this.folders = {} as Record<Folders<T> | string, FolderApi>
 
     const entries: Array<[string, Entry]> = Object.entries(config)
     entries.sort(([k, v]) => (v.type === 'folder' ? -k.split('.').length : 0))
@@ -95,8 +95,10 @@ export class Settings<T extends SettingsConfig<T>> {
   }
 
   set(key: Params<T>, value: any) {
-    this.values[key] = value
-    this.pane.refresh()
+    if (key in this.params) {
+      this.values[key] = value
+      this.pane.refresh()
+    }
   }
 
   get(key: Params<T>) {

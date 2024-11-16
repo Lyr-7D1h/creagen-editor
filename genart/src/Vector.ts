@@ -44,6 +44,18 @@ export class Vector<N extends number> extends Array<number> {
     return super.length as N
   }
 
+  get x(): number {
+    return this[0]!
+  }
+
+  get y(): Y<N> {
+    return this[1] as Y<N>
+  }
+
+  get z(): Z<N> {
+    return this[2] as Z<N>
+  }
+
   override push(): number {
     throw new Error('Cannot add items to FixedSizeArray')
   }
@@ -248,18 +260,6 @@ export class Vector<N extends number> extends Array<number> {
       a += this.get(i)
     }
     return a
-  }
-
-  get x(): number {
-    return this[0]!
-  }
-
-  get y(): Y<N> {
-    return this[1] as Y<N>
-  }
-
-  get z(): Z<N> {
-    return this[2] as Z<N>
   }
 }
 
