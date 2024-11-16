@@ -67,18 +67,29 @@ const debugSettingsConfig = {
   },
 }
 
-export class Generator {
-  private readonly settings: Settings<
-    SettingsConfig<
-      | typeof generatorSettingsConfig
-      | (typeof generatorSettingsConfig & typeof debugSettingsConfig)
-    >
+export type GeneratorSettings = Settings<
+  SettingsConfig<
+    // | typeof generatorSettingsConfig
+    typeof generatorSettingsConfig &
+      typeof debugSettingsConfig & {
+        'debug.fps': {
+          type: 'param'
+          label: 'FPS'
+          value: undefined
+          opts: {
+            readonly: true
+          }
+        }
+      }
   >
+>
+export class Generator {
+  private readonly settings: GeneratorSettings
 
   private readonly libraries: Library[] = []
   private readonly editor: Editor = new Editor()
   private readonly importer: Importer = new Importer()
-  private readonly sandbox: Sandbox = new Sandbox()
+  private readonly sandbox: Sandbox
   private readonly resizer: HTMLElement = document.getElementById('resizer')!
 
   private readonly localStorage: LocalStorage = new LocalStorage()
@@ -99,6 +110,7 @@ export class Generator {
         >,
       )
     }
+    this.sandbox = new Sandbox(this.settings)
 
     // add global sandbox functions
     this.editor.addTypings(this.sandbox.globalTypings(), 'ts:sandbox.d.ts')
@@ -178,7 +190,11 @@ export class Generator {
       }
     })
     this.settings.onChange('editor.relative_lines', (v) => {
-      this.editor.updateOptions({ lineNumbers: 'relative' })
+      if (v) {
+        this.editor.updateOptions({ lineNumbers: 'relative' })
+      } else {
+        this.editor.updateOptions({ lineNumbers: 'on' })
+      }
     })
 
     // load stored settings
@@ -219,7 +235,8 @@ export class Generator {
         resizer.style.left =
         editor.html().style.width =
           editorWidth + 'px'
-      sandbox.html.style.width = screen.width - editorWidth + 'px'
+      console.log(window.innerWidth, editorWidth)
+      sandbox.html.style.width = window.innerWidth - editorWidth + 'px'
     }
     function up() {
       document.removeEventListener('mouseup', up, false)

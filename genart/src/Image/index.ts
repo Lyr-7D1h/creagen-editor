@@ -1,6 +1,7 @@
 // use p5 as ref https://p5js.org/reference/#/p5.Image
 
-import { Color } from './color'
+import { Color } from '../color'
+import { gaussianBlur } from './gaussianBlur'
 
 // https://github.dev/ronikaufman/poetical_computer_vision/blob/main/days01-10/day01/day01.pde
 export class Image {
@@ -8,9 +9,8 @@ export class Image {
   private pixeldata: Uint8ClampedArray
   private pixelsLoaded: boolean
 
-  static async create(input: string) {
+  static create(input: string) {
     const image = new Image(input)
-    await image.loadPixels()
     return image
   }
 
@@ -48,16 +48,19 @@ export class Image {
     })
   }
 
-  width() {
+  get width() {
     return this.img.width
   }
 
-  height() {
+  get height() {
     return this.img.height
   }
 
-  pixels() {
-    if (!this.pixelsLoaded) throw new Error('pixels not loaded')
+  get pixels() {
+    if (!this.pixelsLoaded)
+      throw new Error(
+        'pixels not loaded. use `await Image.loadPixels()` before accessing them',
+      )
     return this.pixeldata
   }
 
@@ -69,12 +72,10 @@ export class Image {
     dx?: number,
     dy?: number,
   ): Uint8ClampedArray | Uint8ClampedArray[] | Color {
-    if (!this.pixelsLoaded) throw new Error('pixels not loaded')
-
     if (typeof dx !== 'undefined' && typeof dy !== 'undefined') {
       const width = this.img.width * 4
       const r = []
-      const pixels = this.pixels()
+      const pixels = this.pixels
       if ((x + dx) * 4 > pixels.length) {
         throw Error('x is out of bounds')
       }
@@ -90,10 +91,14 @@ export class Image {
 
     const width = this.img.width
     const i = y * width * 4 + x * 4
-    return new Color(this.pixels().slice(i, i + 4))
+    return new Color(this.pixels.slice(i, i + 4))
   }
 
   html() {
     return this.img
+  }
+
+  gaussianBlur(radius: number) {
+    gaussianBlur(this.pixels, this.width, this.height, radius)
   }
 }
