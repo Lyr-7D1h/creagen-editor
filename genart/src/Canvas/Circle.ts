@@ -51,10 +51,11 @@ export class Circle extends Geometry {
   override canvas(ctx: CanvasRenderingContext2D) {
     ctx.beginPath()
     ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI)
-    ctx.stroke()
     if (this.opts.fill) {
       ctx.fillStyle = this.opts.fill.hex()
       ctx.fill()
+    } else {
+      ctx.stroke()
     }
   }
 }
