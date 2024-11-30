@@ -52,7 +52,6 @@ export class Sandbox {
 
     this.drawFns = []
     window.draw = (fn: (dt: number) => void) => {
-      console.log(this.settings.get('debug.fps'))
       if (this.settings.get('debug.fps') === undefined) {
         this.settings.addParam('debug.fps', 'FPS', 0, {
           format: (v: number) => `${v.toFixed(0)} fps`,

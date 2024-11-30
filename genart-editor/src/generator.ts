@@ -235,7 +235,6 @@ export class Generator {
         resizer.style.left =
         editor.html().style.width =
           editorWidth + 'px'
-      console.log(window.innerWidth, editorWidth)
       sandbox.html.style.width = window.innerWidth - editorWidth + 'px'
     }
     function up() {
