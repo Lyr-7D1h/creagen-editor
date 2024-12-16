@@ -1,4 +1,4 @@
-import { roundToDec } from './math'
+import { Math } from '.'
 
 type Y<N extends number> = N extends 3
   ? number
@@ -48,12 +48,24 @@ export class Vector<N extends number> extends Array<number> {
     return this[0]!
   }
 
+  set x(v: number) {
+    this[0] = v
+  }
+
   get y(): Y<N> {
     return this[1] as Y<N>
   }
 
+  set y(v: number) {
+    this[1] = v
+  }
+
   get z(): Z<N> {
     return this[2] as Z<N>
+  }
+
+  set z(v: number) {
+    this[1] = v
   }
 
   override push(): number {
@@ -128,7 +140,7 @@ export class Vector<N extends number> extends Array<number> {
 
   roundToDec(dec?: number) {
     for (let i = 0; i < this.length; i++) {
-      this[i] = roundToDec(this[i]!, dec)
+      this[i] = Math.roundToDec(this[i]!, dec)
     }
     return this
   }
@@ -147,6 +159,14 @@ export class Vector<N extends number> extends Array<number> {
       a += this[i]! * v[i]!
     }
     return a
+  }
+
+  /** Apply modulo to each value */
+  mod(mod: number) {
+    for (let i = 0; i < this.length; i++) {
+      this[i] %= mod
+    }
+    return this
   }
 
   round() {
