@@ -1,4 +1,4 @@
-import { roundToDec } from '../math'
+import { Math } from '..'
 import { type PMF } from './pmf'
 
 /** https://en.wikipedia.org/wiki/Cumulative_distribution_function */
@@ -11,7 +11,7 @@ export class CDF {
   }
 
   static uniform(length: number) {
-    const p: number[] = new Array(length).fill(roundToDec(1 / length))
+    const p: number[] = new Array(length).fill(Math.roundToDec(1 / length))
 
     return new CDF(p)
   }
@@ -22,7 +22,7 @@ export class CDF {
       if (a < 0) throw Error("can't give negative values to cdf")
       return partialSum + a
     }, 0)
-    const p = values.map((v) => roundToDec(v / sum))
+    const p = values.map((v) => Math.roundToDec(v / sum))
     return new CDF(p)
   }
 
@@ -74,7 +74,7 @@ export class CDF {
 
     // update probabilities
     for (let i = 0; i < this.p.length; i++) {
-      this.p[i] = roundToDec((this.p[i]! + p[i]!) / 2)
+      this.p[i] = Math.roundToDec((this.p[i]! + p[i]!) / 2)
     }
 
     // update cdf

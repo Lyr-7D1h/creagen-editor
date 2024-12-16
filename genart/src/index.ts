@@ -1,4 +1,4 @@
-export * as math from './math'
+export * as Math from './math'
 export * as graph from './graph'
 export * as lin from './lin'
 export { Canvas } from './Canvas'
