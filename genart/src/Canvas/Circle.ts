@@ -19,7 +19,7 @@ export class Circle extends Geometry {
     x: number | Vector<2>,
     y: number,
     radius: number | GeometricOptions,
-    options?: GeometricOptions,
+    options: GeometricOptions = {},
   ) {
     super()
     if (typeof x !== 'number' && typeof radius !== 'number') {

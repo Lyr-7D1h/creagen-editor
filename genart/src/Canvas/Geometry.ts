@@ -1,7 +1,7 @@
 import { Color } from '../color'
 
-export const defaultGeometricOptions = {
-  fill: 'none',
+export const defaultGeometricOptions: GeometricOptions = {
+  fill: Color.BLACK,
   fillOpacity: 1,
   stroke: Color.BLACK,
   strokeWidth: 1,
