@@ -1,32 +1,47 @@
 import { Color } from '../color'
 
 export const defaultGeometricOptions: GeometricOptions = {
-  fill: Color.BLACK,
+  fill: null,
   fillOpacity: 1,
   stroke: Color.BLACK,
   strokeWidth: 1,
 }
 export interface GeometricOptions {
-  fill?: Color
+  fill?: Color | null
   fillOpacity?: number
   stroke?: Color
   strokeWidth?: number
 }
-export abstract class Geometry {
-  applySvgOptions(element: SVGElement, opts: GeometricOptions) {
-    element.setAttribute('stroke', opts?.stroke.hex() ?? 'black')
-    if (typeof opts === 'undefined') return
-    if (opts.fill) element.setAttribute('fill', opts.fill.hex())
-    if (opts.fillOpacity) {
-      element.setAttribute('fill-opacity', opts.fillOpacity.toString())
-    }
-    if (opts.strokeWidth) {
-      element.setAttribute('stroke-width', opts.strokeWidth.toString())
-    }
+
+export abstract class Geometry<
+  Opts extends GeometricOptions = GeometricOptions,
+> {
+  options: Opts
+
+  _applySvgOptions(element: SVGElement) {
+    element.setAttribute('stroke', this.options.stroke.hex() ?? 'black')
+    element.setAttribute('fill', this.options.fill.hex())
+    element.setAttribute('fill-opacity', this.options.fillOpacity.toString())
+    element.setAttribute('stroke-width', this.options.strokeWidth.toString())
   }
 
   // TODO: make implementation detail
-  abstract svg(): SVGElement
+  abstract _svg(): SVGElement
 
-  abstract canvas(ctx: CanvasRenderingContext2D): void
+  _applyCanvasOptions(ctx: CanvasRenderingContext2D, path?: Path2D) {
+    ctx.lineWidth = this.options.strokeWidth
+    if (this.options.fill) {
+      ctx.fillStyle = this.options.fill.hex()
+      ctx.fill()
+    } else {
+      ctx.strokeStyle = this.options.stroke.hex()
+      if (typeof path === 'undefined') {
+        ctx.stroke()
+      } else {
+        ctx.stroke(path)
+      }
+    }
+  }
+
+  abstract _canvas(ctx: CanvasRenderingContext2D): void
 }

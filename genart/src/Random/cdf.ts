@@ -1,4 +1,5 @@
 import { Math } from '..'
+import { GENART_ASSERTS } from '../constants'
 import { type PMF } from './pmf'
 
 /** https://en.wikipedia.org/wiki/Cumulative_distribution_function */
@@ -41,7 +42,7 @@ export class CDF {
       return a
     })
 
-    if (window.genart.config.asserts) {
+    if (GENART_ASSERTS) {
       const sum = p.reduce((a, b) => a + b)
       console.assert(sum === 1, sum)
     }

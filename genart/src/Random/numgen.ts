@@ -31,21 +31,17 @@ export class RandomNumberGenerator {
   }
 }
 
-export function random() {
-  return new RandomNumberGenerator(Math.random)
-}
-
 /** TODO: https://en.wikipedia.org/wiki/Linear_congruential_generator */
 // export function lcg(): number {}
 
-export function xorshift(seed?: number) {
+export function xorshift(seed?: number): RandomFn {
   let SEED = seed ?? 2463534242
-  return new RandomNumberGenerator(() => {
+  return () => {
     SEED ^= SEED << 13
     SEED ^= SEED >> 17
     SEED ^= SEED << 5
     return (SEED >>> 0) / 4294967296
-  })
+  }
 }
 
 /** https://en.wikipedia.org/wiki/Beta_distribution */
@@ -63,11 +59,11 @@ export function boxMuller(
   mean: number,
   deviation: number,
   uniformGenerator?: () => number,
-): RandomNumberGenerator {
+): RandomFn {
   const gen = uniformGenerator ? uniformGenerator : Math.random
   const twopi = 2 * Math.PI
 
-  return new RandomNumberGenerator(() => {
+  return () => {
     const u1 = gen()
     const u2 = gen()
 
@@ -75,7 +71,7 @@ export function boxMuller(
     const z0 = mag * Math.cos(twopi * u2) + mean
 
     return z0
-  })
+  }
 }
 
 /** Usefull for generating samples from normal distributions (https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform) */

@@ -1,3 +1,5 @@
+import { GENART_ASSERTS } from './constants'
+
 export class Color {
   c: number[] | Uint8ClampedArray
 
@@ -16,6 +18,14 @@ export class Color {
 
   static get BLACK() {
     return new Color(0, 0, 0)
+  }
+
+  static get RED() {
+    return new Color(255, 0, 0)
+  }
+
+  static get GREEN() {
+    return new Color(0, 255, 0)
   }
 
   static create(r: number, g: number, b: number, a?: number): Color
@@ -37,7 +47,7 @@ export class Color {
     b?: number,
     a?: number,
   ) {
-    if (window.genart.config.asserts) {
+    if (GENART_ASSERTS) {
       if (!Number.isInteger(r)) throw Error('has to be an integer')
       if (typeof g !== 'undefined' && !Number.isInteger(g)) {
         throw Error('has to be an integer')

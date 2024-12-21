@@ -1,6 +1,7 @@
 import { Vector } from '../Vector'
 import { Circle } from './Circle'
 import { GeometricOptions, Geometry } from './Geometry'
+import { Path, PathOptions } from './Path'
 import { Rectangle, RectangleOptions } from './Rectangle'
 
 export type GeometryChild = Rectangle | Circle
@@ -93,14 +94,28 @@ export class Canvas {
     return rect
   }
 
+  path(options?: PathOptions) {
+    const path = new Path(options)
+    this.children.push(path)
+    return path
+  }
+
+  line(x1: Vector<2>, x2: Vector<2>) {
+    const line = new Path()
+    line.add(x1)
+    line.add(x2)
+    this.children.push(line)
+    return line
+  }
+
   load() {
     if (this.ctx) {
       for (const c of this.children) {
-        c.canvas(this.ctx)
+        c._canvas(this.ctx)
       }
     } else {
       for (const c of this.children) {
-        this.element.appendChild(c.svg())
+        this.element.appendChild(c._svg())
       }
     }
   }
