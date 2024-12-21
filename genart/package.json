@@ -9,8 +9,10 @@
     "dist"
   ],
   "scripts": {
-    "build": "rollup -c",
-    "watch": "rollup -c --watch"
+    "build": "cp -f debug.ts src/constants.ts && rollup -c",
+    "build:release": "cp -f release.ts src/constants.ts && rollup -c",
+    "watch": "cp -f debug.ts src/constants.ts && rollup -c --watch",
+    "watch:release": "cp -f release.ts src/constants.ts && rollup -c --watch"
   },
   "keywords": [],
   "author": "Lyr",
