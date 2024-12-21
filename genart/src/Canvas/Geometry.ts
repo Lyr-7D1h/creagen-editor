@@ -12,8 +12,8 @@ export interface GeometricOptions {
   stroke?: Color
   strokeWidth?: number
 }
-export class Geometry {
-  applySvgGeometricOptions(element: SVGElement, opts: GeometricOptions) {
+export abstract class Geometry {
+  applySvgOptions(element: SVGElement, opts: GeometricOptions) {
     element.setAttribute('stroke', opts?.stroke.hex() ?? 'black')
     if (typeof opts === 'undefined') return
     if (opts.fill) element.setAttribute('fill', opts.fill.hex())
@@ -26,9 +26,7 @@ export class Geometry {
   }
 
   // TODO: make implementation detail
-  svg(): SVGElement {
-    return document.createElementNS('http://www.w3.org/2000/svg', 'path')
-  }
+  abstract svg(): SVGElement
 
-  canvas(_ctx: CanvasRenderingContext2D): void {}
+  abstract canvas(ctx: CanvasRenderingContext2D): void
 }
