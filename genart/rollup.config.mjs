@@ -27,6 +27,6 @@ export default [
       file: 'dist/genart.d.ts',
       format: 'es',
     },
-    plugins: [, dts()],
+    plugins: [dts()],
   },
 ]
