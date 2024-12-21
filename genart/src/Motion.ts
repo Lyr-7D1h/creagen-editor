@@ -29,7 +29,7 @@ export class Motion {
    * @param increase (-1 to 1) Percentage to increase the value in within bounds
    * @param dt difference in time
    */
-  update(t: number) {}
+  update(_t: number) {}
 
-  getPosition(t: number) {}
+  getPosition(_t: number) {}
 }
