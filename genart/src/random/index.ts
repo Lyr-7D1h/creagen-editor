@@ -1,5 +1,0 @@
-export * from './simplex'
-export * from './perlin'
-export * from './numgen'
-export * from './pmf'
-export * from './cdf'

@@ -1,21 +1,22 @@
-import { GeometricOptions, Geometry } from './Geometry'
+import { defaultGeometricOptions, GeometricOptions, Geometry } from './Geometry'
 import { Vector } from '../Vector'
+
+export const defaultRectangleOptions = {
+  ...defaultGeometricOptions,
+  rx: 0,
+  ry: 0,
+}
 
 export interface RectangleOptions extends GeometricOptions {
   rx?: number
   ry?: number
 }
 
-function applySvgOptions(element: SVGElement, opts: RectangleOptions) {
-  if (opts.rx) element.setAttribute('rx', opts.rx.toString())
-  if (opts.ry) element.setAttribute('ry', opts.ry.toString())
-}
-export class Rectangle extends Geometry {
+export class Rectangle extends Geometry<RectangleOptions> {
   x: number
   y: number
   width: number
   height: number
-  options?: RectangleOptions
 
   constructor(
     position: Vector<2>,
@@ -42,7 +43,7 @@ export class Rectangle extends Geometry {
     x2: number,
     x3: number,
     x4?: number | RectangleOptions,
-    x5?: RectangleOptions,
+    x5: RectangleOptions = defaultRectangleOptions,
   ) {
     super()
     if (typeof x1 !== 'number') {
@@ -50,17 +51,17 @@ export class Rectangle extends Geometry {
       this.y = x1.y
       this.width = x2
       this.height = x3
-      this.options = x4 as RectangleOptions
+      this.options = (x4 as RectangleOptions) ?? defaultRectangleOptions
     } else {
       this.x = x1
       this.y = x2
       this.width = x3
       this.height = x4 as number
-      this.options = x5 as RectangleOptions
+      this.options = x5 ?? defaultRectangleOptions
     }
   }
 
-  override svg() {
+  _svg() {
     const element = document.createElementNS(
       'http://www.w3.org/2000/svg',
       'rect',
@@ -69,14 +70,12 @@ export class Rectangle extends Geometry {
     element.setAttribute('height', this.height.toString())
     element.setAttribute('x', this.x.toString())
     element.setAttribute('y', this.y.toString())
-    if (this.options) {
-      applySvgOptions(element, this.options)
-      this.applySvgGeometricOptions(element, this.options)
-    }
+    super._applySvgOptions(element)
     return element
   }
 
-  override canvas(ctx: CanvasRenderingContext2D) {
+  _canvas(ctx: CanvasRenderingContext2D) {
+    this._applyCanvasOptions(ctx)
     ctx.fillRect(this.x, this.y, this.width!, this.height)
   }
 }

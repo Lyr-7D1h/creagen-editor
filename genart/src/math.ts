@@ -1,5 +1,7 @@
 // CUSTOM
 
+import { GENART_PRECISION } from './constants'
+
 /**
  * Return the greatest common divisor
  */
@@ -19,13 +21,10 @@ export function mod(n: number, m: number) {
  * Round number to a `dec` decimal point
  */
 export function roundToDec(n: number, dec?: number) {
-  if (
-    typeof window.genart.config.precision === 'undefined' &&
-    typeof dec === 'undefined'
-  ) {
+  if (typeof dec === 'undefined') {
     return n
   }
-  return parseFloat(n.toFixed(dec ?? window.genart.config.precision))
+  return parseFloat(n.toFixed(dec ?? GENART_PRECISION))
 }
 
 // FROM es2015.core
