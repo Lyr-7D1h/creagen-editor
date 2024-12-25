@@ -60,7 +60,8 @@ export class Path extends Geometry<PathOptions> {
   }
 
   private svgPath() {
-    if (!this.options.smooth) {
+    if (this.points.length === 1) return ''
+    if (!this.options.smooth || this.points.length === 2) {
       return this.points
         .map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0]} ${p[1]}`)
         .join(' ')
@@ -72,6 +73,9 @@ export class Path extends Geometry<PathOptions> {
     let path = `M${this.points[0][0]} ${this.points[0][1]}`
 
     // https://stackoverflow.com/questions/22556381/approximating-data-with-a-multi-segment-cubic-bezier-curve-and-a-distance-as-wel/22582447#22582447
+    // https://github.com/paperjs/paper.js/blob/92775f5279c05fb7f0a743e9e7fa02cd40ec1e70/src/path/Segment.js#L428
+    // https://www.particleincell.com/2012/bezier-splines/
+    // https://en.wikipedia.org/wiki/Centripetal_Catmull%E2%80%93Rom_spline
     for (let i = 1; i < this.points.length - 1; i++) {
       const [c1, c2] = this.getControlPoints(
         this.points[i - 1],
@@ -109,3 +113,5 @@ export class Path extends Geometry<PathOptions> {
     this.points.push(vec(x, y))
   }
 }
+
+function calculateBezierControlPoints() {}
