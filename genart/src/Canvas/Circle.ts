@@ -1,5 +1,11 @@
 import { defaultGeometricOptions, GeometricOptions, Geometry } from './Geometry'
 import { Vector } from '../Vector'
+import { Color } from '../color'
+
+const defaultOptions: GeometricOptions = {
+  ...defaultGeometricOptions,
+  fill: Color.BLACK,
+}
 
 export class Circle extends Geometry {
   x: number
@@ -27,13 +33,13 @@ export class Circle extends Geometry {
       this.radius = y
       this.options =
         typeof radius === 'undefined'
-          ? defaultGeometricOptions
-          : { ...defaultGeometricOptions, ...radius }
+          ? defaultOptions
+          : { ...defaultOptions, ...radius }
     } else {
       this.x = x as number
       this.y = y
       this.radius = radius as number
-      this.options = { ...defaultGeometricOptions, ...options }
+      this.options = { ...defaultOptions, ...options }
     }
   }
 
