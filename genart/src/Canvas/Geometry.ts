@@ -20,7 +20,10 @@ export abstract class Geometry<
 
   _applySvgOptions(element: SVGElement) {
     element.setAttribute('stroke', this.options.stroke.hex() ?? 'black')
-    element.setAttribute('fill', this.options.fill.hex())
+    element.setAttribute(
+      'fill',
+      this.options.fill === null ? 'none' : this.options.fill.hex(),
+    )
     element.setAttribute('fill-opacity', this.options.fillOpacity.toString())
     element.setAttribute('stroke-width', this.options.strokeWidth.toString())
   }

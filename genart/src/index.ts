@@ -1,6 +1,6 @@
 export * as Math from './math'
 export * as graph from './graph'
-export * as lin from './lin'
+// export * as lin from './lin'
 export { Canvas } from './Canvas'
 export { Random } from './Random/index'
 export { SpatialMap } from './spatialmap'
