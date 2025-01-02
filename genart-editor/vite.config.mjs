@@ -3,10 +3,10 @@ import { defineConfig, loadEnv } from 'vite'
 import path from 'path'
 import fs from 'fs'
 
-const LIBRARY_PATH = '../genart'
+const LIBRARY_PATH = path.resolve('../genart')
 
 /** Serve local build of genart library */
-function localLibrary() {
+function localLibraryOnHttp() {
   return {
     apply: 'serve',
     configureServer(server) {
@@ -19,9 +19,7 @@ function localLibrary() {
             res.setHeader('Content-Type', 'text/javascript; charset=utf-8')
             res.writeHead(200)
             res.write(
-              fs.readFileSync(
-                path.join(__dirname, `${LIBRARY_PATH}/dist/${req.originalUrl}`),
-              ),
+              fs.readFileSync(`${LIBRARY_PATH}/dist/${req.originalUrl}`),
             )
             res.end()
           }
@@ -42,33 +40,13 @@ export default defineConfig(async ({ command, mode }) => {
     VITE_GENART_EDITOR_VERSION: process.env.npm_package_version,
     // use the latest local version by default
     VITE_GENART_VERSION: JSON.parse(
-      fs.readFileSync(path.join(__dirname, `${LIBRARY_PATH}/package.json`)),
+      fs.readFileSync(`${LIBRARY_PATH}/package.json`),
     ).version,
   }
 
   return {
-    server: {
-      fs: {
-        allow: [
-          path.resolve(__dirname, `${LIBRARY_PATH}/dist/genart.d.ts`),
-          path.resolve(__dirname, `${LIBRARY_PATH}/dist/genart.js`),
-          ...(await fg(['src/**/*', `${LIBRARY_PATH}/src/**/*`])),
-          'node_modules',
-          'main.css',
-        ],
-      },
-      watch: {
-        paths: [
-          path.resolve(__dirname, `${LIBRARY_PATH}/dist/genart.d.ts`),
-          path.resolve(__dirname, `${LIBRARY_PATH}/dist/genart.js`),
-        ],
-        ignored: ['**/node_modules/**'],
-        usePolling: true,
-        interval: 100,
-      },
-    },
     plugins: [
-      localLibrary(),
+      localLibraryOnHttp(),
       {
         name: 'watch-external',
         async buildStart() {
@@ -77,7 +55,19 @@ export default defineConfig(async ({ command, mode }) => {
             this.addWatchFile(file)
           }
         },
+        handleHotUpdate({ file, server }) {
+          if (file.includes(LIBRARY_PATH)) {
+            server.ws.send({
+              type: 'full-reload',
+              path: '*',
+            })
+            return []
+          }
+        },
       },
     ],
+    optimizeDeps: {
+      exclude: ['genart'],
+    },
   }
 })
