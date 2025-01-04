@@ -1,4 +1,4 @@
-// CUSTOM
+// EXTENDED MATH FUNCTIONS
 
 import { GENART_PRECISION } from './constants'
 

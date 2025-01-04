@@ -1,4 +1,4 @@
-import { Math } from '.'
+import * as Math from './math'
 
 type Y<N extends number> = N extends 3
   ? number
@@ -15,6 +15,9 @@ type GrowToSize<
 > = L extends N ? A : L extends 999 ? T[] : GrowToSize<T, N, [...A, T]>
 
 export type FixedArray<T, N extends number> = GrowToSize<T, N, [], 0>
+
+/** The bounds for a given N dimensional vector [[xmin, xmax], [ymin, ymax]] */
+export type Bounds<N extends number> = FixedArray<[number, number], N>
 
 export class Vector<N extends number> extends Array<number> {
   private constructor(...items: [number[] & { length: N }])
@@ -153,6 +156,16 @@ export class Vector<N extends number> extends Array<number> {
     return this
   }
 
+  /** Compare two vectors for equality */
+  equals(v: Vector<N>) {
+    for (let i = 0; i < this.length; i++) {
+      if (this[i]! !== v[i]!) {
+        return false
+      }
+    }
+    return true
+  }
+
   dot(v: Vector<N>) {
     let a = 0
     for (let i = 0; i < this.length; i++) {
@@ -258,10 +271,21 @@ export class Vector<N extends number> extends Array<number> {
     return result
   }
 
-  /** if a number is above or below a limit it correct it so it is within the boundary limits */
-  wraparound(limits: FixedArray<[number, number], N>) {
+  /** Check if a number is within `limits` */
+  within(limits: FixedArray<[number, number], N>): boolean {
     for (let i = 0; i < this.length; i++) {
       const [start, stop] = (limits as any)[i] as [number, number]
+      if (this[i]! < start || this[i]! > stop) {
+        return false
+      }
+    }
+    return true
+  }
+
+  /** if a number is above or below a limit it correct it so it is within the boundary limits */
+  wrapAround(bounds: Bounds<N>) {
+    for (let i = 0; i < this.length; i++) {
+      const [start, stop] = (bounds as any)[i] as [number, number]
       const v = this[i]!
       if (v < start) {
         const diff = stop - start

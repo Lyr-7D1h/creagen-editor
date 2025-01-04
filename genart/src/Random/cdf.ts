@@ -1,4 +1,4 @@
-import { Math } from '..'
+import * as Math from '../math'
 import { GENART_ASSERTS } from '../constants'
 import { type PMF } from './pmf'
 

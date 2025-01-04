@@ -1,4 +1,4 @@
-import { Vector } from '../Vector'
+import { Bounds, Vector } from '../Vector'
 import { Circle } from './Circle'
 import { GeometricOptions, Geometry } from './Geometry'
 import { Path, PathOptions } from './Path'
@@ -118,6 +118,14 @@ export class Canvas {
         this.element.appendChild(c._svg())
       }
     }
+  }
+
+  /** Returns bounds [[xmin, xmax], [ymin, ymax]] */
+  bounds(): Bounds<2> {
+    return [
+      [0, this.width],
+      [0, this.height],
+    ]
   }
 
   html(): SVGElement | HTMLCanvasElement {
