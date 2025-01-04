@@ -1,6 +1,6 @@
 {
   "name": "@lyr_7d1h/genart",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "",
   "main": "./dist/genart.js",
   "module": "./dist/genart.js",
