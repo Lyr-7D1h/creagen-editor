@@ -261,9 +261,10 @@ export class Path extends Geometry<PathOptions> {
     }
 
     if (this.options.smooth) {
+      // TODO: fix in case of wrap around
       let path = ''
       for (const segment of segments) {
-        if (this.points.length < 3) {
+        if (segment.length < 3) {
           throw Error('Need atleast 3 points to create a smooth path')
         }
 
