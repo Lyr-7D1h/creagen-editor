@@ -1,13 +1,18 @@
 // use p5 as ref https://p5js.org/reference/#/p5.Image
 
-import { Color } from '../color'
+import { Color } from '../Color'
+import MarvinImage from '@rarebearsoft/marvinj'
+// import { Image as ImageJs } from 'image-js'
+// import cannyEdgeDetector from 'canny-edge-detector'
 import { gaussianBlur } from './gaussianBlur'
+import { edgeDetection } from './edgeDetection'
 
 // https://github.dev/ronikaufman/poetical_computer_vision/blob/main/days01-10/day01/day01.pde
 export class Image {
-  private readonly img: HTMLImageElement
+  private img: HTMLImageElement
   private pixeldata: Uint8ClampedArray
   private pixelsLoaded: boolean
+  private input: string
 
   static create(input: string) {
     const image = new Image(input)
@@ -95,10 +100,27 @@ export class Image {
   }
 
   html() {
+    const canvas = document.createElement('canvas')
+    canvas.width = this.img.width
+    canvas.height = this.img.height
+    const ctx = canvas.getContext('2d')!
+    ctx.putImageData(
+      new ImageData(this.pixeldata, this.width, this.height),
+      0,
+      0,
+    )
+    this.img.src = canvas.toDataURL('image/png')
     return this.img
   }
 
   gaussianBlur(radius: number) {
     gaussianBlur(this.pixels, this.width, this.height, radius)
+    return this
+  }
+
+  edgeDetection() {
+    const buff = edgeDetection(this.pixels, this.width)
+    this.pixeldata = buff
+    return this
   }
 }
