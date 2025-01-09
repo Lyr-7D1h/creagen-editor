@@ -1,4 +1,4 @@
-import { type Color } from './color'
+import { type Color } from './Color'
 import { Vector } from './Vector'
 
 export interface GeometricOptions {

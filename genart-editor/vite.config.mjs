@@ -7,15 +7,13 @@ const LIBRARY_PATH = path.resolve('../genart')
 
 /** Serve local build of genart library */
 function localLibraryOnHttp() {
+  const allowedPaths = ['/genart.js', '/genart.d.ts', '/genart.js.map']
   return {
     apply: 'serve',
     configureServer(server) {
       return () => {
         server.middlewares.use(async (req, res, next) => {
-          if (
-            req.originalUrl === '/genart.js' ||
-            req.originalUrl === '/genart.d.ts'
-          ) {
+          if (allowedPaths.includes(req.originalUrl)) {
             res.setHeader('Content-Type', 'text/javascript; charset=utf-8')
             res.writeHead(200)
             res.write(
