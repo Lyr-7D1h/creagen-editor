@@ -1,4 +1,4 @@
-import { Color } from '../color'
+import { Color } from '../Color'
 
 export const defaultGeometricOptions: GeometricOptions = {
   fill: null,

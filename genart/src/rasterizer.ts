@@ -1,4 +1,4 @@
-import { type Color } from './color'
+import { type Color } from './Color'
 import { type Vector } from './Vector'
 
 // https://github.dev/ronikaufman/poetical_computer_vision/blob/main/days01-10/day01/day01.pde
@@ -33,7 +33,7 @@ export class Rasterizer {
     const width = this.data.width * 4
     for (let o = y * width; o <= (y + dy) * width; o += width) {
       for (let d = x * 4; d < (x + dx) * 4; d++) {
-        this.buffer[o + d] = c.c[d % 4]!
+        this.buffer[o + d] = c[d % 4]!
       }
     }
   }
@@ -116,7 +116,7 @@ export class Rasterizer {
       const xo = (x + xi) * 4 + o
       const fadingPerc = percentage * (1 - Math.abs((mid - xi) / mid))
       for (let i = 0; i < 3; i++) {
-        const diff = c.c[i % 4]! - this.buffer[xo + i]!
+        const diff = c[i % 4]! - this.buffer[xo + i]!
         this.buffer[xo + i] += Math.sign(diff) * Math.abs(diff) * fadingPerc
       }
       // assume that alpha is always 255
@@ -172,7 +172,7 @@ export class Rasterizer {
   ) {
     const o = y * this.width * 4
     for (let i = x * 4 + o; i < (x + dx) * 4 + o; i++) {
-      const diff = c.c[i % 4]! - this.buffer[i]!
+      const diff = c[i % 4]! - this.buffer[i]!
       this.buffer[i] += Math.sign(diff) * Math.abs(diff) * percentage
     }
   }
@@ -251,7 +251,7 @@ export class Rasterizer {
     let i = x * 4 + y * this.width * 4
     const j = i + 4
     for (i; i < j; i++) {
-      this.buffer[i] = (dx as Color).c[i % 4]!
+      this.buffer[i] = (dx as Color)[i % 4]!
     }
   }
 

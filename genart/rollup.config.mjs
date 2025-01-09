@@ -1,7 +1,7 @@
 import typescript from '@rollup/plugin-typescript'
 import terser from '@rollup/plugin-terser'
 import { dts } from 'rollup-plugin-dts'
-import { nodeResolve } from '@rollup/plugin-node-resolve'
+import resolve from '@rollup/plugin-node-resolve'
 import commonjs from '@rollup/plugin-commonjs'
 
 export default [
@@ -14,11 +14,12 @@ export default [
       sourcemap: true,
     },
     plugins: [
-      nodeResolve(),
+      resolve(),
       commonjs(),
       typescript({ noEmitOnError: false }),
       terser(),
     ],
+    sourcemap: true,
   },
   {
     input: 'dist/types/index.d.ts',

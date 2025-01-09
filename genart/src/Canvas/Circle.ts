@@ -1,6 +1,6 @@
 import { defaultGeometricOptions, GeometricOptions, Geometry } from './Geometry'
 import { Vector } from '../Vector'
-import { Color } from '../color'
+import { Color } from '../Color'
 
 const defaultOptions: GeometricOptions = {
   ...defaultGeometricOptions,

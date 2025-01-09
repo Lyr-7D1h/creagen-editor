@@ -20,10 +20,10 @@ export type FixedArray<T, N extends number> = GrowToSize<T, N, [], 0>
 export type Bounds<N extends number> = FixedArray<[number, number], N>
 
 export class Vector<N extends number> extends Array<number> {
-  private constructor(...items: [number[] & { length: N }])
-  private constructor(...items: number[] & { length: N })
-  private constructor(...items: number[])
-  private constructor(
+  constructor(...items: [number[] & { length: N }])
+  constructor(...items: number[] & { length: N })
+  constructor(...items: number[])
+  constructor(
     ...items: [number[] & { length: N }] | (number[] & { length: N })
   ) {
     if (typeof items[0] === 'undefined') {
@@ -34,7 +34,6 @@ export class Vector<N extends number> extends Array<number> {
     } else {
       super(...(items[0] as number[]))
     }
-    Object.setPrototypeOf(this, Vector.prototype)
   }
 
   static create<N extends number>(
@@ -272,9 +271,9 @@ export class Vector<N extends number> extends Array<number> {
   }
 
   /** Check if a number is within `limits` */
-  within(limits: FixedArray<[number, number], N>): boolean {
+  within(bounds: Bounds<N>): boolean {
     for (let i = 0; i < this.length; i++) {
-      const [start, stop] = (limits as any)[i] as [number, number]
+      const [start, stop] = (bounds as any)[i] as [number, number]
       if (this[i]! < start || this[i]! > stop) {
         return false
       }

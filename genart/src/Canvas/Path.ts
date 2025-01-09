@@ -124,6 +124,7 @@ export class Path extends Geometry<PathOptions> {
   private wrapAroundPoints(
     points: Vector<2>[],
     bounds: FixedArray<[number, number], 2>,
+    currentIndex: number = 0,
   ): Vector<2>[][] {
     let segments = []
     const [xmin, xmax] = bounds[0]
@@ -134,6 +135,7 @@ export class Path extends Geometry<PathOptions> {
     // const [ymin, ymax] = bounds[1]
     let queue = [...points.map((p) => p.clone())]
     for (let i = 0; i < queue.length - 1; i++) {
+      currentIndex += 1
       // what direction is the first point outside of bounds
       let d1 = this.outsideBoundDirection(queue[i], bounds)
       // what direction is the second point outside of bounds
@@ -198,14 +200,38 @@ export class Path extends Geometry<PathOptions> {
         // starting points are inside
         outsideSegment = [
           intersection,
-          ...queue.splice(i + 1, queue.length - i + 2, intersection),
+          ...queue.splice(
+            i + 1,
+            queue.length - i + 2,
+            this.options.smooth ? undefined : intersection,
+          ),
         ]
+
+        // add inside point and the two outside points
+        if (this.options.smooth) {
+          if (typeof outsideSegment[currentIndex + 2] === 'undefined') {
+            if (this.points[currentIndex - 1] !== queue[queue.length - 2]) {
+              queue.splice(queue.length - 2, 0, this.points[currentIndex - 1])
+            }
+            queue.push(this.points[currentIndex + 1])
+          } else {
+            queue.push(this.points[currentIndex + 1])
+            queue.push(this.points[currentIndex + 2])
+          }
+          i += 2
+        }
+        // console.log(JSON.stringify(queue))
+        // should be in the end of queue now
+        console.assert(queue.length - 1 === i)
       } else {
         // starting points are outside
         outsideSegment = queue.splice(0, i + 1, intersection)
-        outsideSegment.push(intersection)
+        if (this.options.smooth) {
+          outsideSegment.push(intersection)
+        }
         i = -1
       }
+      // console.log(outsideSegment)
 
       // if intersection and next point are the same, remove the intersection
       // if (intersection.equals(queue[1])) queue.shift()
@@ -215,6 +241,7 @@ export class Path extends Geometry<PathOptions> {
         [ymin + d.y * width, ymax + d.y * width],
       ])
 
+      // console.log(outsideSegments)
       for (const s of outsideSegments) {
         for (const p of s) {
           p.x += d.x * -1 * width
@@ -261,11 +288,13 @@ export class Path extends Geometry<PathOptions> {
     }
 
     if (this.options.smooth) {
+      // console.log('segments', segments)
       // TODO: fix in case of wrap around
       let path = ''
       for (const segment of segments) {
         if (segment.length < 3) {
-          throw Error('Need atleast 3 points to create a smooth path')
+          console.warn('Need atleast 3 points to create a smooth path')
+          // TODO: put back: throw Error('Need atleast 3 points to create a smooth path')
         }
 
         path += `M${this.points[0][0]} ${this.points[0][1]}`
