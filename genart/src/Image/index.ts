@@ -3,6 +3,7 @@
 import { Color } from '../Color'
 import { gaussianBlur } from './gaussianBlur'
 import { edgeDetection } from './edgeDetection'
+import { Vector } from '../Vector'
 
 // https://github.dev/ronikaufman/poetical_computer_vision/blob/main/days01-10/day01/day01.pde
 export class Image {
@@ -57,7 +58,7 @@ export class Image {
     return this.img.height
   }
 
-  get pixels() {
+  get pixels(): Uint8ClampedArray {
     if (!this.pixelsLoaded)
       throw new Error(
         'pixels not loaded. use `await Image.loadPixels()` before accessing them',
@@ -73,13 +74,18 @@ export class Image {
   }
 
   get(x: number, y: number): Color
+  get(p: Vector<2>): Color
   get(x: number, y: number, dx: number, dy: number): Uint8ClampedArray[]
   get(
-    x: number,
-    y: number,
+    x: number | Vector<2>,
+    y?: number,
     dx?: number,
     dy?: number,
   ): Uint8ClampedArray | Uint8ClampedArray[] | Color {
+    if (x instanceof Vector) {
+      return this.get(x.x, x.y)
+    }
+
     if (typeof dx !== 'undefined' && typeof dy !== 'undefined') {
       const width = this.img.width * 4
       const r = []
@@ -108,7 +114,6 @@ export class Image {
       canvas.width = this.img.width
       canvas.height = this.img.height
       const ctx = canvas.getContext('2d')!
-      console.log(this.pixeldata, this.width, this.height)
       ctx.putImageData(
         new ImageData(this.pixeldata, this.width, this.height),
         0,
@@ -121,6 +126,41 @@ export class Image {
 
   gaussianBlur(radius: number) {
     gaussianBlur(this.pixels, this.width, this.height, radius)
+    return this
+  }
+
+  private applyCanvasFilter(type: string) {
+    const canvas = document.createElement('canvas')
+    canvas.width = this.img.width
+    canvas.height = this.img.height
+    const ctx = canvas.getContext('2d')!
+    ctx.putImageData(
+      new ImageData(this.pixeldata, this.width, this.height),
+      0,
+      0,
+    )
+    ctx.filter = type
+    this.pixeldata = ctx.getImageData(0, 0, canvas.width, canvas.height).data
+    return this
+  }
+
+  // TODO: not working
+  brightness(percentage: number) {
+    this.applyCanvasFilter(`brightness(${percentage})`)
+  }
+
+  horizontalGradient(startPercentage: number, endPercentage: number) {
+    const width = this.width * 4
+    for (let y = 0; y < this.height; y += 1) {
+      const o = y * width
+      const p =
+        startPercentage + ((endPercentage - startPercentage) * y) / this.height
+      for (let x = 0; x < width; x += 4) {
+        this.pixeldata[o + x] *= p
+        this.pixeldata[o + x + 1] *= p
+        this.pixeldata[o + x + 2] *= p
+      }
+    }
     return this
   }
 
