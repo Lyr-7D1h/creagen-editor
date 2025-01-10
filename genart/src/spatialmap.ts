@@ -162,11 +162,11 @@ export class SpatialMap {
    * returns an iterator with [index of position, direction, distance^2]
    * */
   nearestNeighbors(
-    i: number,
+    i: number | Vector<2>,
     distance: number,
   ): Iterator<[number, Vector<2>, number]> {
     const positions = this.positions
-    const p = this.positions[i]!
+    const p = typeof i === 'number' ? this.positions[i]! : i
 
     // can at maximum be in the top right corner which is (distance + start of block) * 2*sqrt(2) (~2.82)
     const distanceSquared = distance ** 2
@@ -231,8 +231,11 @@ export class SpatialMap {
    *
    * returns an iterator with all the ids
    * */
-  nearestNeighborsFromGrid(i: number, distance: number): Iterator<number> {
-    const { x, y } = this.positions[i]!
+  nearestNeighborsFromGrid(
+    i: number | Vector<2>,
+    distance: number,
+  ): Iterator<number> {
+    const { x, y } = typeof i === 'number' ? this.positions[i]! : i
     this.querySize = 0
 
     let x0 = Math.floor((x - distance) / this.spacing)

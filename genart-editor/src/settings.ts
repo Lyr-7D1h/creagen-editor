@@ -288,9 +288,10 @@ function optimizeSvg(html: Element, opts: SvgProps) {
   for (const c of Array.from(html.children)) {
     switch (c.tagName.toLocaleLowerCase()) {
       case 'path':
-        if (optimizePath(c as SVGPathElement, opts)) {
-          c.remove()
-        }
+        // TODO: fix for http://localhost:5173/af438744df3a711f006203aaa39cd24e157f0f16f59ddfd6c93ea8ba00624032302e302e313a313733363532363839323337353a5b2267656e61727440302e302e35225d
+        // if (optimizePath(c as SVGPathElement, opts)) {
+        //   c.remove()
+        // }
         break
       case 'circle':
         break
@@ -314,7 +315,7 @@ function optimizePath(el: SVGPathElement, opts: SvgProps) {
   if (d === null || d.length === 0) {
     return true
   }
-  const m = d.matchAll(/(\w) ?((?:[\d|\.]*(,? |(?<=\w)))+)/gi)
+  const m = d.matchAll(/(\w) ?((?:[\d|\.]*(,? ?|(?<=\w)))+)/gi)
   let nd = ''
   for (const match of m) {
     const cmd = match[1]!
@@ -323,7 +324,8 @@ function optimizePath(el: SVGPathElement, opts: SvgProps) {
       .filter((a) => a !== ' ' && a !== '')
       .map((a) => a.replace(',', ''))
     if (args.length < 2) {
-      return true
+      console.warn(`Path command doesn't have enough arguments: ${match}`)
+      // return true
     }
     nd += cmd
     const nargs = []
