@@ -1,9 +1,6 @@
 // use p5 as ref https://p5js.org/reference/#/p5.Image
 
 import { Color } from '../Color'
-import MarvinImage from '@rarebearsoft/marvinj'
-// import { Image as ImageJs } from 'image-js'
-// import cannyEdgeDetector from 'canny-edge-detector'
 import { gaussianBlur } from './gaussianBlur'
 import { edgeDetection } from './edgeDetection'
 
@@ -12,7 +9,6 @@ export class Image {
   private img: HTMLImageElement
   private pixeldata: Uint8ClampedArray
   private pixelsLoaded: boolean
-  private input: string
 
   static create(input: string) {
     const image = new Image(input)
@@ -69,6 +65,13 @@ export class Image {
     return this.pixeldata
   }
 
+  clone() {
+    const img = new Image(this.img.src)
+    img.pixeldata = new Uint8ClampedArray(this.pixeldata)
+    img.pixelsLoaded = this.pixelsLoaded
+    return img
+  }
+
   get(x: number, y: number): Color
   get(x: number, y: number, dx: number, dy: number): Uint8ClampedArray[]
   get(
@@ -100,16 +103,19 @@ export class Image {
   }
 
   html() {
-    const canvas = document.createElement('canvas')
-    canvas.width = this.img.width
-    canvas.height = this.img.height
-    const ctx = canvas.getContext('2d')!
-    ctx.putImageData(
-      new ImageData(this.pixeldata, this.width, this.height),
-      0,
-      0,
-    )
-    this.img.src = canvas.toDataURL('image/png')
+    if (this.pixeldata.length > 0) {
+      const canvas = document.createElement('canvas')
+      canvas.width = this.img.width
+      canvas.height = this.img.height
+      const ctx = canvas.getContext('2d')!
+      console.log(this.pixeldata, this.width, this.height)
+      ctx.putImageData(
+        new ImageData(this.pixeldata, this.width, this.height),
+        0,
+        0,
+      )
+      this.img.src = canvas.toDataURL('image/png')
+    }
     return this.img
   }
 

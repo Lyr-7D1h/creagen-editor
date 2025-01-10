@@ -19,7 +19,6 @@ export default [
       typescript({ noEmitOnError: false }),
       terser(),
     ],
-    sourcemap: true,
   },
   {
     input: 'dist/types/index.d.ts',
