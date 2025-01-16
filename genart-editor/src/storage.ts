@@ -1,5 +1,10 @@
-import { type BladeState } from '@tweakpane/core'
 import { type ID } from './id'
+
+export abstract class Storage {
+  abstract set(id: ID, item: Generation): void
+
+  abstract get(id: ID): any | null
+}
 
 export interface Generation {
   code: string
@@ -7,22 +12,11 @@ export interface Generation {
   previous?: ID
 }
 
-export class LocalStorage {
-  set(id: 'settings', item: BladeState) {
-    localStorage.setItem(id, JSON.stringify(item))
-  }
-
-  get(id: 'settings'): BladeState | null {
-    const v = localStorage.getItem(id)
-    if (v === null) return null
-    return JSON.parse(v)
-  }
-}
-
-export class IndexDB {
+export class IndexDB extends Storage {
   db: IDBDatabase | null
 
   constructor() {
+    super()
     this.db = null
   }
 

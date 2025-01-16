@@ -2,6 +2,7 @@ import fg from 'fast-glob'
 import { defineConfig, loadEnv } from 'vite'
 import path from 'path'
 import fs from 'fs'
+import react from '@vitejs/plugin-react'
 
 const LIBRARY_PATH = path.resolve('../genart')
 
@@ -63,6 +64,7 @@ export default defineConfig(async ({ command, mode }) => {
           }
         },
       },
+      react(),
     ],
     optimizeDeps: {
       exclude: ['genart'],

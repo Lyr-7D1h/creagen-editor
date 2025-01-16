@@ -6,6 +6,8 @@
     "inlineSources": true,
     "pretty": true,
 
+    "jsx": "react",
+
     "module": "CommonJS",
     "target": "ESNext",
 

@@ -11,23 +11,10 @@
   </head>
 
   <body>
-    <div id="messages"></div>
-    <main>
-      <div id="view">
-        <div id="editor"></div>
-
-        <div id="resizer">
-          <div id="resizer-cursor"></div>
-        </div>
-
-        <iframe
-          id="sandbox"
-          title="Sandbox"
-          sandbox="allow-same-origin allow-scripts"
-        ></iframe>
-      </div>
-    </main>
-    <div id="settings"></div>
-    <script type="module" src="./src/main.ts"></script>
+    <div id="root"></div>
+    <script type="module" src="./src/main.tsx"></script>
+    <noscript>
+      <div>Please enable JavaScript to view the site.</div>
+    </noscript>
   </body>
 </html>
