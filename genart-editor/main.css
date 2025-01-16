@@ -51,19 +51,6 @@ button {
   height: 100%;
   z-index: 999;
 }
-#resizer {
-  top: 0;
-  z-index: 1001;
-  left: 30%;
-  width: 200px;
-  height: 100vh;
-  position: relative;
-}
-#resizer-cursor {
-  cursor: ew-resize;
-  height: 100%;
-  width: 3px;
-}
 #hresizer {
   top: 0;
   z-index: 1001;

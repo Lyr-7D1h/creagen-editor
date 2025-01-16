@@ -6,49 +6,7 @@ import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 
 import { initVimMode } from 'monaco-vim'
 
-export const typescriptDiagnosticsOptions: monaco.languages.typescript.DiagnosticsOptions =
-  {
-    noSemanticValidation: false,
-    noSyntaxValidation: false,
-    // 1378,1375: allow await on top level
-    diagnosticCodesToIgnore: [1375, 1378],
-  }
-export const typescriptCompilerOptions: monaco.languages.typescript.CompilerOptions =
-  {
-    target: monaco.languages.typescript.ScriptTarget.ESNext,
-    allowNonTsExtensions: true,
-    moduleResolution: monaco.languages.typescript.ModuleResolutionKind.Classic,
-    esModuleInterop: true,
-    module: monaco.languages.typescript.ModuleKind.ESNext,
-    noEmit: true,
-  }
-monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions(
-  typescriptDiagnosticsOptions,
-)
-monaco.languages.typescript.typescriptDefaults.setCompilerOptions(
-  typescriptCompilerOptions,
-)
-
 // https://github.com/brijeshb42/monaco-themes/tree/master
-const genartLightTheme: m.editor.IStandaloneThemeData = {
-  base: 'vs',
-  inherit: true,
-  colors: {},
-  rules: [],
-}
-const genartFullscreenTheme: m.editor.IStandaloneThemeData = {
-  base: 'hc-black',
-  inherit: true,
-  colors: {
-    'editor.background': '#ffffff00',
-    'editor.selectionBackground': '#ffffff',
-    'editor.lineHighlightBackground': '#00000088',
-    'editorCursor.foreground': '#ffffff',
-  },
-  rules: [],
-}
-monaco.editor.defineTheme('genart', genartLightTheme)
-monaco.editor.defineTheme('genart-fullscreen', genartFullscreenTheme)
 
 self.MonacoEnvironment = {
   getWorker(_, label) {

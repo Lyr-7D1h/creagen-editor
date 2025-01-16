@@ -57,12 +57,14 @@ export type Buttons<T extends SettingsConfig<T>> = {
 export class Settings<T extends SettingsConfig<T>> {
   private readonly html: HTMLElement
   private readonly pane: Pane
-  private values: Record<Params<T> | string, any>
+  values: Record<Params<T> | string, any>
+  config: T
   private readonly params: Record<Params<T> | string, BindingApi>
   private readonly buttons: Record<Buttons<T> | string, ButtonApi>
   private folders: Record<Folders<T> | string, FolderApi>
 
   constructor(config: T) {
+    this.config = config
     this.html = document.getElementById('settings')!
     this.pane = new Pane({ container: this.html })
 
@@ -101,7 +103,7 @@ export class Settings<T extends SettingsConfig<T>> {
     }
   }
 
-  get(key: Params<T>) {
+  get(key: Params<T> | string) {
     return this.values[key]
   }
 
