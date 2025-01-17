@@ -1,4 +1,10 @@
-import React, { createContext, PropsWithChildren, useContext } from 'react'
+import React, {
+  createContext,
+  PropsWithChildren,
+  useContext,
+  useEffect,
+  useState,
+} from 'react'
 import { Settings, SettingsConfig } from './settings'
 import { DEBUG, GENART_EDITOR_VERSION, GENART_VERSION, MODE } from './env'
 
@@ -79,18 +85,24 @@ const SettingsContext = createContext<Settings<GeneratorSettingsConfig> | null>(
 )
 
 export const SettingsProvider = ({ children }: PropsWithChildren) => {
-  let settings
-  if (DEBUG) {
-    const config = {
-      ...debugSettingsConfig,
-      ...generatorSettingsConfig,
+  let [settings, setSettings] =
+    useState<Settings<GeneratorSettingsConfig> | null>(null)
+
+  useEffect(() => {
+    if (DEBUG) {
+      const config = {
+        ...debugSettingsConfig,
+        ...generatorSettingsConfig,
+      }
+      setSettings(new Settings(config as GeneratorSettingsConfig))
+    } else {
+      setSettings(
+        new Settings(generatorSettingsConfig as GeneratorSettingsConfig),
+      )
     }
-    settings = new Settings(config as SettingsConfig<typeof config>)
-  } else {
-    settings = new Settings(
-      generatorSettingsConfig as SettingsConfig<typeof generatorSettingsConfig>,
-    )
-  }
+  }, [])
+
+  if (settings === null) return
 
   return (
     <SettingsContext.Provider value={settings}>
