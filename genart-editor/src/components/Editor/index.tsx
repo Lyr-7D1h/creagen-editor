@@ -103,7 +103,7 @@ export function Editor({ value, width, height }: EditorProps) {
       beforeMount={handleBeforeMount}
       onMount={handleEditorDidMount}
       loading={<div>Loading...</div>}
-      value="asdf"
+      value=""
       options={{
         minimap: { enabled: false },
         tabSize: 2,
