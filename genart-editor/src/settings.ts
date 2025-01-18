@@ -65,7 +65,8 @@ export class Settings<T extends SettingsConfig<T>> {
 
   constructor(config: T) {
     this.config = config
-    this.html = document.getElementById('settings')!
+    // this.html = document.getElementById('settings')!
+    this.html = document.createElement('div')!
     this.pane = new Pane({ container: this.html })
 
     this.values = {} as Record<Params<T> | string, any>
