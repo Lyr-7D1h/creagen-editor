@@ -23,7 +23,7 @@ export function VerticalSplitResizer({ children }: PropsWithChildren) {
 
   return (
     <div style={{ display: 'flex' }}>
-      {React.cloneElement(childrenArray[0], { width: `${width}px` })}
+      {React.cloneElement(childrenArray[0] as any, { width: `${width}px` })}
       <div
         style={{
           top: 0,
@@ -48,7 +48,7 @@ export function VerticalSplitResizer({ children }: PropsWithChildren) {
         />
         {childrenArray[1]}
       </div>
-      {React.cloneElement(childrenArray[1], {
+      {React.cloneElement(childrenArray[1] as any, {
         width: `${window.innerWidth - width}px`,
       })}
     </div>
