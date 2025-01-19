@@ -1,4 +1,5 @@
-import React, { Children, PropsWithChildren, useState } from 'react'
+import React, { Children, PropsWithChildren, useEffect, useState } from 'react'
+import { useSettings } from '../SettingsProvider'
 
 /**
  * Split two given children and make them resizable
@@ -6,14 +7,24 @@ import React, { Children, PropsWithChildren, useState } from 'react'
  * each child must have a width prop
  */
 export function VerticalSplitResizer({ children }: PropsWithChildren) {
-  const [width, setWidth] = useState(window.innerWidth / 4)
+  const settings = useSettings()
+  const [editorWidth, setEditorWidth] = useState<number>(window.innerWidth / 4)
+  const [fullscreen, setFullscreen] = useState<boolean>(
+    settings.values['editor.fullscreen'],
+  )
+
+  useEffect(() => {
+    if (settings.values['editor.fullscreen'] === fullscreen) return
+    setFullscreen(settings.values['editor.fullscreen'])
+  }, [settings.values['editor.fullscreen']])
+
   const childrenArray = Children.toArray(children)
   if (childrenArray.length !== 2)
     throw Error('Resizer must have exactly 2 children')
 
   function handleResize(e: MouseEvent) {
     if (e.clientX < 200 || e.clientX > window.innerWidth - 200) return
-    setWidth(e.clientX)
+    setEditorWidth(e.clientX)
   }
   //on mouseup remove windows functions mousemove & mouseup
   function stopResize() {
@@ -23,33 +34,39 @@ export function VerticalSplitResizer({ children }: PropsWithChildren) {
 
   return (
     <div style={{ display: 'flex' }}>
-      {React.cloneElement(childrenArray[0] as any, { width: `${width}px` })}
-      <div
-        style={{
-          top: 0,
-          left: width,
-          zIndex: 1001,
-          // layer above sandbox which captures mouse events
-          width: '800px',
-          height: '100%',
-          position: 'absolute',
-        }}
-      >
+      {React.cloneElement(childrenArray[0] as any, {
+        width: `${fullscreen ? window.innerWidth : editorWidth}px`,
+      })}
+      {fullscreen === false && (
         <div
-          onMouseDown={() => {
-            window.addEventListener('mousemove', handleResize, false)
-            window.addEventListener('mouseup', stopResize, false)
-          }}
           style={{
-            cursor: 'ew-resize',
+            top: 0,
+            left: editorWidth,
+            zIndex: 1001,
+            // layer above sandbox which captures mouse events
+            width: '800px',
             height: '100%',
-            width: '3px',
+            position: 'absolute',
           }}
-        />
-        {childrenArray[1]}
-      </div>
+        >
+          <div
+            onMouseDown={() => {
+              window.addEventListener('mousemove', handleResize, false)
+              window.addEventListener('mouseup', stopResize, false)
+            }}
+            style={{
+              cursor: 'ew-resize',
+              height: '100%',
+              width: '3px',
+            }}
+          />
+        </div>
+      )}
       {React.cloneElement(childrenArray[1] as any, {
-        width: `${window.innerWidth - width}px`,
+        left: fullscreen ? 0 : editorWidth,
+        width: fullscreen
+          ? `${window.innerWidth}px`
+          : `${window.innerWidth - editorWidth}px`,
       })}
     </div>
   )

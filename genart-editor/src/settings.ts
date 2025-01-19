@@ -27,37 +27,10 @@ export interface Param {
 
 export type Entry = Folder | Button | Param
 
-type Generic<T> = {
-  [K in keyof T]: K extends 'type' ? string : T[K]
-}
-
-type GenericSettingsConfig = Record<
-  string,
-  Generic<Param> | Generic<Folder> | Generic<Button>
->
-
-export type SettingsConfig<T extends GenericSettingsConfig> = {
-  [K in keyof T]: T[K] extends { value: any }
-    ? Param
-    : T[K] extends { label: string }
-      ? Button
-      : Folder
-}
-
-export type Params<T extends SettingsConfig<T>> = {
-  [K in keyof T]: T[K] extends Param ? K : never
-}[keyof T]
-export type Folders<T extends SettingsConfig<T>> = {
-  [K in keyof T]: T[K] extends Folder ? K : never
-}[keyof T]
-export type Buttons<T extends SettingsConfig<T>> = {
-  [K in keyof T]: T[K] extends Button ? K : never
-}[keyof T]
-
 export class Settings<T extends SettingsConfig<T>> {
   private readonly html: HTMLElement
   private readonly pane: Pane
-  values: Record<Params<T> | string, any>
+  values: Record<Params<T>, any>
   config: T
   private readonly params: Record<Params<T> | string, BindingApi>
   private readonly buttons: Record<Buttons<T> | string, ButtonApi>
@@ -104,7 +77,7 @@ export class Settings<T extends SettingsConfig<T>> {
     }
   }
 
-  get(key: Params<T> | string) {
+  get(key: Params<T>) {
     return this.values[key]
   }
 
