@@ -1,9 +1,5 @@
 import React from 'react'
-import {
-  useSettings,
-  Button as SettingsButton,
-  Entry,
-} from '../../SettingsProvider'
+import { useSettings, Entry } from '../../SettingsProvider'
 import {
   Accordion,
   AccordionDetails,
@@ -69,12 +65,20 @@ export function Settings() {
             >
               {entries.map(([paramKey, e]) => {
                 const entry = e as Entry
+
                 if (entry.type === 'button')
                   return (
-                    <Button key={paramKey} onClick={() => entry.onClick()}>
-                      {entry.title}
-                    </Button>
+                    <React.Fragment key={paramKey}>
+                      <div />
+                      <Button
+                        variant="contained"
+                        onClick={() => entry.onClick()}
+                      >
+                        {entry.title}
+                      </Button>
+                    </React.Fragment>
                   )
+                if (entry.type !== 'param') return
 
                 return (
                   <React.Fragment key={paramKey}>
@@ -98,6 +102,9 @@ export function Settings() {
                       />
                     ) : (
                       <TextField
+                        type={
+                          typeof entry.value === 'number' ? 'number' : 'text'
+                        }
                         disabled={entry.opts?.readonly}
                         defaultValue={entry.value}
                         size="small"

@@ -127,7 +127,7 @@ export interface Param {
   }
 }
 
-export type Entry = Folder | Button | Param
+export type Entry = (Folder | Button | Param) & { generated?: boolean }
 
 export function SettingsProvider({ children }: PropsWithChildren) {
   const defaultSettingsConfig = {
@@ -138,9 +138,17 @@ export function SettingsProvider({ children }: PropsWithChildren) {
     defaultSettingsConfig,
   )
 
-  function setSettings(settings: DefaultAppSettingsConfig) {
-    setSettingsState(settings)
-    localStorage.set('settings', settings)
+  function setSettings(settings: Record<string, any>) {
+    setSettingsState(settings as DefaultAppSettingsConfig)
+
+    // remove generated settings before saving
+    const clone = { ...settings }
+    for (const key of Object.keys(clone)) {
+      if (clone[key].generated) {
+        delete clone[key]
+      }
+    }
+    localStorage.set('settings', clone)
   }
 
   if (settings === null) return
@@ -170,6 +178,7 @@ export function SettingsProvider({ children }: PropsWithChildren) {
           )
             throw Error('parent is not a folder')
           genericSettings[key] = entry
+          genericSettings[key].generated = true
           setSettings({ ...settings })
         },
       }}
