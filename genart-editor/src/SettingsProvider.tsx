@@ -2,11 +2,10 @@ import React, {
   createContext,
   PropsWithChildren,
   useContext,
-  useEffect,
   useState,
 } from 'react'
 import { localStorage } from './localStorage'
-import { DEBUG, GENART_EDITOR_VERSION, GENART_VERSION, MODE } from './env'
+import { GENART_EDITOR_VERSION, GENART_VERSION, MODE } from './env'
 import { generateHumanReadableName } from './util'
 
 const defaultAppSettingsConfig = {
@@ -164,7 +163,13 @@ export function SettingsProvider({ children }: PropsWithChildren) {
           setSettings({ ...settings })
         },
         add: (key: string, entry: Entry) => {
-          ;(settings as Record<string, any>)[key] = entry
+          const genericSettings = settings as Record<string, any>
+          if (
+            entry.type === 'param' &&
+            (genericSettings[parentKey(key)] as Entry).type !== 'folder'
+          )
+            throw Error('parent is not a folder')
+          genericSettings[key] = entry
           setSettings({ ...settings })
         },
       }}
@@ -172,6 +177,10 @@ export function SettingsProvider({ children }: PropsWithChildren) {
       {children}
     </SettingsContext.Provider>
   )
+}
+
+export function parentKey(key: string) {
+  return key.split('.').slice(0, -1).join('.')
 }
 
 const SettingsContext = createContext<{

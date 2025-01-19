@@ -68,17 +68,10 @@ export interface EditorProps {
   width?: string
   height?: string
   minimap?: boolean
-  keybinds?: Record<number, () => void>
   onLoad?: (editor: Editor) => void
 }
 
-export function EditorView({
-  value,
-  width,
-  height,
-  onLoad,
-  keybinds,
-}: EditorProps) {
+export function EditorView({ value, width, height, onLoad }: EditorProps) {
   const editorRef = useRef<Editor>(null)
   const settings = useSettings()
 
@@ -119,11 +112,6 @@ export function EditorView({
     const editor = new Editor(monacoEditor, monaco)
     editorRef.current = editor
 
-    if (typeof keybinds !== 'undefined') {
-      for (const [key, bind] of Object.entries(keybinds)) {
-        editor.addKeybind(key as any, bind)
-      }
-    }
     update(editor)
     if (typeof onLoad !== 'undefined') onLoad(editor)
   }

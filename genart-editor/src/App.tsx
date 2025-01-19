@@ -55,6 +55,12 @@ export function App() {
     const sandbox = sandboxRef.current
 
     editor.addTypings(sandbox.globalTypings(), 'ts:sandbox.d.ts')
+    editor.addKeybind(
+      monaco.KeyMod.Shift | monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+      () => {
+        render()
+      },
+    )
 
     // load initial code
     loadCodeFromPath(storage)
@@ -129,6 +135,10 @@ export function App() {
   async function updateRenderSettings(result: AnalyzeContainerResult) {
     for (const svgResult of result.svgs) {
       const { paths, circles, rects, svg } = svgResult
+      settings.add('export', {
+        type: 'folder',
+        title: 'Export',
+      })
       settings.add('export.paths', {
         type: 'param',
         label: 'Paths',
@@ -182,20 +192,12 @@ export function App() {
     }
   }
 
-  const keybinds = {
-    [monaco.KeyMod.Shift | monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter]:
-      () => {
-        render()
-      },
-  }
-
   return (
     <>
       <Messages />
       <VerticalSplitResizer>
         <EditorView
           height={'100vh'}
-          keybinds={keybinds}
           onLoad={(editor) => {
             editorRef.current = editor
             load()

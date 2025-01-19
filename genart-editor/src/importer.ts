@@ -19,7 +19,10 @@ export class Importer {
   ): Promise<Library | null> {
     console.log('getLibrary', packageName, MODE)
     // get local version of genart
-    if (packageName === 'genart' && MODE === 'dev') {
+    if (
+      (packageName === '@lyr_7d1h/genart' || packageName === 'genart') &&
+      MODE === 'dev'
+    ) {
       if (MODE === 'dev') {
         return {
           name: packageName,
@@ -28,7 +31,7 @@ export class Importer {
           typings: async () => {
             const res = await fetch('./genart.d.ts')
             const typings = await res.text()
-            return `declare module 'genart' {${typings}}`
+            return `declare module '${packageName}' {${typings}}`
           },
         }
       }

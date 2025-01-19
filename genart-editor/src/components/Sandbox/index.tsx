@@ -16,7 +16,7 @@ export function SandboxView({
     if (!iframe.current) return
     const sandbox = new Sandbox(iframe.current)
     onLoad(sandbox)
-  })
+  }, [])
 
   return (
     <iframe

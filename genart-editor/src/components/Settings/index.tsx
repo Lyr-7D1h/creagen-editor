@@ -1,5 +1,9 @@
 import React from 'react'
-import { useSettings } from '../../SettingsProvider'
+import {
+  useSettings,
+  Button as SettingsButton,
+  Entry,
+} from '../../SettingsProvider'
 import {
   Accordion,
   AccordionDetails,
@@ -8,9 +12,9 @@ import {
   FormLabel,
   Typography,
   TextField,
+  Button,
 } from '@mui/material'
 import { ExpandMore } from '@mui/icons-material'
-import { Entry } from '../../settings'
 
 export function Settings() {
   const settings = useSettings()
@@ -24,13 +28,12 @@ export function Settings() {
     switch ((entry as Entry).type) {
       case 'folder':
         continue
+      case 'button':
       case 'param': {
         const parts = key.split('.')
         const folder = parts.splice(0, parts.length - 1).join('.')
         folders[folder]!.push([key, entry])
       }
-      // case 'button': {
-      //   return <button key={key}>{entry.title}</button>
     }
   }
 
@@ -64,33 +67,45 @@ export function Settings() {
                 alignItems: 'center',
               }}
             >
-              {entries.map(([paramKey, entry]) => (
-                <React.Fragment key={entry.label}>
-                  <FormLabel sx={{ fontSize: 12 }}>{entry.label}</FormLabel>
-                  {typeof entry.value === 'boolean' ? (
-                    <Checkbox
-                      sx={{
-                        height: 10,
-                        '&:hover': {
-                          backgroundColor: 'transparent',
-                        },
-                        '&:click': {
-                          backgroundColor: 'transparent',
-                        },
-                      }}
-                      disableRipple={true}
-                      checked={entry.value}
-                      onChange={(e) => settings.set(paramKey, e.target.checked)}
-                    />
-                  ) : (
-                    <TextField
-                      disabled={entry.opts?.readonly}
-                      defaultValue={entry.value}
-                      size="small"
-                    />
-                  )}
-                </React.Fragment>
-              ))}
+              {entries.map(([paramKey, e]) => {
+                const entry = e as Entry
+                if (entry.type === 'button')
+                  return (
+                    <Button key={paramKey} onClick={() => entry.onClick()}>
+                      {entry.title}
+                    </Button>
+                  )
+
+                return (
+                  <React.Fragment key={paramKey}>
+                    <FormLabel sx={{ fontSize: 12 }}>{entry.label}</FormLabel>
+                    {typeof entry.value === 'boolean' ? (
+                      <Checkbox
+                        sx={{
+                          height: 10,
+                          '&:hover': {
+                            backgroundColor: 'transparent',
+                          },
+                          '&:click': {
+                            backgroundColor: 'transparent',
+                          },
+                        }}
+                        disableRipple={true}
+                        checked={entry.value}
+                        onChange={(e) =>
+                          settings.set(paramKey, e.target.checked)
+                        }
+                      />
+                    ) : (
+                      <TextField
+                        disabled={entry.opts?.readonly}
+                        defaultValue={entry.value}
+                        size="small"
+                      />
+                    )}
+                  </React.Fragment>
+                )
+              })}
             </div>
           </AccordionDetails>
         </Accordion>
