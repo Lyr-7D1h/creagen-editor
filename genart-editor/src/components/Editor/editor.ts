@@ -1,4 +1,5 @@
 import AutoImport, { regexTokeniser } from '@kareemkermad/monaco-auto-import'
+import { Monaco } from '@monaco-editor/react'
 import * as monaco from 'monaco-editor'
 import type * as m from 'monaco-editor'
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
@@ -27,21 +28,8 @@ export class Editor {
   private vimMode: m.editor.IStandaloneCodeEditor | null
   private fullscreendecorators: m.editor.IEditorDecorationsCollection | null
 
-  constructor(options?: EditorSettings) {
-    this.editor = monaco.editor.create(document.getElementById('editor')!, {
-      value: options?.value ?? '',
-      language: 'typescript',
-      minimap: { enabled: false },
-      tabSize: 2,
-      theme: 'genart',
-      // TODO: formatting
-      autoIndent: 'full',
-      formatOnPaste: true,
-      formatOnType: true,
-
-      // allow for resizing
-      automaticLayout: true,
-    })
+  constructor(editor: m.editor.IStandaloneCodeEditor, monaco: Monaco) {
+    this.editor = editor
     this.autoimport = new AutoImport({
       monaco,
       editor: this.editor,
@@ -58,17 +46,16 @@ export class Editor {
     await this.editor.getAction('editor.action.formatDocument')!.run()
   }
 
-  html() {
-    return document.getElementById('editor')!
-  }
-
   addKeybind(keybinding: number, handler: (...args: any[]) => void) {
     this.editor.addCommand(keybinding, handler)
   }
 
   setVimMode(value: boolean) {
     if (value && this.vimMode === null) {
-      this.vimMode = initVimMode(this.editor, document.getElementById('status'))
+      this.vimMode = initVimMode(
+        this.editor,
+        document.getElementById('vim-status'),
+      )
     } else if (!value && this.vimMode !== null) {
       this.vimMode.dispose()
       this.vimMode = null

@@ -1,31 +1,279 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
+import * as monaco from 'monaco-editor'
 import { Messages } from './components/Messages'
-import { Editor } from './components/Editor'
-import { Sandbox } from './components/Sandbox'
-import { StorageProvider } from './StorageProvider'
-import { LocalStorageProvider } from './LocalStorageProvider'
-import { IndexDB } from './storage'
+import { EditorView, typescriptCompilerOptions } from './components/Editor'
+import { SandboxView } from './components/Sandbox'
+import { useStorage } from './StorageProvider'
 import { Settings } from './components/Settings'
-import { SettingsProvider } from './SettingsProvider'
+import { useSettings } from './SettingsProvider'
 import { VerticalSplitResizer } from './components/VerticalSplitResizer'
+import { createID, ID, IDFromString, IDToString } from './id'
+import { Importer, Library } from './importer'
+import log from './log'
+import ts from 'typescript'
+import { Storage } from './storage'
+import { Editor } from './components/Editor/editor'
+import { AnalyzeContainerResult, Sandbox } from './components/Sandbox/sandbox'
+import { GENART_EDITOR_VERSION, GENART_VERSION } from './env'
+
+/** Get code id from path and load code from indexdb */
+async function loadCodeFromPath(storage: Storage) {
+  const path = window.location.pathname.replace('/', '')
+
+  if (path.length === 0) return null
+
+  const id = IDFromString(path)
+
+  if (id === null) {
+    log.error('invalid id given')
+    return null
+  }
+  const value = await storage.get(id)
+  if (value === null) {
+    log.warn(`${IDToString(id)} not found in storage`)
+    return null
+  }
+
+  return { id, code: value.code }
+}
 
 export function App() {
-  const [width] = useState(window.innerWidth / 4)
-  const indexdb = new IndexDB()
-  console.log(width)
+  const storage = useStorage()
+  const settings = useSettings()
+  const [activeId, setActiveId] = useState<ID | null>(null)
+  const editorRef = useRef<Editor>(null)
+  const sandboxRef = useRef<Sandbox>(null)
+  const [loaded, setLoaded] = useState(false)
+  const libraries = useRef<Library[]>([])
+
+  function load() {
+    if (editorRef.current === null || sandboxRef.current === null) return
+    if (loaded) return
+    setLoaded(true)
+
+    const editor = editorRef.current
+    const sandbox = sandboxRef.current
+
+    editor.addTypings(sandbox.globalTypings(), 'ts:sandbox.d.ts')
+
+    // load initial code
+    loadCodeFromPath(storage)
+      .then((res) => {
+        if (res !== null) {
+          const { id, code } = res
+          setActiveId(id)
+          editor.setValue(code)
+        }
+      })
+      .catch(log.error)
+
+    for (const { name, version } of settings.values['general.libraries']) {
+      Importer.getLibrary(name, version).then((library) => {
+        if (library === null) {
+          log.warn(`Library ${name} not found`)
+          return
+        }
+        library
+          .typings()
+          .then((typings) => {
+            editor.addTypings(typings, `ts:${library.name}.d.ts`, library.name)
+            libraries.current.push(library)
+          })
+          .catch(log.error)
+      })
+    }
+  }
+
+  addEventListener('popstate', () => {
+    loadCodeFromPath(storage).catch(log.error)
+  })
+
+  async function render() {
+    if (editorRef.current === null || sandboxRef.current === null) return
+    const editor = editorRef.current
+    const sandbox = sandboxRef.current
+
+    log.clear()
+    const info = log.info('rendering code')
+    if (settings.values['editor.format_on_render']) {
+      await editor.format()
+    }
+
+    let code = editor.getValue()
+
+    // store code and change url
+    const id = await createID(code, libraries.current)
+    await storage.set(id, {
+      code,
+      createdOn: id.date,
+      previous: activeId ?? undefined,
+    })
+    if (id.hash !== activeId?.hash) {
+      window.history.pushState('Genart', '', IDToString(id))
+      setActiveId(id)
+    }
+
+    code = parseCode(code, libraries.current)
+
+    sandbox.runScript(code)
+
+    info.remove()
+
+    // TODO: wait for execution
+    setTimeout(() => {
+      const result = sandbox.analyzeContainer()
+      updateRenderSettings(result)
+    }, 300)
+  }
+
+  async function updateRenderSettings(result: AnalyzeContainerResult) {
+    for (const svgResult of result.svgs) {
+      const { paths, circles, rects, svg } = svgResult
+      settings.add('export.paths', {
+        type: 'param',
+        label: 'Paths',
+        value: paths,
+        opts: {
+          readonly: true,
+        },
+      })
+      settings.add('export.circles', {
+        type: 'param',
+        label: 'Circles',
+        value: circles,
+        opts: {
+          readonly: true,
+        },
+      })
+      settings.add('export.rects', {
+        type: 'param',
+        label: 'Rects',
+        value: rects,
+        opts: {
+          readonly: true,
+        },
+      })
+      settings.add('export.name', {
+        type: 'param',
+        label: 'Name',
+        value: settings.values['general.name'],
+        opts: {
+          readonly: true,
+        },
+      })
+      settings.add('export.optimize', {
+        type: 'param',
+        label: 'Name',
+        value: true,
+        opts: {
+          readonly: true,
+        },
+      })
+      settings.add('export.download', {
+        type: 'button',
+        title: 'Download',
+        onClick: () => {
+          exportSvg(svg, {
+            optimize: true,
+            name: settings.values['general.name'],
+          })
+        },
+      })
+    }
+  }
+
+  const keybinds = {
+    [monaco.KeyMod.Shift | monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter]:
+      () => {
+        render()
+      },
+  }
 
   return (
-    <LocalStorageProvider>
-      <StorageProvider storage={indexdb}>
-        <SettingsProvider>
-          <Messages />
-          <VerticalSplitResizer>
-            <Editor height={'100vh'} />
-            <Sandbox />
-          </VerticalSplitResizer>
-          <Settings />
-        </SettingsProvider>
-      </StorageProvider>
-    </LocalStorageProvider>
+    <>
+      <Messages />
+      <VerticalSplitResizer>
+        <EditorView
+          height={'100vh'}
+          keybinds={keybinds}
+          onLoad={(editor) => {
+            editorRef.current = editor
+            load()
+          }}
+        />
+        <SandboxView
+          onLoad={(sandbox) => {
+            sandboxRef.current = sandbox
+            load()
+          }}
+        />
+      </VerticalSplitResizer>
+      <Settings />
+    </>
   )
+}
+
+/** change imports to the library version it uses */
+function parseCode(code: string, libraries: Library[]) {
+  for (const { name, importPath } of libraries) {
+    const regex = new RegExp(
+      `import(.*{[^]*}[^]*from)? *["'](${name})["'];?`,
+      'gm',
+    )
+    code = code.replace(regex, (m, _p1, p2) => {
+      return m.replace(p2, importPath)
+    })
+  }
+  return ts.transpile(code, typescriptCompilerOptions)
+}
+
+function exportSvg(svg: SVGElement, opts: { optimize: boolean; name: string }) {
+  svg = svg.cloneNode(true) as SVGElement
+
+  if (opts.optimize) {
+    optimizeSvg(svg)
+  }
+
+  // TODO: add params used, code hash, date generated
+  const metadata = document.createElementNS(
+    'http://www.w3.org/2000/svg',
+    'metadata',
+  )
+  const genart = document.createElement('genart')
+  genart.setAttribute('version', GENART_VERSION)
+  genart.setAttribute('editor-version', GENART_EDITOR_VERSION)
+  metadata.appendChild(genart)
+  svg.appendChild(metadata)
+
+  const htmlStr = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>${svg.outerHTML}`
+  const blob = new Blob([htmlStr], { type: 'image/svg+xml' })
+
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.setAttribute('download', `${name}.svg`)
+  a.setAttribute('href', url)
+  a.style.display = 'none'
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}
+
+function optimizeSvg(html: Element) {
+  for (const c of Array.from(html.children)) {
+    switch (c.tagName.toLocaleLowerCase()) {
+      case 'path':
+        // TODO: fix for http://localhost:5173/af438744df3a711f006203aaa39cd24e157f0f16f59ddfd6c93ea8ba00624032302e302e313a313733363532363839323337353a5b2267656e61727440302e302e35225d
+        // if (optimizePath(c as SVGPathElement, opts)) {
+        //   c.remove()
+        // }
+        break
+      case 'circle':
+        break
+      case 'rect':
+        break
+    }
+
+    optimizeSvg(c)
+  }
 }

@@ -1,11 +1,11 @@
 import * as monaco from 'monaco-editor'
 import ts from 'typescript'
-import { Editor, typescriptCompilerOptions } from './editor'
+import { Editor, typescriptCompilerOptions } from './components/Editor/editor'
 import { Settings, type SettingsConfig } from './settings'
 import log from './log'
 import { type ID, IDFromString, IDToString, createID } from './id'
 import { IndexDB, LocalStorage } from './storage'
-import { Sandbox } from './sandbox'
+import { Sandbox } from './components/Sandbox/sandbox'
 import { DEBUG, GENART_EDITOR_VERSION, GENART_VERSION, MODE } from './env'
 import { Importer, Library } from './importer'
 

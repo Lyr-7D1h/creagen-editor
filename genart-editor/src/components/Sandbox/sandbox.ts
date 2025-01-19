@@ -1,11 +1,16 @@
-import { GeneratorSettings } from './generator'
-import log from './log'
+import log from '../../log'
 
 export type LoadableObject =
   | Node
   | {
       html: () => Node
     }
+
+export type SandboxWindow = Window & {
+  load: (obj: LoadableObject) => void
+  draw: (fn: (dt: number) => void) => void
+  console: Console
+}
 
 export class Sandbox {
   html: HTMLIFrameElement
@@ -14,15 +19,12 @@ export class Sandbox {
   /** Html element that holds code rendered by load() */
   container: HTMLDivElement
 
-  settings: GeneratorSettings
-
   drawFns: Array<(dt: number) => void>
 
-  constructor(settings: GeneratorSettings) {
-    this.html = document.getElementById('sandbox')! as HTMLIFrameElement
-    this.settings = settings
+  constructor(iframe: HTMLIFrameElement) {
+    this.html = iframe
 
-    const window = this.html.contentWindow!
+    const window = this.html.contentWindow! as SandboxWindow
 
     window.document.body.style.margin = '0'
 
@@ -52,12 +54,12 @@ export class Sandbox {
 
     this.drawFns = []
     window.draw = (fn: (dt: number) => void) => {
-      if (this.settings.get('debug.fps') === undefined) {
-        this.settings.addParam('debug.fps', 'FPS', 0, {
-          format: (v: number) => `${v.toFixed(0)} fps`,
-          readonly: true,
-        })
-      }
+      // if (this.settings.get('debug.fps') === undefined) {
+      //   this.settings.addParam('debug.fps', 'FPS', 0, {
+      //     format: (v: number) => `${v.toFixed(0)} fps`,
+      //     readonly: true,
+      //   })
+      // }
 
       this.drawFns.push(fn)
     }
@@ -73,7 +75,7 @@ export class Sandbox {
       // const t1 = performance.now()
       frames += 1
       if (t1 - s >= 1000) {
-        this.settings.set('debug.fps', frames)
+        // this.settings.set('debug.fps', frames)
         s += 1000
         frames = 0
       }
@@ -120,4 +122,70 @@ function draw(fn: (dt: number) => void): void;`
     script.innerHTML = code
     doc.body.appendChild(script)
   }
+
+  analyzeContainer(): AnalyzeContainerResult {
+    const result: AnalyzeContainerResult = { svgs: [] }
+    for (const c of Array.from(this.container.children)) {
+      switch (c.tagName.toLocaleLowerCase()) {
+        case 'svg': {
+          // add svg information
+          result.svgs.push({
+            svg: c as SVGElement,
+            ...analyzeSvg(c),
+          })
+        }
+      }
+    }
+    return result
+  }
+}
+
+export interface AnalyzeContainerResult {
+  svgs: (SvgProps & { svg: SVGElement })[]
+}
+
+export interface SvgProps {
+  width?: number
+  height?: number
+  paths: number
+  circles: number
+  rects: number
+}
+function analyzeSvg(html: Element): SvgProps {
+  let paths = 0
+  let circles = 0
+  let rects = 0
+  for (const c of Array.from(html.children)) {
+    switch (c.tagName.toLocaleLowerCase()) {
+      case 'path':
+        const d = c.getAttribute('d')
+        if (d === null || d.length === 0) {
+          console.warn('Path has no d attribute')
+          // c.remove()
+          continue
+        }
+        paths++
+        break
+      case 'circle':
+        circles++
+        break
+      case 'rect':
+        rects++
+        break
+    }
+
+    const { paths: p, circles: ci, rects: r } = analyzeSvg(c)
+
+    paths += p
+    circles += ci
+    rects += r
+  }
+
+  if (html.tagName === 'svg') {
+    const height = Number(html.getAttribute('height')) ?? undefined
+    const width = Number(html.getAttribute('width')) ?? undefined
+    return { paths, circles, rects, width, height }
+  }
+
+  return { paths, circles, rects }
 }

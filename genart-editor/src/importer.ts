@@ -5,7 +5,7 @@ export interface Library {
   /** Specific version used ('{major}.{minor}.{patch}'), can't be latest or something else */
   version: string
   typings: () => Promise<string>
-  /** Absolute or relative path to library */
+  /** Url, Absolute or relative path to library */
   importPath: string
 }
 
@@ -13,7 +13,7 @@ export interface Library {
 // TODO: use https://unpkg.com/
 export class Importer {
   /** Get a library, latest if version is not given */
-  async getLibrary(
+  static async getLibrary(
     packageName: string,
     version?: string,
   ): Promise<Library | null> {
