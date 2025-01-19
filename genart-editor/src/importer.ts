@@ -47,9 +47,20 @@ export class Importer {
     const pkgTypings = pkg.typings || pkg.types
     let typings
     if (typeof pkgTypings === 'undefined') {
-      const pkg = await this.getLibrary(`@types/${packageName}`)
-      if (pkg === null) throw Error('No typings found')
-      typings = pkg?.typings
+      // if no typings are found, try to get the @types package
+      const url = `https://unpkg.com/@types/${packageName}`
+      let res = await fetch(`${url}/package.json`)
+      const pkg = await res.json()
+      const pkgTypings = pkg.typings || pkg.types
+      if (pkgTypings === null) throw Error('No typings found')
+      typings = async () => {
+        res = await fetch(
+          `https://unpkg.com/@types/${packageName}/${pkgTypings}`,
+        )
+        let body = await res.text()
+        console.log(body)
+        return `declare module '${packageName}' {${body}}`
+      }
     } else {
       typings = async () => {
         res = await fetch(
