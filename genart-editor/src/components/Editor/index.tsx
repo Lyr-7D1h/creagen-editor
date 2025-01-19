@@ -3,16 +3,15 @@ import AutoImport from '@kareemkermad/monaco-auto-import'
 import { editor } from 'monaco-editor'
 import MonacoEditor, { Monaco } from '@monaco-editor/react'
 import { initVimMode } from 'monaco-vim'
-
+import { useSettings } from '../../SettingsProvider'
+import { loader } from '@monaco-editor/react'
+import { Editor } from './editor'
 import * as monaco from 'monaco-editor'
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
 import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
 import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
 import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker'
 import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
-import { useSettings } from '../../SettingsProvider'
-import { loader } from '@monaco-editor/react'
-import { Editor } from './editor'
 
 // needed for vite: https://www.npmjs.com/package/@monaco-editor/react#loader-config
 self.MonacoEnvironment = {
@@ -79,6 +78,11 @@ export function EditorView({ value, width, height, onLoad }: EditorProps) {
   function update(editor: Editor) {
     editor.setVimMode(settings.values['editor.vim'])
     editor.setFullscreenMode(settings.values['editor.fullscreen'])
+    if (settings.values['editor.relative_lines']) {
+      editor.updateOptions({ lineNumbers: 'relative' })
+    } else {
+      editor.updateOptions({ lineNumbers: 'on' })
+    }
   }
 
   // if (editorRef.current !== null) {
@@ -88,6 +92,7 @@ export function EditorView({ value, width, height, onLoad }: EditorProps) {
   }, [
     settings.values['editor.vim'],
     settings.values['editor.fullscreen'],
+    settings.values['editor.relative_lines'],
     editorRef,
   ])
 

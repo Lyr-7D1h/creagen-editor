@@ -1,5 +1,9 @@
-import React from 'react'
-import { useSettings, Entry } from '../../SettingsProvider'
+import React, { useEffect, useState } from 'react'
+import {
+  useSettings,
+  Entry,
+  SelectedLibrarySetting,
+} from '../../SettingsProvider'
 import {
   Accordion,
   AccordionDetails,
@@ -9,12 +13,25 @@ import {
   Typography,
   TextField,
   Button,
+  ToggleButtonGroup,
+  ToggleButton,
+  Select,
+  MenuItem,
 } from '@mui/material'
 import { ExpandMore } from '@mui/icons-material'
+import { Importer } from '../../importer'
+import log from '../../log'
 
 export function Settings() {
   const settings = useSettings()
-  const [expanded, setExpanded] = React.useState<string | false>(false)
+  const [expanded, setExpandedState] = React.useState<string | false>(
+    localStorage.getItem('expanded') ?? 'general',
+  )
+
+  function setExpanded(expanded: string | false) {
+    localStorage.setItem('expanded', expanded as string)
+    setExpandedState(expanded)
+  }
 
   const folders: Record<string, any[]> = Object.entries(settings.config)
     .filter(([_, entry]) => (entry as Entry).type === 'folder')
@@ -42,7 +59,7 @@ export function Settings() {
           key={folderKey}
           expanded={expanded === folderKey}
           onChange={(_, expanded) => {
-            setExpanded(expanded ? folderKey : false)
+            setExpandedState(expanded ? folderKey : false)
           }}
           slotProps={{ transition: { timeout: 0 } }}
         >
@@ -79,6 +96,23 @@ export function Settings() {
                     </React.Fragment>
                   )
                 if (entry.type !== 'param') return
+
+                if (paramKey === 'general.libraries')
+                  return (
+                    <React.Fragment key={paramKey}>
+                      <FormLabel sx={{ fontSize: 12 }}>Libraries</FormLabel>
+                      <LibrarySetting />
+                    </React.Fragment>
+                  )
+
+                if (typeof entry.render !== 'undefined') {
+                  return (
+                    <React.Fragment key={paramKey}>
+                      <FormLabel sx={{ fontSize: 12 }}>{entry.label}</FormLabel>
+                      {entry.render(entry.value)}
+                    </React.Fragment>
+                  )
+                }
 
                 return (
                   <React.Fragment key={paramKey}>
@@ -118,5 +152,95 @@ export function Settings() {
         </Accordion>
       ))}
     </div>
+  )
+}
+
+const supportedLibraries = [
+  { name: '@lyr_7d1h/genart' },
+  { name: 'p5' },
+  { name: 'three', disabled: true },
+]
+
+function LibrarySetting() {
+  const settings = useSettings()
+  const [versions, setVersions] = useState<Record<string, string[]>>({})
+  const [selectedVersion, setSelectedVersion] = useState<
+    Record<string, string>
+  >({})
+
+  const libraries = settings.values[
+    'general.libraries'
+  ] as SelectedLibrarySetting[]
+
+  useEffect(() => {
+    Promise.all(supportedLibraries.map((l) => Importer.versions(l.name)))
+      .then((vers) => {
+        for (let i = 0; i < vers.length; i++) {
+          if (typeof supportedLibraries[i] === 'undefined')
+            throw Error('library not found')
+          const name = supportedLibraries[i]!.name
+          versions[name] = vers[i]!
+          selectedVersion[name] =
+            libraries.find((l) => l.name === name)?.version ?? vers[i]![0]!
+        }
+        setVersions(versions)
+        setSelectedVersion(selectedVersion)
+      })
+      .catch(log.error)
+  }, [])
+
+  return (
+    <ToggleButtonGroup
+      orientation="vertical"
+      fullWidth={true}
+      value={libraries.map((l) => l.name)}
+      onChange={(_, value) => {
+        console.log('enable lib')
+        settings.set(
+          'general.libraries',
+          value.map((name: string) => ({
+            name,
+            version:
+              libraries.find((l) => l.name === name)?.version ??
+              selectedVersion[name]!,
+          })),
+        )
+      }}
+    >
+      {supportedLibraries.map((lib) => (
+        <ToggleButton
+          key={lib.name}
+          value={lib.name}
+          aria-label="list"
+          size="small"
+          disabled={lib?.disabled ?? false}
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            width: '100%',
+          }}
+        >
+          <span>{lib.name}</span>
+          {versions[lib.name] === undefined ? null : (
+            <Select
+              value={versions[lib.name]![0]}
+              size="small"
+              onChange={(e) => {
+                setSelectedVersion({
+                  ...selectedVersion,
+                  [lib.name]: e.target.value,
+                })
+              }}
+            >
+              {versions[lib.name]!.map((v) => (
+                <MenuItem key={v} value={v}>
+                  {v}
+                </MenuItem>
+              ))}
+            </Select>
+          )}
+        </ToggleButton>
+      ))}
+    </ToggleButtonGroup>
   )
 }
