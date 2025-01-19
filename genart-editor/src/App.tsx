@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import * as monaco from 'monaco-editor'
 import { Messages } from './components/Messages'
 import { EditorView, typescriptCompilerOptions } from './components/Editor'
@@ -46,6 +46,27 @@ export function App() {
   const [loaded, setLoaded] = useState(false)
   const libraries = useRef<Library[]>([])
 
+  function loadLibraries() {
+    if (editorRef.current === null) return
+    const editor = editorRef.current!
+    for (const { name, version } of settings.values['general.libraries']) {
+      Importer.getLibrary(name, version).then((library) => {
+        if (library === null) {
+          log.warn(`Library ${name} not found`)
+          return
+        }
+        library
+          .typings()
+          .then((typings) => {
+            console.log(typings)
+            editor.addTypings(typings, `ts:${library.name}.d.ts`, library.name)
+            libraries.current.push(library)
+          })
+          .catch(log.error)
+      })
+    }
+  }
+
   function load() {
     if (editorRef.current === null || sandboxRef.current === null) return
     if (loaded) return
@@ -73,22 +94,12 @@ export function App() {
       })
       .catch(log.error)
 
-    for (const { name, version } of settings.values['general.libraries']) {
-      Importer.getLibrary(name, version).then((library) => {
-        if (library === null) {
-          log.warn(`Library ${name} not found`)
-          return
-        }
-        library
-          .typings()
-          .then((typings) => {
-            editor.addTypings(typings, `ts:${library.name}.d.ts`, library.name)
-            libraries.current.push(library)
-          })
-          .catch(log.error)
-      })
-    }
+    loadLibraries()
   }
+
+  useEffect(() => {
+    loadLibraries()
+  }, [settings.values['general.libraries']])
 
   addEventListener('popstate', () => {
     loadCodeFromPath(storage).catch(log.error)
