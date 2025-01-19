@@ -23,7 +23,7 @@ export default [
   {
     input: 'dist/types/index.d.ts',
     output: {
-      name: 'genart',
+      name: '@lyr_7d1h/genart',
       file: 'dist/genart.d.ts',
       format: 'es',
     },
