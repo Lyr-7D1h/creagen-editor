@@ -173,7 +173,7 @@ export function App() {
       })
       settings.add('export.optimize', {
         type: 'param',
-        label: 'Name',
+        label: 'Optimize',
         value: true,
         opts: {
           readonly: true,
@@ -252,7 +252,7 @@ function exportSvg(svg: SVGElement, opts: { optimize: boolean; name: string }) {
 
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
-  a.setAttribute('download', `${name}.svg`)
+  a.setAttribute('download', `${opts.name}.svg`)
   a.setAttribute('href', url)
   a.style.display = 'none'
   document.body.appendChild(a)
