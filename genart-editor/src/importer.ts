@@ -44,20 +44,41 @@ export class Importer {
     version = pkg.version
     if (typeof version === 'undefined') throw Error('No version found')
 
-    const typings = pkg.typings
-    if (typeof typings === 'undefined') throw Error('No typings found')
+    const pkgTypings = pkg.typings || pkg.types
+    let typings
+    if (typeof pkgTypings === 'undefined') {
+      const pkg = await this.getLibrary(`@types/${packageName}`)
+      if (pkg === null) throw Error('No typings found')
+      typings = pkg?.typings
+    } else {
+      typings = async () => {
+        res = await fetch(
+          `https://unpkg.com/${packageName}${version ? `@${version}` : ''}/${pkgTypings}`,
+        )
+        let body = await res.text()
+        return `declare module '${packageName}' {${body}}`
+      }
+    }
 
     return {
       name: packageName,
       version,
       importPath: `https://unpkg.com/${packageName}${version ? `@${version}` : ''}`,
-      typings: async () => {
-        res = await fetch(
-          `https://unpkg.com/${packageName}${version ? `@${version}` : ''}/${typings}`,
-        )
-        let body = await res.text()
-        return `declare module '${packageName}' {${body}}`
-      },
+      typings,
     }
+  }
+
+  /** return a list of all the versions of a package from latest to oldest */
+  static async versions(packageName: string) {
+    const url = `https://registry.npmjs.org/${packageName}`
+
+    const response = await fetch(url)
+    if (!response.ok) {
+      throw new Error(`Failed to fetch data for package: ${packageName}`)
+    }
+    const data = await response.json()
+    const versions = Object.keys(data.versions)
+    versions.reverse()
+    return versions
   }
 }

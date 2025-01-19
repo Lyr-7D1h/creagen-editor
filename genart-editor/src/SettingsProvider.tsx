@@ -8,6 +8,11 @@ import { localStorage } from './localStorage'
 import { GENART_EDITOR_VERSION, GENART_VERSION, MODE } from './env'
 import { generateHumanReadableName } from './util'
 
+export interface SelectedLibrarySetting {
+  name: string
+  version?: string
+}
+
 const defaultAppSettingsConfig = {
   general: {
     type: 'folder',
@@ -25,7 +30,7 @@ const defaultAppSettingsConfig = {
       {
         name: '@lyr_7d1h/genart',
       },
-    ] as { name: string; version?: string }[],
+    ] as SelectedLibrarySetting[],
   },
   editor: {
     type: 'folder',
@@ -118,10 +123,11 @@ export interface Button {
   onClick: () => void
 }
 
-export interface Param {
+export interface Param<T = any> {
   type: 'param'
   label: string
-  value: any
+  render: (value: T, set?: (value: T) => void) => React.ReactNode
+  value: T
   opts?: {
     readonly?: boolean
   }
