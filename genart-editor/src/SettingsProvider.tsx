@@ -132,7 +132,7 @@ export interface Button {
 export interface Param<T = any> {
   type: 'param'
   label: string
-  render: (value: T, set?: (value: T) => void) => React.ReactNode
+  render?: (value: T, set?: (value: T) => void) => React.ReactNode
   value: T
   opts?: {
     readonly?: boolean

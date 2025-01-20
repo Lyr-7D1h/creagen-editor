@@ -46,9 +46,6 @@ export function App() {
   const [loaded, setLoaded] = useState(false)
   const libraries = useRef<Library[]>([])
 
-  // TODO: update available storage expectation
-  // navigator.storage.estimate(),
-
   function loadLibraries() {
     if (editorRef.current === null) return
     const editor = editorRef.current!
@@ -98,6 +95,19 @@ export function App() {
 
     loadLibraries()
   }
+
+  // update storage used estimate
+  useEffect(() => {
+    navigator.storage
+      .estimate()
+      .then((storage) =>
+        settings.set(
+          'general.storage',
+          (storage.usage ?? 0) / (storage.quota ?? 1),
+        ),
+      )
+      .catch(log.error)
+  })
 
   useEffect(() => {
     loadLibraries()
