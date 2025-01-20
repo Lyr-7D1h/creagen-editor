@@ -46,6 +46,9 @@ export function App() {
   const [loaded, setLoaded] = useState(false)
   const libraries = useRef<Library[]>([])
 
+  // TODO: update available storage expectation
+  // navigator.storage.estimate(),
+
   function loadLibraries() {
     if (editorRef.current === null) return
     const editor = editorRef.current!

@@ -1,4 +1,6 @@
+import { info, warn } from './components/Messages'
 import { type ID } from './id'
+import log from './log'
 
 export abstract class Storage {
   abstract set(id: ID, item: Generation): void
@@ -26,6 +28,26 @@ export class IndexDB extends Storage {
         resolve(this.db)
         return
       }
+
+      // Make storage persistent https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria#does_browser-stored_data_persist
+      if (navigator.storage && navigator.storage.persist) {
+        navigator.storage
+          .persisted()
+          .then((persisted) => {
+            // if not already persisted set it (asks for permission in firefox)
+            if (!persisted) {
+              navigator.storage.persist().then((persistent) => {
+                if (persistent) {
+                  info('Generations will be persisted in local storage')
+                } else {
+                  warn('Generations might be cleared from local storage')
+                }
+              })
+            }
+          })
+          .catch(log.error)
+      }
+
       const req = indexedDB.open('genart', 1)
       req.onerror = (_e) => {
         reject(
