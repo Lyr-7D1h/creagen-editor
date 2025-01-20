@@ -22,14 +22,16 @@ import { ExpandMore } from '@mui/icons-material'
 import { Importer } from '../../importer'
 import log from '../../log'
 
+const expendedSettingKey = 'expandedSetting'
+
 export function Settings() {
   const settings = useSettings()
   const [expanded, setExpandedState] = React.useState<string | false>(
-    localStorage.getItem('expanded') ?? 'general',
+    localStorage.getItem(expendedSettingKey) ?? 'general',
   )
 
   function setExpanded(expanded: string | false) {
-    localStorage.setItem('expanded', expanded as string)
+    localStorage.setItem(expendedSettingKey, expanded as string)
     setExpandedState(expanded)
   }
 
@@ -59,7 +61,7 @@ export function Settings() {
           key={folderKey}
           expanded={expanded === folderKey}
           onChange={(_, expanded) => {
-            setExpandedState(expanded ? folderKey : false)
+            setExpanded(expanded ? folderKey : false)
           }}
           slotProps={{ transition: { timeout: 0 } }}
         >
