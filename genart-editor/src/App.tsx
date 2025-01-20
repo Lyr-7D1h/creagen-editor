@@ -61,7 +61,6 @@ export function App() {
         library
           .typings()
           .then((typings) => {
-            console.log(typings)
             editor.addTypings(typings, `ts:${library.name}.d.ts`, library.name)
             libraries.current.push(library)
           })
