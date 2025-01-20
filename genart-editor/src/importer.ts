@@ -9,6 +9,8 @@ export interface Library {
   importPath: string
 }
 
+const PACKAGE_SOURCE_URL = 'https://unpkg.com'
+
 /** Takes care of handling proper typings and importing libraries */
 // TODO: use https://unpkg.com/
 export class Importer {
@@ -37,7 +39,7 @@ export class Importer {
       }
     }
 
-    const url = `https://unpkg.com/${packageName}${version ? `@${version}` : ''}`
+    const url = `${PACKAGE_SOURCE_URL}/${packageName}${version ? `@${version}` : ''}`
     let res = await fetch(`${url}/package.json`)
     const pkg = await res.json()
 
@@ -48,23 +50,24 @@ export class Importer {
     let typings
     if (typeof pkgTypings === 'undefined') {
       // if no typings are found, try to get the @types package
-      const url = `https://unpkg.com/@types/${packageName}`
+      const url = `${PACKAGE_SOURCE_URL}/@types/${packageName}`
       let res = await fetch(`${url}/package.json`)
       const pkg = await res.json()
-      const pkgTypings = pkg.typings || pkg.types
+      let pkgTypings = pkg.typings || pkg.types
+      // HACK: using p5 in global mode
+      if (packageName === 'p5') pkgTypings = 'global.d.ts'
       if (pkgTypings === null) throw Error('No typings found')
       typings = async () => {
         res = await fetch(
-          `https://unpkg.com/@types/${packageName}/${pkgTypings}`,
+          `${PACKAGE_SOURCE_URL}/@types/${packageName}/${pkgTypings}`,
         )
         let body = await res.text()
-        console.log(body)
         return `declare module '${packageName}' {${body}}`
       }
     } else {
       typings = async () => {
         res = await fetch(
-          `https://unpkg.com/${packageName}${version ? `@${version}` : ''}/${pkgTypings}`,
+          `${PACKAGE_SOURCE_URL}/${packageName}${version ? `@${version}` : ''}/${pkgTypings}`,
         )
         let body = await res.text()
         return `declare module '${packageName}' {${body}}`
@@ -74,7 +77,7 @@ export class Importer {
     return {
       name: packageName,
       version,
-      importPath: `https://unpkg.com/${packageName}${version ? `@${version}` : ''}`,
+      importPath: `${PACKAGE_SOURCE_URL}/${packageName}${version ? `@${version}` : ''}`,
       typings,
     }
   }
