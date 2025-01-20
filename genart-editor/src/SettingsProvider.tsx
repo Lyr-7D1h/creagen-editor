@@ -23,6 +23,12 @@ const defaultAppSettingsConfig = {
     label: 'Name',
     value: generateHumanReadableName(),
   },
+  'general.storage': {
+    type: 'param',
+    label: 'Available Storage',
+    value: 0,
+    opts: { readonly: true },
+  },
   'general.libraries': {
     type: 'param',
     label: 'Libraries',
