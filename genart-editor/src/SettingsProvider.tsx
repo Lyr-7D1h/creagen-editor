@@ -6,7 +6,31 @@ import React, {
 } from 'react'
 import { localStorage } from './localStorage'
 import { GENART_EDITOR_VERSION, GENART_VERSION, MODE } from './env'
-import { generateHumanReadableName } from './util'
+import { generateHumanReadableName, roundToDec } from './util'
+import {
+  Box,
+  LinearProgress,
+  LinearProgressProps,
+  Typography,
+} from '@mui/material'
+
+function LinearProgressWithLabel(
+  props: LinearProgressProps & { value: number },
+) {
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      <Box sx={{ width: '100%', mr: 1 }}>
+        <LinearProgress variant="determinate" {...props} />
+      </Box>
+      <Box sx={{ minWidth: 35 }}>
+        <Typography
+          variant="body2"
+          sx={{ color: 'text.secondary' }}
+        >{`${props.value}%`}</Typography>
+      </Box>
+    </Box>
+  )
+}
 
 export interface SelectedLibrarySetting {
   name: string
@@ -26,6 +50,12 @@ const defaultAppSettingsConfig = {
   'general.storage': {
     type: 'param',
     label: 'Available Storage',
+    render: (value: number) => (
+      <LinearProgressWithLabel
+        variant="determinate"
+        value={roundToDec(value, 3)}
+      />
+    ),
     value: 0,
     opts: { readonly: true },
   },
@@ -142,12 +172,18 @@ export interface Param<T = any> {
 export type Entry = (Folder | Button | Param) & { generated?: boolean }
 
 export function SettingsProvider({ children }: PropsWithChildren) {
-  const defaultSettingsConfig = {
-    ...defaultAppSettingsConfig,
-    ...(localStorage.get('settings') ?? {}),
-  } as DefaultAppSettingsConfig
+  const defaultSettingsConfig = defaultAppSettingsConfig as Record<string, any>
+  const storageSettings = localStorage.get('settings')
+  if (storageSettings !== null) {
+    for (const [key, value] of Object.entries(localStorage.get('settings'))) {
+      defaultSettingsConfig[key as string] = {
+        ...(defaultSettingsConfig[key] ?? {}),
+        ...(value as any),
+      }
+    }
+  }
   let [settings, setSettingsState] = useState<DefaultAppSettingsConfig>(
-    defaultSettingsConfig,
+    defaultSettingsConfig as DefaultAppSettingsConfig,
   )
 
   function setSettings(settings: Record<string, any>) {
