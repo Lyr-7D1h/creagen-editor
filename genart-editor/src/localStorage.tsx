@@ -7,7 +7,7 @@ class LocalStorage {
     globalThis.localStorage.setItem(id, JSON.stringify(item))
   }
 
-  get(id: 'settings'): null {
+  get(id: 'settings'): null | any {
     const v = globalThis.localStorage.getItem(id)
     if (v === null) return null
     return JSON.parse(v)
