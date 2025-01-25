@@ -4,7 +4,7 @@ export interface Library {
   name: string
   /** Specific version used ('{major}.{minor}.{patch}'), can't be latest or something else */
   version: string
-  typings: () => Promise<string>
+  typings: () => Promise<string | null>
   /** Url, Absolute or relative path to library */
   importPath: string
 }
@@ -46,33 +46,20 @@ export class Importer {
     version = pkg.version
     if (typeof version === 'undefined') throw Error('No version found')
 
-    const pkgTypings = pkg.typings || pkg.types
-    let typings
+    let typingsUrlRoot = `${PACKAGE_SOURCE_URL}/${packageName}${version ? `@${version}` : ''}`
+    let pkgTypings = pkg.typings || pkg.types
     if (typeof pkgTypings === 'undefined') {
       // if no typings are found, try to get the @types package
-      const url = `${PACKAGE_SOURCE_URL}/@types/${packageName}`
-      let res = await fetch(`${url}/package.json`)
+      typingsUrlRoot = `${PACKAGE_SOURCE_URL}/@types/${packageName}`
+      let res = await fetch(`${typingsUrlRoot}/package.json`)
       const pkg = await res.json()
-      let pkgTypings = pkg.typings || pkg.types
+      pkgTypings = pkg.typings || pkg.types
       // HACK: using p5 in global mode
       if (packageName === 'p5') pkgTypings = 'global.d.ts'
       if (pkgTypings === null) throw Error('No typings found')
-      typings = async () => {
-        res = await fetch(
-          `${PACKAGE_SOURCE_URL}/@types/${packageName}/${pkgTypings}`,
-        )
-        let body = await res.text()
-        return `declare module '${packageName}' {${body}}`
-      }
-    } else {
-      typings = async () => {
-        res = await fetch(
-          `${PACKAGE_SOURCE_URL}/${packageName}${version ? `@${version}` : ''}/${pkgTypings}`,
-        )
-        let body = await res.text()
-        return `declare module '${packageName}' {${body}}`
-      }
     }
+    const typings = async () =>
+      getTypings(packageName, typingsUrlRoot, pkgTypings)
 
     return {
       name: packageName,
@@ -95,4 +82,49 @@ export class Importer {
     versions.reverse()
     return versions
   }
+}
+
+async function getTypings(packageName: string, root: string, typeFile: string) {
+  const typings = await parseImports(root, typeFile)
+  if (typings === null) return null
+  return `declare module '${packageName}' {${typings}}`
+}
+
+const importRegex =
+  /import\s+(?:(?:(?<imports>[\w*\s{},]+?)\s+from\s+)|(?=['"]))['"](?<module>[^'"]+)['"];?/gm
+
+async function parseImports(root: string, typeFile: string) {
+  const response = await fetch(root + '/' + typeFile)
+  if (response.status !== 200) {
+    return null
+  }
+  let typings = await response.text()
+
+  const matches = [...typings.matchAll(importRegex)]
+  if (matches === null) return typings
+
+  const modules = await Promise.all(
+    matches.map(async (match) => {
+      const module = match.groups!['module']
+      if (typeof module === 'undefined') {
+        console.error('module path couldnt be parsed')
+        return ''
+      }
+      const parts = module.split('/')
+      let parent = parts.splice(0, parts.length - 1).join('/')
+      if (parent === '.') parent = ''
+      return parseImports(`${root}/${parent}`, module + '.d.ts')
+    }),
+  )
+
+  modules.forEach((module, i) => {
+    if (module === null) return
+    const match = matches[i]![0]
+    if (typeof match === 'undefined') return
+    typings = typings.replace(match, module)
+  })
+  // ignore exports
+  typings = typings.replace(/export .*/g, '')
+
+  return typings
 }
