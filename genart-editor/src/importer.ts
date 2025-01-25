@@ -1,3 +1,4 @@
+import { TYPESCRIPT_IMPORT_REGEX } from './constants'
 import { GENART_VERSION, MODE } from './env'
 
 export interface Library {
@@ -90,9 +91,6 @@ async function getTypings(packageName: string, root: string, typeFile: string) {
   return `declare module '${packageName}' {${typings}}`
 }
 
-const importRegex =
-  /import\s+(?:(?:(?<imports>[\w*\s{},]+?)\s+from\s+)|(?=['"]))['"](?<module>[^'"]+)['"];?/gm
-
 async function parseImports(root: string, typeFile: string) {
   const response = await fetch(root + '/' + typeFile)
   if (response.status !== 200) {
@@ -100,7 +98,7 @@ async function parseImports(root: string, typeFile: string) {
   }
   let typings = await response.text()
 
-  const matches = [...typings.matchAll(importRegex)]
+  const matches = [...typings.matchAll(TYPESCRIPT_IMPORT_REGEX)]
   if (matches === null) return typings
 
   const modules = await Promise.all(
