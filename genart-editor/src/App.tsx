@@ -15,6 +15,7 @@ import { Storage } from './storage'
 import { Editor } from './components/Editor/editor'
 import { AnalyzeContainerResult, Sandbox } from './components/Sandbox/sandbox'
 import { GENART_EDITOR_VERSION, GENART_VERSION } from './env'
+import { TYPESCRIPT_IMPORT_REGEX } from './constants'
 
 /** Get code id from path and load code from indexdb */
 async function loadCodeFromPath(storage: Storage) {
@@ -240,15 +241,25 @@ export function App() {
 
 /** change imports to the library version it uses */
 function parseCode(code: string, libraries: Library[]) {
-  for (const { name, importPath } of libraries) {
-    const regex = new RegExp(
-      `import(.*{[^]*}[^]*from)? *["'](${name})["'];?`,
-      'gm',
-    )
-    code = code.replace(regex, (m, _p1, p2) => {
-      return m.replace(p2, importPath)
-    })
+  let match
+  while ((match = TYPESCRIPT_IMPORT_REGEX.exec(code)) !== null) {
+    const imports = match.groups!['imports']
+    const module = match.groups!['module']
+    if (typeof module === 'undefined') continue
+
+    // Replace the module path while leaving the imports intact
+    const newModulePath = libraries.find((l) => l.name === module)?.importPath
+    if (typeof newModulePath === 'undefined') {
+      log.error(`Library ${module} not found`)
+      continue
+    }
+    const updatedImport = imports
+      ? `import ${imports} from '${newModulePath}';`
+      : `import '${newModulePath}';`
+
+    code = code.replace(match[0], updatedImport)
   }
+
   return ts.transpile(code, typescriptCompilerOptions)
 }
 
