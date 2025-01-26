@@ -59,11 +59,7 @@ const defaultAppSettingsConfig = {
     type: 'param',
     label: 'Libraries',
     generated: true,
-    value: [
-      {
-        name: '@lyr_7d1h/genart',
-      },
-    ] as Library[],
+    value: [] as Library[],
   },
   editor: {
     type: 'folder',
@@ -239,6 +235,14 @@ export function parentKey(key: string) {
   return key.split('.').slice(0, -1).join('.')
 }
 
+export interface SettingsContextType {
+  /** Do not change any of these values use `set()` and `add()` */
+  values: Record<Params<DefaultAppSettingsConfig>, any>
+  /** Do not change any of these values use `set()` and `add()` */
+  config: DefaultAppSettingsConfig
+  set: (key: Params<DefaultAppSettingsConfig>, value: any) => void
+  add: (key: string, entry: Entry) => void
+}
 const SettingsContext = createContext<{
   values: Record<Params<DefaultAppSettingsConfig>, any>
   config: DefaultAppSettingsConfig

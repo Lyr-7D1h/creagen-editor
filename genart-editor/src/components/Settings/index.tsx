@@ -1,9 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import {
-  useSettings,
-  Entry,
-  SelectedLibrarySetting,
-} from '../../SettingsProvider'
+import { useSettings, Entry } from '../../SettingsProvider'
 import {
   Accordion,
   AccordionDetails,
@@ -21,6 +17,7 @@ import {
 import { ExpandMore } from '@mui/icons-material'
 import { Importer } from '../../importer'
 import log from '../../log'
+import { Library } from '../../id'
 
 const expendedSettingKey = 'expandedSetting'
 
@@ -170,9 +167,7 @@ function LibrarySetting() {
     Record<string, string>
   >({})
 
-  const libraries = settings.values[
-    'general.libraries'
-  ] as SelectedLibrarySetting[]
+  const libraries = settings.values['general.libraries'] as Library[]
 
   useEffect(() => {
     Promise.all(supportedLibraries.map((l) => Importer.versions(l.name)))
@@ -190,6 +185,7 @@ function LibrarySetting() {
       })
       .catch(log.error)
   }, [])
+  console.log(libraries)
 
   return (
     <ToggleButtonGroup
@@ -197,7 +193,6 @@ function LibrarySetting() {
       fullWidth={true}
       value={libraries.map((l) => l.name)}
       onChange={(_, value) => {
-        console.log('enable lib')
         settings.set(
           'general.libraries',
           value.map((name: string) => ({

@@ -5,9 +5,9 @@ import { EditorView, typescriptCompilerOptions } from './components/Editor'
 import { SandboxView } from './components/Sandbox'
 import { useStorage } from './StorageProvider'
 import { Settings } from './components/Settings'
-import { useSettings } from './SettingsProvider'
+import { SettingsContextType, useSettings } from './SettingsProvider'
 import { VerticalSplitResizer } from './components/VerticalSplitResizer'
-import { createID, ID, IDFromString, IDToString } from './id'
+import { createID, ID, IDFromString, IDToString, Library } from './id'
 import { Importer, LibraryImport } from './importer'
 import log from './log'
 import ts from 'typescript'
@@ -41,11 +41,18 @@ async function loadCodeFromPath(storage: Storage) {
 export function App() {
   const storage = useStorage()
   const settings = useSettings()
-  const [activeId, setActiveId] = useState<ID | null>(null)
+  const [activeId, setActiveIdState] = useState<ID | null>(null)
   const editorRef = useRef<Editor>(null)
   const sandboxRef = useRef<Sandbox>(null)
   const [loaded, setLoaded] = useState(false)
-  const libraries = useRef<LibraryImport[]>([])
+  const libraryImports = useRef<LibraryImport[]>([])
+
+  /** Add new id to history */
+  function updateActiveId(id: ID) {
+    if (JSON.stringify(id) === JSON.stringify(activeId)) return
+    window.history.pushState('Genart', '', IDToString(id))
+    setActiveIdState(id)
+  }
 
   function loadLibraries() {
     if (editorRef.current === null || sandboxRef.current === null) return
@@ -72,7 +79,7 @@ export function App() {
                 library.name,
               )
             }
-            libraries.current.push(library)
+            libraryImports.current.push(library)
           })
           .catch(log.error)
       })
@@ -89,12 +96,7 @@ export function App() {
     const sandbox = sandboxRef.current
 
     editor.addTypings(sandbox.globalTypings(), 'ts:sandbox.d.ts')
-    editor.addKeybind(
-      monaco.KeyMod.Shift | monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-      () => {
-        render()
-      },
-    )
+    setupKeybinds(editor)
 
     // load initial code
     loadCodeFromPath(storage)
@@ -103,8 +105,8 @@ export function App() {
           const { id, code } = res
           if (id.editorVersion !== GENART_EDITOR_VERSION)
             log.warn("Editor version doesn't match")
-          settings.set('general.libraries', id.libs)
-          setActiveId(id)
+          settings.set('general.libraries', id.libraries)
+          setActiveIdState(id)
           editor.setValue(code)
         }
       })
@@ -130,11 +132,11 @@ export function App() {
     loadLibraries()
     if (activeId !== null) {
       const { hash, editorVersion, date } = activeId
-      setActiveId({
+      updateActiveId({
         hash,
         editorVersion,
         date,
-        libs: settings.values['general.libraries'],
+        libraries: settings.values['general.libraries'],
       })
     }
   }, [settings.values['general.libraries']])
@@ -143,7 +145,7 @@ export function App() {
     loadCodeFromPath(storage).catch(log.error)
   })
 
-  async function render() {
+  async function render(settings: SettingsContextType) {
     if (editorRef.current === null || sandboxRef.current === null) return
     const editor = editorRef.current
     const sandbox = sandboxRef.current
@@ -157,87 +159,55 @@ export function App() {
     let code = editor.getValue()
 
     // store code and change url
-    const id = await createID(code, libraries.current)
-    await storage.set(id, {
-      code,
-      createdOn: id.date,
-      previous: activeId ?? undefined,
-    })
+    const id = await createID(code, settings.values['general.libraries'])
+    console.log('new id', id, settings.values)
+    // store and add to history if not new
     if (id.hash !== activeId?.hash) {
-      window.history.pushState('Genart', '', IDToString(id))
-      setActiveId(id)
+      await storage.set(id, {
+        code,
+        createdOn: id.date,
+        previous: activeId ?? undefined,
+      })
+      if (id.hash !== activeId?.hash) {
+        // FIXME: activeId should not be undefined
+        updateActiveId(id)
+      }
     }
 
-    code = parseCode(code, libraries.current)
+    code = parseCode(code, libraryImports.current)
 
-    sandbox.runScript(code, () => {
+    sandbox.runScript(code)
+
+    // TODO: check when script has been run
+    setTimeout(() => {
       const result = sandbox.analyzeContainer()
-      updateRenderSettings(result)
-      console.log('loaded')
-    })
+      updateRenderSettings(settings, result)
+      // p5 library searches window for p5 functions so the library has to be added after the code script has been added
+      if (
+        settings.values['general.libraries'].find(
+          (l: Library) => l.name === 'p5',
+        )
+      ) {
+        sandbox.reloadLibraries()
+      }
+    }, 300)
 
     info.remove()
   }
 
-  async function updateRenderSettings(result: AnalyzeContainerResult) {
-    for (const svgResult of result.svgs) {
-      const { paths, circles, rects, svg } = svgResult
-      settings.add('export', {
-        type: 'folder',
-        title: 'Export',
-      })
-      settings.add('export.paths', {
-        type: 'param',
-        label: 'Paths',
-        value: paths,
-        opts: {
-          readonly: true,
-        },
-      })
-      settings.add('export.circles', {
-        type: 'param',
-        label: 'Circles',
-        value: circles,
-        opts: {
-          readonly: true,
-        },
-      })
-      settings.add('export.rects', {
-        type: 'param',
-        label: 'Rects',
-        value: rects,
-        opts: {
-          readonly: true,
-        },
-      })
-      settings.add('export.name', {
-        type: 'param',
-        label: 'Name',
-        value: settings.values['general.name'],
-        opts: {
-          readonly: true,
-        },
-      })
-      settings.add('export.optimize', {
-        type: 'param',
-        label: 'Optimize',
-        value: true,
-        opts: {
-          readonly: true,
-        },
-      })
-      settings.add('export.download', {
-        type: 'button',
-        title: 'Download',
-        onClick: () => {
-          exportSvg(svg, {
-            optimize: true,
-            name: settings.values['general.name'],
-          })
-        },
-      })
-    }
+  function setupKeybinds(editor: Editor) {
+    editor.addKeybind(
+      monaco.KeyMod.Shift | monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+      () => {
+        render(settings)
+      },
+    )
   }
+  // ensure that keybinds are always dealing with latest settings
+  useEffect(() => {
+    if (editorRef.current === null) return
+    setupKeybinds(editorRef.current!)
+  }, [settings.values])
 
   return (
     <>
@@ -260,6 +230,69 @@ export function App() {
       <Settings />
     </>
   )
+}
+
+async function updateRenderSettings(
+  settings: SettingsContextType,
+  result: AnalyzeContainerResult,
+) {
+  for (const svgResult of result.svgs) {
+    const { paths, circles, rects, svg } = svgResult
+    settings.add('export', {
+      type: 'folder',
+      title: 'Export',
+    })
+    settings.add('export.paths', {
+      type: 'param',
+      label: 'Paths',
+      value: paths,
+      opts: {
+        readonly: true,
+      },
+    })
+    settings.add('export.circles', {
+      type: 'param',
+      label: 'Circles',
+      value: circles,
+      opts: {
+        readonly: true,
+      },
+    })
+    settings.add('export.rects', {
+      type: 'param',
+      label: 'Rects',
+      value: rects,
+      opts: {
+        readonly: true,
+      },
+    })
+    settings.add('export.name', {
+      type: 'param',
+      label: 'Name',
+      value: settings.values['general.name'],
+      opts: {
+        readonly: true,
+      },
+    })
+    settings.add('export.optimize', {
+      type: 'param',
+      label: 'Optimize',
+      value: true,
+      opts: {
+        readonly: true,
+      },
+    })
+    settings.add('export.download', {
+      type: 'button',
+      title: 'Download',
+      onClick: () => {
+        exportSvg(svg, {
+          optimize: true,
+          name: settings.values['general.name'],
+        })
+      },
+    })
+  }
 }
 
 /** Parse code to make it compatible for the editor */
