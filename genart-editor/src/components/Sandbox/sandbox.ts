@@ -18,6 +18,8 @@ export class Sandbox {
   /** Html element that holds code rendered by load() */
   container: HTMLDivElement
 
+  libraries: LibraryImport[] = []
+
   // drawFns: Array<(dt: number) => void>
 
   constructor(iframe: HTMLIFrameElement) {
@@ -63,22 +65,41 @@ export class Sandbox {
   }
 
   addLibrary(library: LibraryImport) {
+    if (this.libraries.find((lib) => lib.name === library.name)) {
+      console.warn(`Library ${library.name} already loaded`)
+      return
+    }
+
     console.log(
       `Sandbox: loading library ${library.name}@${library.version} at ${library.importPath}`,
     )
+    this.libraries.push(library)
     const document =
       this.html.contentDocument || this.html.contentWindow!.document
     const script = document.createElement('script')
     script.src = library.importPath
     script.type = 'text/javascript'
     script.onerror = log.error
+    script.onload = () => {
+      console.log(`Sandbox: loaded library ${library.name}@${library.version}`)
+    }
     document.head.appendChild(script)
+  }
+
+  reloadLibraries() {
+    console.log('Sandbox: reloading libraries')
+    const libraries = [...this.libraries]
+    this.clearLibraries()
+    libraries.forEach((lib) => {
+      this.addLibrary(lib)
+    })
   }
 
   clearLibraries() {
     const document =
       this.html.contentDocument || this.html.contentWindow!.document
     document.head.innerHTML = ''
+    this.libraries = []
   }
 
   /** try to run a draw loop that runs drawFns every 1/60 seconds */
@@ -122,24 +143,24 @@ export class Sandbox {
     // function draw(fn: (dt: number) => void): void;`
   }
 
-  runScript(code: string, onLoad: () => void) {
+  runScript(code: string) {
     console.log('Running script', code)
     // reset draw functions
     // this.drawFns = []
 
-    const doc = this.html.contentDocument!
+    const document =
+      this.html.contentDocument || this.html.contentWindow!.document
 
-    doc.getElementById('canvas-container')!.innerHTML = ''
+    document.getElementById('canvas-container')!.innerHTML = ''
 
-    const oldScript = doc.getElementById('script')
+    const oldScript = document.getElementById('script')
     if (oldScript) oldScript.remove()
-    const script = doc.createElement('script')
+    const script = document.createElement('script')
+    script.onerror = log.error
     script.type = 'module'
     script.id = 'script'
     script.textContent = code
-    script.onload = onLoad
-    script.onerror = log.error
-    doc.body.appendChild(script)
+    document.body.appendChild(script)
   }
 
   analyzeContainer(): AnalyzeContainerResult {

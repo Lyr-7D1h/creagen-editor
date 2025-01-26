@@ -1,5 +1,4 @@
 import { GENART_EDITOR_VERSION } from './env'
-import { LibraryImport } from './importer'
 
 export interface Library {
   name: string
@@ -18,12 +17,12 @@ export interface ID {
   /** Current time stamp in case of hash collisions */
   date: Date
   /** libraries used for generating code */
-  libs: Library[]
+  libraries: Library[]
 }
 
 export async function createID(
   code: string,
-  libs: LibraryImport[],
+  libraries: Library[],
 ): Promise<ID> {
   const data = new TextEncoder().encode(code)
   const hashBuffer = await crypto.subtle.digest('SHA-256', data)
@@ -33,7 +32,7 @@ export async function createID(
 
   return {
     hash,
-    libs,
+    libraries,
     editorVersion: GENART_EDITOR_VERSION,
     date: new Date(),
   }
@@ -59,7 +58,7 @@ export function IDToString(id: ID): string {
   return (
     id.hash +
     tohex(
-      `${id.editorVersion}:${id.date.valueOf()}:[${id.libs.map((l) => `"${l.name}@${l.version}"`).join(',')}]`,
+      `${id.editorVersion}:${id.date.valueOf()}:[${id.libraries.map((l) => `"${l.name}@${l.version}"`).join(',')}]`,
     )
   )
 }
@@ -84,6 +83,6 @@ export function IDFromString(id: string): ID | null {
     // TODO: handle error
     editorVersion: ext[0]!,
     date: new Date(Number(ext[1]!)),
-    libs,
+    libraries: libs,
   }
 }
