@@ -67,6 +67,7 @@ export function VerticalSplitResizer({ children }: PropsWithChildren) {
         width: fullscreen
           ? `${window.innerWidth}px`
           : `${window.innerWidth - editorWidth}px`,
+        height: `${window.innerHeight}px`,
       })}
     </div>
   )

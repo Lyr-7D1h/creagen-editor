@@ -1,7 +1,7 @@
 import { TYPESCRIPT_IMPORT_REGEX } from './constants'
 import { GENART_VERSION, MODE } from './env'
 
-export interface Library {
+export interface LibraryImport {
   name: string
   /** Specific version used ('{major}.{minor}.{patch}'), can't be latest or something else */
   version: string
@@ -19,8 +19,7 @@ export class Importer {
   static async getLibrary(
     packageName: string,
     version?: string,
-  ): Promise<Library | null> {
-    console.log('getLibrary', packageName, MODE)
+  ): Promise<LibraryImport | null> {
     // get local version of genart
     if (
       (packageName === '@lyr_7d1h/genart' || packageName === 'genart') &&
