@@ -75,8 +75,8 @@ export class Editor {
 
   /** If `packageName` given will also add autoimports */
   addTypings(typings: string, uri: string, packageName?: string) {
-    console.log(`Adding typings for ${uri}`)
     if (this.models[uri]) return
+    console.log(`Adding typings for ${uri}`)
     // monaco.languages.typescript.javascriptDefaults.addExtraLib(typings, uri)
     if (typeof packageName === 'string') {
       this.autoimport.imports.saveFile({
@@ -85,11 +85,10 @@ export class Editor {
         imports: regexTokeniser(typings),
       })
     }
-    this.models[uri] = monaco.editor.createModel(
-      typings,
-      'typescript',
-      monaco.Uri.parse(uri),
-    )
+    monaco.languages.typescript.typescriptDefaults.addExtraLib(typings, uri)
+    // force update current model
+    const currentModel = this.editor.getModel()!
+    monaco.editor.setModelLanguage(currentModel, 'typescript')
   }
 
   /** set background transparent and make code highly visable */
