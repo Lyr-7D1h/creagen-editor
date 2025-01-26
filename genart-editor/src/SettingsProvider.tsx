@@ -13,6 +13,7 @@ import {
   LinearProgressProps,
   Typography,
 } from '@mui/material'
+import { Library } from './id'
 
 function LinearProgressWithLabel(
   props: LinearProgressProps & { value: number },
@@ -30,11 +31,6 @@ function LinearProgressWithLabel(
       </Box>
     </Box>
   )
-}
-
-export interface SelectedLibrarySetting {
-  name: string
-  version?: string
 }
 
 const defaultAppSettingsConfig = {
@@ -62,11 +58,12 @@ const defaultAppSettingsConfig = {
   'general.libraries': {
     type: 'param',
     label: 'Libraries',
+    generated: true,
     value: [
       {
         name: '@lyr_7d1h/genart',
       },
-    ] as SelectedLibrarySetting[],
+    ] as Library[],
   },
   editor: {
     type: 'folder',
@@ -162,6 +159,8 @@ export interface Button {
 export interface Param<T = any> {
   type: 'param'
   label: string
+  /** If the value should be stored or that it is generated */
+  generated?: boolean
   render?: (value: T, set?: (value: T) => void) => React.ReactNode
   value: T
   opts?: {

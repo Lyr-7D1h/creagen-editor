@@ -8,7 +8,7 @@ import { Settings } from './components/Settings'
 import { useSettings } from './SettingsProvider'
 import { VerticalSplitResizer } from './components/VerticalSplitResizer'
 import { createID, ID, IDFromString, IDToString } from './id'
-import { Importer, Library } from './importer'
+import { Importer, LibraryImport } from './importer'
 import log from './log'
 import ts from 'typescript'
 import { Storage } from './storage'
@@ -45,21 +45,33 @@ export function App() {
   const editorRef = useRef<Editor>(null)
   const sandboxRef = useRef<Sandbox>(null)
   const [loaded, setLoaded] = useState(false)
-  const libraries = useRef<Library[]>([])
+  const libraries = useRef<LibraryImport[]>([])
 
   function loadLibraries() {
-    if (editorRef.current === null) return
+    if (editorRef.current === null || sandboxRef.current === null) return
     const editor = editorRef.current!
+    const sandbox = sandboxRef.current!
+
+    // sandbox.clearLibraries()
     for (const { name, version } of settings.values['general.libraries']) {
       Importer.getLibrary(name, version).then((library) => {
         if (library === null) {
           log.warn(`Library ${name} not found`)
           return
         }
+
+        sandbox.addLibrary(library)
+
         library
           .typings()
           .then((typings) => {
-            editor.addTypings(typings, `ts:${library.name}.d.ts`, library.name)
+            if (typings) {
+              editor.addTypings(
+                typings,
+                `ts:${library.name}.d.ts`,
+                library.name,
+              )
+            }
             libraries.current.push(library)
           })
           .catch(log.error)
@@ -67,6 +79,7 @@ export function App() {
     }
   }
 
+  /** initial load */
   function load() {
     if (editorRef.current === null || sandboxRef.current === null) return
     if (loaded) return
@@ -88,6 +101,9 @@ export function App() {
       .then((res) => {
         if (res !== null) {
           const { id, code } = res
+          if (id.editorVersion !== GENART_EDITOR_VERSION)
+            log.warn("Editor version doesn't match")
+          settings.set('general.libraries', id.libs)
           setActiveId(id)
           editor.setValue(code)
         }
@@ -112,6 +128,15 @@ export function App() {
 
   useEffect(() => {
     loadLibraries()
+    if (activeId !== null) {
+      const { hash, editorVersion, date } = activeId
+      setActiveId({
+        hash,
+        editorVersion,
+        date,
+        libs: settings.values['general.libraries'],
+      })
+    }
   }, [settings.values['general.libraries']])
 
   addEventListener('popstate', () => {
@@ -145,15 +170,13 @@ export function App() {
 
     code = parseCode(code, libraries.current)
 
-    sandbox.runScript(code)
-
-    info.remove()
-
-    // TODO: wait for execution
-    setTimeout(() => {
+    sandbox.runScript(code, () => {
       const result = sandbox.analyzeContainer()
       updateRenderSettings(result)
-    }, 300)
+      console.log('loaded')
+    })
+
+    info.remove()
   }
 
   async function updateRenderSettings(result: AnalyzeContainerResult) {
@@ -239,8 +262,16 @@ export function App() {
   )
 }
 
-/** change imports to the library version it uses */
-function parseCode(code: string, libraries: Library[]) {
+/** Parse code to make it compatible for the editor */
+function parseCode(code: string, libraries: LibraryImport[]) {
+  code = resolveImports(code, libraries)
+  console.log(libraries)
+  if (libraries.find((l) => l.name === 'p5')) code = makeP5FunctionsGlobal(code)
+
+  return ts.transpile(code, typescriptCompilerOptions)
+}
+
+function resolveImports(code: string, libraries: LibraryImport[]) {
   let match
   while ((match = TYPESCRIPT_IMPORT_REGEX.exec(code)) !== null) {
     const imports = match.groups!['imports']
@@ -259,8 +290,53 @@ function parseCode(code: string, libraries: Library[]) {
 
     code = code.replace(match[0], updatedImport)
   }
+  return code
+}
 
-  return ts.transpile(code, typescriptCompilerOptions)
+function makeP5FunctionsGlobal(code: string) {
+  // globally defined functions
+  const userDefinedFunctions = [
+    'setup',
+    'draw',
+    'mousePressed',
+    'mouseReleased',
+    'mouseClicked',
+    'mouseMoved',
+    'mouseDragged',
+    'mouseWheel',
+    'keyPressed',
+    'keyReleased',
+    'keyTyped',
+    'touchStarted',
+    'touchMoved',
+    'touchEnded',
+    'windowResized',
+    'preload',
+    'remove',
+    'deviceMoved',
+    'deviceTurned',
+    'deviceShaken',
+  ]
+
+  const functionRegex = new RegExp(
+    `\\b(${userDefinedFunctions.join('|')})\\b\\s*\\(`,
+    'g',
+  )
+
+  // Find all matches of the defined functions
+  let matches
+  const definedFunctions = new Set()
+  while ((matches = functionRegex.exec(code)) !== null) {
+    definedFunctions.add(matches[1])
+  }
+
+  // Append window.{functionName} = {functionName} for each detected function
+  const globalCode = Array.from(definedFunctions)
+    .map((fn) => `window.${fn} = ${fn};`)
+    .join('\n')
+
+  // Add the global code to the original code
+  return code + '\n\n' + globalCode
 }
 
 function exportSvg(svg: SVGElement, opts: { optimize: boolean; name: string }) {

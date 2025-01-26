@@ -27,6 +27,7 @@ export class Editor {
   private readonly autoimport: AutoImport
   private vimMode: m.editor.IStandaloneCodeEditor | null
   private fullscreendecorators: m.editor.IEditorDecorationsCollection | null
+  private models: Record<string, monaco.editor.ITextModel> = {}
 
   constructor(editor: m.editor.IStandaloneCodeEditor, monaco: Monaco) {
     this.editor = editor
@@ -74,6 +75,8 @@ export class Editor {
 
   /** If `packageName` given will also add autoimports */
   addTypings(typings: string, uri: string, packageName?: string) {
+    console.log(`Adding typings for ${uri}`)
+    if (this.models[uri]) return
     // monaco.languages.typescript.javascriptDefaults.addExtraLib(typings, uri)
     if (typeof packageName === 'string') {
       this.autoimport.imports.saveFile({
@@ -82,7 +85,11 @@ export class Editor {
         imports: regexTokeniser(typings),
       })
     }
-    monaco.editor.createModel(typings, 'typescript', monaco.Uri.parse(uri))
+    this.models[uri] = monaco.editor.createModel(
+      typings,
+      'typescript',
+      monaco.Uri.parse(uri),
+    )
   }
 
   /** set background transparent and make code highly visable */

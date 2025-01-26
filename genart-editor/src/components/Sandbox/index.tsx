@@ -3,10 +3,12 @@ import { Sandbox } from './sandbox'
 
 export function SandboxView({
   width,
+  height,
   left,
   onLoad,
 }: {
   width?: string
+  height?: string
   left?: string
   onLoad: (sandbox: Sandbox) => void
 }) {
@@ -21,9 +23,9 @@ export function SandboxView({
   return (
     <iframe
       ref={iframe}
-      style={{ width, border: 'none', position: 'absolute', left }}
+      style={{ width, border: 'none', position: 'absolute', left, height }}
       title="Sandbox"
-      sandbox="allow-same-origin allow-scripts"
+      // sandbox="allow-same-origin allow-scripts"
     ></iframe>
   )
 }

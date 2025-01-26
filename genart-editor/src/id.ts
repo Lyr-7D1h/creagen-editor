@@ -1,5 +1,10 @@
 import { GENART_EDITOR_VERSION } from './env'
-import { Library } from './importer'
+import { LibraryImport } from './importer'
+
+export interface Library {
+  name: string
+  version: string
+}
 
 /**
  * ID: [64 byte hash][hex encoded Extension]
@@ -13,10 +18,13 @@ export interface ID {
   /** Current time stamp in case of hash collisions */
   date: Date
   /** libraries used for generating code */
-  libs: string[]
+  libs: Library[]
 }
 
-export async function createID(code: string, libs: Library[]): Promise<ID> {
+export async function createID(
+  code: string,
+  libs: LibraryImport[],
+): Promise<ID> {
   const data = new TextEncoder().encode(code)
   const hashBuffer = await crypto.subtle.digest('SHA-256', data)
   // convert hash buffer to hexidecimal string
@@ -25,7 +33,7 @@ export async function createID(code: string, libs: Library[]): Promise<ID> {
 
   return {
     hash,
-    libs: libs.map((lib) => `${lib.name}@${lib.version}`),
+    libs,
     editorVersion: GENART_EDITOR_VERSION,
     date: new Date(),
   }
@@ -51,7 +59,7 @@ export function IDToString(id: ID): string {
   return (
     id.hash +
     tohex(
-      `${id.editorVersion}:${id.date.valueOf()}:[${id.libs.map((l) => `"${l}"`).join(',')}]`,
+      `${id.editorVersion}:${id.date.valueOf()}:[${id.libs.map((l) => `"${l.name}@${l.version}"`).join(',')}]`,
     )
   )
 }
@@ -62,14 +70,15 @@ export function IDFromString(id: string): ID | null {
   }
   const hash = id.substring(0, 64)
   const ext = fromhex(id.substring(64)).split(':')
-  const libs = JSON.parse(ext[2]!)
-  if (
-    !Array.isArray(libs) ||
-    libs.length === 0 ||
-    libs.some((lib) => typeof lib !== 'string')
-  ) {
-    throw Error(`Invalid libs: ${libs}`)
-  }
+  let libs = JSON.parse(ext[2]!)
+  if (!Array.isArray(libs)) throw Error(`Invalid libs: ${libs}`)
+  libs = libs.map((lib: string) => {
+    const parts = lib.split('@')
+    return {
+      name: parts.splice(0, parts.length - 1).join('@'),
+      version: parts[0],
+    }
+  })
   return {
     hash,
     // TODO: handle error
