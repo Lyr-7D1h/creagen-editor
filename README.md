@@ -1,34 +1,13 @@
 # Creagen
 
-# Usage
+# Build
 
 ```sh
-cd creagen
 npm install
 npm run build
-
-cd ../creagen-editor
-npm install
-npm start
 ```
 
 # Roadmap
-
-## Editor:
-
-- Project management
-  - List sketches
-  - Name sketches
-  - View history of sketch
-- Import code using ID `import('a123487e...')
-- Crop, compress and convert dropped images to base64 string
-- P5 support
-- Make Settings moveable
-- Typescript support
-- Show only sandbox keybind/setting
-- Html meta tags
-- Autoimport libraries 
-  - Import typings from npm https://lukasbach.github.io/monaco-editor-auto-typings/docs/
 
 ## Library:
 
@@ -49,9 +28,3 @@ Math:
 - https://en.wikipedia.org/wiki/Loop-erased_random_walk
 - http://xahlee.info/math/algorithmic_math_art.html
 - https://en.wikipedia.org/wiki/OpenSimplex_noise
-
-# Useful urls
-PNG to Base64:
-https://base64.guru/converter/encode/image/png
-Sanitize svg's:
-https://www.svgviewer.dev
