@@ -12,6 +12,11 @@ export interface LibraryImport {
 
 const PACKAGE_SOURCE_URL = 'https://unpkg.com'
 
+const typeFileOverwrites: Record<string, string> = {
+  // Using p5 with global types
+  p5: 'global.d.ts',
+}
+
 /** Takes care of handling proper typings and importing libraries */
 // TODO: use https://unpkg.com/
 export class Importer {
@@ -49,8 +54,10 @@ export class Importer {
       let res = await fetch(`${typingsUrlRoot}/package.json`)
       const pkg = await res.json()
       pkgTypings = pkg.typings || pkg.types
-      // HACK: using p5 in global mode
-      if (packageName === 'p5') pkgTypings = 'global.d.ts'
+
+      if (packageName in typeFileOverwrites)
+        pkgTypings = typeFileOverwrites[packageName]
+
       if (pkgTypings === null) throw Error('No typings found')
     }
     const typings = async () =>
@@ -80,12 +87,13 @@ export class Importer {
 }
 
 async function getTypings(packageName: string, root: string, typeFile: string) {
-  const typings = await parseImports(root, typeFile)
+  const typings = await resolveImports(root, typeFile)
   if (typings === null) return null
   return `declare module '${packageName}' {${typings}}`
 }
 
-async function parseImports(root: string, typeFile: string) {
+/** Parse and resolve imports into a single string */
+async function resolveImports(root: string, typeFile: string) {
   const response = await fetch(root + '/' + typeFile)
   if (response.status !== 200) {
     return null
@@ -102,10 +110,15 @@ async function parseImports(root: string, typeFile: string) {
         console.error('module path couldnt be parsed')
         return ''
       }
+      if (isImportedModule(module)) {
+        const lib = await Importer.getLibrary(module)
+        if (lib === null) return null
+        return lib.typings()
+      }
       const parts = module.split('/')
       let parent = parts.splice(0, parts.length - 1).join('/')
       if (parent === '.') parent = ''
-      return parseImports(`${root}/${parent}`, module + '.d.ts')
+      return resolveImports(`${root}/${parent}`, module + '.d.ts')
     }),
   )
 
@@ -119,4 +132,11 @@ async function parseImports(root: string, typeFile: string) {
   typings = typings.replace(/export .*/g, '')
 
   return typings
+}
+
+/** check if a path is */
+function isImportedModule(modulePath: string) {
+  if (modulePath.startsWith('.') || modulePath.includes('/')) return false
+
+  return modulePath.split(' ')[0]?.match(/^[A-Za-z]+$/) !== null
 }
