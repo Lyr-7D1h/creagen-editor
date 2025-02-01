@@ -171,6 +171,7 @@ function LibrarySetting() {
   useEffect(() => {
     Promise.all(supportedLibraries.map((l) => Importer.versions(l.name)))
       .then((vers) => {
+        const versions: Record<string, string[]> = {}
         for (let i = 0; i < vers.length; i++) {
           if (typeof supportedLibraries[i] === 'undefined')
             throw Error('library not found')
@@ -184,7 +185,8 @@ function LibrarySetting() {
       })
       .catch(log.error)
   }, [])
-  console.log(libraries)
+
+  console.log(versions)
 
   return (
     <ToggleButtonGroup
