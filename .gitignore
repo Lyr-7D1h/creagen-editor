@@ -1,5 +1,4 @@
-src/constants.ts
 dist/
 node_modules/
-build/
-.env
+bundle.ts
+constants.ts
