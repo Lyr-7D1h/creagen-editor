@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useSettings, Entry } from '../../SettingsProvider'
+import { Library, useSettings, Entry } from '../../SettingsProvider'
 import {
   Accordion,
   AccordionDetails,
@@ -17,7 +17,6 @@ import {
 import { ExpandMore } from '@mui/icons-material'
 import { Importer } from '../../importer'
 import log from '../../log'
-import { Library } from '../../id'
 
 const expendedSettingKey = 'expandedSetting'
 
@@ -155,7 +154,7 @@ export function Settings() {
 }
 
 const supportedLibraries = [
-  { name: '@lyr_7d1h/creagen' },
+  { name: 'creagen' },
   { name: 'p5' },
   { name: 'three', disabled: true },
 ]
