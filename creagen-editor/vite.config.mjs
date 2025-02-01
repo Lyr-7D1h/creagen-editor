@@ -4,11 +4,11 @@ import path from 'path'
 import fs from 'fs'
 import react from '@vitejs/plugin-react'
 
-const LIBRARY_PATH = path.resolve('../genart')
+const LIBRARY_PATH = path.resolve('../creagen')
 
-/** Serve local build of genart library */
+/** Serve local build of creagen library */
 function localLibraryOnHttp() {
-  const allowedPaths = ['/genart.js', '/genart.d.ts', '/genart.js.map']
+  const allowedPaths = ['/creagen.js', '/creagen.d.ts', '/creagen.js.map']
   return {
     apply: 'serve',
     configureServer(server) {
@@ -27,7 +27,7 @@ function localLibraryOnHttp() {
         })
       }
     },
-    name: 'genart-library',
+    name: 'creagen-library',
   }
 }
 
@@ -36,9 +36,9 @@ export default defineConfig(async ({ command, mode }) => {
     ...process.env,
     ...loadEnv(mode, process.cwd()),
     VITE_DEBUG: true,
-    VITE_GENART_EDITOR_VERSION: process.env.npm_package_version,
+    VITE_CREAGEN_EDITOR_VERSION: process.env.npm_package_version,
     // use the latest local version by default
-    VITE_GENART_VERSION: JSON.parse(
+    VITE_CREAGEN_VERSION: JSON.parse(
       fs.readFileSync(`${LIBRARY_PATH}/package.json`),
     ).version,
   }
@@ -67,7 +67,7 @@ export default defineConfig(async ({ command, mode }) => {
       react(),
     ],
     optimizeDeps: {
-      exclude: ['genart'],
+      exclude: ['creagen'],
     },
   }
 })

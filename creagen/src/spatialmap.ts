@@ -1,7 +1,7 @@
 import { vec, Vector } from './Vector'
 
 // TEST SCRIPT
-// import { SpatialMap, svg, vec } from 'genart'
+// import { SpatialMap, svg, vec } from 'creagen'
 
 // const width = 1000
 // const height = 1000

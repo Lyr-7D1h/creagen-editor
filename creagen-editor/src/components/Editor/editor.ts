@@ -94,7 +94,7 @@ export class Editor {
   /** set background transparent and make code highly visable */
   setFullscreenMode(value: boolean) {
     if (value) {
-      monaco.editor.setTheme('genart-fullscreen')
+      monaco.editor.setTheme('creagen-fullscreen')
       this.fullscreendecorators = this.editor.createDecorationsCollection([
         {
           range: new monaco.Range(0, 0, 500, 500),
@@ -106,7 +106,7 @@ export class Editor {
     } else {
       if (this.fullscreendecorators) this.fullscreendecorators.clear()
       this.fullscreendecorators = null
-      monaco.editor.setTheme('genart')
+      monaco.editor.setTheme('creagen')
     }
   }
 
@@ -114,14 +114,14 @@ export class Editor {
   //   const h = Math.round(opacity).toString(16)
   //   const hex = h.length === 1 ? '0' + h : h
 
-  //   monaco.editor.defineTheme('genart', {
-  //     ...genartLightTheme,
+  //   monaco.editor.defineTheme('creagen', {
+  //     ...creagenLightTheme,
   //     colors: {
   //       'editor.background': `#333333${hex}`,
   //     },
   //   })
   //   monaco.editor.setTheme('vs')
-  //   monaco.editor.setTheme('genart')
+  //   monaco.editor.setTheme('creagen')
   // }
 
   getValue() {

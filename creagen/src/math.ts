@@ -1,6 +1,6 @@
 // EXTENDED MATH FUNCTIONS
 
-import { GENART_PRECISION } from './constants'
+import { CREAGEN_PRECISION } from './constants'
 
 /**
  * Return the greatest common divisor
@@ -24,7 +24,7 @@ export function roundToDec(n: number, dec?: number) {
   if (typeof dec === 'undefined') {
     return n
   }
-  return parseFloat(n.toFixed(dec ?? GENART_PRECISION))
+  return parseFloat(n.toFixed(dec ?? CREAGEN_PRECISION))
 }
 
 // FROM es2015.core

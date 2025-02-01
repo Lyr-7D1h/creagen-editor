@@ -14,7 +14,7 @@ import ts from 'typescript'
 import { Storage } from './storage'
 import { Editor } from './components/Editor/editor'
 import { AnalyzeContainerResult, Sandbox } from './components/Sandbox/sandbox'
-import { GENART_EDITOR_VERSION, GENART_VERSION } from './env'
+import { CREAGEN_EDITOR_VERSION, CREAGEN_VERSION } from './env'
 import { TYPESCRIPT_IMPORT_REGEX } from './constants'
 
 const templates: Record<string, string> = {
@@ -61,7 +61,7 @@ export function App() {
   /** Add new id to history */
   function updateActiveId(id: ID) {
     if (JSON.stringify(id) === JSON.stringify(activeId)) return
-    window.history.pushState('Genart', '', IDToString(id))
+    window.history.pushState('Creagen', '', IDToString(id))
     setActiveIdState(id)
   }
 
@@ -120,7 +120,7 @@ export function App() {
       .then((res) => {
         if (res !== null) {
           const { id, code } = res
-          if (id.editorVersion !== GENART_EDITOR_VERSION)
+          if (id.editorVersion !== CREAGEN_EDITOR_VERSION)
             log.warn("Editor version doesn't match")
           settings.set('general.libraries', id.libraries)
           setActiveIdState(id)
@@ -401,10 +401,10 @@ function exportSvg(svg: SVGElement, opts: { optimize: boolean; name: string }) {
     'http://www.w3.org/2000/svg',
     'metadata',
   )
-  const genart = document.createElement('genart')
-  genart.setAttribute('version', GENART_VERSION)
-  genart.setAttribute('editor-version', GENART_EDITOR_VERSION)
-  metadata.appendChild(genart)
+  const creagen = document.createElement('creagen')
+  creagen.setAttribute('version', CREAGEN_VERSION)
+  creagen.setAttribute('editor-version', CREAGEN_EDITOR_VERSION)
+  metadata.appendChild(creagen)
   svg.appendChild(metadata)
 
   const htmlStr = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>${svg.outerHTML}`

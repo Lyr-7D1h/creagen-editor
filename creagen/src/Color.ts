@@ -1,4 +1,4 @@
-import { GENART_ASSERTS } from './constants'
+import { CREAGEN_ASSERTS } from './constants'
 import { Bounds, Vector } from './Vector'
 
 export class Color extends Vector<4> {
@@ -78,7 +78,7 @@ export class Color extends Vector<4> {
     b?: number,
     a?: number,
   ) {
-    if (GENART_ASSERTS) {
+    if (CREAGEN_ASSERTS) {
       if (
         (typeof r === 'number' && !Number.isInteger(r)) ||
         (Array.isArray(r) && !Number.isInteger(r[0]))

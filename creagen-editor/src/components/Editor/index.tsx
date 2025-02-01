@@ -44,13 +44,13 @@ export const typescriptCompilerOptions = {
 // Use monaco without cdn: https://www.npmjs.com/package/@monaco-editor/react#loader-config
 loader.config({ monaco })
 
-const genartLightTheme: monaco.editor.IStandaloneThemeData = {
+const creagenLightTheme: monaco.editor.IStandaloneThemeData = {
   base: 'vs',
   inherit: true,
   colors: {},
   rules: [],
 }
-const genartFullscreenTheme: monaco.editor.IStandaloneThemeData = {
+const creagenFullscreenTheme: monaco.editor.IStandaloneThemeData = {
   base: 'hc-black',
   inherit: true,
   colors: {
@@ -106,8 +106,8 @@ export function EditorView({ value, width, height, onLoad }: EditorProps) {
     monaco.languages.typescript.typescriptDefaults.setCompilerOptions(
       typescriptCompilerOptions,
     )
-    monaco.editor.defineTheme('genart', genartLightTheme)
-    monaco.editor.defineTheme('genart-fullscreen', genartFullscreenTheme)
+    monaco.editor.defineTheme('creagen', creagenLightTheme)
+    monaco.editor.defineTheme('creagen-fullscreen', creagenFullscreenTheme)
   }
 
   function handleEditorDidMount(
@@ -128,7 +128,7 @@ export function EditorView({ value, width, height, onLoad }: EditorProps) {
         height={height}
         defaultValue={value ?? ''}
         language="typescript"
-        theme="genart"
+        theme="creagen"
         beforeMount={handleBeforeMount}
         onMount={handleEditorDidMount}
         loading={<div>Loading...</div>}

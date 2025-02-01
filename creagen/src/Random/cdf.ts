@@ -1,5 +1,5 @@
 import * as Math from '../math'
-import { GENART_ASSERTS } from '../constants'
+import { CREAGEN_ASSERTS } from '../constants'
 import { type PMF } from './pmf'
 
 /** https://en.wikipedia.org/wiki/Cumulative_distribution_function */
@@ -42,7 +42,7 @@ export class CDF {
       return a
     })
 
-    if (GENART_ASSERTS) {
+    if (CREAGEN_ASSERTS) {
       const sum = p.reduce((a, b) => a + b)
       console.assert(sum === 1, sum)
     }

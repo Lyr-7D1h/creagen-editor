@@ -1,4 +1,4 @@
-import { GENART_EDITOR_VERSION } from './env'
+import { CREAGEN_EDITOR_VERSION } from './env'
 import { Library } from './SettingsProvider'
 
 /**
@@ -29,7 +29,7 @@ export async function createID(
   return {
     hash,
     libraries,
-    editorVersion: GENART_EDITOR_VERSION,
+    editorVersion: CREAGEN_EDITOR_VERSION,
     date: new Date(),
   }
 }
