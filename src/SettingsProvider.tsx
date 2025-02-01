@@ -24,6 +24,12 @@ const defaultAppSettingsConfig = {
     label: 'Name',
     value: generateHumanReadableName(),
   },
+  'general.libraries': {
+    type: 'param',
+    label: 'Libraries',
+    generated: true,
+    value: [] as Library[],
+  },
   'general.storage': {
     type: 'param',
     label: 'Available Storage',
@@ -38,12 +44,6 @@ const defaultAppSettingsConfig = {
     value: { value: 0, max: 0 },
     generated: true,
     opts: { readonly: true },
-  },
-  'general.libraries': {
-    type: 'param',
-    label: 'Libraries',
-    generated: true,
-    value: [] as Library[],
   },
   editor: {
     type: 'folder',

@@ -1,15 +1,7 @@
 import { LibraryImport } from '../../importer'
 import log from '../../log'
 
-export type LoadableObject =
-  | Node
-  | {
-      html: () => Node
-    }
-
 export type SandboxWindow = Window & {
-  load: (obj: LoadableObject) => void
-  draw: (fn: (dt: number) => void) => void
   console: Console
 }
 
@@ -37,14 +29,6 @@ export class Sandbox {
       log.error(e)
     }
 
-    // setup global functions
-    window.load = (obj: LoadableObject) => {
-      if ('html' in obj) {
-        this.container.appendChild(obj.html())
-      } else {
-        this.container.appendChild(obj)
-      }
-    }
     window.console.log = (...msg: any[]) => {
       console.log(...msg)
       // log.info(...msg)
@@ -78,7 +62,7 @@ export class Sandbox {
       this.html.contentDocument || this.html.contentWindow!.document
     const script = document.createElement('script')
     script.src = library.importPath
-    script.type = 'text/javascript'
+    script.type = 'module'
     script.onerror = log.error
     script.onload = () => {
       console.log(`Sandbox: loaded library ${library.name}@${library.version}`)
@@ -144,7 +128,7 @@ export class Sandbox {
   }
 
   runScript(code: string) {
-    console.log('Running script', code)
+    console.log('Running script\n', code)
     // reset draw functions
     // this.drawFns = []
 
