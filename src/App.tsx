@@ -177,7 +177,6 @@ export function App() {
 
     // store code and change url
     const id = await createID(code, settings.values['general.libraries'])
-    console.log('new id', id, settings.values)
     // store and add to history if not new
     if (id.hash !== activeId?.hash) {
       await storage.set(id, {

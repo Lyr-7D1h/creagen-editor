@@ -9,26 +9,23 @@ const LIBRARY_PATH = process.env.CREAGEN_PATH ?? path.resolve('../creagen')
 /** Serve local build of creagen library */
 function localLibraryOnHttp(mode) {
   // don't load if not dev
-  if (mode !== 'development') return {}
+  if (mode !== 'dev') return {}
 
   const allowedPaths = ['/creagen.js', '/creagen.d.ts', '/creagen.js.map']
   return {
     apply: 'serve',
     configureServer(server) {
-      return () => {
-        server.middlewares.use(async (req, res, next) => {
-          if (allowedPaths.includes(req.originalUrl)) {
-            res.setHeader('Content-Type', 'text/javascript; charset=utf-8')
-            res.writeHead(200)
-            res.write(
-              fs.readFileSync(`${LIBRARY_PATH}/dist/${req.originalUrl}`),
-            )
-            res.end()
-          }
+      server.middlewares.use(async (req, res, next) => {
+        if (allowedPaths.includes(req.originalUrl)) {
+          res.setHeader('Content-Type', 'text/javascript; charset=utf-8')
+          res.writeHead(200)
+          res.write(fs.readFileSync(`${LIBRARY_PATH}/dist/${req.originalUrl}`))
+          res.end()
+          return
+        }
 
-          next()
-        })
-      }
+        next()
+      })
     },
     name: 'creagen-library',
   }
@@ -39,15 +36,18 @@ export default defineConfig(async ({ command, mode }) => {
     ...process.env,
     ...loadEnv(mode, process.cwd()),
     VITE_CREAGEN_EDITOR_VERSION: process.env.npm_package_version,
-    VITE_DEBUG: mode === 'development',
+    VITE_DEBUG: mode === 'dev',
     // if dev, get version from local creagen package.json
     VITE_CREAGEN_DEV_VERSION:
-      mode === 'development'
+      mode === 'dev'
         ? JSON.parse(fs.readFileSync(`${LIBRARY_PATH}/package.json`)).version
         : undefined,
   }
 
   return {
+    build: {
+      sourcemap: true,
+    },
     plugins: [
       localLibraryOnHttp(mode),
       {
