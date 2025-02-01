@@ -155,7 +155,7 @@ export function Settings() {
 }
 
 const supportedLibraries = [
-  { name: '@lyr_7d1h/genart' },
+  { name: '@lyr_7d1h/creagen' },
   { name: 'p5' },
   { name: 'three', disabled: true },
 ]

@@ -1,10 +1,10 @@
 {
-  "name": "@lyr_7d1h/genart",
+  "name": "@lyr_7d1h/creagen",
   "version": "0.0.5",
   "description": "",
-  "main": "./dist/genart.js",
-  "module": "./dist/genart.js",
-  "typings": "./dist/genart.d.ts",
+  "main": "./dist/creagen.js",
+  "module": "./dist/creagen.js",
+  "typings": "./dist/creagen.d.ts",
   "files": [
     "dist"
   ],

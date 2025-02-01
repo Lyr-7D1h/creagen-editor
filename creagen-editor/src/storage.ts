@@ -48,7 +48,7 @@ export class IndexDB extends Storage {
           .catch(log.error)
       }
 
-      const req = indexedDB.open('genart', 1)
+      const req = indexedDB.open('creagen', 1)
       req.onerror = (_e) => {
         reject(
           new Error(`failed to open index db: ${req.error?.message ?? ''}`),

@@ -5,7 +5,7 @@ import React, {
   useState,
 } from 'react'
 import { localStorage } from './localStorage'
-import { GENART_EDITOR_VERSION, GENART_VERSION, MODE } from './env'
+import { CREAGEN_EDITOR_VERSION, CREAGEN_VERSION, MODE } from './env'
 import { generateHumanReadableName, roundToDec } from './util'
 import { LinearProgressWithLabelSetting } from './components/settings/LinearProgressWithLabelSetting'
 
@@ -84,7 +84,7 @@ const defaultAppSettingsConfig = {
   'debug.package': {
     type: 'param',
     label: 'Package',
-    value: `genart@${GENART_VERSION}`,
+    value: `creagen@${CREAGEN_VERSION}`,
     opts: {
       readonly: true,
     },
@@ -92,7 +92,7 @@ const defaultAppSettingsConfig = {
   'debug.editor': {
     type: 'param',
     label: 'Editor Version',
-    value: `${GENART_EDITOR_VERSION}`,
+    value: `${CREAGEN_EDITOR_VERSION}`,
     opts: {
       readonly: true,
     },

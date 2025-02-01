@@ -8,9 +8,9 @@ export default [
   {
     input: 'src/index.ts',
     output: {
-      file: 'dist/genart.js',
+      file: 'dist/creagen.js',
       format: 'es',
-      name: 'genart',
+      name: 'creagen',
       sourcemap: true,
     },
     plugins: [
@@ -23,8 +23,8 @@ export default [
   {
     input: 'dist/types/index.d.ts',
     output: {
-      name: '@lyr_7d1h/genart',
-      file: 'dist/genart.d.ts',
+      name: '@lyr_7d1h/creagen',
+      file: 'dist/creagen.d.ts',
       format: 'es',
     },
     plugins: [dts()],

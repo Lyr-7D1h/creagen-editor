@@ -1,13 +1,13 @@
-# Genart
+# Creagen
 
 # Usage
 
 ```sh
-cd genart
+cd creagen
 npm install
 npm run build
 
-cd ../genart-editor
+cd ../creagen-editor
 npm install
 npm start
 ```
