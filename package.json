@@ -1,46 +1,39 @@
 {
-  "name": "@lyr_7d1h/creagen",
-  "version": "0.0.5",
+  "name": "creagen-editor",
+  "version": "0.0.1",
   "description": "",
-  "main": "./dist/creagen.js",
-  "module": "./dist/creagen.js",
-  "typings": "./dist/creagen.d.ts",
-  "files": [
-    "dist"
-  ],
   "scripts": {
-    "build": "cp -f debug.ts src/constants.ts && rollup -c",
-    "build:release": "cp -f release.ts src/constants.ts && rollup -c",
-    "watch": "cp -f debug.ts src/constants.ts && rollup -c --watch",
-    "watch:chokidar": "chokidar 'src/**/*' -i src/constants.ts -c 'npm run build'",
-    "watch:release": "cp -f release.ts src/constants.ts && rollup -c --watch"
+    "start": "vite -m dev",
+    "build": "vite build",
+    "format": "prettier -w src/",
+    "lint": "eslint src/**/*"
   },
   "keywords": [],
   "author": "Lyr",
   "license": "ISC",
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^28.0.2",
-    "@rollup/plugin-node-resolve": "^16.0.0",
-    "@rollup/plugin-terser": "^0.4.4",
-    "@rollup/plugin-typescript": "^12.1.2",
-    "@types/kd-tree-javascript": "^1.0.3",
-    "chokidar-cli": "^3.0.0",
-    "prettier": "^3.4.2",
-    "rollup": "^4.30.1",
-    "rollup-plugin-dts": "^6.1.1",
-    "tslib": "^2.8.1",
-    "typescript": "^5.7.3"
+    "@tweakpane/core": "^2.0.4",
+    "@types/react": "^19.0.5",
+    "@types/react-dom": "^19.0.3",
+    "eslint": "^8.0.0",
+    "eslint-config-love": "^64.0.0",
+    "prettier": "3.3.3",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.3"
   },
   "dependencies": {
-    "@rarebearsoft/marvinj": "^1.0.0",
-    "@turf/turf": "^7.2.0",
-    "d3-delaunay": "^6.0.4",
-    "d3-quadtree": "^3.0.1",
-    "kd-tree-javascript": "^1.0.3",
-    "kdbush": "^4.0.2",
-    "knn": "^0.0.2",
-    "ml-kmeans": "^6.0.0",
-    "rbush": "^4.0.1",
-    "skmeans": "^0.11.3"
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@fontsource/roboto": "^5.1.1",
+    "@kareemkermad/monaco-auto-import": "^1.1.6",
+    "@monaco-editor/react": "^4.6.0",
+    "@mui/icons-material": "^6.4.0",
+    "@mui/material": "^6.4.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "monaco-editor": "^0.51.0",
+    "monaco-vim": "^0.4.1",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "tweakpane": "^4.0.4"
   }
 }
