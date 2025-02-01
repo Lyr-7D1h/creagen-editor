@@ -1,9 +1,5 @@
 import { GENART_EDITOR_VERSION } from './env'
-
-export interface Library {
-  name: string
-  version: string
-}
+import { Library } from './SettingsProvider'
 
 /**
  * ID: [64 byte hash][hex encoded Extension]
