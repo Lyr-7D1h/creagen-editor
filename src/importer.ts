@@ -1,5 +1,5 @@
 import { TYPESCRIPT_IMPORT_REGEX } from './constants'
-import { CREAGEN_VERSION, MODE } from './env'
+import { CREAGEN_DEV_VERSION, MODE } from './env'
 
 export interface LibraryImport {
   name: string
@@ -21,21 +21,16 @@ export class Importer {
     version?: string,
   ): Promise<LibraryImport | null> {
     // get local version of creagen
-    if (
-      (packageName === '@lyr_7d1h/creagen' || packageName === 'creagen') &&
-      MODE === 'dev'
-    ) {
-      if (MODE === 'dev') {
-        return {
-          name: packageName,
-          version: CREAGEN_VERSION,
-          importPath: './creagen.js',
-          typings: async () => {
-            const res = await fetch('./creagen.d.ts')
-            const typings = await res.text()
-            return `declare module '${packageName}' {${typings}}`
-          },
-        }
+    if (packageName === 'creagen' && MODE === 'dev') {
+      return {
+        name: packageName,
+        version: CREAGEN_DEV_VERSION,
+        importPath: './creagen.js',
+        typings: async () => {
+          const res = await fetch('./creagen.d.ts')
+          const typings = await res.text()
+          return `declare module '${packageName}' {${typings}}`
+        },
       }
     }
 
