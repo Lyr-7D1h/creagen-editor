@@ -7,31 +7,8 @@ import React, {
 import { localStorage } from './localStorage'
 import { GENART_EDITOR_VERSION, GENART_VERSION, MODE } from './env'
 import { generateHumanReadableName, roundToDec } from './util'
-import {
-  Box,
-  LinearProgress,
-  LinearProgressProps,
-  Typography,
-} from '@mui/material'
 import { Library } from './id'
-
-function LinearProgressWithLabel(
-  props: LinearProgressProps & { value: number },
-) {
-  return (
-    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-      <Box sx={{ width: '100%', mr: 1 }}>
-        <LinearProgress variant="determinate" {...props} />
-      </Box>
-      <Box sx={{ minWidth: 35 }}>
-        <Typography
-          variant="body2"
-          sx={{ color: 'text.secondary' }}
-        >{`${props.value}%`}</Typography>
-      </Box>
-    </Box>
-  )
-}
+import { LinearProgressWithLabelSetting } from './components/settings/LinearProgressWithLabelSetting'
 
 const defaultAppSettingsConfig = {
   general: {
@@ -46,13 +23,16 @@ const defaultAppSettingsConfig = {
   'general.storage': {
     type: 'param',
     label: 'Available Storage',
-    render: (value: number) => (
-      <LinearProgressWithLabel
+    render: ({ current, max }: { current: number; max: number }) => (
+      <LinearProgressWithLabelSetting
+        minLabel="0GB"
+        maxLabel={`${roundToDec(max / 1000000000, 3)}GB`}
         variant="determinate"
-        value={roundToDec(value, 3)}
+        value={roundToDec(current / max, 3)}
       />
     ),
-    value: 0,
+    value: { value: 0, max: 0 },
+    generated: true,
     opts: { readonly: true },
   },
   'general.libraries': {
