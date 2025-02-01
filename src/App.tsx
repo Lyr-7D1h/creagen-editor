@@ -14,7 +14,7 @@ import ts from 'typescript'
 import { Storage } from './storage'
 import { Editor } from './components/Editor/editor'
 import { AnalyzeContainerResult, Sandbox } from './components/Sandbox/sandbox'
-import { CREAGEN_EDITOR_VERSION, CREAGEN_VERSION } from './env'
+import { CREAGEN_EDITOR_VERSION, CREAGEN_DEV_VERSION } from './env'
 import { TYPESCRIPT_IMPORT_REGEX } from './constants'
 
 const templates: Record<string, string> = {
@@ -402,7 +402,7 @@ function exportSvg(svg: SVGElement, opts: { optimize: boolean; name: string }) {
     'metadata',
   )
   const creagen = document.createElement('creagen')
-  creagen.setAttribute('version', CREAGEN_VERSION)
+  creagen.setAttribute('version', CREAGEN_DEV_VERSION)
   creagen.setAttribute('editor-version', CREAGEN_EDITOR_VERSION)
   metadata.appendChild(creagen)
   svg.appendChild(metadata)

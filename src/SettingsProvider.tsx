@@ -5,7 +5,7 @@ import React, {
   useState,
 } from 'react'
 import { localStorage } from './localStorage'
-import { CREAGEN_EDITOR_VERSION, CREAGEN_VERSION, MODE } from './env'
+import { CREAGEN_EDITOR_VERSION, CREAGEN_DEV_VERSION, MODE } from './env'
 import { generateHumanReadableName, roundToDec } from './util'
 import { LinearProgressWithLabelSetting } from './components/settings/LinearProgressWithLabelSetting'
 
@@ -84,7 +84,7 @@ const defaultAppSettingsConfig = {
   'debug.package': {
     type: 'param',
     label: 'Package',
-    value: `creagen@${CREAGEN_VERSION}`,
+    value: `creagen@${CREAGEN_DEV_VERSION}`,
     opts: {
       readonly: true,
     },

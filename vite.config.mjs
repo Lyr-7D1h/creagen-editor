@@ -4,10 +4,14 @@ import path from 'path'
 import fs from 'fs'
 import react from '@vitejs/plugin-react'
 
-const LIBRARY_PATH = path.resolve('../creagen')
+const LIBRARY_PATH = process.env.CREAGEN_PATH ?? path.resolve('../creagen')
 
 /** Serve local build of creagen library */
-function localLibraryOnHttp() {
+function localLibraryOnHttp(mode) {
+  console.log('mode', mode)
+  // don't load if not dev
+  if (mode !== 'development') return {}
+
   const allowedPaths = ['/creagen.js', '/creagen.d.ts', '/creagen.js.map']
   return {
     apply: 'serve',
@@ -35,17 +39,18 @@ export default defineConfig(async ({ command, mode }) => {
   process.env = {
     ...process.env,
     ...loadEnv(mode, process.cwd()),
-    VITE_DEBUG: true,
     VITE_CREAGEN_EDITOR_VERSION: process.env.npm_package_version,
-    // use the latest local version by default
-    VITE_CREAGEN_VERSION: JSON.parse(
-      fs.readFileSync(`${LIBRARY_PATH}/package.json`),
-    ).version,
+    VITE_DEBUG: mode === 'development',
+    // if dev, get version from local creagen package.json
+    VITE_CREAGEN_DEV_VERSION:
+      mode === 'development'
+        ? JSON.parse(fs.readFileSync(`${LIBRARY_PATH}/package.json`)).version
+        : undefined,
   }
 
   return {
     plugins: [
-      localLibraryOnHttp(),
+      localLibraryOnHttp(mode),
       {
         name: 'watch-external',
         async buildStart() {
