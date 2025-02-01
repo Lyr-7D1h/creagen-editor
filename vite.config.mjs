@@ -8,7 +8,6 @@ const LIBRARY_PATH = process.env.CREAGEN_PATH ?? path.resolve('../creagen')
 
 /** Serve local build of creagen library */
 function localLibraryOnHttp(mode) {
-  console.log('mode', mode)
   // don't load if not dev
   if (mode !== 'development') return {}
 

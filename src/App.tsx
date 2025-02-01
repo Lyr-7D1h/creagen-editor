@@ -315,7 +315,6 @@ async function updateRenderSettings(
 /** Parse code to make it compatible for the editor */
 function parseCode(code: string, libraries: LibraryImport[]) {
   code = resolveImports(code, libraries)
-  console.log(libraries)
   if (libraries.find((l) => l.name === 'p5')) code = makeP5FunctionsGlobal(code)
 
   return ts.transpile(code, typescriptCompilerOptions)

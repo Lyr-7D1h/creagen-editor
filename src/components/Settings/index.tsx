@@ -186,8 +186,6 @@ function LibrarySetting() {
       .catch(log.error)
   }, [])
 
-  console.log(versions)
-
   return (
     <ToggleButtonGroup
       orientation="vertical"

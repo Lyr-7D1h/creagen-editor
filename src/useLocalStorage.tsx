@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import log from './log'
 
 // Extend WindowEventMap to include 'local-storage' event
 declare global {
@@ -27,7 +28,7 @@ export function useLocalStorage(
       const item = window.localStorage.getItem(key)
       return item ? JSON.parse(item) : initialValue
     } catch (error) {
-      console.log(error)
+      log.error(error)
       return initialValue
     }
   })
@@ -46,7 +47,7 @@ export function useLocalStorage(
         }),
       )
     } catch (error) {
-      console.log(error)
+      log.error(error)
     }
   }
 
