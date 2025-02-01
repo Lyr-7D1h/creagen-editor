@@ -3,11 +3,6 @@
 # Usage
 
 ```sh
-cd creagen
-npm install
-npm run build
-
-cd ../creagen-editor
 npm install
 npm start
 ```
