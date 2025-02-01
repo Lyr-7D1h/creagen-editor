@@ -7,8 +7,12 @@ import React, {
 import { localStorage } from './localStorage'
 import { GENART_EDITOR_VERSION, GENART_VERSION, MODE } from './env'
 import { generateHumanReadableName, roundToDec } from './util'
-import { Library } from './id'
 import { LinearProgressWithLabelSetting } from './components/settings/LinearProgressWithLabelSetting'
+
+export interface Library {
+  name: string
+  version: string
+}
 
 const defaultAppSettingsConfig = {
   general: {

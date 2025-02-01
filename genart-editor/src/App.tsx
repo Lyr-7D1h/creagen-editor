@@ -5,9 +5,9 @@ import { EditorView, typescriptCompilerOptions } from './components/Editor'
 import { SandboxView } from './components/Sandbox'
 import { useStorage } from './StorageProvider'
 import { Settings } from './components/Settings'
-import { SettingsContextType, useSettings } from './SettingsProvider'
+import { Library, SettingsContextType, useSettings } from './SettingsProvider'
 import { VerticalSplitResizer } from './components/VerticalSplitResizer'
-import { createID, ID, IDFromString, IDToString, Library } from './id'
+import { createID, ID, IDFromString, IDToString } from './id'
 import { Importer, LibraryImport } from './importer'
 import log from './log'
 import ts from 'typescript'
@@ -16,6 +16,17 @@ import { Editor } from './components/Editor/editor'
 import { AnalyzeContainerResult, Sandbox } from './components/Sandbox/sandbox'
 import { GENART_EDITOR_VERSION, GENART_VERSION } from './env'
 import { TYPESCRIPT_IMPORT_REGEX } from './constants'
+
+const templates: Record<string, string> = {
+  p5: `function setup() {
+  createCanvas(400, 400);
+}
+
+function draw() {
+  background(220);
+}`,
+  creagen: ``,
+}
 
 /** Get code id from path and load code from indexdb */
 async function loadCodeFromPath(storage: Storage) {
@@ -60,7 +71,13 @@ export function App() {
     const sandbox = sandboxRef.current!
 
     // sandbox.clearLibraries()
-    for (const { name, version } of settings.values['general.libraries']) {
+    for (const { name, version } of settings.values[
+      'general.libraries'
+    ] as Library[]) {
+      // set default value
+      if (name in templates) {
+        editor.getValue() === '' && editor.setValue(templates[name]!)
+      }
       Importer.getLibrary(name, version).then((library) => {
         if (library === null) {
           log.warn(`Library ${name} not found`)
