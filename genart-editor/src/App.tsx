@@ -120,10 +120,10 @@ export function App() {
     navigator.storage
       .estimate()
       .then((storage) =>
-        settings.set(
-          'general.storage',
-          (storage.usage ?? 0) / (storage.quota ?? 1),
-        ),
+        settings.set('general.storage', {
+          current: storage.usage ?? 0,
+          max: storage.quota ?? 1,
+        }),
       )
       .catch(log.error)
   }, [])
