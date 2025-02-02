@@ -1,21 +1,23 @@
 import { TYPESCRIPT_IMPORT_REGEX } from './constants'
 import { CREAGEN_DEV_VERSION, MODE } from './env'
+import { LIBRARY_CONFIGS } from './libraryConfigs'
+
+export interface ImportPath {
+  /** if `module` it is an es6 module otherwise main */
+  type: 'main' | 'module'
+  /** Url, Absolute or relative path to library */
+  path: string
+}
 
 export interface LibraryImport {
   name: string
   /** Specific version used ('{major}.{minor}.{patch}'), can't be latest or something else */
   version: string
   typings: () => Promise<string | null>
-  /** Url, Absolute or relative path to library */
-  importPath: string
+  importPath: ImportPath
 }
 
 const PACKAGE_SOURCE_URL = 'https://unpkg.com'
-
-const typeFileOverwrites: Record<string, string> = {
-  // Using p5 with global types
-  p5: 'global.d.ts',
-}
 
 /** Takes care of handling proper typings and importing libraries */
 // TODO: use https://unpkg.com/
@@ -30,7 +32,10 @@ export class Importer {
       return {
         name: packageName,
         version: CREAGEN_DEV_VERSION,
-        importPath: './creagen.js',
+        importPath: {
+          type: 'module',
+          path: './creagen.js',
+        },
         typings: async () => {
           const res = await fetch('./creagen.d.ts')
           const typings = await res.text()
@@ -55,18 +60,26 @@ export class Importer {
       const pkg = await res.json()
       pkgTypings = pkg.typings || pkg.types
 
-      if (packageName in typeFileOverwrites)
-        pkgTypings = typeFileOverwrites[packageName]
+      if (LIBRARY_CONFIGS[packageName]?.typingsOverwrite)
+        pkgTypings = LIBRARY_CONFIGS[packageName].typingsOverwrite
 
       if (pkgTypings === null) throw Error('No typings found')
     }
     const typings = async () =>
       getTypings(packageName, typingsUrlRoot, pkgTypings)
 
+    let importPath: ImportPath = {
+      type: 'main',
+      path: `${PACKAGE_SOURCE_URL}/${packageName}${version ? `@${version}` : ''}/${pkg.main}`,
+    }
+    if (pkg.module) {
+      importPath.type = 'module'
+      importPath.path = `${PACKAGE_SOURCE_URL}/${packageName}${version ? `@${version}` : ''}/${pkg.module}`
+    }
     return {
       name: packageName,
       version,
-      importPath: `${PACKAGE_SOURCE_URL}/${packageName}${version ? `@${version}` : ''}`,
+      importPath,
       typings,
     }
   }
