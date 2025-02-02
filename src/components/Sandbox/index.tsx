@@ -25,7 +25,7 @@ export function SandboxView({
       ref={iframe}
       style={{ width, border: 'none', position: 'absolute', left, height }}
       title="Sandbox"
-      // sandbox="allow-same-origin allow-scripts"
+      sandbox="allow-same-origin allow-scripts"
     ></iframe>
   )
 }
