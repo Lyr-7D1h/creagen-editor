@@ -31,21 +31,7 @@ export class Sandbox {
 
     window.console.log = (...msg: any[]) => {
       console.log(...msg)
-      // log.info(...msg)
     }
-
-    // this.drawFns = []
-    // window.draw = (fn: (dt: number) => void) => {
-    //   // if (this.settings.get('debug.fps') === undefined) {
-    //   //   this.settings.addParam('debug.fps', 'FPS', 0, {
-    //   //     format: (v: number) => `${v.toFixed(0)} fps`,
-    //   //     readonly: true,
-    //   //   })
-    //   // }
-
-    //   this.drawFns.push(fn)
-    // }
-    // this.drawLoop()
   }
 
   addLibrary(library: LibraryImport) {
@@ -55,7 +41,7 @@ export class Sandbox {
     }
 
     console.log(
-      `Sandbox: loading library ${library.name}@${library.version} at ${library.importPath.path}`,
+      `Sandbox: loading ${library.name}@${library.version} at ${library.importPath.path}`,
     )
     this.libraries.push(library)
     const document =
@@ -65,7 +51,7 @@ export class Sandbox {
     script.type = 'module'
     script.onerror = log.error
     script.onload = () => {
-      console.log(`Sandbox: loaded library ${library.name}@${library.version}`)
+      console.log(`Sandbox: loaded ${library.name}@${library.version}`)
     }
     document.head.appendChild(script)
   }
@@ -86,45 +72,16 @@ export class Sandbox {
     this.libraries = []
   }
 
-  /** try to run a draw loop that runs drawFns every 1/60 seconds */
-  // drawLoop() {
-  //   let t0 = (document.timeline.currentTime as number) ?? 0
-  //   let frames = 0
-  //   let s = 0
-  //   const draw = (t1: DOMHighResTimeStamp) => {
-  //     // const t1 = performance.now()
-  //     frames += 1
-  //     if (t1 - s >= 1000) {
-  //       // this.settings.set('debug.fps', frames)
-  //       s += 1000
-  //       frames = 0
-  //     }
-  //     const dt = t1 - t0
-
-  //     this.drawFns.forEach((fn) => {
-  //       fn(dt)
-  //     })
-  //     t0 = t1
-  //     requestAnimationFrame(draw)
-  //   }
-  //   requestAnimationFrame(draw)
-  // }
-
   globalTypings(): string {
     return ''
-    //     return `
-    // const container: HTMLElement;
-    // type LoadableObject =
-    //   | Node
-    //   | {
-    //       html: () => Node
-    //     }
-    // function load(obj: LoadableObject): void;
-    // /**
-    //  * Call a drawing function every 1/60 seconds
-    //  * @param fn draw callback
-    //  * */
-    // function draw(fn: (dt: number) => void): void;`
+  }
+
+  run(code: string, libraries: LibraryImport[] = []) {
+    this.clearLibraries()
+    libraries.forEach((lib) => {
+      this.addLibrary(lib)
+    })
+    this.runScript(code)
   }
 
   runScript(code: string) {
