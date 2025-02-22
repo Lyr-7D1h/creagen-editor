@@ -34,7 +34,7 @@ export class Importer {
         version: CREAGEN_DEV_VERSION,
         importPath: {
           type: 'module',
-          path: './creagen.js',
+          path: `http://${window.location.host}/creagen.js`,
         },
         typings: async () => {
           const res = await fetch('./creagen.d.ts')

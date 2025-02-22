@@ -16,22 +16,7 @@ import { Editor } from './components/Editor/editor'
 import { AnalyzeContainerResult, Sandbox } from './components/Sandbox/sandbox'
 import { CREAGEN_EDITOR_VERSION, CREAGEN_DEV_VERSION } from './env'
 import { TYPESCRIPT_IMPORT_REGEX } from './constants'
-
-const templates: Record<string, string> = {
-  p5: `function setup() {
-  createCanvas(400, 400);
-}
-
-function draw() {
-  background(220);
-}`,
-  creagen: `import { Canvas, vec, load } from "creagen";
-
-const canvas = Canvas.create(400,400)
-canvas.line(vec(0, 0), vec(50, 50))
-
-load(canvas)`,
-}
+import { LIBRARY_CONFIGS } from './libraryConfigs'
 
 /** Get code id from path and load code from indexdb */
 async function loadCodeFromPath(storage: Storage) {
@@ -59,9 +44,9 @@ export function App() {
   const settings = useSettings()
   const [activeId, setActiveIdState] = useState<ID | null>(null)
   const editorRef = useRef<Editor>(null)
-  const sandboxRef = useRef<Sandbox>(null)
   const [loaded, setLoaded] = useState(false)
   const libraryImports = useRef<LibraryImport[]>([])
+  const [code, setCode] = useState('')
 
   /** Add new id to history */
   function updateActiveId(id: ID) {
@@ -71,17 +56,21 @@ export function App() {
   }
 
   function loadLibraries() {
-    if (editorRef.current === null || sandboxRef.current === null) return
+    if (editorRef.current === null) return
     const editor = editorRef.current!
-    const sandbox = sandboxRef.current!
+    console.log(settings.values['general.libraries'])
 
     // sandbox.clearLibraries()
     for (const { name, version } of settings.values[
       'general.libraries'
     ] as Library[]) {
-      // set default value
-      if (name in templates) {
-        editor.getValue() === '' && editor.setValue(templates[name]!)
+      // set default value from template
+      if (
+        name in LIBRARY_CONFIGS &&
+        typeof LIBRARY_CONFIGS[name]?.template !== 'undefined'
+      ) {
+        editor.getValue() === '' &&
+          editor.setValue(LIBRARY_CONFIGS[name]?.template)
       }
       Importer.getLibrary(name, version).then((library) => {
         if (library === null) {
@@ -89,8 +78,7 @@ export function App() {
           return
         }
 
-        sandbox.addLibrary(library)
-
+        libraryImports.current.push(library)
         library
           .typings()
           .then((typings) => {
@@ -101,7 +89,6 @@ export function App() {
                 library.name,
               )
             }
-            libraryImports.current.push(library)
           })
           .catch(log.error)
       })
@@ -110,14 +97,12 @@ export function App() {
 
   /** initial load */
   function load() {
-    if (editorRef.current === null || sandboxRef.current === null) return
+    if (editorRef.current === null) return
     if (loaded) return
     setLoaded(true)
 
     const editor = editorRef.current
-    const sandbox = sandboxRef.current
 
-    editor.addTypings(sandbox.globalTypings(), 'ts:sandbox.d.ts')
     setupKeybinds(editor)
 
     // load initial code
@@ -168,9 +153,8 @@ export function App() {
   })
 
   async function render(settings: SettingsContextType) {
-    if (editorRef.current === null || sandboxRef.current === null) return
+    if (editorRef.current === null) return
     const editor = editorRef.current
-    const sandbox = sandboxRef.current
 
     log.clear()
     const info = log.info('rendering code')
@@ -197,21 +181,24 @@ export function App() {
 
     code = parseCode(code, libraryImports.current)
 
-    sandbox.runScript(code)
+    setCode(code)
 
-    // TODO: check when script has been run
-    setTimeout(() => {
-      const result = sandbox.analyzeContainer()
-      updateRenderSettings(settings, result)
-      // p5 library searches window for p5 functions so the library has to be added after the code script has been added
-      if (
-        settings.values['general.libraries'].find(
-          (l: Library) => l.name === 'p5',
-        )
-      ) {
-        sandbox.reloadLibraries()
-      }
-    }, 300)
+    // sandbox.reloadLibraries()
+    // sandbox.runScript(code)
+
+    // // TODO: check when script has been run
+    // setTimeout(() => {
+    //   const result = sandbox.analyzeContainer()
+    //   updateRenderSettings(settings, result)
+    //   // p5 library searches window for p5 functions so the library has to be added after the code script has been added
+    //   if (
+    //     settings.values['general.libraries'].find(
+    //       (l: Library) => l.name === 'p5',
+    //     )
+    //   ) {
+    //     sandbox.reloadLibraries()
+    //   }
+    // }, 300)
 
     info.remove()
   }
@@ -241,12 +228,9 @@ export function App() {
             load()
           }}
         />
-        <SandboxView
-          onLoad={(sandbox) => {
-            sandboxRef.current = sandbox
-            load()
-          }}
-        />
+        {libraryImports.current !== null && (
+          <SandboxView code={code} libraries={libraryImports.current} />
+        )}
       </VerticalSplitResizer>
       <Settings />
     </>
