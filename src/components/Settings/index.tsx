@@ -186,23 +186,19 @@ function LibrarySetting() {
       .catch(log.error)
   }, [])
 
+  // update selected version when libraries change
+  useEffect(() => {
+    setSelectedVersion((versions) => {
+      const newVersions = { ...versions }
+      for (const lib of libraries) {
+        newVersions[lib.name] = lib.version
+      }
+      return newVersions
+    })
+  }, [libraries])
+
   return (
-    <ToggleButtonGroup
-      orientation="vertical"
-      fullWidth={true}
-      value={libraries.map((l) => l.name)}
-      onChange={(_, value) => {
-        settings.set(
-          'general.libraries',
-          value.map((name: string) => ({
-            name,
-            version:
-              libraries.find((l) => l.name === name)?.version ??
-              selectedVersion[name]!,
-          })),
-        )
-      }}
-    >
+    <ToggleButtonGroup orientation="vertical" fullWidth={true}>
       {supportedLibraries.map((lib) => (
         <ToggleButton
           key={lib.name}
@@ -215,13 +211,48 @@ function LibrarySetting() {
             justifyContent: 'space-between',
             width: '100%',
           }}
+          selected={libraries.map((l) => l.name).includes(lib.name)}
+          onChange={(_, libraryName) => {
+            const enabled =
+              typeof libraries.find((l) => l.name === libraryName) !==
+              'undefined'
+
+            if (enabled) {
+              settings.set(
+                'general.libraries',
+                libraries.filter((l) => l.name !== libraryName),
+              )
+              return
+            }
+
+            settings.set('general.libraries', [
+              ...libraries,
+              { name: libraryName, version: selectedVersion[libraryName]! },
+            ])
+          }}
         >
           <span>{lib.name}</span>
           {versions[lib.name] === undefined ? null : (
             <Select
-              value={versions[lib.name]![0]}
+              value={selectedVersion[lib.name] ?? versions[lib.name]![0]}
               size="small"
+              onClick={(e) => e.stopPropagation()}
               onChange={(e) => {
+                const enabled =
+                  typeof libraries.find((l) => l.name === lib.name) !==
+                  'undefined'
+
+                if (enabled) {
+                  settings.set(
+                    'general.libraries',
+                    libraries.map((l) => {
+                      if (l.name !== lib.name) return l
+                      return { ...l, version: e.target.value }
+                    }),
+                  )
+                  return
+                }
+
                 setSelectedVersion({
                   ...selectedVersion,
                   [lib.name]: e.target.value,

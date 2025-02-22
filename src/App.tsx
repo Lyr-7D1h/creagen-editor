@@ -25,7 +25,12 @@ const templates: Record<string, string> = {
 function draw() {
   background(220);
 }`,
-  creagen: ``,
+  creagen: `import { Canvas, vec, load } from "creagen";
+
+const canvas = Canvas.create(400,400)
+canvas.line(vec(0, 0), vec(50, 50))
+
+load(canvas)`,
 }
 
 /** Get code id from path and load code from indexdb */
@@ -328,6 +333,7 @@ function resolveImports(code: string, libraries: LibraryImport[]) {
 
     // Replace the module path while leaving the imports intact
     const newModulePath = libraries.find((l) => l.name === module)?.importPath
+      .path
     if (typeof newModulePath === 'undefined') {
       log.error(`Library ${module} not found`)
       continue
