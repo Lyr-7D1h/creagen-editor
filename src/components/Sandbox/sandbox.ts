@@ -55,13 +55,13 @@ export class Sandbox {
     }
 
     console.log(
-      `Sandbox: loading library ${library.name}@${library.version} at ${library.importPath}`,
+      `Sandbox: loading library ${library.name}@${library.version} at ${library.importPath.path}`,
     )
     this.libraries.push(library)
     const document =
       this.html.contentDocument || this.html.contentWindow!.document
     const script = document.createElement('script')
-    script.src = library.importPath
+    script.src = library.importPath.path
     script.type = 'module'
     script.onerror = log.error
     script.onload = () => {
