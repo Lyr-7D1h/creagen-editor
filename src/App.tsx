@@ -13,7 +13,7 @@ import log from './log'
 import ts from 'typescript'
 import { Storage } from './storage'
 import { Editor } from './components/Editor/editor'
-import { AnalyzeContainerResult, Sandbox } from './components/Sandbox/sandbox'
+import { AnalyzeContainerResult } from './components/Sandbox'
 import { CREAGEN_EDITOR_VERSION, CREAGEN_DEV_VERSION } from './env'
 import { TYPESCRIPT_IMPORT_REGEX } from './constants'
 import { LIBRARY_CONFIGS } from './libraryConfigs'
@@ -229,7 +229,14 @@ export function App() {
           }}
         />
         {libraryImports.current !== null && (
-          <SandboxView code={code} libraries={libraryImports.current} />
+          <SandboxView
+            code={code}
+            libraries={libraryImports.current}
+            onAnalysis={(result) => {
+              console.log(result)
+              updateRenderSettings(settings, result)
+            }}
+          />
         )}
       </VerticalSplitResizer>
       <Settings />
@@ -242,7 +249,7 @@ async function updateRenderSettings(
   result: AnalyzeContainerResult,
 ) {
   for (const svgResult of result.svgs) {
-    const { paths, circles, rects, svg } = svgResult
+    const { paths, circles, rects } = svgResult
     settings.add('export', {
       type: 'folder',
       title: 'Export',
@@ -287,16 +294,16 @@ async function updateRenderSettings(
         readonly: true,
       },
     })
-    settings.add('export.download', {
-      type: 'button',
-      title: 'Download',
-      onClick: () => {
-        exportSvg(svg, {
-          optimize: true,
-          name: settings.values['general.name'],
-        })
-      },
-    })
+    // settings.add('export.download', {
+    //   type: 'button',
+    //   title: 'Download',
+    //   onClick: () => {
+    //     exportSvg(svg, {
+    //       optimize: true,
+    //       name: settings.values['general.name'],
+    //     })
+    //   },
+    // })
   }
 }
 
