@@ -2,6 +2,7 @@ import fg from 'fast-glob'
 import { defineConfig, loadEnv } from 'vite'
 import path from 'path'
 import fs from 'fs'
+import ts from 'typescript'
 import react from '@vitejs/plugin-react'
 
 const LIBRARY_PATH = process.env.CREAGEN_PATH ?? path.resolve('../creagen')
@@ -31,6 +32,54 @@ function localLibraryOnHttp(mode) {
   }
 }
 
+function watchExternal() {
+  return {
+    name: 'watch-external',
+    async buildStart() {
+      const files = await fg(['src/**/*', `${LIBRARY_PATH}/src/**/*`])
+      for (const file of files) {
+        this.addWatchFile(file)
+      }
+    },
+    handleHotUpdate({ file, server }) {
+      if (file.includes(LIBRARY_PATH)) {
+        server.ws.send({
+          type: 'full-reload',
+          path: '*',
+        })
+        return []
+      }
+    },
+  }
+}
+
+/** Parse `sandbox.ts` to a string import for `src/components/Sandbox` */
+function sandboxJs() {
+  return {
+    name: 'sandbox-js',
+    async buildStart() {
+      const sandboxPath = path.resolve('./sandbox.ts')
+      const sandboxTs = fs.readFileSync(sandboxPath, 'utf-8')
+      const result = ts.transpileModule(sandboxTs, {
+        compilerOptions: { target: 'ES6' },
+      })
+      const outputPath = path.resolve('src/sandbox.ts')
+      const output = result.outputText
+        .replace(/\\/g, '\\\\')
+        .replace(/"/g, '\\"')
+        .replace(/export\s+(default\s+)?/g, '')
+      fs.writeFileSync(
+        outputPath,
+        `// THIS FILE IS AUTO GENERATED, DO NOT MODIFY
+// generated from sandbox.ts
+export default \`${output}\``,
+      )
+
+      console.log('sandbox.ts -> src/sandbox.ts')
+    },
+  }
+}
+
 export default defineConfig(async ({ command, mode }) => {
   process.env = {
     ...process.env,
@@ -48,28 +97,7 @@ export default defineConfig(async ({ command, mode }) => {
     build: {
       sourcemap: true,
     },
-    plugins: [
-      localLibraryOnHttp(mode),
-      {
-        name: 'watch-external',
-        async buildStart() {
-          const files = await fg(['src/**/*', `${LIBRARY_PATH}/src/**/*`])
-          for (const file of files) {
-            this.addWatchFile(file)
-          }
-        },
-        handleHotUpdate({ file, server }) {
-          if (file.includes(LIBRARY_PATH)) {
-            server.ws.send({
-              type: 'full-reload',
-              path: '*',
-            })
-            return []
-          }
-        },
-      },
-      react(),
-    ],
+    plugins: [localLibraryOnHttp(mode), watchExternal(), sandboxJs(), react()],
     optimizeDeps: {
       exclude: ['creagen'],
     },
