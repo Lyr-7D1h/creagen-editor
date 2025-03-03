@@ -5,7 +5,7 @@ import {
   AnalyzeContainerResult,
   SandboxEvent,
   SvgProps,
-} from './src/components/Sandbox'
+} from './src/components/Sandbox/Sandbox'
 import { Library } from './src/SettingsProvider'
 
 declare global {

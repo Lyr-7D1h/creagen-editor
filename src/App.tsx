@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import * as monaco from 'monaco-editor'
 import { Messages } from './components/Messages'
 import { EditorView } from './components/Editor'
-import { Sandbox, SandboxLink } from './components/Sandbox'
+import { Sandbox } from './components/Sandbox/Sandbox'
 import { useStorage } from './StorageProvider'
 import { Settings } from './components/Settings'
 import { Library, SettingsContextType, useSettings } from './SettingsProvider'
@@ -13,10 +13,11 @@ import log from './log'
 import ts from 'typescript'
 import { Storage } from './storage'
 import { Editor, typescriptCompilerOptions } from './components/Editor/editor'
-import { AnalyzeContainerResult } from './components/Sandbox'
+import { AnalyzeContainerResult } from './components/Sandbox/Sandbox'
 import { CREAGEN_EDITOR_VERSION, CREAGEN_DEV_VERSION } from './env'
 import { TYPESCRIPT_IMPORT_REGEX } from './constants'
 import { LIBRARY_CONFIGS } from './libraryConfigs'
+import { SandboxView } from './components/Sandbox/SandboxView'
 
 /** Get code id from path and load code from indexdb */
 async function loadCodeFromPath(storage: Storage) {
@@ -44,11 +45,11 @@ export function App() {
   const settings = useSettings()
   const [activeId, setActiveIdState] = useState<ID | null>(null)
   const editorRef = useRef<Editor>(null)
+  const sandboxRef = useRef<Sandbox>(null)
   const [loaded, setLoaded] = useState(false)
   const [libraryImports, setLibraryImports] = useState<
     Record<string, LibraryImport>
   >({})
-  const [code, setCode] = useState('')
 
   /** Add new id to history */
   function updateActiveId(id: ID) {
@@ -174,7 +175,10 @@ export function App() {
     loadCodeFromPath(storage).catch(log.error)
   })
 
-  async function render(settings: SettingsContextType) {
+  async function render(
+    settings: SettingsContextType,
+    libraryImports: Record<string, LibraryImport>,
+  ) {
     if (editorRef.current === null) return
     const editor = editorRef.current
 
@@ -203,7 +207,13 @@ export function App() {
 
     code = parseCode(code, libraryImports)
 
-    setCode(code)
+    const imports = Object.values(libraryImports).filter((lib) =>
+      settings.values['general.libraries'].some(
+        (library: Library) => library.name === lib.name,
+      ),
+    )
+    console.log(settings.values['general.libraries'], libraryImports)
+    sandboxRef.current?.render(code, imports)
 
     info.remove()
   }
@@ -212,13 +222,13 @@ export function App() {
     document.addEventListener('keydown', (event) => {
       if (event.ctrlKey && event.shiftKey && event.key === 'Enter') {
         event.preventDefault()
-        render(settings)
+        render(settings, libraryImports)
       }
     })
     editor.addKeybind(
       monaco.KeyMod.Shift | monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
       () => {
-        render(settings)
+        render(settings, libraryImports)
       },
     )
   }
@@ -226,9 +236,8 @@ export function App() {
   useEffect(() => {
     if (editorRef.current === null) return
     setupKeybinds(editorRef.current!)
-  }, [settings.values])
+  }, [settings.values, libraryImports])
 
-  const imports = useMemo(() => Object.values(libraryImports), [libraryImports])
   return (
     <>
       <Messages />
@@ -240,11 +249,12 @@ export function App() {
             load()
           }}
         />
-        <Sandbox
-          code={code}
-          libraryImports={imports}
-          onAnalysis={(result, sendMessage) => {
-            updateRenderSettings(settings, result, sendMessage)
+        <SandboxView
+          onLoad={(sandbox) => {
+            sandboxRef.current = sandbox
+            sandbox.addEventListener('analysisResult', (result) => {
+              updateRenderSettings(settings, result.analysisResult, sandbox)
+            })
           }}
         />
       </VerticalSplitResizer>
@@ -256,7 +266,7 @@ export function App() {
 async function updateRenderSettings(
   settings: SettingsContextType,
   result: AnalyzeContainerResult,
-  link: SandboxLink,
+  link: Sandbox,
 ) {
   settings.remove('export')
   for (const svgResult of result.svgs) {
