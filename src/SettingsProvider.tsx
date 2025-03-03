@@ -99,7 +99,9 @@ const defaultAppSettingsConfig = {
   },
 }
 
-type DefaultAppSettingsConfig = SettingsConfig<typeof defaultAppSettingsConfig>
+export type DefaultAppSettingsConfig = SettingsConfig<
+  typeof defaultAppSettingsConfig
+>
 
 type Generic<T> = {
   [K in keyof T]: K extends 'type' ? string : T[K]
@@ -108,7 +110,7 @@ type GenericSettingsConfig = Record<
   string,
   Generic<Param> | Generic<Folder> | Generic<Button>
 >
-type SettingsConfig<T extends GenericSettingsConfig> = {
+export type SettingsConfig<T extends GenericSettingsConfig> = {
   [K in keyof T]: T[K] extends { value: any }
     ? Param
     : T[K] extends { label: string }
@@ -124,6 +126,8 @@ type Folders<T extends SettingsConfig<T>> = {
 type Buttons<T extends SettingsConfig<T>> = {
   [K in keyof T]: T[K] extends Button ? K : never
 }[keyof T]
+
+type SettingsConfigKeys = keyof DefaultAppSettingsConfig
 
 export interface Folder {
   type: 'folder'
@@ -175,7 +179,7 @@ export function SettingsProvider({ children }: PropsWithChildren) {
         delete clone[key]
       }
     }
-    localStorage.set('settings', clone)
+    localStorage.set('settings', clone as DefaultAppSettingsConfig)
   }
 
   if (settings === null) return
@@ -208,6 +212,15 @@ export function SettingsProvider({ children }: PropsWithChildren) {
           genericSettings[key].generated = true
           setSettings({ ...settings })
         },
+        remove: (key: string) => {
+          const newSettings: Record<string, any> = { ...settings }
+          for (const k in newSettings) {
+            if (k.startsWith(key)) {
+              delete newSettings[k]
+            }
+          }
+          setSettings(newSettings)
+        },
       }}
     >
       {children}
@@ -226,12 +239,15 @@ export interface SettingsContextType {
   config: DefaultAppSettingsConfig
   set: (key: Params<DefaultAppSettingsConfig>, value: any) => void
   add: (key: string, entry: Entry) => void
+  /** Remove all values under this key */
+  remove: (key: string) => void
 }
 const SettingsContext = createContext<{
   values: Record<Params<DefaultAppSettingsConfig>, any>
   config: DefaultAppSettingsConfig
   set: (key: Params<DefaultAppSettingsConfig>, value: any) => void
   add: (key: string, entry: Entry) => void
+  remove: (key: string) => void
 } | null>(null)
 
 export const useSettings = () => {

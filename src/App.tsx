@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react'
 import * as monaco from 'monaco-editor'
 import { Messages } from './components/Messages'
-import { EditorView, typescriptCompilerOptions } from './components/Editor'
-import { SandboxView } from './components/Sandbox'
+import { EditorView } from './components/Editor'
+import { Sandbox, SandboxLink } from './components/Sandbox'
 import { useStorage } from './StorageProvider'
 import { Settings } from './components/Settings'
 import { Library, SettingsContextType, useSettings } from './SettingsProvider'
@@ -12,7 +12,7 @@ import { Importer, LibraryImport } from './importer'
 import log from './log'
 import ts from 'typescript'
 import { Storage } from './storage'
-import { Editor } from './components/Editor/editor'
+import { Editor, typescriptCompilerOptions } from './components/Editor/editor'
 import { AnalyzeContainerResult } from './components/Sandbox'
 import { CREAGEN_EDITOR_VERSION, CREAGEN_DEV_VERSION } from './env'
 import { TYPESCRIPT_IMPORT_REGEX } from './constants'
@@ -58,7 +58,6 @@ export function App() {
   function loadLibraries() {
     if (editorRef.current === null) return
     const editor = editorRef.current!
-    console.log(settings.values['general.libraries'])
 
     // sandbox.clearLibraries()
     for (const { name, version } of settings.values[
@@ -183,27 +182,16 @@ export function App() {
 
     setCode(code)
 
-    // sandbox.reloadLibraries()
-    // sandbox.runScript(code)
-
-    // // TODO: check when script has been run
-    // setTimeout(() => {
-    //   const result = sandbox.analyzeContainer()
-    //   updateRenderSettings(settings, result)
-    //   // p5 library searches window for p5 functions so the library has to be added after the code script has been added
-    //   if (
-    //     settings.values['general.libraries'].find(
-    //       (l: Library) => l.name === 'p5',
-    //     )
-    //   ) {
-    //     sandbox.reloadLibraries()
-    //   }
-    // }, 300)
-
     info.remove()
   }
 
   function setupKeybinds(editor: Editor) {
+    document.addEventListener('keydown', (event) => {
+      if (event.ctrlKey && event.shiftKey && event.key === 'Enter') {
+        event.preventDefault()
+        render(settings)
+      }
+    })
     editor.addKeybind(
       monaco.KeyMod.Shift | monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
       () => {
@@ -229,12 +217,11 @@ export function App() {
           }}
         />
         {libraryImports.current !== null && (
-          <SandboxView
+          <Sandbox
             code={code}
             libraries={libraryImports.current}
-            onAnalysis={(result) => {
-              console.log(result)
-              updateRenderSettings(settings, result)
+            onAnalysis={(result, sendMessage) => {
+              updateRenderSettings(settings, result, sendMessage)
             }}
           />
         )}
@@ -247,7 +234,9 @@ export function App() {
 async function updateRenderSettings(
   settings: SettingsContextType,
   result: AnalyzeContainerResult,
+  link: SandboxLink,
 ) {
+  settings.remove('export')
   for (const svgResult of result.svgs) {
     const { paths, circles, rects } = svgResult
     settings.add('export', {
@@ -294,16 +283,20 @@ async function updateRenderSettings(
         readonly: true,
       },
     })
-    // settings.add('export.download', {
-    //   type: 'button',
-    //   title: 'Download',
-    //   onClick: () => {
-    //     exportSvg(svg, {
-    //       optimize: true,
-    //       name: settings.values['general.name'],
-    //     })
-    //   },
-    // })
+    settings.add('export.download', {
+      type: 'button',
+      title: 'Download',
+      onClick: async () => {
+        const svg = await link.svgExport(
+          0,
+          settings.values['general.libraries'],
+        )
+        if (svg === null) {
+          log.error('No svg found')
+          return
+        }
+      },
+    })
   }
 }
 

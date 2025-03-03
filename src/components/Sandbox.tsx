@@ -1,8 +1,9 @@
 import React, { useEffect, useRef } from 'react'
 import { LibraryImport } from '../importer'
-import { MODE } from '../env'
+import { CREAGEN_EDITOR_VERSION, MODE } from '../env'
 import log from '../log'
 import sandboxCode from '../sandbox'
+import { Library } from '../SettingsProvider'
 
 export type SandboxEvent =
   | {
@@ -14,12 +15,28 @@ export type SandboxEvent =
       type: 'loaded'
     }
   | {
+      type: 'analysisResult'
+      analysisResult: AnalyzeContainerResult
+    }
+  | {
       type: 'error'
       error: Error
     }
   | {
-      type: 'analysis'
-      result: AnalyzeContainerResult
+      type: 'svgExportRequest'
+      svgIndex: number
+      optimize: boolean
+      libraries: Library[]
+    }
+  | {
+      type: 'svgExportResponse'
+      data: string | null
+    }
+  | {
+      type: 'init'
+      constants: {
+        creagenEditorVersion: string
+      }
     }
 
 export interface AnalyzeContainerResult {
@@ -38,13 +55,54 @@ function isSandboxEvent(event: any): event is SandboxEvent {
   return event && typeof event.type === 'string'
 }
 
-export function SandboxView({
+export class SandboxLink {
+  iframe: HTMLIFrameElement
+
+  constructor(iframe: HTMLIFrameElement) {
+    this.iframe = iframe
+  }
+
+  sendMessage(message: SandboxEvent) {
+    this.iframe.contentWindow!.postMessage(message, '*')
+  }
+
+  async svgExport(
+    svgIndex: number,
+    libraries: Library[],
+  ): Promise<string | null> {
+    return new Promise((resolve, reject) => {
+      this.sendMessage({
+        type: 'svgExportRequest',
+        svgIndex,
+        optimize: true,
+        libraries,
+      })
+
+      const listener = (event: MessageEvent) => {
+        if (isSandboxEvent(event.data)) {
+          if (event.data.type === 'svgExportResponse') {
+            window.removeEventListener('message', listener)
+            resolve(event.data.data)
+          }
+        }
+      }
+
+      window.addEventListener('message', listener)
+
+      setTimeout(() => {
+        window.removeEventListener('message', listener)
+        reject(new Error('Timeout'))
+      }, 5000)
+    })
+  }
+}
+
+export function Sandbox({
   code,
   libraries,
   width,
   height,
   left,
-  onLoad,
   onAnalysis,
 }: {
   code: string
@@ -52,19 +110,16 @@ export function SandboxView({
   width?: string
   height?: string
   left?: string
-  onLoad?: () => void
-  onAnalysis?: (result: AnalyzeContainerResult) => void
+  onAnalysis?: (result: AnalyzeContainerResult, link: SandboxLink) => void
 }) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
+  const link = useRef<SandboxLink | null>(null)
 
   useEffect(() => {
     window.addEventListener('message', (event) => {
       const sandboxEvent = event.data
       if (isSandboxEvent(sandboxEvent)) {
         switch (sandboxEvent.type) {
-          case 'analysis':
-            if (onAnalysis) onAnalysis(sandboxEvent.result)
-            break
           case 'error':
             throw sandboxEvent.error
           case 'log':
@@ -75,13 +130,24 @@ export function SandboxView({
             console[sandboxEvent.level](...sandboxEvent.data)
             break
           case 'loaded':
-            if (onLoad) onLoad()
+            link.current?.sendMessage({
+              type: 'init',
+              constants: { creagenEditorVersion: CREAGEN_EDITOR_VERSION },
+            })
+            break
+          case 'analysisResult':
+            if (onAnalysis)
+              onAnalysis(
+                sandboxEvent.analysisResult,
+                link.current as SandboxLink,
+              )
             break
         }
       }
     })
   }, [])
 
+  // reset iframe on code and library changes
   useEffect(() => {
     const iframe = iframeRef.current
     if (!iframe) return
@@ -90,10 +156,11 @@ export function SandboxView({
     <html lang="en">
       <head>
         <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         ${libraries.filter((lib) => lib.importPath.type !== 'module').map((lib) => `<script src="${lib.importPath.path}"></script>`)}
       </head>
       <body style="margin: 0;">
-        <script>${sandboxCode}</script>
+        <script type="module">${sandboxCode}</script>
         <script type="module">${code}</script>
       </body>
     </html>
@@ -104,6 +171,8 @@ export function SandboxView({
 
     // Update iframe source
     iframe.src = blobURL
+    link.current = new SandboxLink(iframe)
+    console.log(`Sandbox: Loading code into iframe`, libraries)
   }, [code, libraries])
 
   return (

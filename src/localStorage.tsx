@@ -1,6 +1,4 @@
-import { BladeState } from '@tweakpane/core'
-import { SettingsConfig } from './settings'
-import { DefaultAppSettingsConfig } from './SettingsProvider'
+import { DefaultAppSettingsConfig, SettingsConfig } from './SettingsProvider'
 
 class LocalStorage {
   set(id: 'settings', item: SettingsConfig<DefaultAppSettingsConfig>) {

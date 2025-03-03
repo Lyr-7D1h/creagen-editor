@@ -59,6 +59,8 @@ export class IndexDB extends Storage {
         resolve(req.result)
       }
       req.onupgradeneeded = (event) => {
+        if (event.target === null) return
+        if (!('result' in event.target)) return
         const db = event.target.result as IDBDatabase
 
         db.onerror = () => {

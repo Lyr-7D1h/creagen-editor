@@ -35,15 +35,15 @@ function formatMsg(msg: any[]): string {
 }
 
 function info(...msg: any[]): HTMLElement {
-  console.info(...msg)
+  console.info('Info: ', ...msg)
   return message('info', formatMsg(msg))
 }
 function warn(...msg: any[]): HTMLElement {
-  console.warn(...msg)
+  console.warn('Warn: ', ...msg)
   return message('warn', formatMsg(msg))
 }
 function error(...msg: any[]): HTMLElement {
-  console.error(...msg)
+  console.error('Error: ', ...msg)
   return message('error', formatMsg(msg))
 }
 

@@ -2,20 +2,63 @@ import AutoImport, { regexTokeniser } from '@kareemkermad/monaco-auto-import'
 import { Monaco } from '@monaco-editor/react'
 import * as monaco from 'monaco-editor'
 import type * as m from 'monaco-editor'
+import { loader } from '@monaco-editor/react'
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
+import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
+import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
+import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker'
 import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 
 import { initVimMode } from 'monaco-vim'
 
-// https://github.com/brijeshb42/monaco-themes/tree/master
-
+// Use monaco without cdn: https://www.npmjs.com/package/@monaco-editor/react#loader-config
+// needed for vite: https://www.npmjs.com/package/@monaco-editor/react#loader-config
 self.MonacoEnvironment = {
   getWorker(_, label) {
+    if (label === 'json') {
+      return new jsonWorker()
+    }
+    if (label === 'css' || label === 'scss' || label === 'less') {
+      return new cssWorker()
+    }
+    if (label === 'html' || label === 'handlebars' || label === 'razor') {
+      return new htmlWorker()
+    }
     if (label === 'typescript' || label === 'javascript') {
       return new tsWorker()
     }
     return new editorWorker()
   },
+}
+loader.config({ monaco })
+loader.init()
+
+// https://github.com/brijeshb42/monaco-themes/tree/master
+const creagenLightTheme: monaco.editor.IStandaloneThemeData = {
+  base: 'vs',
+  inherit: true,
+  colors: {},
+  rules: [],
+}
+const creagenFullscreenTheme: monaco.editor.IStandaloneThemeData = {
+  base: 'hc-black',
+  inherit: true,
+  colors: {
+    'editor.background': '#ffffff00',
+    'editor.selectionBackground': '#ffffff',
+    'editor.lineHighlightBackground': '#00000088',
+    'editorCursor.foreground': '#ffffff',
+  },
+  rules: [],
+}
+
+export const typescriptCompilerOptions = {
+  target: monaco.languages.typescript.ScriptTarget.ESNext,
+  allowNonTsExtensions: true,
+  moduleResolution: monaco.languages.typescript.ModuleResolutionKind.Classic,
+  esModuleInterop: true,
+  module: monaco.languages.typescript.ModuleKind.ESNext,
+  noEmit: true,
 }
 
 export interface EditorSettings {
@@ -28,6 +71,20 @@ export class Editor {
   private vimMode: m.editor.IStandaloneCodeEditor | null
   private fullscreendecorators: m.editor.IEditorDecorationsCollection | null
   private models: Record<string, monaco.editor.ITextModel> = {}
+
+  static handleBeforeMount(monaco: Monaco) {
+    monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+      noSemanticValidation: false,
+      noSyntaxValidation: false,
+      // 1378,1375: allow await on top level
+      diagnosticCodesToIgnore: [1375, 1378],
+    })
+    monaco.languages.typescript.typescriptDefaults.setCompilerOptions(
+      typescriptCompilerOptions,
+    )
+    monaco.editor.defineTheme('creagen', creagenLightTheme)
+    monaco.editor.defineTheme('creagen-fullscreen', creagenFullscreenTheme)
+  }
 
   constructor(editor: m.editor.IStandaloneCodeEditor, monaco: Monaco) {
     this.editor = editor
@@ -76,7 +133,7 @@ export class Editor {
   /** If `packageName` given will also add autoimports */
   addTypings(typings: string, uri: string, packageName?: string) {
     if (this.models[uri]) return
-    console.log(`Adding typings for ${uri}`)
+    console.log(`Editor: Adding typings for ${uri}`)
     // monaco.languages.typescript.javascriptDefaults.addExtraLib(typings, uri)
     if (typeof packageName === 'string') {
       this.autoimport.imports.saveFile({
