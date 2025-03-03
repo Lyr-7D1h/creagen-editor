@@ -99,14 +99,14 @@ export class SandboxLink {
 
 export function Sandbox({
   code,
-  libraries,
+  libraryImports,
   width,
   height,
   left,
   onAnalysis,
 }: {
   code: string
-  libraries: LibraryImport[]
+  libraryImports: LibraryImport[]
   width?: string
   height?: string
   left?: string
@@ -157,7 +157,7 @@ export function Sandbox({
       <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        ${libraries.filter((lib) => lib.importPath.type !== 'module').map((lib) => `<script src="${lib.importPath.path}"></script>`)}
+        ${libraryImports.filter((lib) => lib.importPath.type !== 'module').map((lib) => `<script src="${lib.importPath.path}"></script>`)}
       </head>
       <body style="margin: 0;">
         <script type="module">${sandboxCode}</script>
@@ -172,8 +172,11 @@ export function Sandbox({
     // Update iframe source
     iframe.src = blobURL
     link.current = new SandboxLink(iframe)
-    console.log(`Sandbox: Loading code into iframe`, libraries)
-  }, [code, libraries])
+    console.log(
+      `Sandbox: Loading code with '${code.length}' characters into iframe with libraries: `,
+      JSON.stringify(libraryImports),
+    )
+  }, [code, libraryImports])
 
   return (
     <div

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import * as monaco from 'monaco-editor'
 import { Messages } from './components/Messages'
 import { EditorView } from './components/Editor'
@@ -45,7 +45,9 @@ export function App() {
   const [activeId, setActiveIdState] = useState<ID | null>(null)
   const editorRef = useRef<Editor>(null)
   const [loaded, setLoaded] = useState(false)
-  const libraryImports = useRef<LibraryImport[]>([])
+  const [libraryImports, setLibraryImports] = useState<
+    Record<string, LibraryImport>
+  >({})
   const [code, setCode] = useState('')
 
   /** Add new id to history */
@@ -59,39 +61,60 @@ export function App() {
     if (editorRef.current === null) return
     const editor = editorRef.current!
 
-    // sandbox.clearLibraries()
-    for (const { name, version } of settings.values[
-      'general.libraries'
-    ] as Library[]) {
-      // set default value from template
-      if (
-        name in LIBRARY_CONFIGS &&
-        typeof LIBRARY_CONFIGS[name]?.template !== 'undefined'
-      ) {
-        editor.getValue() === '' &&
-          editor.setValue(LIBRARY_CONFIGS[name]?.template)
+    const libraries = settings.values['general.libraries'] as Library[]
+    const updatedImports = libraries.map(({ name, version }) => {
+      if (name in LIBRARY_CONFIGS) {
+        const config = LIBRARY_CONFIGS[name]
+        if (config?.template) {
+          editor.getValue() === '' && editor.setValue(config.template)
+        }
       }
-      Importer.getLibrary(name, version).then((library) => {
-        if (library === null) {
-          log.warn(`Library ${name} not found`)
-          return
+
+      return new Promise<LibraryImport>((resolve, reject) => {
+        if (libraryImports[name] && libraryImports[name].version === version) {
+          return resolve(libraryImports[name])
         }
 
-        libraryImports.current.push(library)
-        library
-          .typings()
-          .then((typings) => {
-            if (typings) {
-              editor.addTypings(
-                typings,
-                `ts:${library.name}.d.ts`,
-                library.name,
-              )
+        Importer.getLibrary(name, version)
+          .then((library) => {
+            if (library === null) {
+              reject(`Library ${name} not found`)
+              return
             }
+
+            library
+              .typings()
+              .then((typings) => {
+                if (typings) {
+                  editor.addTypings(
+                    typings,
+                    `ts:${library.name}.d.ts`,
+                    library.name,
+                  )
+                }
+              })
+              .catch(log.error)
+
+            resolve(library)
           })
-          .catch(log.error)
+          .catch(reject)
       })
-    }
+    })
+
+    Promise.allSettled(updatedImports)
+      .then((results) => {
+        const errors = results.filter((r) => r.status === 'rejected')
+        if (errors.length > 0) errors.forEach((e) => log.error(e.reason))
+
+        setLibraryImports(
+          Object.fromEntries(
+            results
+              .filter((r) => r.status === 'fulfilled')
+              .map((r) => [r.value.name, r.value]),
+          ),
+        )
+      })
+      .catch(log.error)
   }
 
   /** initial load */
@@ -178,7 +201,7 @@ export function App() {
       }
     }
 
-    code = parseCode(code, libraryImports.current)
+    code = parseCode(code, libraryImports)
 
     setCode(code)
 
@@ -205,6 +228,7 @@ export function App() {
     setupKeybinds(editorRef.current!)
   }, [settings.values])
 
+  const imports = useMemo(() => Object.values(libraryImports), [libraryImports])
   return (
     <>
       <Messages />
@@ -216,15 +240,13 @@ export function App() {
             load()
           }}
         />
-        {libraryImports.current !== null && (
-          <Sandbox
-            code={code}
-            libraries={libraryImports.current}
-            onAnalysis={(result, sendMessage) => {
-              updateRenderSettings(settings, result, sendMessage)
-            }}
-          />
-        )}
+        <Sandbox
+          code={code}
+          libraryImports={imports}
+          onAnalysis={(result, sendMessage) => {
+            updateRenderSettings(settings, result, sendMessage)
+          }}
+        />
       </VerticalSplitResizer>
       <Settings />
     </>
@@ -301,14 +323,17 @@ async function updateRenderSettings(
 }
 
 /** Parse code to make it compatible for the editor */
-function parseCode(code: string, libraries: LibraryImport[]) {
+function parseCode(code: string, libraries: Record<string, LibraryImport>) {
   code = resolveImports(code, libraries)
-  if (libraries.find((l) => l.name === 'p5')) code = makeP5FunctionsGlobal(code)
+  if (libraries['p5']) code = makeP5FunctionsGlobal(code)
 
   return ts.transpile(code, typescriptCompilerOptions)
 }
 
-function resolveImports(code: string, libraries: LibraryImport[]) {
+function resolveImports(
+  code: string,
+  libraries: Record<string, LibraryImport>,
+) {
   let match
   while ((match = TYPESCRIPT_IMPORT_REGEX.exec(code)) !== null) {
     const imports = match.groups!['imports']
@@ -316,8 +341,7 @@ function resolveImports(code: string, libraries: LibraryImport[]) {
     if (typeof module === 'undefined') continue
 
     // Replace the module path while leaving the imports intact
-    const newModulePath = libraries.find((l) => l.name === module)?.importPath
-      .path
+    const newModulePath = libraries[module]?.importPath.path
     if (typeof newModulePath === 'undefined') {
       log.error(`Library ${module} not found`)
       continue

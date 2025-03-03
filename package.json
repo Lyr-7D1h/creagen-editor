@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "description": "",
   "scripts": {
-    "start": "vite -m production",
-    "dev": "vite -m dev",
+    "start": "vite -m dev",
+    "prod": "vite -m production",
     "build": "vite build",
     "format": "prettier -w src/",
     "lint": "eslint src/**/*"
