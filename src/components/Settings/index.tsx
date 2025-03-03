@@ -66,7 +66,7 @@ export function Settings() {
             expandIcon={<ExpandMore />}
           >
             <Typography component={'span'} fontSize={12}>
-              {settings.config[folderKey].title}
+              {(settings.config as any)[folderKey].title}
             </Typography>
           </AccordionSummary>
           <AccordionDetails sx={{ p: 1 }}>
