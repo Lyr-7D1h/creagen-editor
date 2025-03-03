@@ -172,16 +172,19 @@ function LibrarySetting() {
     Promise.all(supportedLibraries.map((l) => Importer.versions(l.name)))
       .then((vers) => {
         const versions: Record<string, string[]> = {}
+        const latestVersions: Record<string, string> = {}
         for (let i = 0; i < vers.length; i++) {
           if (typeof supportedLibraries[i] === 'undefined')
             throw Error('library not found')
           const name = supportedLibraries[i]!.name
           versions[name] = vers[i]!
-          selectedVersion[name] =
-            libraries.find((l) => l.name === name)?.version ?? vers[i]![0]!
+          latestVersions[name] = vers[i]![0]!
         }
         setVersions(versions)
-        setSelectedVersion(selectedVersion)
+        setSelectedVersion((selectedVersions) => ({
+          ...latestVersions,
+          ...selectedVersions,
+        }))
       })
       .catch(log.error)
   }, [])
