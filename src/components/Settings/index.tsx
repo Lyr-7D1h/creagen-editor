@@ -229,7 +229,7 @@ function LibrarySetting() {
             }
 
             settings.set('general.libraries', [
-              ...libraries,
+              ...libraries.filter((l) => l.name !== libraryName),
               { name: libraryName, version: selectedVersion[libraryName]! },
             ])
           }}
