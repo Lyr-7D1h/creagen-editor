@@ -1,0 +1,30 @@
+#messages {
+  z-index: 1000;
+  position: absolute;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  width: 100svw;
+  justify-content: center;
+}
+.message {
+  font-size: 1.2em;
+  border: solid;
+  border-width: 1px;
+  padding: 5px;
+  margin: auto;
+  margin-bottom: 10px;
+  margin-top: 10px;
+}
+.message-error {
+  background-color: rgba(255, 0, 0, 0.5);
+  border-color: darkred;
+}
+.message-warn {
+  background-color: rgba(255, 255, 0, 0.5);
+  border-color: darkorange;
+}
+.message-info {
+  background-color: rgba(0, 0, 255, 0.5);
+  border-color: darkblue;
+}

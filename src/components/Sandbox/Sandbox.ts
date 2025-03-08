@@ -1,8 +1,8 @@
 import sandboxCode from '../../sandbox'
 import { LibraryImport } from '../../importer'
-import log from '../../log'
 import { Library } from '../../SettingsProvider'
 import { CREAGEN_EDITOR_VERSION } from '../../env'
+import { logger } from '../../logger'
 
 export type SandboxEvent =
   | {
@@ -77,7 +77,7 @@ export class Sandbox {
             throw sandboxEvent.error
           case 'log':
             if (sandboxEvent.level === 'error') {
-              log.error(...sandboxEvent.data)
+              logger.error(...sandboxEvent.data)
               return
             }
             console[sandboxEvent.level](...sandboxEvent.data)
@@ -85,7 +85,9 @@ export class Sandbox {
           case 'loaded':
             this.sendMessage({
               type: 'init',
-              constants: { creagenEditorVersion: CREAGEN_EDITOR_VERSION },
+              constants: {
+                creagenEditorVersion: CREAGEN_EDITOR_VERSION.toString(),
+              },
             })
             break
         }

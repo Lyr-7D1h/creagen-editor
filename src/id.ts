@@ -1,3 +1,4 @@
+import { SemVer } from 'semver'
 import { CREAGEN_EDITOR_VERSION } from './env'
 import { Library } from './SettingsProvider'
 
@@ -9,7 +10,7 @@ import { Library } from './SettingsProvider'
 export interface ID {
   /** Hash of the code. Used for comparing changes between code and storing versions locally */
   hash: string
-  editorVersion: string
+  editorVersion: SemVer
   /** Current time stamp in case of hash collisions */
   date: Date
   /** libraries used for generating code */
@@ -54,7 +55,7 @@ export function IDToString(id: ID): string {
   return (
     id.hash +
     tohex(
-      `${id.editorVersion}:${id.date.valueOf()}:[${id.libraries.map((l) => `"${l.name}@${l.version}"`).join(',')}]`,
+      `${id.editorVersion}:${id.date.valueOf()}:[${id.libraries.map((l) => `"${l.name}@${l.version.toString()}"`).join(',')}]`,
     )
   )
 }
@@ -77,7 +78,7 @@ export function IDFromString(id: string): ID | null {
   return {
     hash,
     // TODO: handle error
-    editorVersion: ext[0]!,
+    editorVersion: new SemVer(ext[0]!),
     date: new Date(Number(ext[1]!)),
     libraries: libs,
   }

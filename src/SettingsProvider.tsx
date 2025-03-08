@@ -8,10 +8,11 @@ import { localStorage } from './localStorage'
 import { CREAGEN_EDITOR_VERSION, CREAGEN_DEV_VERSION, MODE } from './env'
 import { generateHumanReadableName, roundToDec } from './util'
 import { LinearProgressWithLabelSetting } from './components/settings/LinearProgressWithLabelSetting'
+import { SemVer } from 'semver'
 
 export interface Library {
   name: string
-  version: string
+  version: SemVer
 }
 
 const defaultAppSettingsConfig = {

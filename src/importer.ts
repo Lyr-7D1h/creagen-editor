@@ -1,6 +1,8 @@
+import { SemVer } from 'semver'
 import { TYPESCRIPT_IMPORT_REGEX } from './constants'
-import { CREAGEN_DEV_VERSION, MODE } from './env'
+import { CREAGEN_DEV_VERSION } from './env'
 import { LIBRARY_CONFIGS } from './libraryConfigs'
+import { Library } from './SettingsProvider'
 
 export interface ImportPath {
   /** if `module` it is an es6 module otherwise main */
@@ -9,10 +11,7 @@ export interface ImportPath {
   path: string
 }
 
-export interface LibraryImport {
-  name: string
-  /** Specific version used ('{major}.{minor}.{patch}'), can't be latest or something else */
-  version: string
+export interface LibraryImport extends Library {
   typings: () => Promise<string | null>
   importPath: ImportPath
 }
@@ -25,10 +24,10 @@ export class Importer {
   /** Get a library, latest if version is not given */
   static async getLibrary(
     packageName: string,
-    version?: string,
+    version?: SemVer,
   ): Promise<LibraryImport | null> {
     // get local version of creagen
-    if (packageName === 'creagen' && MODE === 'dev') {
+    if (packageName === 'creagen' && CREAGEN_DEV_VERSION) {
       return {
         name: packageName,
         version: CREAGEN_DEV_VERSION,
@@ -78,7 +77,7 @@ export class Importer {
     }
     return {
       name: packageName,
-      version,
+      version: new SemVer(version),
       importPath,
       typings,
     }
