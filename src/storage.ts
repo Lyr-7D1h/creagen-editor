@@ -1,6 +1,5 @@
-import { info, warn } from './components/Messages'
 import { type ID } from './id'
-import log from './log'
+import { logger } from './logger'
 
 export abstract class Storage {
   abstract set(id: ID, item: Generation): void
@@ -38,14 +37,14 @@ export class IndexDB extends Storage {
             if (!persisted) {
               navigator.storage.persist().then((persistent) => {
                 if (persistent) {
-                  info('Generations will be persisted in local storage')
+                  logger.info('Generations will be persisted in local storage')
                 } else {
-                  warn('Generations might be cleared from local storage')
+                  logger.warn('Generations might be cleared from local storage')
                 }
               })
             }
           })
-          .catch(log.error)
+          .catch(logger.error)
       }
 
       const req = indexedDB.open('creagen', 1)

@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import * as monaco from 'monaco-editor'
-import { Messages } from './components/Messages'
+import { Logs } from './components/Messages/Messages'
 import { EditorView } from './components/Editor'
 import { Sandbox } from './components/Sandbox/Sandbox'
 import { useStorage } from './StorageProvider'
@@ -9,15 +9,15 @@ import { Library, SettingsContextType, useSettings } from './SettingsProvider'
 import { VerticalSplitResizer } from './components/VerticalSplitResizer'
 import { createID, ID, IDFromString, IDToString } from './id'
 import { Importer, LibraryImport } from './importer'
-import log from './log'
 import ts from 'typescript'
 import { Storage } from './storage'
 import { Editor, typescriptCompilerOptions } from './components/Editor/editor'
 import { AnalyzeContainerResult } from './components/Sandbox/Sandbox'
-import { CREAGEN_EDITOR_VERSION, CREAGEN_DEV_VERSION } from './env'
+import { CREAGEN_EDITOR_VERSION } from './env'
 import { TYPESCRIPT_IMPORT_REGEX } from './constants'
 import { LIBRARY_CONFIGS } from './libraryConfigs'
 import { SandboxView } from './components/Sandbox/SandboxView'
+import { logger } from './logger'
 
 /** Get code id from path and load code from indexdb */
 async function loadCodeFromPath(storage: Storage) {
@@ -28,12 +28,12 @@ async function loadCodeFromPath(storage: Storage) {
   const id = IDFromString(path)
 
   if (id === null) {
-    log.error('invalid id given')
+    logger.error('invalid id given')
     return null
   }
   const value = await storage.get(id)
   if (value === null) {
-    log.warn(`${IDToString(id)} not found in storage`)
+    logger.warn(`${IDToString(id)} not found in storage`)
     return null
   }
 
@@ -63,6 +63,7 @@ export function App() {
     const editor = editorRef.current!
 
     const libraries = settings.values['general.libraries'] as Library[]
+    editor.clearTypings()
     const updatedImports = libraries.map(({ name, version }) => {
       if (name in LIBRARY_CONFIGS) {
         const config = LIBRARY_CONFIGS[name]
@@ -94,7 +95,7 @@ export function App() {
                   )
                 }
               })
-              .catch(log.error)
+              .catch(logger.error)
 
             resolve(library)
           })
@@ -105,7 +106,7 @@ export function App() {
     Promise.allSettled(updatedImports)
       .then((results) => {
         const errors = results.filter((r) => r.status === 'rejected')
-        if (errors.length > 0) errors.forEach((e) => log.error(e.reason))
+        if (errors.length > 0) errors.forEach((e) => logger.error(e.reason))
 
         setLibraryImports(
           Object.fromEntries(
@@ -115,7 +116,7 @@ export function App() {
           ),
         )
       })
-      .catch(log.error)
+      .catch(logger.error)
   }
 
   /** initial load */
@@ -134,13 +135,13 @@ export function App() {
         if (res !== null) {
           const { id, code } = res
           if (id.editorVersion !== CREAGEN_EDITOR_VERSION)
-            log.warn("Editor version doesn't match")
+            logger.warn("Editor version doesn't match")
           settings.set('general.libraries', id.libraries)
           setActiveIdState(id)
           editor.setValue(code)
         }
       })
-      .catch(log.error)
+      .catch(logger.error)
 
     loadLibraries()
   }
@@ -155,7 +156,7 @@ export function App() {
           max: storage.quota ?? 1,
         }),
       )
-      .catch(log.error)
+      .catch(logger.error)
   }, [])
 
   useEffect(() => {
@@ -172,7 +173,7 @@ export function App() {
   }, [settings.values['general.libraries']])
 
   addEventListener('popstate', () => {
-    loadCodeFromPath(storage).catch(log.error)
+    loadCodeFromPath(storage).catch(logger.error)
   })
 
   async function render(
@@ -182,8 +183,8 @@ export function App() {
     if (editorRef.current === null) return
     const editor = editorRef.current
 
-    log.clear()
-    const info = log.info('rendering code')
+    logger.clear()
+    const info = logger.info('rendering code')
     if (settings.values['editor.format_on_render']) {
       await editor.format()
     }
@@ -212,10 +213,9 @@ export function App() {
         (library: Library) => library.name === lib.name,
       ),
     )
-    console.log(settings.values['general.libraries'], libraryImports)
     sandboxRef.current?.render(code, imports)
 
-    info.remove()
+    logger.remove(info)
   }
 
   function setupKeybinds(editor: Editor) {
@@ -240,7 +240,7 @@ export function App() {
 
   return (
     <>
-      <Messages />
+      <Logs />
       <VerticalSplitResizer>
         <EditorView
           height={'100vh'}
@@ -324,7 +324,7 @@ async function updateRenderSettings(
           settings.values['general.libraries'],
         )
         if (svg === null) {
-          log.error('No svg found')
+          logger.error('No svg found')
           return
         }
       },
@@ -353,7 +353,7 @@ function resolveImports(
     // Replace the module path while leaving the imports intact
     const newModulePath = libraries[module]?.importPath.path
     if (typeof newModulePath === 'undefined') {
-      log.error(`Library ${module} not found`)
+      logger.error(`Library ${module} not found`)
       continue
     }
     const updatedImport = imports
@@ -411,53 +411,54 @@ function makeP5FunctionsGlobal(code: string) {
   return code + '\n\n' + globalCode
 }
 
-function exportSvg(svg: SVGElement, opts: { optimize: boolean; name: string }) {
-  svg = svg.cloneNode(true) as SVGElement
+// function exportSvg(svg: SVGElement, opts: { optimize: boolean; name: string }) {
+//   svg = svg.cloneNode(true) as SVGElement
 
-  if (opts.optimize) {
-    optimizeSvg(svg)
-  }
+//   if (opts.optimize) {
+//     optimizeSvg(svg)
+//   }
 
-  // TODO: add params used, code hash, date generated
-  const metadata = document.createElementNS(
-    'http://www.w3.org/2000/svg',
-    'metadata',
-  )
-  const creagen = document.createElement('creagen')
-  creagen.setAttribute('version', CREAGEN_DEV_VERSION)
-  creagen.setAttribute('editor-version', CREAGEN_EDITOR_VERSION)
-  metadata.appendChild(creagen)
-  svg.appendChild(metadata)
+//   // TODO: add params used, code hash, date generated
+//   const metadata = document.createElementNS(
+//     'http://www.w3.org/2000/svg',
+//     'metadata',
+//   )
+//   const creagen = document.createElement('creagen')
+//   if (CREAGEN_DEV_VERSION)
+//     creagen.setAttribute('version', CREAGEN_DEV_VERSION?.toString())
+//   creagen.setAttribute('editor-version', CREAGEN_EDITOR_VERSION.toString())
+//   metadata.appendChild(creagen)
+//   svg.appendChild(metadata)
 
-  const htmlStr = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>${svg.outerHTML}`
-  const blob = new Blob([htmlStr], { type: 'image/svg+xml' })
+//   const htmlStr = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>${svg.outerHTML}`
+//   const blob = new Blob([htmlStr], { type: 'image/svg+xml' })
 
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.setAttribute('download', `${opts.name}.svg`)
-  a.setAttribute('href', url)
-  a.style.display = 'none'
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  URL.revokeObjectURL(url)
-}
+//   const url = URL.createObjectURL(blob)
+//   const a = document.createElement('a')
+//   a.setAttribute('download', `${opts.name}.svg`)
+//   a.setAttribute('href', url)
+//   a.style.display = 'none'
+//   document.body.appendChild(a)
+//   a.click()
+//   a.remove()
+//   URL.revokeObjectURL(url)
+// }
 
-function optimizeSvg(html: Element) {
-  for (const c of Array.from(html.children)) {
-    switch (c.tagName.toLocaleLowerCase()) {
-      case 'path':
-        // TODO: fix for http://localhost:5173/af438744df3a711f006203aaa39cd24e157f0f16f59ddfd6c93ea8ba00624032302e302e313a313733363532363839323337353a5b2267656e61727440302e302e35225d
-        // if (optimizePath(c as SVGPathElement, opts)) {
-        //   c.remove()
-        // }
-        break
-      case 'circle':
-        break
-      case 'rect':
-        break
-    }
+// function optimizeSvg(html: Element) {
+//   for (const c of Array.from(html.children)) {
+//     switch (c.tagName.toLocaleLowerCase()) {
+//       case 'path':
+//         // TODO: fix for http://localhost:5173/af438744df3a711f006203aaa39cd24e157f0f16f59ddfd6c93ea8ba00624032302e302e313a313733363532363839323337353a5b2267656e61727440302e302e35225d
+//         // if (optimizePath(c as SVGPathElement, opts)) {
+//         //   c.remove()
+//         // }
+//         break
+//       case 'circle':
+//         break
+//       case 'rect':
+//         break
+//     }
 
-    optimizeSvg(c)
-  }
-}
+//     optimizeSvg(c)
+//   }
+// }

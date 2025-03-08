@@ -127,7 +127,8 @@ export class Editor {
   }
 
   clearTypings() {
-    monaco.languages.typescript.javascriptDefaults.setExtraLibs([])
+    console.log('Editor: clearing typings')
+    monaco.languages.typescript.typescriptDefaults.setExtraLibs([])
   }
 
   /** If `packageName` given will also add autoimports */
@@ -143,7 +144,10 @@ export class Editor {
       })
     }
     monaco.languages.typescript.typescriptDefaults.addExtraLib(typings, uri)
-    // force update current model
+  }
+
+  /** force update current model */
+  private forceUpdateModel() {
     const currentModel = this.editor.getModel()!
     monaco.editor.setModelLanguage(currentModel, 'typescript')
   }

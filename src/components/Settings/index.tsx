@@ -16,7 +16,8 @@ import {
 } from '@mui/material'
 import { ExpandMore } from '@mui/icons-material'
 import { Importer } from '../../importer'
-import log from '../../log'
+import { CREAGEN_DEV_VERSION } from '../../env'
+import { logger } from '../../logger'
 
 const expendedSettingKey = 'expandedSetting'
 
@@ -49,7 +50,7 @@ export function Settings() {
   }
 
   return (
-    <div id="settings">
+    <div style={{ zIndex: 1002, position: 'absolute', right: 10, top: 10 }}>
       {Object.entries(folders).map(([folderKey, entries]) => (
         <Accordion
           disableGutters
@@ -177,16 +178,24 @@ function LibrarySetting() {
           if (typeof supportedLibraries[i] === 'undefined')
             throw Error('library not found')
           const name = supportedLibraries[i]!.name
+
           versions[name] = vers[i]!
           latestVersions[name] = vers[i]![0]!
+
+          if (name === 'creagen' && CREAGEN_DEV_VERSION) {
+            const devVersion = CREAGEN_DEV_VERSION.toString()
+            versions[name].push(devVersion)
+            latestVersions[name] = devVersion
+          }
         }
+
         setVersions(versions)
         setSelectedVersion((selectedVersions) => ({
           ...latestVersions,
           ...selectedVersions,
         }))
       })
-      .catch(log.error)
+      .catch(logger.error)
   }, [])
 
   // update selected version when libraries change
@@ -194,7 +203,7 @@ function LibrarySetting() {
     setSelectedVersion((versions) => {
       const newVersions = { ...versions }
       for (const lib of libraries) {
-        newVersions[lib.name] = lib.version
+        newVersions[lib.name] = lib.version.toString()
       }
       return newVersions
     })
@@ -262,9 +271,9 @@ function LibrarySetting() {
                 })
               }}
             >
-              {versions[lib.name]!.map((v) => (
-                <MenuItem key={v} value={v}>
-                  {v}
+              {versions[lib.name]!.map((v, i) => (
+                <MenuItem key={i} value={v.toString()}>
+                  {v.toString()}
                 </MenuItem>
               ))}
             </Select>
