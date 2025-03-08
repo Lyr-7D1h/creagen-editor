@@ -44,15 +44,25 @@ try {
   postMessage({ type: 'error', error: error as Error })
 }
 
-function analyzeContainer(container: HTMLElement): AnalyzeContainerResult {
-  const result: AnalyzeContainerResult = { svgs: [] }
+function analyzeContainer(
+  container: HTMLElement,
+  result: AnalyzeContainerResult = { svgs: [] },
+): AnalyzeContainerResult {
   for (const c of Array.from(container.children)) {
     switch (c.tagName.toLocaleLowerCase()) {
       case 'svg': {
+        c.setAttribute('data-creagen-svg', result.svgs.length.toString())
         // add svg information
         result.svgs.push({
           ...analyzeSvg(c),
         })
+        break
+      }
+      default: {
+        if (c.children.length > 0) {
+          analyzeContainer(c as HTMLElement, result)
+        }
+        break
       }
     }
   }
@@ -116,17 +126,7 @@ window.addEventListener('message', (event) => {
         window.creagen.constants = sandboxEvent.constants
         break
       case 'svgExportRequest':
-        const svg = document.querySelector('svg')
-        if (!svg) {
-          postMessage({ type: 'svgExportResponse', data: null })
-          return
-        }
-        exportSvg(svg, {
-          libraries: sandboxEvent.libraries,
-          name: 'asdf',
-          optimize: sandboxEvent.optimize,
-        })
-        postMessage({ type: 'svgExportResponse', data: null })
+        svgExportRequest(sandboxEvent)
         break
     }
   }
@@ -136,47 +136,21 @@ function isSandboxEvent(event: any): event is SandboxEvent {
   return event && typeof event.type === 'string'
 }
 
-function exportSvg(
-  svg: SVGElement,
-  opts: { optimize: boolean; name: string; libraries: Library[] },
-) {
-  svg = svg.cloneNode(true) as SVGElement
-
+function svgExportRequest(opts: { optimize: boolean; svgIndex: number }) {
+  let svg = document.querySelector<SVGElement>(
+    `[data-creagen-svg="${opts.svgIndex}"]`,
+  )
+  if (!svg) {
+    postMessage({ type: 'svgExportResponse', data: null })
+    return
+  }
   if (opts.optimize) {
     optimizeSvg(svg)
   }
+  svg = svg.cloneNode(true) as SVGElement
+  svg.removeAttribute('data-creagen-svg')
 
-  // TODO: add params used, code hash, date generated
-  const metadata = document.createElementNS(
-    'http://www.w3.org/2000/svg',
-    'metadata',
-  )
-  const creagen = document.createElement('creagen')
-  creagen.setAttribute(
-    'libraries',
-    opts.libraries.map((l) => `${l.name}@${l.version}`).join(','),
-  )
-  creagen.setAttribute(
-    'editor-version',
-    window.creagen.constants.creagenEditorVersion,
-  )
-  creagen.setAttribute('date-generated', new Date().toISOString())
-
-  metadata.appendChild(creagen)
-  svg.appendChild(metadata)
-
-  const htmlStr = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>${svg.outerHTML}`
-  const blob = new Blob([htmlStr], { type: 'image/svg+xml' })
-
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.setAttribute('download', `${opts.name}.svg`)
-  a.setAttribute('href', url)
-  a.style.display = 'none'
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  URL.revokeObjectURL(url)
+  postMessage({ type: 'svgExportResponse', data: svg.outerHTML })
 }
 
 function optimizeSvg(html: Element) {

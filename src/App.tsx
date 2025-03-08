@@ -13,7 +13,7 @@ import ts from 'typescript'
 import { Storage } from './storage'
 import { Editor, typescriptCompilerOptions } from './components/Editor/editor'
 import { AnalyzeContainerResult } from './components/Sandbox/Sandbox'
-import { CREAGEN_EDITOR_VERSION } from './env'
+import { CREAGEN_DEV_VERSION, CREAGEN_EDITOR_VERSION } from './env'
 import { TYPESCRIPT_IMPORT_REGEX } from './constants'
 import { LIBRARY_CONFIGS } from './libraryConfigs'
 import { SandboxView } from './components/Sandbox/SandboxView'
@@ -134,7 +134,7 @@ export function App() {
       .then((res) => {
         if (res !== null) {
           const { id, code } = res
-          if (id.editorVersion !== CREAGEN_EDITOR_VERSION)
+          if (id.editorVersion.compare(CREAGEN_EDITOR_VERSION))
             logger.warn("Editor version doesn't match")
           settings.set('general.libraries', id.libraries)
           setActiveIdState(id)
@@ -319,14 +319,20 @@ async function updateRenderSettings(
       type: 'button',
       title: 'Download',
       onClick: async () => {
-        const svg = await link.svgExport(
-          0,
-          settings.values['general.libraries'],
-        )
-        if (svg === null) {
+        const svgString = await link.svgExport(0)
+        if (svgString === null) {
           logger.error('No svg found')
           return
         }
+        const parser = new DOMParser()
+        const doc = parser.parseFromString(svgString, 'image/svg+xml')
+        console.log(doc)
+        exportSvg(
+          doc.documentElement as unknown as SVGElement,
+          settings.values['general.name'],
+          settings.values['general.libraries'],
+        )
+        console.log(svgString)
       },
     })
   }
@@ -411,54 +417,33 @@ function makeP5FunctionsGlobal(code: string) {
   return code + '\n\n' + globalCode
 }
 
-// function exportSvg(svg: SVGElement, opts: { optimize: boolean; name: string }) {
-//   svg = svg.cloneNode(true) as SVGElement
+function exportSvg(svg: SVGElement, name: string, libraries: Library[]) {
+  svg = svg.cloneNode(true) as SVGElement
 
-//   if (opts.optimize) {
-//     optimizeSvg(svg)
-//   }
+  // TODO: add params used, code hash, date generated
+  const metadata = document.createElementNS(
+    'http://www.w3.org/2000/svg',
+    'metadata',
+  )
+  const creagen = document.createElement('creagen')
+  creagen.setAttribute(
+    'libraries',
+    libraries.map((l) => `${l.name}@${l.version.toString()}`).join(','),
+  )
+  creagen.setAttribute('editor-version', CREAGEN_EDITOR_VERSION.toString())
+  metadata.appendChild(creagen)
+  svg.appendChild(metadata)
 
-//   // TODO: add params used, code hash, date generated
-//   const metadata = document.createElementNS(
-//     'http://www.w3.org/2000/svg',
-//     'metadata',
-//   )
-//   const creagen = document.createElement('creagen')
-//   if (CREAGEN_DEV_VERSION)
-//     creagen.setAttribute('version', CREAGEN_DEV_VERSION?.toString())
-//   creagen.setAttribute('editor-version', CREAGEN_EDITOR_VERSION.toString())
-//   metadata.appendChild(creagen)
-//   svg.appendChild(metadata)
+  const htmlStr = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>${svg.outerHTML}`
+  const blob = new Blob([htmlStr], { type: 'image/svg+xml' })
 
-//   const htmlStr = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>${svg.outerHTML}`
-//   const blob = new Blob([htmlStr], { type: 'image/svg+xml' })
-
-//   const url = URL.createObjectURL(blob)
-//   const a = document.createElement('a')
-//   a.setAttribute('download', `${opts.name}.svg`)
-//   a.setAttribute('href', url)
-//   a.style.display = 'none'
-//   document.body.appendChild(a)
-//   a.click()
-//   a.remove()
-//   URL.revokeObjectURL(url)
-// }
-
-// function optimizeSvg(html: Element) {
-//   for (const c of Array.from(html.children)) {
-//     switch (c.tagName.toLocaleLowerCase()) {
-//       case 'path':
-//         // TODO: fix for http://localhost:5173/af438744df3a711f006203aaa39cd24e157f0f16f59ddfd6c93ea8ba00624032302e302e313a313733363532363839323337353a5b2267656e61727440302e302e35225d
-//         // if (optimizePath(c as SVGPathElement, opts)) {
-//         //   c.remove()
-//         // }
-//         break
-//       case 'circle':
-//         break
-//       case 'rect':
-//         break
-//     }
-
-//     optimizeSvg(c)
-//   }
-// }
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.setAttribute('download', `${name}.svg`)
+  a.setAttribute('href', url)
+  a.style.display = 'none'
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}

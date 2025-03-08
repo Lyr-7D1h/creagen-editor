@@ -25,7 +25,6 @@ export type SandboxEvent =
       type: 'svgExportRequest'
       svgIndex: number
       optimize: boolean
-      libraries: Library[]
     }
   | {
       type: 'svgExportResponse'
@@ -154,16 +153,12 @@ export class Sandbox {
     this.iframe.contentWindow!.postMessage(message, '*')
   }
 
-  async svgExport(
-    svgIndex: number,
-    libraries: Library[],
-  ): Promise<string | null> {
+  async svgExport(svgIndex: number): Promise<string | null> {
     return new Promise((resolve, reject) => {
       this.sendMessage({
         type: 'svgExportRequest',
         svgIndex,
         optimize: true,
-        libraries,
       })
 
       const listener = (event: MessageEvent) => {
