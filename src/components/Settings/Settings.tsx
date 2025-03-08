@@ -184,7 +184,7 @@ function LibrarySetting() {
 
           if (name === 'creagen' && CREAGEN_DEV_VERSION) {
             const devVersion = CREAGEN_DEV_VERSION.toString()
-            versions[name].push(devVersion)
+            versions[name].unshift(devVersion)
             latestVersions[name] = devVersion
           }
         }
