@@ -64,7 +64,6 @@ export function EditorView({ value, width, height, onLoad }: EditorProps) {
         options={{
           minimap: { enabled: false },
           tabSize: 2,
-          // TODO: formatting
           autoIndent: 'full',
           formatOnPaste: true,
           formatOnType: true,

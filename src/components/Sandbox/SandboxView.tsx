@@ -23,7 +23,15 @@ export function SandboxView({
   return (
     <div
       id="sandbox"
-      style={{ width, border: 'none', position: 'absolute', left, height }}
+      style={{
+        width,
+        border: 'none',
+        position: 'absolute',
+        left,
+        height,
+        // HACK: for some reason the iframe is not 100% height
+        overflow: 'hidden',
+      }}
     >
       <iframe
         ref={iframeRef}

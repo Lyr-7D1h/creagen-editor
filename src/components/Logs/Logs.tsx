@@ -1,5 +1,4 @@
 import { Alert, AlertColor, Stack } from '@mui/material'
-import './messages.css'
 import React, { JSX, useEffect, useState } from 'react'
 import { Message, logger } from '../../logger'
 

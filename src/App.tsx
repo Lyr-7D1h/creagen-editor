@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import * as monaco from 'monaco-editor'
-import { Logs } from './components/Messages/Messages'
+import { Logs } from './components/Logs/Logs'
 import { EditorView } from './components/Editor/Editor'
 import { Sandbox } from './components/Sandbox/Sandbox'
 import { useStorage } from './StorageProvider'
