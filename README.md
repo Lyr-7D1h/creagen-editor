@@ -16,8 +16,8 @@ npm start
 
 # Roadmap
 
-## Editor:
-
+- use importmap to map module names to urls https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap
+- qp5.js
 - Project management
   - List sketches
   - Name sketches
