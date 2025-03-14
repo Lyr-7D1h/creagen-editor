@@ -14,12 +14,14 @@ export const LIBRARY_CONFIGS: Record<string, LibraryConfig> = {
 
 function draw() {
   background(220);
+  line(0, 0, 50, 50)
 }`,
   },
   creagen: {
-    template: `import { Canvas, vec, load } from "creagen";
+    template: `import { Canvas, vec, load, color } from "creagen";
 
-const canvas = Canvas.create(400,400)
+const canvas = Canvas.create(400, 400)
+canvas.background(color(220))
 canvas.line(vec(0, 0), vec(50, 50))
 
 load(canvas)`,
