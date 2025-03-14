@@ -8,6 +8,7 @@ import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
 import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
 import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker'
 import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
+import './editor.css'
 
 import { initVimMode } from 'monaco-vim'
 
@@ -160,7 +161,7 @@ export class Editor {
         {
           range: new monaco.Range(0, 0, 500, 500),
           options: {
-            inlineClassName: 'fullscreen',
+            inlineClassName: 'creagen-fullscreen',
           },
         },
       ])

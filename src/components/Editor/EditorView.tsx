@@ -50,7 +50,7 @@ export function EditorView({ value, width, height, onLoad }: EditorProps) {
   }
 
   return (
-    <>
+    <div style={{ zIndex: 1001 }}>
       <MonacoEditor
         width={width}
         height={height}
@@ -78,6 +78,6 @@ export function EditorView({ value, width, height, onLoad }: EditorProps) {
           style={{ position: 'absolute', bottom: 0, left: 20 }}
         />
       )}
-    </>
+    </div>
   )
 }
