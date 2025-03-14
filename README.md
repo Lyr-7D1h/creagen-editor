@@ -20,7 +20,7 @@ npm start
 - qp5.js
 - Project management
   - List sketches
-  - Name sketches
+  - Name sketches (aliases to a hash, similar to git branches)
   - View history of sketch
 - Import code using ID `import('a123487e...')
 - Crop, compress and convert dropped images to base64 string

@@ -1,6 +1,5 @@
 import sandboxCode from '../../sandbox'
 import { LibraryImport } from '../../importer'
-import { Library } from '../../SettingsProvider'
 import { CREAGEN_EDITOR_VERSION } from '../../env'
 import { logger } from '../../logger'
 
