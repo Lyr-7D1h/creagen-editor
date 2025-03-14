@@ -18,6 +18,7 @@ import { ExpandMore } from '@mui/icons-material'
 import { Importer } from '../../importer'
 import { CREAGEN_DEV_VERSION } from '../../env'
 import { logger } from '../../logger'
+import { SemVer } from 'semver'
 
 const expendedSettingKey = 'expandedSetting'
 
@@ -160,6 +161,10 @@ const supportedLibraries = [
   { name: 'three', disabled: true },
 ]
 
+function isDevBuild(version: SemVer) {
+  return version.prerelease.length > 0
+}
+
 function LibrarySetting() {
   const settings = useSettings()
   const [versions, setVersions] = useState<Record<string, string[]>>({})
@@ -180,7 +185,11 @@ function LibrarySetting() {
           const name = supportedLibraries[i]!.name
 
           versions[name] = vers[i]!
-          latestVersions[name] = vers[i]![0]!
+          const latestIndex = vers[i]!.map((v) => new SemVer(v)).findIndex(
+            (v) => !isDevBuild(v),
+          )
+
+          latestVersions[name] = vers[i]![latestIndex]!
 
           if (name === 'creagen' && CREAGEN_DEV_VERSION) {
             const devVersion = CREAGEN_DEV_VERSION.toString()
