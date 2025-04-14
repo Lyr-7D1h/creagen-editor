@@ -84,7 +84,6 @@ class Logger {
   }
   error(...msg: any[]) {
     console.error(...msg)
-    console.log(this)
     return this.log('error', formatMsg(msg))
   }
   debug(...msg: any[]) {
