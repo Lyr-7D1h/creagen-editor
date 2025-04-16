@@ -118,8 +118,8 @@ function sandboxJs(mode) {
     fs.writeFileSync(
       outputPath,
       `// THIS FILE IS AUTO GENERATED, DO NOT MODIFY
-    // generated from sandbox.ts
-    export default \`${output}\``,
+// generated from sandbox.ts
+export default \`${output}\``,
     )
 
     console.log(`${tmpPath} -> ${outputPath}`)
@@ -149,7 +149,7 @@ export default defineConfig(async ({ command, mode }) => {
     VITE_CREAGEN_DEV_VERSION:
       mode === 'dev'
         ? JSON.parse(fs.readFileSync(`${LIBRARY_PATH}/package.json`)).version
-        : undefined,
+        : null,
   }
 
   return {

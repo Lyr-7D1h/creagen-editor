@@ -6,7 +6,6 @@ import {
   SandboxEvent,
   SvgProps,
 } from './src/components/Sandbox/Sandbox'
-import { Library } from './src/SettingsProvider'
 
 declare global {
   interface Window {
