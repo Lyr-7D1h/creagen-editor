@@ -166,11 +166,11 @@ export default defineConfig(async ({ command, mode }) => {
       rollupOptions: {
         output: {
           manualChunks: (id) => {
+            // Bundle all monaco files together to avoid initialization issues
             if (id.includes('monaco-editor')) {
-              if (id.includes('language')) return 'monaco-languages'
-              if (id.includes('editor')) return 'monaco-editor-core'
-              return 'monaco-base'
+              return 'monaco'
             }
+
             if (id.includes('node_modules')) {
               return 'vendor'
             }

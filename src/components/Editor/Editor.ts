@@ -13,7 +13,6 @@ import './editor.css'
 import { initVimMode } from 'monaco-vim'
 
 // Use monaco without cdn: https://www.npmjs.com/package/@monaco-editor/react#loader-config
-// needed for vite: https://www.npmjs.com/package/@monaco-editor/react#loader-config
 self.MonacoEnvironment = {
   getWorker(_, label) {
     if (label === 'json') {
@@ -31,6 +30,7 @@ self.MonacoEnvironment = {
     return new editorWorker()
   },
 }
+
 loader.config({ monaco })
 loader.init()
 
