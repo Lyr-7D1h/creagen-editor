@@ -155,26 +155,13 @@ export default defineConfig(async ({ command, mode }) => {
 
   return {
     build: {
-      sourcemap: true,
+      // don't include source maps to reduce upload size
+      sourcemap: mode === 'dev',
       chunkSizeWarningLimit: 25 * 1000, // max 25mb for cloudflare pages
       terserOptions: {
         compress: {
           drop_console: true,
           drop_debugger: true,
-        },
-      },
-      rollupOptions: {
-        output: {
-          manualChunks: (id) => {
-            // Bundle all monaco files together to avoid initialization issues
-            if (id.includes('monaco-editor')) {
-              return 'monaco'
-            }
-
-            if (id.includes('node_modules')) {
-              return 'vendor'
-            }
-          },
         },
       },
     },
