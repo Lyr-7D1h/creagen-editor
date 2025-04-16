@@ -110,8 +110,7 @@ async function resolveImports(root: string, typeFile: string) {
     if (typeof match === 'undefined') return
     typings = typings.replace(match, module)
   })
-  // ignore exports but keep their contents
-  typings = filterExportStatements(typings)
+  // typings = filterExportStatements(typings)
   return typings
 }
 
