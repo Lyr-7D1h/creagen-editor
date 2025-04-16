@@ -4,8 +4,8 @@
   "description": "",
   "scripts": {
     "start": "vite -m dev",
-    "prod": "vite -m production",
-    "build": "vite build",
+    "start:prod": "vite -m production",
+    "build": "vite build -m production",
     "format": "prettier -w src/",
     "lint": "eslint src/**/*"
   },
