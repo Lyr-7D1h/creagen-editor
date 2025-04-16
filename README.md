@@ -45,6 +45,7 @@ Math:
 - https://mathjs.org/docs/reference/functions.html#matrix-functions
 - http://sylvester.jcoglan.com/api/vector.html#create
 - https://github.com/scijs/ndarray
+
 **Reading**
 - https://en.wikipedia.org/wiki/Tessellation
 - https://en.wikipedia.org/wiki/Random_walk
