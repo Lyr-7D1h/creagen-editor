@@ -3,6 +3,7 @@ import resolve from '@rollup/plugin-node-resolve'
 import commonjs from '@rollup/plugin-commonjs'
 import typescript from '@rollup/plugin-typescript'
 import terser from '@rollup/plugin-terser'
+import { createHtmlPlugin } from 'vite-plugin-html'
 
 import fg from 'fast-glob'
 import { defineConfig, loadEnv } from 'vite'
@@ -155,15 +156,44 @@ export default defineConfig(async ({ command, mode }) => {
   return {
     build: {
       sourcemap: true,
+      chunkSizeWarningLimit: 25 * 1000, // max 25mb for cloudflare pages
+      terserOptions: {
+        compress: {
+          drop_console: true,
+          drop_debugger: true,
+        },
+      },
+      rollupOptions: {
+        output: {
+          manualChunks: (id) => {
+            if (id.includes('monaco-editor')) {
+              if (id.includes('language')) return 'monaco-languages'
+              if (id.includes('editor')) return 'monaco-editor-core'
+              return 'monaco-base'
+            }
+            if (id.includes('node_modules')) {
+              return 'vendor'
+            }
+          },
+        },
+      },
     },
     plugins: [
       localLibraryOnHttp(mode),
       watchExternal(),
       sandboxJs(mode),
       react(),
+      createHtmlPlugin({
+        minify: mode === 'production',
+        inject: {
+          data: {
+            analyticsScript:
+              mode === 'production'
+                ? '<script defer src="https://analytics.lyrx.dev/script.js" data-website-id="e9b1d776-a9fc-4d52-a9e1-18b80355b1ab"></script>'
+                : '',
+          },
+        },
+      }),
     ],
-    optimizeDeps: {
-      exclude: ['creagen'],
-    },
   }
 })
