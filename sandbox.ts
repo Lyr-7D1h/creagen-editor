@@ -115,9 +115,6 @@ window.onload = () => {
 }
 
 window.addEventListener('message', (event) => {
-  if (event.origin !== window.origin) {
-    throw Error(`Invalid origin ${event.origin} should be ${window.origin}`)
-  }
   const sandboxEvent = event.data
   if (isSandboxEvent(sandboxEvent)) {
     switch (sandboxEvent.type) {
