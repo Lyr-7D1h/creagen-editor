@@ -50,6 +50,7 @@ function analyzeContainer(
   for (const c of Array.from(container.children)) {
     switch (c.tagName.toLocaleLowerCase()) {
       case 'svg': {
+        // set custom attribute to track this svg
         c.setAttribute('data-creagen-svg', result.svgs.length.toString())
         // add svg information
         result.svgs.push({
