@@ -3,7 +3,7 @@ import { SemVer } from 'semver'
 import { TYPESCRIPT_IMPORT_REGEX } from '../constants'
 import { CREAGEN_DEV_VERSION } from '../env'
 import { LIBRARY_CONFIGS } from './libraryConfigs'
-import { Library } from '../settings/SettingsProvider'
+import { Library } from '../settings/Settings'
 import ts from 'typescript'
 
 export interface ImportPath {

@@ -1,294 +1,277 @@
-import React, { useEffect, useState } from 'react'
-import { Library, useSettings, Entry } from './SettingsProvider'
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Checkbox,
-  FormLabel,
-  Typography,
-  TextField,
-  Button,
-  ToggleButtonGroup,
-  ToggleButton,
-  Select,
-  MenuItem,
-} from '@mui/material'
-import { ExpandMore } from '@mui/icons-material'
-import { Importer } from '../creagen-editor/importer'
-import { CREAGEN_DEV_VERSION } from '../env'
-import { logger } from '../logs/logger'
+import React from 'react'
+import { localStorage } from '../storage/localStorage'
+import { CREAGEN_EDITOR_VERSION, CREAGEN_DEV_VERSION, MODE } from '../env'
+import { generateHumanReadableName, roundToDec } from '../util'
 import { SemVer } from 'semver'
+import { LinearProgressWithLabelSetting } from './LinearProgressWithLabelSetting'
 
-const expendedSettingKey = 'expandedSetting'
+export interface Library {
+  name: string
+  version: SemVer
+}
 
-export function Settings() {
-  const settings = useSettings()
-  const [expanded, setExpandedState] = React.useState<string | false>(
-    localStorage.getItem(expendedSettingKey) ?? 'general',
-  )
+const defaultAppSettingsConfig = {
+  general: {
+    type: 'folder',
+    title: 'General',
+  },
+  'general.name': {
+    type: 'param',
+    label: 'Name',
+    value: generateHumanReadableName(),
+  },
+  'general.libraries': {
+    type: 'param',
+    label: 'Libraries',
+    generated: true,
+    value: [] as Library[],
+  },
+  'general.storage': {
+    type: 'param',
+    label: 'Available Storage',
+    render: ({ current, max }: { current: number; max: number }) => (
+      <LinearProgressWithLabelSetting
+        minLabel="0GB"
+        maxLabel={`${roundToDec(max / 1000000000, 3)}GB`}
+        variant="determinate"
+        value={roundToDec(current / max, 3)}
+      />
+    ),
+    value: { value: 0, max: 0 },
+    generated: true,
+    opts: { readonly: true },
+  },
+  editor: {
+    type: 'folder',
+    title: 'Editor',
+  },
+  'editor.format_on_render': {
+    type: 'param',
+    label: 'Format on render',
+    value: false,
+  },
+  'editor.fullscreen': {
+    type: 'param',
+    label: 'Fullscreen',
+    value: false,
+  },
+  'editor.vim': {
+    type: 'param',
+    label: 'Vim',
+    value: false,
+  },
+  'editor.relative_lines': {
+    type: 'param',
+    label: 'Relative Lines',
+    value: false,
+  },
+  debug: {
+    type: 'folder',
+    title: 'Debug',
+  },
+  'debug.mode': {
+    type: 'param',
+    label: 'Mode',
+    value: `${MODE}`,
+    opts: {
+      readonly: true,
+    },
+  },
+  'debug.package': {
+    type: 'param',
+    label: 'Package',
+    value: `creagen@${CREAGEN_DEV_VERSION}`,
+    opts: {
+      readonly: true,
+    },
+  },
+  'debug.editor': {
+    type: 'param',
+    label: 'Editor Version',
+    value: `${CREAGEN_EDITOR_VERSION}`,
+    opts: {
+      readonly: true,
+    },
+  },
+}
 
-  function setExpanded(expanded: string | false) {
-    localStorage.setItem(expendedSettingKey, expanded as string)
-    setExpandedState(expanded)
+export type DefaultAppSettingsConfig = SettingsConfig<
+  typeof defaultAppSettingsConfig
+>
+
+type Generic<T> = {
+  [K in keyof T]: K extends 'type' ? string : T[K]
+}
+type GenericSettingsConfig = Record<
+  string,
+  Generic<Param> | Generic<Folder> | Generic<Button>
+>
+export type SettingsConfig<T extends GenericSettingsConfig> = {
+  [K in keyof T]: T[K] extends { value: any }
+    ? Param
+    : T[K] extends { label: string }
+      ? Button
+      : Folder
+}
+type Params<T extends SettingsConfig<T>> = {
+  [K in keyof T]: T[K] extends Param ? K : never
+}[keyof T]
+type Folders<T extends SettingsConfig<T>> = {
+  [K in keyof T]: T[K] extends Folder ? K : never
+}[keyof T]
+type Buttons<T extends SettingsConfig<T>> = {
+  [K in keyof T]: T[K] extends Button ? K : never
+}[keyof T]
+
+type SettingsConfigKeys = keyof DefaultAppSettingsConfig
+
+export interface Folder {
+  type: 'folder'
+  title: string
+}
+
+export interface Button {
+  type: 'button'
+  title: string
+  onClick: () => void
+}
+
+export interface Param<T = any> {
+  type: 'param'
+  label: string
+  /** If the value should be stored or that it is generated */
+  generated?: boolean
+  render?: (value: T, set?: (value: T) => void) => React.ReactNode
+  value: T
+  opts?: {
+    readonly?: boolean
   }
+}
 
-  const folders: Record<string, any[]> = Object.entries(settings.config)
-    .filter(([_, entry]) => (entry as Entry).type === 'folder')
-    .reduce((a, [key]) => ({ ...a, [key]: [] }), {})
+export type Entry = (Folder | Button | Param) & { generated?: boolean }
 
-  for (const [key, entry] of Object.entries(settings.config)) {
-    switch ((entry as Entry).type) {
-      case 'folder':
-        continue
-      case 'button':
-      case 'param': {
-        const parts = key.split('.')
-        const folder = parts.splice(0, parts.length - 1).join('.')
-        folders[folder]!.push([key, entry])
+export function parentKey(key: string) {
+  return key.split('.').slice(0, -1).join('.')
+}
+
+export interface SettingsContextType {
+  /** Do not change any of these values use `set()` and `add()` */
+  values: Record<Params<DefaultAppSettingsConfig>, any>
+  /** Do not change any of these values use `set()` and `add()` */
+  config: DefaultAppSettingsConfig
+  set: (key: Params<DefaultAppSettingsConfig>, value: any) => void
+  add: (key: string, entry: Entry) => void
+  /** Remove all values under this key */
+  remove: (key: string) => void
+}
+
+export type Listener = (value: any) => void
+
+// Core Settings class to handle the settings logic
+export class Settings {
+  private settings: DefaultAppSettingsConfig
+  private listeners: Map<string | null, Listener[]> = new Map()
+
+  constructor() {
+    // Initialize with default settings
+    const defaultSettingsConfig = { ...defaultAppSettingsConfig } as Record<
+      string,
+      any
+    >
+
+    // Load stored settings from localStorage
+    const storageSettings = localStorage.get('settings')
+    if (storageSettings !== null) {
+      for (const [key, value] of Object.entries(storageSettings)) {
+        defaultSettingsConfig[key] = {
+          ...(defaultSettingsConfig[key] ?? {}),
+          ...(value as any),
+        }
       }
     }
+
+    this.settings = defaultSettingsConfig as DefaultAppSettingsConfig
   }
 
-  return (
-    <div style={{ zIndex: 1002, position: 'absolute', right: 10, top: 10 }}>
-      {Object.entries(folders).map(([folderKey, entries]) => (
-        <Accordion
-          disableGutters
-          sx={{ width: expanded === false ? 100 : 300, margin: 0 }}
-          key={folderKey}
-          expanded={expanded === folderKey}
-          onChange={(_, expanded) => {
-            setExpanded(expanded ? folderKey : false)
-          }}
-          slotProps={{ transition: { timeout: 0 } }}
-        >
-          <AccordionSummary
-            sx={{ minHeight: 30, maxHeight: 30 }}
-            expandIcon={<ExpandMore />}
-          >
-            <Typography component={'span'} fontSize={12}>
-              {(settings.config as any)[folderKey].title}
-            </Typography>
-          </AccordionSummary>
-          <AccordionDetails sx={{ p: 1 }}>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'max-content auto',
-                gap: '8px',
-                alignItems: 'center',
-              }}
-            >
-              {entries.map(([paramKey, e]) => {
-                const entry = e as Entry
+  get values(): Record<Params<DefaultAppSettingsConfig>, any> {
+    return Object.fromEntries(
+      Object.entries(this.settings)
+        .filter(([_, entry]) => (entry as Entry).type === 'param')
+        .map(([key, entry]) => [key, (entry as Param).value]),
+    ) as Record<Params<DefaultAppSettingsConfig>, any>
+  }
 
-                if (entry.type === 'button')
-                  return (
-                    <React.Fragment key={paramKey}>
-                      <div />
-                      <Button
-                        variant="contained"
-                        onClick={() => entry.onClick()}
-                      >
-                        {entry.title}
-                      </Button>
-                    </React.Fragment>
-                  )
-                if (entry.type !== 'param') return
+  // Get all settings
+  get config(): DefaultAppSettingsConfig {
+    return this.settings
+  }
 
-                if (paramKey === 'general.libraries')
-                  return (
-                    <React.Fragment key={paramKey}>
-                      <FormLabel sx={{ fontSize: 12 }}>Libraries</FormLabel>
-                      <LibrarySetting />
-                    </React.Fragment>
-                  )
+  // Set a param value
+  set(key: Params<DefaultAppSettingsConfig>, value: any): void {
+    const entry = this.settings[key]
+    if (entry.type !== 'param') throw Error('not a param')
+    entry.value = value
+    this.saveAndNotify()
 
-                if (typeof entry.render !== 'undefined') {
-                  return (
-                    <React.Fragment key={paramKey}>
-                      <FormLabel sx={{ fontSize: 12 }}>{entry.label}</FormLabel>
-                      {entry.render(entry.value)}
-                    </React.Fragment>
-                  )
-                }
+    this.listeners.get(key)?.forEach((listener) => listener(entry))
+  }
 
-                return (
-                  <React.Fragment key={paramKey}>
-                    <FormLabel sx={{ fontSize: 12 }}>{entry.label}</FormLabel>
-                    {typeof entry.value === 'boolean' ? (
-                      <Checkbox
-                        sx={{
-                          height: 10,
-                          '&:hover': {
-                            backgroundColor: 'transparent',
-                          },
-                          '&:click': {
-                            backgroundColor: 'transparent',
-                          },
-                        }}
-                        disableRipple={true}
-                        checked={entry.value}
-                        onChange={(e) =>
-                          settings.set(paramKey, e.target.checked)
-                        }
-                      />
-                    ) : (
-                      <TextField
-                        type={
-                          typeof entry.value === 'number' ? 'number' : 'text'
-                        }
-                        disabled={entry.opts?.readonly}
-                        defaultValue={entry.value}
-                        size="small"
-                      />
-                    )}
-                  </React.Fragment>
-                )
-              })}
-            </div>
-          </AccordionDetails>
-        </Accordion>
-      ))}
-    </div>
-  )
-}
+  // Add a new entry
+  add(key: string, entry: Entry): void {
+    if (
+      entry.type === 'param' &&
+      (this.settings[parentKey(key) as keyof DefaultAppSettingsConfig] as Entry)
+        ?.type !== 'folder'
+    ) {
+      throw Error('parent is not a folder')
+    }
 
-const supportedLibraries = [
-  { name: 'creagen' },
-  { name: 'p5' },
-  { name: 'three', disabled: true },
-]
+    this.settings[key as keyof DefaultAppSettingsConfig] = entry as any
+    ;(this.settings[key as keyof DefaultAppSettingsConfig] as Entry).generated =
+      true
+    this.saveAndNotify()
+  }
 
-function isDevBuild(version: SemVer) {
-  return version.prerelease.length > 0
-}
-
-function LibrarySetting() {
-  const settings = useSettings()
-  const [versions, setVersions] = useState<Record<string, string[]>>({})
-  const [selectedVersion, setSelectedVersion] = useState<
-    Record<string, string>
-  >({})
-
-  const libraries = settings.values['general.libraries'] as Library[]
-
-  useEffect(() => {
-    Promise.all(supportedLibraries.map((l) => Importer.versions(l.name)))
-      .then((vers) => {
-        const versions: Record<string, string[]> = {}
-        const latestVersions: Record<string, string> = {}
-        for (let i = 0; i < vers.length; i++) {
-          if (typeof supportedLibraries[i] === 'undefined')
-            throw Error('library not found')
-          const name = supportedLibraries[i]!.name
-
-          versions[name] = vers[i]!
-          const latestIndex = vers[i]!.map((v) => new SemVer(v)).findIndex(
-            (v) => !isDevBuild(v),
-          )
-
-          latestVersions[name] = vers[i]![latestIndex]!
-
-          if (name === 'creagen' && CREAGEN_DEV_VERSION) {
-            const devVersion = CREAGEN_DEV_VERSION.toString()
-            versions[name].unshift(devVersion)
-            latestVersions[name] = devVersion
-          }
-        }
-
-        setVersions(versions)
-        setSelectedVersion((selectedVersions) => ({
-          ...latestVersions,
-          ...selectedVersions,
-        }))
-      })
-      .catch(logger.error)
-  }, [])
-
-  // update selected version when libraries change
-  useEffect(() => {
-    setSelectedVersion((versions) => {
-      const newVersions = { ...versions }
-      for (const lib of libraries) {
-        newVersions[lib.name] = lib.version.toString()
+  // Remove an entry and its children
+  remove(key: string): void {
+    const newSettings: Record<string, any> = { ...this.settings }
+    for (const k in newSettings) {
+      if (k.startsWith(key)) {
+        delete newSettings[k]
       }
-      return newVersions
-    })
-  }, [libraries])
+    }
+    this.settings = newSettings as DefaultAppSettingsConfig
+    this.saveAndNotify()
+  }
 
-  return (
-    <ToggleButtonGroup orientation="vertical" fullWidth={true}>
-      {supportedLibraries.map((lib) => (
-        <ToggleButton
-          key={lib.name}
-          value={lib.name}
-          aria-label="list"
-          size="small"
-          disabled={lib?.disabled ?? false}
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            width: '100%',
-          }}
-          selected={libraries.map((l) => l.name).includes(lib.name)}
-          onChange={(_, libraryName) => {
-            const enabled =
-              typeof libraries.find((l) => l.name === libraryName) !==
-              'undefined'
+  // Save settings to localStorage and notify listeners
+  private saveAndNotify(): void {
+    // Remove generated settings before saving
+    const clone = { ...this.settings }
+    const saveSettings = Object.fromEntries(
+      Object.entries(clone).filter(([_, value]) => !(value as Entry).generated),
+    ) as DefaultAppSettingsConfig
 
-            if (enabled) {
-              settings.set(
-                'general.libraries',
-                libraries.filter((l) => l.name !== libraryName),
-              )
-              return
-            }
+    localStorage.set('settings', saveSettings)
 
-            settings.set('general.libraries', [
-              ...libraries.filter((l) => l.name !== libraryName),
-              { name: libraryName, version: selectedVersion[libraryName]! },
-            ])
-          }}
-        >
-          <span>{lib.name}</span>
-          {versions[lib.name] === undefined ? null : (
-            <Select
-              value={selectedVersion[lib.name] ?? versions[lib.name]![0]}
-              size="small"
-              onClick={(e) => e.stopPropagation()}
-              onChange={(e) => {
-                const enabled =
-                  typeof libraries.find((l) => l.name === lib.name) !==
-                  'undefined'
+    // Notify all listeners
+    this.listeners.get(null)?.forEach((listener) => listener(null))
+  }
 
-                if (enabled) {
-                  settings.set(
-                    'general.libraries',
-                    libraries.map((l) => {
-                      if (l.name !== lib.name) return l
-                      return { ...l, version: e.target.value }
-                    }),
-                  )
-                  return
-                }
-
-                setSelectedVersion({
-                  ...selectedVersion,
-                  [lib.name]: e.target.value,
-                })
-              }}
-            >
-              {versions[lib.name]!.map((v, i) => (
-                <MenuItem key={i} value={v.toString()}>
-                  {v.toString()}
-                </MenuItem>
-              ))}
-            </Select>
-          )}
-        </ToggleButton>
-      ))}
-    </ToggleButtonGroup>
-  )
+  // Add a change listener
+  subscribe(listener: () => void, key?: string): () => void {
+    const index = key ?? null
+    let listeners = this.listeners.get(index)
+    if (typeof listeners === 'undefined') {
+      listeners = [] as Listener[]
+    }
+    listeners.push(listener)
+    this.listeners.set(index, listeners)
+    return () => {
+      this.listeners.set(
+        index,
+        listeners!.filter((l) => l !== listener),
+      )
+    }
+  }
 }

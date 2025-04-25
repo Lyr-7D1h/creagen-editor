@@ -1,6 +1,6 @@
 import { SemVer } from 'semver'
 import { CREAGEN_EDITOR_VERSION } from '../env'
-import { Library } from '../settings/SettingsProvider'
+import { Library } from '../settings/Settings'
 
 /**
  * ID: [64 byte hash][hex encoded Extension]
