@@ -1,4 +1,7 @@
-import { DefaultAppSettingsConfig, SettingsConfig } from './SettingsProvider'
+import {
+  DefaultAppSettingsConfig,
+  SettingsConfig,
+} from '../settings/SettingsProvider'
 
 class LocalStorage {
   set(id: 'settings', item: SettingsConfig<DefaultAppSettingsConfig>) {

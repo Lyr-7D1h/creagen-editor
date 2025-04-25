@@ -113,16 +113,3 @@ export const Alerts: React.FC = () => {
     </Stack>
   )
 }
-
-// Utility functions for easy access
-export const showAlert = (
-  message: string,
-  severity: AlertProps['severity'] = 'info',
-  autoHideDuration: number = 6000,
-): string => {
-  return alertManager.addAlert(message, severity, autoHideDuration)
-}
-
-export const removeAlert = (id: string): void => {
-  alertManager.removeAlert(id)
-}

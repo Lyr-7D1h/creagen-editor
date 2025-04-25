@@ -1,5 +1,5 @@
 import React, { Children, PropsWithChildren, useEffect, useState } from 'react'
-import { useSettings } from '../SettingsProvider'
+import { useSettings } from '../settings/SettingsProvider'
 
 /**
  * Split two given children and make them resizable

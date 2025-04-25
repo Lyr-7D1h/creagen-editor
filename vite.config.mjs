@@ -62,8 +62,9 @@ function watchExternal() {
 /** Parse `sandbox.ts` to a string import for `src/components/Sandbox` */
 function sandboxJs(mode) {
   const inputPath = path.resolve('./sandbox.ts')
-  const outputPath = path.resolve('src/sandbox.ts')
+  const outputPath = path.resolve('gen/sandbox.ts')
   const tmpPath = path.resolve('./sandbox.tmp.js')
+  fs.mkdirSync(path.resolve('gen'), { recursive: true })
   // prevent compile errors by creating sandbox.ts early
   fs.writeFileSync(outputPath, 'export default ""')
   const rollupConfig = {
@@ -133,7 +134,7 @@ export default \`${output}\``,
       buildSandboxJs()
     },
     handleHotUpdate({ file }) {
-      if (file.includes('sandbox.ts') && !file.includes('src/sandbox.ts')) {
+      if (file.includes('sandbox.ts') && !file.includes('gen/')) {
         buildSandboxJs()
       }
     },

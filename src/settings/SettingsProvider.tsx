@@ -4,10 +4,10 @@ import React, {
   useContext,
   useState,
 } from 'react'
-import { localStorage } from './localStorage'
-import { CREAGEN_EDITOR_VERSION, CREAGEN_DEV_VERSION, MODE } from './env'
-import { generateHumanReadableName, roundToDec } from './util'
-import { LinearProgressWithLabelSetting } from './components/settings/LinearProgressWithLabelSetting'
+import { localStorage } from '../storage/localStorage'
+import { CREAGEN_EDITOR_VERSION, CREAGEN_DEV_VERSION, MODE } from '../env'
+import { generateHumanReadableName, roundToDec } from '../util'
+import { LinearProgressWithLabelSetting } from './LinearProgressWithLabelSetting'
 import { SemVer } from 'semver'
 
 export interface Library {

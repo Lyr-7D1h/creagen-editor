@@ -1,9 +1,9 @@
 import React from 'react'
-import { App } from './App'
+import { CreagenEditor } from './creagen-editor/CreagenEditor'
 import { createRoot } from 'react-dom/client'
-import { SettingsProvider } from './SettingsProvider'
-import { StorageProvider } from './StorageProvider'
-import { IndexDB } from './storage'
+import { SettingsProvider } from './settings/SettingsProvider'
+import { StorageProvider } from './storage/StorageProvider'
+import { IndexDB } from './storage/storage'
 
 const root = createRoot(document.getElementById('root')!)
 
@@ -12,7 +12,7 @@ const indexdb = new IndexDB()
 root.render(
   <StorageProvider storage={indexdb}>
     <SettingsProvider>
-      <App />
+      <CreagenEditor />
     </SettingsProvider>
   </StorageProvider>,
 )

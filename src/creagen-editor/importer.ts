@@ -1,9 +1,9 @@
-import { fetch } from './fetch'
+import { fetch } from '../fetch'
 import { SemVer } from 'semver'
-import { TYPESCRIPT_IMPORT_REGEX } from './constants'
-import { CREAGEN_DEV_VERSION } from './env'
+import { TYPESCRIPT_IMPORT_REGEX } from '../constants'
+import { CREAGEN_DEV_VERSION } from '../env'
 import { LIBRARY_CONFIGS } from './libraryConfigs'
-import { Library } from './SettingsProvider'
+import { Library } from '../settings/SettingsProvider'
 import ts from 'typescript'
 
 export interface ImportPath {

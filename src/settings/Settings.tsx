@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Library, useSettings, Entry } from '../../SettingsProvider'
+import { Library, useSettings, Entry } from './SettingsProvider'
 import {
   Accordion,
   AccordionDetails,
@@ -15,9 +15,9 @@ import {
   MenuItem,
 } from '@mui/material'
 import { ExpandMore } from '@mui/icons-material'
-import { Importer } from '../../importer'
-import { CREAGEN_DEV_VERSION } from '../../env'
-import { logger } from '../../logger'
+import { Importer } from '../creagen-editor/importer'
+import { CREAGEN_DEV_VERSION } from '../env'
+import { logger } from '../logs/logger'
 import { SemVer } from 'semver'
 
 const expendedSettingKey = 'expandedSetting'
