@@ -1,4 +1,4 @@
-import { MODE } from './env'
+import { MODE } from '../env'
 
 export type Severity = 'success' | 'info' | 'warning' | 'error' | 'debug'
 

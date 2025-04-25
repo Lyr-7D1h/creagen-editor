@@ -1,6 +1,6 @@
 import { Alert, AlertColor, Stack } from '@mui/material'
 import React, { JSX, useEffect, useState } from 'react'
-import { Message, logger } from '../../logger'
+import { Message, logger } from './logger'
 
 export function Logs() {
   const [logs, setLogs] = useState<Message[]>(logger.getMessages())

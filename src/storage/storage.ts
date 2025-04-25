@@ -1,5 +1,5 @@
-import { type ID } from './id'
-import { logger } from './logger'
+import { type ID } from '../creagen-editor/id'
+import { logger } from '../logs/logger'
 
 export abstract class Storage {
   abstract set(id: ID, item: Generation): void

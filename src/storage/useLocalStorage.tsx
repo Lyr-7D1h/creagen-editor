@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { logger } from './logger'
+import { logger } from '../logs/logger'
 
 // Extend WindowEventMap to include 'local-storage' event
 declare global {
