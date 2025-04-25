@@ -1,26 +1,14 @@
 import * as monaco from 'monaco-editor'
-import { Settings } from '../settings/Settings'
-import React, { useState, useRef, useEffect } from 'react'
-import { VerticalSplitResizer } from './VerticalSplitResizer'
 import { Editor } from './editor/Editor'
-import { EditorView } from './editor/EditorView'
 import { CREAGEN_EDITOR_VERSION } from '../env'
 import { logger } from '../logs/logger'
-import { Logs } from '../logs/Logs'
-import { Sandbox, AnalyzeContainerResult } from './sandbox/Sandbox'
-import { SandboxView } from './sandbox/SandboxView'
-import {
-  useSettings,
-  Library,
-  SettingsContextType,
-} from '../settings/SettingsProvider'
-import { useStorage } from '../storage/StorageProvider'
+import { Sandbox } from './sandbox/Sandbox'
+import { Library, Settings } from '../settings/Settings'
 import { IDFromString, IDToString, ID, createID } from './id'
 import { LibraryImport, Importer } from './importer'
 import { LIBRARY_CONFIGS } from './libraryConfigs'
 import { parseCode } from './parseCode'
-import { Svg } from './svg'
-import { Storage } from '../storage/storage'
+import { IndexDB, Storage } from '../storage/storage'
 
 /** Get code id from path and load code from indexdb */
 async function loadCodeFromPath(storage: Storage) {
@@ -43,41 +31,117 @@ async function loadCodeFromPath(storage: Storage) {
   return { id, code: value.code }
 }
 
-export function CreagenEditor() {
-  const storage = useStorage()
-  const settings = useSettings()
-  const [activeId, setActiveIdState] = useState<ID | null>(null)
-  const editorRef = useRef<Editor>(null)
-  const sandboxRef = useRef<Sandbox>(null)
-  const [loaded, setLoaded] = useState(false)
-  const [libraryImports, setLibraryImports] = useState<
-    Record<string, LibraryImport>
-  >({})
+export class CreagenEditor {
+  editor: Editor | null = null
+  storage: Storage = new IndexDB()
+  settings: Settings = new Settings()
+  sandbox: Sandbox | null = null
 
-  /** Add new id to history */
-  function updateActiveId(id: ID) {
-    if (JSON.stringify(id) === JSON.stringify(activeId)) return
-    window.history.pushState('Creagen', '', IDToString(id))
-    setActiveIdState(id)
+  private activeId: ID | null = null
+  // private commands: Map<string, (editor: CreagenEditor) => void> = new Map()
+  private libraryImports: Record<string, LibraryImport> = {}
+  private loaded = false
+
+  constructor() {
+    // Handle popstate event
+    addEventListener('popstate', () => {
+      this.loadCodeFromPath().catch(logger.error)
+    })
   }
 
-  function loadLibraries() {
-    if (editorRef.current === null) return
-    const editor = editorRef.current!
+  setEditor(editor: Editor | null) {
+    this.editor = editor
+    if (editor && !this.loaded) {
+      this.load()
+    }
+  }
 
-    const libraries = settings.values['general.libraries'] as Library[]
-    editor.clearTypings()
+  setSandbox(sandbox: Sandbox | null) {
+    this.sandbox = sandbox
+  }
+
+  setStorage(storage: Storage) {
+    this.storage = storage
+  }
+
+  setActiveId(id: ID | null) {
+    this.activeId = id
+    return id
+  }
+
+  updateActiveId(id: ID) {
+    if (JSON.stringify(id) === JSON.stringify(this.activeId)) return
+    window.history.pushState('Creagen', '', IDToString(id))
+    return this.setActiveId(id)
+  }
+
+  getLibraryImports() {
+    return this.libraryImports
+  }
+
+  setLibraryImports(imports: Record<string, LibraryImport>) {
+    this.libraryImports = imports
+    return imports
+  }
+
+  updateStorageUsage() {
+    navigator.storage
+      .estimate()
+      .then((storage) =>
+        this.settings.set('general.storage', {
+          current: storage.usage ?? 0,
+          max: storage.quota ?? 1,
+        }),
+      )
+      .catch(logger.error)
+  }
+
+  setupKeybinds() {
+    if (!this.editor) return
+
+    this.editor.addKeybind(
+      monaco.KeyMod.Shift | monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+      () => {
+        this.render()
+      },
+    )
+  }
+
+  async loadCodeFromPath() {
+    const result = await loadCodeFromPath(this.storage)
+    if (result !== null && this.editor) {
+      const { id, code } = result
+      if (id.editorVersion.compare(CREAGEN_EDITOR_VERSION)) {
+        logger.warn("Editor version doesn't match")
+      }
+      this.settings.set('general.libraries', id.libraries)
+      this.setActiveId(id)
+      this.editor.setValue(code)
+    }
+    return result
+  }
+
+  loadLibraries() {
+    if (!this.editor) return
+
+    const libraries = this.settings.values['general.libraries'] as Library[]
+    this.editor.clearTypings()
+
     const updatedImports = libraries.map(({ name, version }) => {
       if (name in LIBRARY_CONFIGS) {
         const config = LIBRARY_CONFIGS[name]
         if (config?.template) {
-          editor.getValue() === '' && editor.setValue(config.template)
+          this.editor?.getValue() === '' &&
+            this.editor.setValue(config.template)
         }
       }
 
       return new Promise<LibraryImport>((resolve, reject) => {
-        if (libraryImports[name] && libraryImports[name].version === version) {
-          return resolve(libraryImports[name])
+        if (
+          this.libraryImports[name] &&
+          this.libraryImports[name].version === version
+        ) {
+          return resolve(this.libraryImports[name])
         }
 
         Importer.getLibrary(name, version)
@@ -90,8 +154,8 @@ export function CreagenEditor() {
             library
               .typings()
               .then((typings) => {
-                if (typings) {
-                  editor.addTypings(
+                if (typings && this.editor) {
+                  this.editor.addTypings(
                     typings,
                     `ts:${library.name}.d.ts`,
                     library.name,
@@ -111,227 +175,81 @@ export function CreagenEditor() {
         const errors = results.filter((r) => r.status === 'rejected')
         if (errors.length > 0) errors.forEach((e) => logger.error(e.reason))
 
-        setLibraryImports(
-          Object.fromEntries(
-            results
-              .filter((r) => r.status === 'fulfilled')
-              .map((r) => [r.value.name, r.value]),
-          ),
+        const newImports = Object.fromEntries(
+          results
+            .filter((r) => r.status === 'fulfilled')
+            .map((r) => [r.value.name, r.value]),
         )
+
+        this.setLibraryImports(newImports)
+        return newImports
       })
       .catch(logger.error)
   }
 
-  /** initial load */
-  function load() {
-    if (editorRef.current === null) return
-    if (loaded) return
-    setLoaded(true)
+  load() {
+    if (!this.editor) return
+    if (this.loaded) return
+    this.loaded = true
 
-    const editor = editorRef.current
+    this.setupKeybinds()
 
-    setupKeybinds(editor)
+    // Load initial code
+    this.loadCodeFromPath().catch(logger.error)
+    this.loadLibraries()
 
-    // load initial code
-    loadCodeFromPath(storage)
-      .then((res) => {
-        if (res !== null) {
-          const { id, code } = res
-          if (id.editorVersion.compare(CREAGEN_EDITOR_VERSION))
-            logger.warn("Editor version doesn't match")
-          settings.set('general.libraries', id.libraries)
-          setActiveIdState(id)
-          editor.setValue(code)
-        }
-      })
-      .catch(logger.error)
-
-    loadLibraries()
+    this.settings.subscribe(() => {
+      this.updateLibraries()
+    }, 'general.libraries')
   }
 
-  // update storage used estimate
-  useEffect(() => {
-    navigator.storage
-      .estimate()
-      .then((storage) =>
-        settings.set('general.storage', {
-          current: storage.usage ?? 0,
-          max: storage.quota ?? 1,
-        }),
-      )
-      .catch(logger.error)
-  }, [])
-
-  useEffect(() => {
-    loadLibraries()
-    if (activeId !== null) {
-      const { hash, editorVersion, date } = activeId
-      updateActiveId({
+  updateLibraries() {
+    this.loadLibraries()
+    if (this.activeId !== null) {
+      const { hash, editorVersion, date } = this.activeId
+      this.updateActiveId({
         hash,
         editorVersion,
         date,
-        libraries: settings.values['general.libraries'],
+        libraries: this.settings.values['general.libraries'],
       })
     }
-  }, [settings.values['general.libraries']])
+  }
 
-  addEventListener('popstate', () => {
-    loadCodeFromPath(storage).catch(logger.error)
-  })
-
-  async function render(
-    settings: SettingsContextType,
-    libraryImports: Record<string, LibraryImport>,
-  ) {
-    if (editorRef.current === null) return
-    const editor = editorRef.current
+  async render() {
+    if (!this.editor) return
 
     logger.clear()
     const info = logger.info('rendering code')
-    if (settings.values['editor.format_on_render']) {
-      await editor.format()
+    if (this.settings.values['editor.format_on_render']) {
+      await this.editor.format()
     }
 
-    let code = editor.getValue()
+    let code = this.editor.getValue()
 
     // store code and change url
-    const id = await createID(code, settings.values['general.libraries'])
+    const id = await createID(code, this.settings.values['general.libraries'])
     // store and add to history if not new
-    if (id.hash !== activeId?.hash) {
-      await storage.set(id, {
+    if (id.hash !== this.activeId?.hash) {
+      await this.storage.set(id, {
         code,
         createdOn: id.date,
-        previous: activeId ?? undefined,
+        previous: this.activeId ?? undefined,
       })
-      if (id.hash !== activeId?.hash) {
-        // FIXME: activeId should not be undefined
-        updateActiveId(id)
+      if (id.hash !== this.activeId?.hash) {
+        this.updateActiveId(id)
       }
     }
 
-    code = parseCode(code, libraryImports)
+    code = parseCode(code, this.libraryImports)
 
-    const imports = Object.values(libraryImports).filter((lib) =>
-      settings.values['general.libraries'].some(
+    const imports = Object.values(this.libraryImports).filter((lib) =>
+      this.settings.values['general.libraries'].some(
         (library: Library) => library.name === lib.name,
       ),
     )
-    sandboxRef.current?.render(code, imports)
 
+    this.sandbox?.render(code, imports)
     logger.remove(info)
-  }
-
-  function setupKeybinds(editor: Editor) {
-    editor.addKeybind(
-      monaco.KeyMod.Shift | monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-      () => {
-        render(settings, libraryImports)
-      },
-    )
-  }
-  // ensure that keybinds are always dealing with latest settings
-  useEffect(() => {
-    if (editorRef.current === null) return
-    setupKeybinds(editorRef.current!)
-  }, [settings.values, libraryImports])
-
-  return (
-    <>
-      <Logs />
-      <VerticalSplitResizer>
-        <EditorView
-          height={'100vh'}
-          onLoad={(editor) => {
-            editorRef.current = editor
-            load()
-          }}
-        />
-        <SandboxView
-          onLoad={(sandbox) => {
-            sandboxRef.current = sandbox
-            sandbox.addEventListener('analysisResult', (result) => {
-              updateRenderSettings(settings, result.analysisResult, sandbox)
-            })
-          }}
-        />
-      </VerticalSplitResizer>
-      <Settings />
-    </>
-  )
-}
-
-async function updateRenderSettings(
-  settings: SettingsContextType,
-  result: AnalyzeContainerResult,
-  link: Sandbox,
-) {
-  settings.remove('export')
-  for (const svgResult of result.svgs) {
-    const { paths, circles, rects } = svgResult
-    settings.add('export', {
-      type: 'folder',
-      title: 'Export',
-    })
-    settings.add('export.paths', {
-      type: 'param',
-      label: 'Paths',
-      value: paths,
-      opts: {
-        readonly: true,
-      },
-    })
-    settings.add('export.circles', {
-      type: 'param',
-      label: 'Circles',
-      value: circles,
-      opts: {
-        readonly: true,
-      },
-    })
-    settings.add('export.rects', {
-      type: 'param',
-      label: 'Rects',
-      value: rects,
-      opts: {
-        readonly: true,
-      },
-    })
-    settings.add('export.name', {
-      type: 'param',
-      label: 'Name',
-      value: settings.values['general.name'],
-      opts: {
-        readonly: true,
-      },
-    })
-    settings.add('export.optimize', {
-      type: 'param',
-      label: 'Optimize',
-      value: true,
-      opts: {
-        readonly: true,
-      },
-    })
-    settings.add('export.download', {
-      type: 'button',
-      title: 'Download',
-      onClick: async () => {
-        const svgString = await link.svgExport(0)
-        if (svgString === null) {
-          logger.error('No svg found')
-          return
-        }
-        const parser = new DOMParser()
-        const doc = parser.parseFromString(svgString, 'image/svg+xml')
-        const svgInstance = new Svg(
-          doc.documentElement as unknown as SVGElement,
-        )
-        svgInstance.export(
-          settings.values['general.name'],
-          settings.values['general.libraries'],
-        )
-        console.log(svgString)
-      },
-    })
   }
 }
