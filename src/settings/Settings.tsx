@@ -55,6 +55,11 @@ const defaultAppSettingsConfig = {
     label: 'Fullscreen',
     value: false,
   },
+  'editor.hide_all': {
+    type: 'param',
+    label: 'Show all',
+    value: false,
+  },
   'editor.vim': {
     type: 'param',
     label: 'Vim',
@@ -204,6 +209,10 @@ export class Settings {
   // Get all settings
   get config(): DefaultAppSettingsConfig {
     return this.settings
+  }
+
+  get(key: Params<DefaultAppSettingsConfig>): any {
+    return this.settings[key].value
   }
 
   // Set a param value

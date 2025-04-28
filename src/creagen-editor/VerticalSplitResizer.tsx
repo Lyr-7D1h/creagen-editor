@@ -15,9 +15,11 @@ export function VerticalSplitResizer({ children }: PropsWithChildren) {
   )
 
   useEffect(() => {
-    if (settings.values['editor.fullscreen'] === fullscreen) return
-    setFullscreen(settings.values['editor.fullscreen'])
-  }, [settings.values['editor.fullscreen']])
+    setFullscreen(
+      settings.values['editor.fullscreen'] ||
+        settings.values['editor.hide_all'],
+    )
+  }, [settings.values['editor.fullscreen'], settings.values['editor.hide_all']])
 
   const childrenArray = Children.toArray(children)
   if (childrenArray.length !== 2)
