@@ -52,7 +52,15 @@ export function SettingsView() {
   }
 
   return (
-    <div style={{ zIndex: 1002, position: 'absolute', right: 10, top: 10 }}>
+    <div
+      style={{
+        zIndex: 1002,
+        position: 'absolute',
+        right: 10,
+        top: 10,
+        display: settings.values['editor.hide_all'] ? 'none' : 'block',
+      }}
+    >
       {Object.entries(folders).map(([folderKey, entries]) => (
         <Accordion
           disableGutters
