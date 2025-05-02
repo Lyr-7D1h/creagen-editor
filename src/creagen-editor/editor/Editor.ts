@@ -69,7 +69,7 @@ export interface EditorSettings {
 export class Editor {
   private readonly editor: m.editor.IStandaloneCodeEditor
   private readonly autoimport: AutoImport
-  private vimStatus: HTMLElement = document.getElementById('vim-status')!
+  private vimStatus: HTMLElement | null = document.getElementById('vim-status')
   private vimMode: m.editor.IStandaloneCodeEditor | null
   private fullscreendecorators: m.editor.IEditorDecorationsCollection | null
   private models: Record<string, monaco.editor.ITextModel> = {}
@@ -185,12 +185,12 @@ export class Editor {
   }
 
   hide() {
-    this.vimStatus.style.display = 'none'
+    if (this.vimStatus) this.vimStatus.style.display = 'none'
     this.html().style.display = 'none'
   }
 
   show() {
-    this.vimStatus.style.display = 'block'
+    if (this.vimStatus) this.vimStatus.style.display = 'block'
     this.html().style.display = 'block'
   }
 
