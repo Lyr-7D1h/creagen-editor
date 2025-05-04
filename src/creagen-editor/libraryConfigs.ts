@@ -1,13 +1,18 @@
 export interface LibraryConfig {
+  /** overwrite types of package with a specific type package */
   typingsOverwrite?: string
+  typingsPathOverwrite?: string
   forceReload?: boolean
   template?: string
 }
 
 export const LIBRARY_CONFIGS: Record<string, LibraryConfig> = {
+  '@types/p5': {
+    typingsPathOverwrite: 'global.d.ts',
+  },
   p5: {
     // Using p5 with global types
-    typingsOverwrite: 'global.d.ts',
+    typingsOverwrite: '@types/p5',
     template: `function setup() {
   createCanvas(400, 400);
 }
