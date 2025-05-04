@@ -149,7 +149,7 @@ export function SettingsView() {
                         type={
                           typeof entry.value === 'number' ? 'number' : 'text'
                         }
-                        disabled={entry.opts?.readonly}
+                        disabled={entry.readonly}
                         defaultValue={entry.value}
                         size="small"
                       />

@@ -89,41 +89,31 @@ async function updateExportSettings(
       type: 'param',
       label: 'Paths',
       value: paths,
-      opts: {
-        readonly: true,
-      },
+      readonly: true,
     })
     settings.add('export.circles', {
       type: 'param',
       label: 'Circles',
       value: circles,
-      opts: {
-        readonly: true,
-      },
+      readonly: true,
     })
     settings.add('export.rects', {
       type: 'param',
       label: 'Rects',
       value: rects,
-      opts: {
-        readonly: true,
-      },
+      readonly: true,
     })
     settings.add('export.name', {
       type: 'param',
       label: 'Name',
       value: settings.values['general.name'],
-      opts: {
-        readonly: true,
-      },
+      readonly: true,
     })
     settings.add('export.optimize', {
       type: 'param',
       label: 'Optimize',
       value: true,
-      opts: {
-        readonly: true,
-      },
+      readonly: true,
     })
     settings.add('export.download', {
       type: 'button',
