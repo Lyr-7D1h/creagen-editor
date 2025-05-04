@@ -4,20 +4,24 @@ class TimeoutError extends Error {
     this.name = 'TimeoutError'
   }
 }
-interface FetchOptions extends RequestInit {
+interface FetchOptions extends Omit<RequestInit, 'signal'> {
   timeout?: number
+  /** will validate status code by default */
+  validate?: boolean
 }
 // Wrapper function for fetch
 export async function fetch(
   url: string,
   options?: FetchOptions,
 ): Promise<Response> {
+  const validate = options?.validate ?? true
   const timeout = options?.timeout ?? 5000
   let controller = new AbortController()
   setTimeout(() => controller.abort(), timeout)
   let resp
   try {
-    resp = await window.fetch(url, { signal: controller.signal })
+    const { validate, ...fetchOpts } = options ?? {}
+    resp = await window.fetch(url, { ...fetchOpts, signal: controller.signal })
   } catch (e) {
     let error = e as Error
     if (error.name === 'AbortError')
@@ -26,8 +30,10 @@ export async function fetch(
       )
     throw e
   }
-  if (!resp.ok) {
-    throw new Error(`Failed to fetch ${url} ${resp.status}`)
+  if (validate && !resp.ok) {
+    throw new Error(
+      `Failed to fetch ${url} ${resp.status} - ${resp.statusText}`,
+    )
   }
   return resp
 }
