@@ -1,108 +1,9 @@
 import React from 'react'
 import { localStorage } from '../storage/localStorage'
-import { CREAGEN_EDITOR_VERSION, CREAGEN_DEV_VERSION, MODE } from '../env'
-import { generateHumanReadableName, roundToDec } from '../util'
-import { SemVer } from 'semver'
-import { LinearProgressWithLabelSetting } from './LinearProgressWithLabelSetting'
-
-export interface Library {
-  name: string
-  version: SemVer
-}
-
-const defaultAppSettingsConfig = {
-  general: {
-    type: 'folder',
-    title: 'General',
-  },
-  'general.name': {
-    type: 'param',
-    label: 'Name',
-    value: generateHumanReadableName(),
-  },
-  'general.libraries': {
-    type: 'param',
-    label: 'Libraries',
-    generated: true,
-    value: [] as Library[],
-  },
-  'general.storage': {
-    type: 'param',
-    label: 'Available Storage',
-    render: ({ current, max }: { current: number; max: number }) => (
-      <LinearProgressWithLabelSetting
-        minLabel="0GB"
-        maxLabel={`${roundToDec(max / 1000000000, 3)}GB`}
-        variant="determinate"
-        value={roundToDec(current / max, 3)}
-      />
-    ),
-    value: { value: 0, max: 0 },
-    generated: true,
-    opts: { readonly: true },
-  },
-  editor: {
-    type: 'folder',
-    title: 'Editor',
-  },
-  'editor.format_on_render': {
-    type: 'param',
-    label: 'Format on render',
-    value: false,
-  },
-  'editor.fullscreen': {
-    type: 'param',
-    label: 'Fullscreen',
-    value: false,
-  },
-  'editor.hide_all': {
-    type: 'param',
-    label: 'Show all',
-    value: false,
-  },
-  'editor.vim': {
-    type: 'param',
-    label: 'Vim',
-    value: false,
-  },
-  'editor.relative_lines': {
-    type: 'param',
-    label: 'Relative Lines',
-    value: false,
-  },
-  debug: {
-    type: 'folder',
-    title: 'Debug',
-  },
-  'debug.mode': {
-    type: 'param',
-    label: 'Mode',
-    value: `${MODE}`,
-    opts: {
-      readonly: true,
-    },
-  },
-  'debug.package': {
-    type: 'param',
-    label: 'Package',
-    value: `creagen@${CREAGEN_DEV_VERSION}`,
-    opts: {
-      readonly: true,
-    },
-  },
-  'debug.editor': {
-    type: 'param',
-    label: 'Editor Version',
-    value: `${CREAGEN_EDITOR_VERSION}`,
-    opts: {
-      readonly: true,
-    },
-  },
-}
-
-export type DefaultAppSettingsConfig = SettingsConfig<
-  typeof defaultAppSettingsConfig
->
+import {
+  defaultSettingsConfig,
+  DefaultAppSettingsConfig,
+} from './defaultSettingsConfig'
 
 type Generic<T> = {
   [K in keyof T]: K extends 'type' ? string : T[K]
@@ -127,8 +28,6 @@ type Folders<T extends SettingsConfig<T>> = {
 type Buttons<T extends SettingsConfig<T>> = {
   [K in keyof T]: T[K] extends Button ? K : never
 }[keyof T]
-
-type SettingsConfigKeys = keyof DefaultAppSettingsConfig
 
 export interface Folder {
   type: 'folder'
@@ -179,23 +78,20 @@ export class Settings {
 
   constructor() {
     // Initialize with default settings
-    const defaultSettingsConfig = { ...defaultAppSettingsConfig } as Record<
-      string,
-      any
-    >
+    const defaultConfig = { ...defaultSettingsConfig } as Record<string, any>
 
     // Load stored settings from localStorage
     const storageSettings = localStorage.get('settings')
     if (storageSettings !== null) {
       for (const [key, value] of Object.entries(storageSettings)) {
-        defaultSettingsConfig[key] = {
-          ...(defaultSettingsConfig[key] ?? {}),
+        defaultConfig[key] = {
+          ...(defaultConfig[key] ?? {}),
           ...(value as any),
         }
       }
     }
 
-    this.settings = defaultSettingsConfig as DefaultAppSettingsConfig
+    this.settings = defaultConfig as DefaultAppSettingsConfig
   }
 
   get values(): Record<Params<DefaultAppSettingsConfig>, any> {

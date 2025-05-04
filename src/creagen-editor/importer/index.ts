@@ -2,7 +2,7 @@ import { fetch } from '../../fetch'
 import { SemVer } from 'semver'
 import { z } from 'zod'
 import { CREAGEN_DEV_VERSION } from '../../env'
-import { Library } from '../../settings/Settings'
+import { Library } from '../../settings/defaultSettingsConfig'
 import { semver } from '../schemaUtils'
 import { getTypings } from './typings'
 

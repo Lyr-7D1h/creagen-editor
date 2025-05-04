@@ -2,7 +2,7 @@ import { Editor } from './editor/Editor'
 import { CREAGEN_EDITOR_VERSION } from '../env'
 import { logger } from '../logs/logger'
 import { Sandbox } from './sandbox/Sandbox'
-import { Library, Settings } from '../settings/Settings'
+import { Settings } from '../settings/Settings'
 import { IDFromString, IDToString, ID, createID } from './id'
 import { LibraryImport, Importer } from './importer'
 import { LIBRARY_CONFIGS } from './libraryConfigs'
@@ -14,6 +14,7 @@ import {
   monacoKeyToBrowserKey,
 } from './keybindings'
 import { COMMANDS } from './commands'
+import { Library } from '../settings/defaultSettingsConfig'
 
 /** Get code id from path and load code from indexdb */
 async function loadCodeFromPath(storage: Storage) {
