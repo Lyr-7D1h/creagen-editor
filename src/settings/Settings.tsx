@@ -2,32 +2,9 @@ import React from 'react'
 import { localStorage } from '../storage/localStorage'
 import {
   defaultSettingsConfig,
-  DefaultAppSettingsConfig,
+  DefaultSettingsConfig,
+  Params,
 } from './defaultSettingsConfig'
-
-type Generic<T> = {
-  [K in keyof T]: K extends 'type' ? string : T[K]
-}
-type GenericSettingsConfig = Record<
-  string,
-  Generic<Param> | Generic<Folder> | Generic<Button>
->
-export type SettingsConfig<T extends GenericSettingsConfig> = {
-  [K in keyof T]: T[K] extends { value: any }
-    ? Param
-    : T[K] extends { label: string }
-      ? Button
-      : Folder
-}
-type Params<T extends SettingsConfig<T>> = {
-  [K in keyof T]: T[K] extends Param ? K : never
-}[keyof T]
-type Folders<T extends SettingsConfig<T>> = {
-  [K in keyof T]: T[K] extends Folder ? K : never
-}[keyof T]
-type Buttons<T extends SettingsConfig<T>> = {
-  [K in keyof T]: T[K] extends Button ? K : never
-}[keyof T]
 
 export interface Folder {
   type: 'folder'
@@ -40,19 +17,23 @@ export interface Button {
   onClick: () => void
 }
 
+/** A simple state value */
+export interface StateValue<T = any> {
+  type: 'state'
+  value: T
+}
+
 export interface Param<T = any> {
   type: 'param'
   label: string
-  /** If the value should be stored or that it is generated */
-  generated?: boolean
   render?: (value: T, set?: (value: T) => void) => React.ReactNode
   value: T
-  opts?: {
-    readonly?: boolean
-  }
+  readonly?: boolean
 }
 
-export type Entry = (Folder | Button | Param) & { generated?: boolean }
+export type Entry = (Folder | Button | Param | StateValue) & {
+  generated?: boolean
+}
 
 export function parentKey(key: string) {
   return key.split('.').slice(0, -1).join('.')
@@ -60,10 +41,10 @@ export function parentKey(key: string) {
 
 export interface SettingsContextType {
   /** Do not change any of these values use `set()` and `add()` */
-  values: Record<Params<DefaultAppSettingsConfig>, any>
+  values: Record<Params, any>
   /** Do not change any of these values use `set()` and `add()` */
-  config: DefaultAppSettingsConfig
-  set: (key: Params<DefaultAppSettingsConfig>, value: any) => void
+  config: DefaultSettingsConfig
+  set: (key: Params, value: any) => void
   add: (key: string, entry: Entry) => void
   /** Remove all values under this key */
   remove: (key: string) => void
@@ -73,7 +54,7 @@ export type Listener = (value: any) => void
 
 // Core Settings class to handle the settings logic
 export class Settings {
-  private settings: DefaultAppSettingsConfig
+  private settings: DefaultSettingsConfig
   private listeners: Map<string | null, Listener[]> = new Map()
 
   constructor() {
@@ -91,28 +72,28 @@ export class Settings {
       }
     }
 
-    this.settings = defaultConfig as DefaultAppSettingsConfig
+    this.settings = defaultConfig as DefaultSettingsConfig
   }
 
-  get values(): Record<Params<DefaultAppSettingsConfig>, any> {
+  get values(): Record<Params, any> {
     return Object.fromEntries(
       Object.entries(this.settings)
         .filter(([_, entry]) => (entry as Entry).type === 'param')
         .map(([key, entry]) => [key, (entry as Param).value]),
-    ) as Record<Params<DefaultAppSettingsConfig>, any>
+    ) as Record<Params, any>
   }
 
   // Get all settings
-  get config(): DefaultAppSettingsConfig {
+  get config(): DefaultSettingsConfig {
     return this.settings
   }
 
-  get(key: Params<DefaultAppSettingsConfig>): any {
+  get(key: Params): any {
     return this.settings[key].value
   }
 
   // Set a param value
-  set(key: Params<DefaultAppSettingsConfig>, value: any): void {
+  set(key: Params, value: any): void {
     const entry = this.settings[key]
     if (entry.type !== 'param') throw Error('not a param')
     entry.value = value
@@ -122,19 +103,20 @@ export class Settings {
   }
 
   // Add a new entry
-  add(key: string, entry: Entry): void {
+  add(key: string, entry: Entry) {
     if (
       entry.type === 'param' &&
-      (this.settings[parentKey(key) as keyof DefaultAppSettingsConfig] as Entry)
+      (this.settings[parentKey(key) as keyof DefaultSettingsConfig] as Entry)
         ?.type !== 'folder'
     ) {
       throw Error('parent is not a folder')
     }
 
-    this.settings[key as keyof DefaultAppSettingsConfig] = entry as any
-    ;(this.settings[key as keyof DefaultAppSettingsConfig] as Entry).generated =
+    this.settings[key as keyof DefaultSettingsConfig] = entry as any
+    ;(this.settings[key as keyof DefaultSettingsConfig] as Entry).generated =
       true
     this.saveAndNotify()
+    return key as keyof DefaultSettingsConfig
   }
 
   // Remove an entry and its children
@@ -145,7 +127,7 @@ export class Settings {
         delete newSettings[k]
       }
     }
-    this.settings = newSettings as DefaultAppSettingsConfig
+    this.settings = newSettings as DefaultSettingsConfig
     this.saveAndNotify()
   }
 
@@ -155,7 +137,7 @@ export class Settings {
     const clone = { ...this.settings }
     const saveSettings = Object.fromEntries(
       Object.entries(clone).filter(([_, value]) => !(value as Entry).generated),
-    ) as DefaultAppSettingsConfig
+    ) as DefaultSettingsConfig
 
     localStorage.set('settings', saveSettings)
 

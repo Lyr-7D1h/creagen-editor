@@ -1,7 +1,7 @@
 import { SemVer } from 'semver'
 import { MODE, CREAGEN_DEV_VERSION, CREAGEN_EDITOR_VERSION } from '../env'
 import { generateHumanReadableName, roundToDec } from '../util'
-import { SettingsConfig } from './Settings'
+import { Button, Folder, Param, StateValue } from './Settings'
 import { LinearProgressWithLabelSetting } from './LinearProgressWithLabelSetting'
 import React from 'react'
 
@@ -10,7 +10,7 @@ export interface Library {
   version: SemVer
 }
 
-export const defaultSettingsConfig = {
+const defaultConfig = {
   general: {
     type: 'folder',
     title: 'General',
@@ -39,7 +39,7 @@ export const defaultSettingsConfig = {
     ),
     value: { value: 0, max: 0 },
     generated: true,
-    opts: { readonly: true },
+    readonly: true,
   },
   editor: {
     type: 'folder',
@@ -56,10 +56,8 @@ export const defaultSettingsConfig = {
     value: false,
   },
   'editor.hide_all': {
-    type: 'param',
-    label: 'Show all',
+    type: 'state',
     value: false,
-    generated: true,
   },
   'editor.vim': {
     type: 'param',
@@ -79,28 +77,52 @@ export const defaultSettingsConfig = {
     type: 'param',
     label: 'Mode',
     value: `${MODE}`,
-    opts: {
-      readonly: true,
-    },
+
+    readonly: true,
   },
   'debug.package': {
     type: 'param',
     label: 'Package',
     value: `creagen@${CREAGEN_DEV_VERSION}`,
-    opts: {
-      readonly: true,
-    },
+    readonly: true,
   },
   'debug.editor': {
     type: 'param',
     label: 'Editor Version',
     value: `${CREAGEN_EDITOR_VERSION}`,
-    opts: {
-      readonly: true,
-    },
+    readonly: true,
   },
 }
 
-export type DefaultAppSettingsConfig = SettingsConfig<
-  typeof defaultSettingsConfig
+type Generic<T> = {
+  [K in keyof T]: K extends 'type' ? string : T[K]
+}
+type GenericSettingsConfig = Record<
+  string,
+  Generic<Param> | Generic<Folder> | Generic<Button> | Generic<StateValue>
 >
+type SettingsConfig<T extends GenericSettingsConfig> = {
+  [K in keyof T]: T[K] extends { value: any }
+    ? Param
+    : T[K] extends { label: string }
+      ? Button
+      : Folder
+}
+export type DefaultSettingsConfig = SettingsConfig<typeof defaultConfig>
+
+type GenericParams<T extends SettingsConfig<T>> = {
+  [K in keyof T]: T[K] extends Param ? K : never
+}[keyof T]
+export type Params = GenericParams<DefaultSettingsConfig>
+
+type GenericFolders<T extends SettingsConfig<T>> = {
+  [K in keyof T]: T[K] extends Folder ? K : never
+}[keyof T]
+export type Folders = GenericFolders<DefaultSettingsConfig>
+
+type GenericButtons<T extends SettingsConfig<T>> = {
+  [K in keyof T]: T[K] extends Button ? K : never
+}[keyof T]
+export type Buttons = GenericButtons<DefaultSettingsConfig>
+
+export const defaultSettingsConfig = defaultConfig
