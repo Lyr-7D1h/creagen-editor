@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { Library, Entry } from './Settings'
+import { Entry } from './Settings'
+import { Library } from './defaultSettingsConfig'
 import {
   Accordion,
   AccordionDetails,
