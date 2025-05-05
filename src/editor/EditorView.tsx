@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react'
 import type { editor } from 'monaco-editor'
 import MonacoEditor, { Monaco } from '@monaco-editor/react'
 import { Editor } from './Editor'
-import { useSettings } from '../../settings/SettingsProvider'
+import { useSettings } from '../settings/SettingsProvider'
 
 export interface EditorProps {
   value?: string

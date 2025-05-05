@@ -1,7 +1,7 @@
 import ts from 'typescript'
-import { typescriptCompilerOptions } from './editor/Editor'
+import { typescriptCompilerOptions } from '../editor/Editor'
 import { TYPESCRIPT_IMPORT_REGEX } from '../constants'
-import { LibraryImport } from './importer'
+import { LibraryImport } from '../importer'
 import { logger } from '../logs/logger'
 
 /** Parse code to make it compatible for the editor */

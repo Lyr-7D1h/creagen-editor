@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react'
-import { Entry, Library } from './SettingsConfig'
+import React from 'react'
+import { Entry } from './SettingsConfig'
 import {
   Accordion,
   AccordionDetails,
@@ -9,18 +9,10 @@ import {
   Typography,
   TextField,
   Button,
-  ToggleButtonGroup,
-  ToggleButton,
-  Select,
-  MenuItem,
   IconButton,
   Tooltip,
 } from '@mui/material'
 import { ExpandMore, ChevronRight, ChevronLeft } from '@mui/icons-material'
-import { Importer } from '../creagen-editor/importer'
-import { CREAGEN_DEV_VERSION } from '../env'
-import { logger } from '../logs/logger'
-import { SemVer } from 'semver'
 import { useSettings } from './SettingsProvider'
 
 const expendedSettingKey = 'expandedSetting'

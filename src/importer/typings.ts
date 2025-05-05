@@ -1,6 +1,6 @@
-import { TYPESCRIPT_IMPORT_REGEX } from '../../constants'
+import { TYPESCRIPT_IMPORT_REGEX } from '../constants'
+import { LIBRARY_CONFIGS } from '../creagen-editor/libraryConfigs'
 import { Importer, PackageJson } from '../importer'
-import { LIBRARY_CONFIGS } from '../libraryConfigs'
 
 export async function getTypings(rootUrl: string, pkg: PackageJson) {
   const typingsFilePath =

@@ -1,7 +1,7 @@
 import { KeyCode, KeyMod } from 'monaco-editor'
 import { Command, COMMANDS } from './commands'
 import { CreagenEditor } from './CreagenEditor'
-import { Editor } from './editor/Editor'
+import { Editor } from '../editor/Editor'
 
 type KeyInfo = string
 
