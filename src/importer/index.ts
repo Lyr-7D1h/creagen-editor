@@ -1,10 +1,10 @@
-import { fetch } from '../../fetch'
+import { fetch } from '../fetch'
 import { SemVer } from 'semver'
 import { z } from 'zod'
-import { CREAGEN_DEV_VERSION } from '../../env'
-import { Library } from '../../settings/SettingsConfig'
-import { semver } from '../schemaUtils'
 import { getTypings } from './typings'
+import { semver } from '../creagen-editor/schemaUtils'
+import { CREAGEN_DEV_VERSION } from '../env'
+import { Library } from '../settings/SettingsConfig'
 
 export interface ImportPath {
   /** if `module` it is an es6 module otherwise main */

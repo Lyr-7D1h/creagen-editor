@@ -1,16 +1,16 @@
 import React, { useRef, useEffect } from 'react'
 import { VerticalSplitResizer } from './VerticalSplitResizer'
-import { Editor } from './editor/Editor'
-import { EditorView } from './editor/EditorView'
+import { Editor } from '../editor/Editor'
 import { logger } from '../logs/logger'
-import { Sandbox, AnalyzeContainerResult } from './sandbox/Sandbox'
-import { SandboxView } from './sandbox/SandboxView'
+import { Sandbox, AnalyzeContainerResult } from '../sandbox/Sandbox'
 import { SettingsContextType } from '../settings/Settings'
 import { Svg } from './svg'
 import { CreagenEditor } from './CreagenEditor'
 import { SettingsProvider } from '../settings/SettingsProvider'
 import { Logs } from '../logs/Logs'
 import { SettingsView } from '../settings/SettingsView'
+import { EditorView } from '../editor/EditorView'
+import { SandboxView } from '../sandbox/SandboxView'
 
 const creagenEditor = new CreagenEditor()
 

@@ -1,15 +1,15 @@
-import { Editor } from './editor/Editor'
+import { Editor } from '../editor/Editor'
 import { CREAGEN_EDITOR_VERSION } from '../env'
 import { logger, Severity } from '../logs/logger'
-import { Sandbox } from './sandbox/Sandbox'
+import { Sandbox } from '../sandbox/Sandbox'
 import { Settings } from '../settings/Settings'
 import { IDFromString, IDToString, ID, createID, IDToSub } from './id'
-import { LibraryImport, Importer } from './importer'
 import { LIBRARY_CONFIGS } from './libraryConfigs'
 import { parseCode } from './parseCode'
 import { IndexDB, Storage } from '../storage/storage'
 import { Library } from '../settings/SettingsConfig'
 import { Keybindings } from './keybindings'
+import { Importer, LibraryImport } from '../importer'
 
 /** Get code id from path and load code from indexdb */
 async function loadCodeFromPath(storage: Storage) {

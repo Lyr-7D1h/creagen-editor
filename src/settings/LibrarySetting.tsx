@@ -6,11 +6,11 @@ import {
 } from '@mui/material'
 import React, { useState, useEffect } from 'react'
 import { SemVer } from 'semver'
-import { Importer } from '../creagen-editor/importer'
 import { CREAGEN_DEV_VERSION } from '../env'
 import { logger } from '../logs/logger'
 import { Library } from './SettingsConfig'
 import { useSettings } from './SettingsProvider'
+import { Importer } from '../importer'
 
 const supportedLibraries = [
   { name: 'creagen' },

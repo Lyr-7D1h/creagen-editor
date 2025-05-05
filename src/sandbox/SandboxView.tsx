@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-import { MODE } from '../../env'
+import { MODE } from '../env'
 import { Sandbox } from './Sandbox'
 
 export function SandboxView({

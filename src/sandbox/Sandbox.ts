@@ -1,7 +1,7 @@
-import sandboxCode from '../../../gen/sandbox'
+import sandboxCode from '../../gen/sandbox'
+import { CREAGEN_EDITOR_VERSION } from '../env'
 import { LibraryImport } from '../importer'
-import { CREAGEN_EDITOR_VERSION } from '../../env'
-import { logger } from '../../logs/logger'
+import { logger } from '../logs/logger'
 
 export type SandboxEvent =
   | {

@@ -5,7 +5,7 @@ import {
   AnalyzeContainerResult,
   SandboxEvent,
   SvgProps,
-} from './src/creagen-editor/sandbox/Sandbox'
+} from './src/sandbox/Sandbox'
 
 declare global {
   interface Window {
