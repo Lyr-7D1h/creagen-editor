@@ -76,18 +76,12 @@ const defaultConfig = {
   debug: {
     type: 'folder',
     title: 'Debug',
+    hidden: MODE !== 'dev',
   },
   'debug.mode': {
     type: 'param',
     label: 'Mode',
     value: `${MODE}`,
-
-    readonly: true,
-  },
-  'debug.package': {
-    type: 'param',
-    label: 'Package',
-    value: `creagen@${CREAGEN_DEV_VERSION}`,
     readonly: true,
   },
   'debug.editor': {
@@ -134,6 +128,7 @@ export const defaultSettingsConfig = defaultConfig as Record<Params, Entry>
 export interface Folder {
   type: 'folder'
   title: string
+  hidden?: boolean
 }
 
 export interface Button {
