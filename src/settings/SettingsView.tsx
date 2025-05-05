@@ -13,8 +13,10 @@ import {
   ToggleButton,
   Select,
   MenuItem,
+  IconButton,
+  Tooltip,
 } from '@mui/material'
-import { ExpandMore } from '@mui/icons-material'
+import { ExpandMore, ChevronRight, ChevronLeft } from '@mui/icons-material'
 import { Importer } from '../creagen-editor/importer'
 import { CREAGEN_DEV_VERSION } from '../env'
 import { logger } from '../logs/logger'
@@ -22,16 +24,26 @@ import { SemVer } from 'semver'
 import { useSettings } from './SettingsProvider'
 
 const expendedSettingKey = 'expandedSetting'
+const collapseAllSettingsKey = 'collapseAllSettings'
 
 export function SettingsView() {
   const settings = useSettings()
   const [expanded, setExpandedState] = React.useState<string>(
     localStorage.getItem(expendedSettingKey) ?? 'general',
   )
+  const [collapsed, setCollapsed] = React.useState<boolean>(
+    localStorage.getItem(collapseAllSettingsKey) === 'true',
+  )
 
   function setExpanded(expanded: string) {
     localStorage.setItem(expendedSettingKey, expanded as string)
     setExpandedState(expanded)
+  }
+
+  function toggleCollapsed() {
+    const newCollapsed = !collapsed
+    localStorage.setItem(collapseAllSettingsKey, newCollapsed.toString())
+    setCollapsed(newCollapsed)
   }
 
   const folders: Record<string, any[]> = Object.entries(settings.config)
@@ -58,246 +70,140 @@ export function SettingsView() {
         position: 'absolute',
         right: 10,
         top: 10,
-        display: settings.values['hide_all'] ? 'none' : 'block',
+        display: settings.values['hide_all'] ? 'none' : 'flex',
+        flexDirection: 'row',
+        alignItems: 'flex-start',
       }}
     >
-      {Object.entries(folders).map(([folderKey, entries]) => (
-        <Accordion
-          disableGutters
-          sx={{ width: expanded === '' ? 100 : 300, margin: 0 }}
-          key={folderKey}
-          expanded={expanded === folderKey}
-          onChange={(_, expanded) => {
-            setExpanded(expanded ? folderKey : '')
+      <Tooltip
+        title={collapsed ? 'Show settings' : 'Hide settings'}
+        placement="left"
+      >
+        <IconButton
+          onClick={toggleCollapsed}
+          size="small"
+          sx={{
+            backgroundColor: 'white',
+            border: '1px solid rgba(0, 0, 0, 0.12)',
+            borderRight: collapsed ? '1px solid rgba(0, 0, 0, 0.12)' : 'none',
+            borderTopRightRadius: collapsed ? 4 : 0,
+            borderBottomRightRadius: collapsed ? 4 : 0,
+            borderTopLeftRadius: 4,
+            borderBottomLeftRadius: 4,
+            minWidth: 30,
+            width: 30,
+            height: 30,
+            padding: 0,
+            '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.9)' },
+            '& .MuiSvgIcon-root': { color: 'rgba(0, 0, 0, 0.54)' },
+            position: 'relative',
           }}
-          slotProps={{ transition: { timeout: 0 } }}
         >
-          <AccordionSummary
-            sx={{ minHeight: 30, maxHeight: 30 }}
-            expandIcon={<ExpandMore />}
+          {collapsed ? <ChevronLeft /> : <ChevronRight />}
+        </IconButton>
+      </Tooltip>
+
+      <div
+        style={{
+          display: collapsed ? 'none' : 'block',
+          boxShadow:
+            '0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12)',
+        }}
+      >
+        {Object.entries(folders).map(([folderKey, entries]) => (
+          <Accordion
+            disableGutters
+            sx={{ width: expanded === '' ? 100 : 300, margin: 0 }}
+            key={folderKey}
+            expanded={expanded === folderKey}
+            onChange={(_, expanded) => {
+              setExpanded(expanded ? folderKey : '')
+            }}
+            slotProps={{ transition: { timeout: 0 } }}
           >
-            <Typography component={'span'} fontSize={12}>
-              {(settings.config as any)[folderKey].title}
-            </Typography>
-          </AccordionSummary>
-          <AccordionDetails sx={{ p: 1 }}>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'max-content auto',
-                gap: '8px',
-                alignItems: 'center',
-              }}
+            <AccordionSummary
+              sx={{ minHeight: 30, maxHeight: 30 }}
+              expandIcon={<ExpandMore />}
             >
-              {entries.map(([paramKey, e]) => {
-                const entry = e as Entry
+              <Typography component={'span'} fontSize={12}>
+                {(settings.config as any)[folderKey].title}
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails sx={{ p: 1 }}>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'max-content auto',
+                  gap: '8px',
+                  alignItems: 'center',
+                }}
+              >
+                {entries.map(([paramKey, e]) => {
+                  const entry = e as Entry
 
-                if (entry.type === 'button')
-                  return (
-                    <React.Fragment key={paramKey}>
-                      <div />
-                      <Button
-                        variant="contained"
-                        onClick={() => entry.onClick()}
-                      >
-                        {entry.title}
-                      </Button>
-                    </React.Fragment>
-                  )
-                if (entry.type !== 'param') return
+                  if (entry.type === 'button')
+                    return (
+                      <React.Fragment key={paramKey}>
+                        <div />
+                        <Button
+                          variant="contained"
+                          onClick={() => entry.onClick()}
+                        >
+                          {entry.title}
+                        </Button>
+                      </React.Fragment>
+                    )
+                  if (entry.type !== 'param') return
 
-                if (paramKey === 'general.libraries')
-                  return (
-                    <React.Fragment key={paramKey}>
-                      <FormLabel sx={{ fontSize: 12 }}>Libraries</FormLabel>
-                      <LibrarySetting />
-                    </React.Fragment>
-                  )
+                  if (typeof entry.render !== 'undefined') {
+                    return (
+                      <React.Fragment key={paramKey}>
+                        <FormLabel sx={{ fontSize: 12 }}>
+                          {entry.label}
+                        </FormLabel>
+                        {entry.render(entry.value)}
+                      </React.Fragment>
+                    )
+                  }
 
-                if (typeof entry.render !== 'undefined') {
                   return (
                     <React.Fragment key={paramKey}>
                       <FormLabel sx={{ fontSize: 12 }}>{entry.label}</FormLabel>
-                      {entry.render(entry.value)}
+                      {typeof entry.value === 'boolean' ? (
+                        <Checkbox
+                          sx={{
+                            height: 10,
+                            '&:hover': {
+                              backgroundColor: 'transparent',
+                            },
+                            '&:click': {
+                              backgroundColor: 'transparent',
+                            },
+                          }}
+                          disableRipple={true}
+                          checked={entry.value}
+                          onChange={(e) =>
+                            settings.set(paramKey, e.target.checked)
+                          }
+                        />
+                      ) : (
+                        <TextField
+                          type={
+                            typeof entry.value === 'number' ? 'number' : 'text'
+                          }
+                          disabled={entry.readonly}
+                          defaultValue={entry.value}
+                          size="small"
+                        />
+                      )}
                     </React.Fragment>
                   )
-                }
-
-                return (
-                  <React.Fragment key={paramKey}>
-                    <FormLabel sx={{ fontSize: 12 }}>{entry.label}</FormLabel>
-                    {typeof entry.value === 'boolean' ? (
-                      <Checkbox
-                        sx={{
-                          height: 10,
-                          '&:hover': {
-                            backgroundColor: 'transparent',
-                          },
-                          '&:click': {
-                            backgroundColor: 'transparent',
-                          },
-                        }}
-                        disableRipple={true}
-                        checked={entry.value}
-                        onChange={(e) =>
-                          settings.set(paramKey, e.target.checked)
-                        }
-                      />
-                    ) : (
-                      <TextField
-                        type={
-                          typeof entry.value === 'number' ? 'number' : 'text'
-                        }
-                        disabled={entry.readonly}
-                        defaultValue={entry.value}
-                        size="small"
-                      />
-                    )}
-                  </React.Fragment>
-                )
-              })}
-            </div>
-          </AccordionDetails>
-        </Accordion>
-      ))}
+                })}
+              </div>
+            </AccordionDetails>
+          </Accordion>
+        ))}
+      </div>
     </div>
-  )
-}
-
-const supportedLibraries = [
-  { name: 'creagen' },
-  { name: 'p5' },
-  { name: 'three', disabled: true },
-]
-
-function isDevBuild(version: SemVer) {
-  return version.prerelease.length > 0
-}
-
-function LibrarySetting() {
-  const settings = useSettings()
-  const [versions, setVersions] = useState<Record<string, string[]>>({})
-  const [selectedVersion, setSelectedVersion] = useState<
-    Record<string, string>
-  >({})
-
-  const libraries = settings.values['general.libraries'] as Library[]
-
-  useEffect(() => {
-    Promise.all(supportedLibraries.map((l) => Importer.versions(l.name)))
-      .then((vers) => {
-        const versions: Record<string, string[]> = {}
-        const latestVersions: Record<string, string> = {}
-        for (let i = 0; i < vers.length; i++) {
-          if (typeof supportedLibraries[i] === 'undefined')
-            throw Error('library not found')
-          const name = supportedLibraries[i]!.name
-
-          versions[name] = vers[i]!
-          const latestIndex = vers[i]!.map((v) => new SemVer(v)).findIndex(
-            (v) => !isDevBuild(v),
-          )
-
-          latestVersions[name] = vers[i]![latestIndex]!
-
-          if (name === 'creagen' && CREAGEN_DEV_VERSION) {
-            const devVersion = CREAGEN_DEV_VERSION.toString()
-            versions[name].unshift(devVersion)
-            latestVersions[name] = devVersion
-          }
-        }
-
-        setVersions(versions)
-        setSelectedVersion((selectedVersions) => ({
-          ...latestVersions,
-          ...selectedVersions,
-        }))
-      })
-      .catch(logger.error)
-  }, [])
-
-  // update selected version when libraries change
-  useEffect(() => {
-    setSelectedVersion((versions) => {
-      const newVersions = { ...versions }
-      for (const lib of libraries) {
-        newVersions[lib.name] = lib.version.toString()
-      }
-      return newVersions
-    })
-  }, [libraries])
-
-  return (
-    <ToggleButtonGroup orientation="vertical" fullWidth={true}>
-      {supportedLibraries.map((lib) => (
-        <ToggleButton
-          key={lib.name}
-          value={lib.name}
-          aria-label="list"
-          size="small"
-          disabled={lib?.disabled ?? false}
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            width: '100%',
-          }}
-          selected={libraries.map((l) => l.name).includes(lib.name)}
-          onChange={(_, libraryName) => {
-            const enabled =
-              typeof libraries.find((l) => l.name === libraryName) !==
-              'undefined'
-
-            if (enabled) {
-              settings.set(
-                'general.libraries',
-                libraries.filter((l) => l.name !== libraryName),
-              )
-              return
-            }
-
-            settings.set('general.libraries', [
-              ...libraries.filter((l) => l.name !== libraryName),
-              { name: libraryName, version: selectedVersion[libraryName]! },
-            ])
-          }}
-        >
-          <span>{lib.name}</span>
-          {versions[lib.name] === undefined ? null : (
-            <Select
-              value={selectedVersion[lib.name] ?? versions[lib.name]![0]}
-              size="small"
-              onClick={(e) => e.stopPropagation()}
-              onChange={(e) => {
-                const enabled =
-                  typeof libraries.find((l) => l.name === lib.name) !==
-                  'undefined'
-
-                if (enabled) {
-                  settings.set(
-                    'general.libraries',
-                    libraries.map((l) => {
-                      if (l.name !== lib.name) return l
-                      return { ...l, version: e.target.value }
-                    }),
-                  )
-                  return
-                }
-
-                setSelectedVersion({
-                  ...selectedVersion,
-                  [lib.name]: e.target.value,
-                })
-              }}
-            >
-              {versions[lib.name]!.map((v, i) => (
-                <MenuItem key={i} value={v.toString()}>
-                  {v.toString()}
-                </MenuItem>
-              ))}
-            </Select>
-          )}
-        </ToggleButton>
-      ))}
-    </ToggleButtonGroup>
   )
 }
