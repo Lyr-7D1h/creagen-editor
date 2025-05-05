@@ -19,7 +19,7 @@ export function EditorView({ value, width, height, onLoad }: EditorProps) {
   /** Update editor based on global settings */
   function update(editor: Editor) {
     editor.setVimMode(settings.values['editor.vim'])
-    if (settings.values['editor.hide_all']) {
+    if (settings.values['hide_all']) {
       editor.hide()
     } else {
       editor.show()
@@ -37,7 +37,7 @@ export function EditorView({ value, width, height, onLoad }: EditorProps) {
     if (editorRef.current === null) return
     update(editorRef.current)
   }, [
-    settings.values['editor.hide_all'],
+    settings.values['hide_all'],
     settings.values['editor.vim'],
     settings.values['editor.fullscreen'],
     settings.values['editor.relative_lines'],

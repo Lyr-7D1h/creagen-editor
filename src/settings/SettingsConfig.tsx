@@ -1,7 +1,6 @@
 import { SemVer } from 'semver'
 import { MODE, CREAGEN_DEV_VERSION, CREAGEN_EDITOR_VERSION } from '../env'
 import { generateHumanReadableName, roundToDec } from '../util'
-import { Button, Folder, Param, StateValue } from './Settings'
 import { LinearProgressWithLabelSetting } from './LinearProgressWithLabelSetting'
 import React from 'react'
 
@@ -11,6 +10,12 @@ export interface Library {
 }
 
 const defaultConfig = {
+  // State parameters
+  hide_all: {
+    type: 'param',
+    hidden: true,
+    value: false,
+  },
   general: {
     type: 'folder',
     title: 'General',
@@ -55,10 +60,6 @@ const defaultConfig = {
     label: 'Fullscreen',
     value: false,
   },
-  'editor.hide_all': {
-    type: 'state',
-    value: false,
-  },
   'editor.vim': {
     type: 'param',
     label: 'Vim',
@@ -99,12 +100,12 @@ type Generic<T> = {
 }
 type GenericSettingsConfig = Record<
   string,
-  Generic<Param> | Generic<Folder> | Generic<Button> | Generic<StateValue>
+  Generic<Param> | Generic<Folder> | Generic<Button>
 >
 type SettingsConfig<T extends GenericSettingsConfig> = {
   [K in keyof T]: T[K] extends { value: any }
     ? Param
-    : T[K] extends { label: string }
+    : T[K] extends { onClick: any }
       ? Button
       : Folder
 }
@@ -125,4 +126,28 @@ type GenericButtons<T extends SettingsConfig<T>> = {
 }[keyof T]
 export type Buttons = GenericButtons<DefaultSettingsConfig>
 
-export const defaultSettingsConfig = defaultConfig
+export const defaultSettingsConfig = defaultConfig as Record<Params, Entry>
+
+export interface Folder {
+  type: 'folder'
+  title: string
+}
+
+export interface Button {
+  type: 'button'
+  title: string
+  onClick: () => void
+}
+
+export interface Param<T = any> {
+  type: 'param'
+  value: T
+  label?: string
+  hidden?: boolean
+  render?: (value: T, set?: (value: T) => void) => React.ReactNode
+  readonly?: boolean
+}
+
+export type Entry = (Folder | Button | Param) & {
+  generated?: boolean
+}

@@ -1,4 +1,4 @@
-import { DefaultSettingsConfig } from '../settings/defaultSettingsConfig'
+import { DefaultSettingsConfig } from '../settings/SettingsConfig'
 
 class LocalStorage {
   set(id: 'settings', item: DefaultSettingsConfig) {

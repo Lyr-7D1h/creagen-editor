@@ -8,13 +8,8 @@ import { LibraryImport, Importer } from './importer'
 import { LIBRARY_CONFIGS } from './libraryConfigs'
 import { parseCode } from './parseCode'
 import { IndexDB, Storage } from '../storage/storage'
-import {
-  getMonacoKeybinding,
-  KEYBINDINGS,
-  monacoKeyToBrowserKey,
-} from './keybindings'
-import { COMMANDS } from './commands'
-import { Library } from '../settings/defaultSettingsConfig'
+import { Library } from '../settings/SettingsConfig'
+import { Keybindings } from './keybindings'
 
 /** Get code id from path and load code from indexdb */
 async function loadCodeFromPath(storage: Storage) {
@@ -42,12 +37,12 @@ export class CreagenEditor {
   storage: Storage = new IndexDB()
   settings: Settings = new Settings()
   sandbox: Sandbox | null = null
+  keybindings = new Keybindings()
 
   private activeId: ID | null = null
   // private commands: Map<string, (editor: CreagenEditor) => void> = new Map()
   private libraryImports: Record<string, LibraryImport> = {}
   private loaded = false
-  private keybindings: Map<string, (e: KeyboardEvent) => void> = new Map()
 
   constructor() {
     // Handle popstate event
@@ -103,61 +98,10 @@ export class CreagenEditor {
       .catch(logger.error)
   }
 
-  private addKeybind(
-    keybind: string,
-    handler: (...args: any[]) => void,
-    preventDefault: boolean = true,
-  ) {
-    if (!this.editor) return
-
-    const monacoKeybinding = getMonacoKeybinding(keybind)
-    this.editor.addKeybind(monacoKeybinding, handler)
-
-    const keyInfo = monacoKeyToBrowserKey(monacoKeybinding)
-    if (!keyInfo) return
-
-    // Create browser-level handler
-    const browserHandler = (e: KeyboardEvent) => {
-      if (
-        keyInfo.ctrlKey === e.ctrlKey &&
-        keyInfo.altKey === e.altKey &&
-        keyInfo.shiftKey === e.shiftKey &&
-        keyInfo.metaKey === e.metaKey &&
-        keyInfo.key.toLowerCase() === e.key.toLowerCase()
-      ) {
-        if (preventDefault) e.preventDefault()
-        handler()
-      }
-    }
-
-    // Store reference to handler for potential cleanup
-    this.keybindings.set(keybind, browserHandler)
-
-    // Register browser-level listener
-    document.addEventListener('keydown', browserHandler)
-  }
-
-  /**
-   * Removes a previously registered keybinding
-   * @param keybinding Monaco keybinding code
-   */
-  private removeKeybind(keybind: string) {
-    const browserHandler = this.keybindings.get(keybind)
-    if (browserHandler) {
-      document.removeEventListener('keydown', browserHandler)
-      this.keybindings.delete(keybind)
-    }
-  }
-
   setupKeybindings() {
     if (!this.editor) return
 
-    for (const keybind of KEYBINDINGS) {
-      const command = COMMANDS[keybind.command]
-      if (typeof command == 'undefined')
-        throw new Error(`Command ${keybind.command} not found`)
-      this.addKeybind(keybind.key, () => command(this))
-    }
+    this.keybindings.setupKeybindings(this)
   }
 
   async loadCodeFromPath() {

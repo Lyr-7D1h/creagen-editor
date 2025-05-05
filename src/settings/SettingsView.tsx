@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Entry } from './Settings'
-import { Library } from './defaultSettingsConfig'
+import { Entry, Library } from './SettingsConfig'
 import {
   Accordion,
   AccordionDetails,
@@ -40,11 +39,11 @@ export function SettingsView() {
     .reduce((a, [key]) => ({ ...a, [key]: [] }), {})
 
   for (const [key, entry] of Object.entries(settings.config)) {
-    switch ((entry as Entry).type) {
+    switch (entry.type) {
       case 'folder':
         continue
-      case 'button':
       case 'param': {
+        if (entry.hidden) continue
         const parts = key.split('.')
         const folder = parts.splice(0, parts.length - 1).join('.')
         folders[folder]!.push([key, entry])
@@ -59,7 +58,7 @@ export function SettingsView() {
         position: 'absolute',
         right: 10,
         top: 10,
-        display: settings.values['editor.hide_all'] ? 'none' : 'block',
+        display: settings.values['hide_all'] ? 'none' : 'block',
       }}
     >
       {Object.entries(folders).map(([folderKey, entries]) => (

@@ -1,6 +1,12 @@
 import { MODE } from '../env'
 
-export type Severity = 'success' | 'info' | 'warning' | 'error' | 'debug'
+export enum Severity {
+  Success,
+  Info,
+  Warning,
+  Error,
+  Debug,
+}
 
 export type Message = {
   id: MessageId
@@ -79,23 +85,23 @@ function notifyListeners(): void {
 // Logging convenience functions
 export function info(...msg: any[]): MessageId {
   console.info(...msg)
-  return log('info', formatMsg(msg))
+  return log(Severity.Info, formatMsg(msg))
 }
 
 export function warn(...msg: any[]): MessageId {
   console.warn(...msg)
-  return log('warning', formatMsg(msg))
+  return log(Severity.Warning, formatMsg(msg))
 }
 
 export function error(...msg: any[]): MessageId {
   console.error(...msg)
-  return log('error', formatMsg(msg))
+  return log(Severity.Error, formatMsg(msg))
 }
 
 export function debug(...msg: any[]): MessageId {
   console.debug(...msg)
   if (MODE === 'dev') {
-    return log('debug', formatMsg(msg))
+    return log(Severity.Debug, formatMsg(msg))
   }
   return ''
 }

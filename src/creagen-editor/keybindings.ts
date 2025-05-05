@@ -1,13 +1,18 @@
 import { KeyCode, KeyMod } from 'monaco-editor'
-import { Command } from './commands'
+import { Command, COMMANDS } from './commands'
+import { CreagenEditor } from './CreagenEditor'
+import { Editor } from './editor/Editor'
+
+type KeyInfo = string
 
 interface Keybinding {
-  key: string
+  key: KeyInfo
   command: Command
-  when?: string
+  /** Define context in which the keybind is active */
+  when?: 'editor' | 'sandbox'
 }
 
-export const KEYBINDINGS: Keybinding[] = [
+const defaultKeybindings: Keybinding[] = [
   {
     key: 'ctrl+shift+enter',
     command: 'editor.run',
@@ -22,9 +27,86 @@ export const KEYBINDINGS: Keybinding[] = [
   },
 ]
 
+type Handler = (...args: any[]) => void
+export class Keybindings {
+  private keybindings: Keybinding[] = []
+  private handlers: Map<Command, Handler> = new Map()
+
+  constructor() {
+    this.keybindings = defaultKeybindings
+  }
+
+  setupKeybindings(editor: CreagenEditor) {
+    if (editor.editor === null) return
+
+    const commandGroups = {} as Record<Command, Keybinding[]>
+    for (const keybind of this.keybindings) {
+      const group = commandGroups[keybind.command]
+      if (group) {
+        group.push(keybind)
+      } else {
+        commandGroups[keybind.command] = [keybind]
+      }
+    }
+
+    for (const group of Object.values(commandGroups)) {
+      const command = group[0]?.command
+      if (typeof command !== 'string') throw new Error('Invalid command type')
+      const handler = () => COMMANDS[command](editor)
+      this.handlers.set(command, handler)
+      for (const keybind of group) {
+        this.addKeybind(editor.editor, keybind, handler)
+      }
+    }
+  }
+
+  private addKeybind(
+    editor: Editor,
+    keybind: Keybinding,
+    handler: (...args: any[]) => void,
+    preventDefault: boolean = true,
+  ) {
+    const monacoKeybinding = getMonacoKeybinding(keybind.key)
+    editor.addKeybind(monacoKeybinding, handler)
+    // only in editor
+    if (keybind.when === 'editor') {
+      return
+    }
+
+    const keyInfo = monacoKeyToBrowserKey(monacoKeybinding)
+    if (!keyInfo) return
+
+    // Create browser-level handler
+    const browserHandler = (e: KeyboardEvent) => {
+      if (
+        keyInfo.ctrlKey === e.ctrlKey &&
+        keyInfo.altKey === e.altKey &&
+        keyInfo.shiftKey === e.shiftKey &&
+        keyInfo.metaKey === e.metaKey &&
+        keyInfo.key.toLowerCase() === e.key.toLowerCase()
+      ) {
+        if (preventDefault) e.preventDefault()
+        handler()
+      }
+    }
+    document.addEventListener('keydown', browserHandler)
+  }
+
+  getKeybindingsToCommand(command: Command): Keybinding[] {
+    return Array.from(this.keybindings.entries())
+      .filter(([_, bind]) => bind.command === command)
+      .map(([_, bind]) => bind)
+  }
+
+  getKeybindings() {
+    return Array.from(this.keybindings.keys())
+  }
+}
+
 type MonacoKeyCode = keyof typeof KeyCode
+type MonacoKeyInfo = number
 /** Translate keybind string to a monaco keycode */
-export function getMonacoKeybinding(key: string): number {
+export function getMonacoKeybinding(key: KeyInfo): MonacoKeyInfo {
   // Handle multi-key combinations like "ctrl+k 1"
   const parts = key.split(' ')
   if (parts.length > 1) {
@@ -96,16 +178,19 @@ export function getMonacoKeybinding(key: string): number {
   return keyCode
 }
 
-/**
- * Converts a Monaco keybinding code to browser KeyboardEvent parameters
- */
-export function monacoKeyToBrowserKey(keybinding: number): {
+interface BrowserKeyInfo {
   ctrlKey: boolean
   altKey: boolean
   shiftKey: boolean
   metaKey: boolean
   key: string
-} | null {
+}
+/**
+ * Converts a Monaco keybinding code to browser KeyboardEvent parameters
+ */
+export function monacoKeyToBrowserKey(
+  keybinding: number,
+): BrowserKeyInfo | null {
   const KEY_CODE_MAP: Record<number, string> = {
     // Special keys
     0: 'Unknown',
