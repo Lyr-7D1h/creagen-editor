@@ -18,9 +18,12 @@ npm start
 
 - use importmap to map module names to urls https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap
 - qp5.js
-- Full fullscreen
 - Custom Keybinds
 - Download canvas as png
+- Improved storage
+  - Fastcdc for file chunking https://www.usenix.org/system/files/conference/atc16/atc16-paper-xia.pdf
+  - git pack files
+  - Cloudflare r2
 - Project management
   - List sketches
   - Name sketches (aliases to a hash, similar to git branches)
