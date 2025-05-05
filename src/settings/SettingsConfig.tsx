@@ -14,6 +14,9 @@ const defaultConfig = {
   hide_all: {
     type: 'param',
     hidden: true,
+    queryParam: (value: string) => {
+      return value === 'true'
+    },
     value: false,
   },
   general: {
@@ -143,6 +146,7 @@ export interface Param<T = any> {
   type: 'param'
   value: T
   label?: string
+  queryParam?: (value: string) => T
   hidden?: boolean
   render?: (value: T, set?: (value: T) => void) => React.ReactNode
   readonly?: boolean

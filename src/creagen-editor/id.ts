@@ -51,6 +51,10 @@ function fromhex(string: string) {
   return out
 }
 
+export function IDToSub(id: ID): string {
+  return id.hash.substring(0, 7)
+}
+
 export function IDToString(id: ID): string {
   return (
     id.hash +

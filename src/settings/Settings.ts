@@ -22,11 +22,15 @@ export interface SettingsContextType {
   remove: (key: string) => void
 }
 
-export type Listener = (value: any) => void
+/** If value is null it means something has been removed/added or the value has been set to null */
+export type Listener = (value: any | null, key: string) => void
+export type KeyListener = (value: any | null) => void
+export type KeyParamListener = (value: any) => void
 
 // Core Settings class to handle the settings logic
 export class Settings {
   config: DefaultSettingsConfig
+  /** Listeners listening to all events located at null */
   private listeners: Map<string | null, Listener[]> = new Map()
 
   constructor() {
@@ -41,14 +45,11 @@ export class Settings {
         // skip if current stored has changed
         if (
           typeof entry === 'undefined' ||
-          typeof entry !== typeof value ||
-          entry.type !== (value as any).type
+          typeof entry.value !== typeof value ||
+          entry.type !== 'param'
         )
           continue
-        defaultConfig[key] = {
-          ...(defaultConfig[key] ?? {}),
-          ...(value as any),
-        }
+        defaultConfig[key].value = value
       }
     }
 
@@ -63,19 +64,33 @@ export class Settings {
     ) as Record<Params, any>
   }
 
+  isParam(key: string): key is Params {
+    if (key in this.config) {
+      const entry = this.config[key as keyof DefaultSettingsConfig]
+      return entry.type === 'param'
+    }
+    return false
+  }
+
+  getEntry(key: string): Entry | null {
+    const entry = this.config[key as keyof DefaultSettingsConfig]
+    if (typeof entry === 'undefined') return null
+    return entry as Entry
+  }
+
   get(key: Params): any {
     return this.config[key].value
   }
 
   // Set a value
   set(key: Params, value: any): void {
+    console.debug(`Settings: setting ${key} to ${JSON.stringify(value)}`)
     const entry = this.config[key]
+    if (typeof entry === 'undefined') throw Error(`Key ${key} does not exist`)
     if (entry.type !== 'param')
       throw Error(`You can't set a value for ${entry.type}`)
     entry.value = value
-    this.saveAndNotify()
-
-    this.listeners.get(key)?.forEach((listener) => listener(entry))
+    this.saveAndNotify(key, value)
   }
 
   // Add a new entry
@@ -90,12 +105,18 @@ export class Settings {
 
     this.config[key as keyof DefaultSettingsConfig] = entry as any
     ;(this.config[key as keyof DefaultSettingsConfig] as Entry).generated = true
-    this.saveAndNotify()
+    this.saveAndNotify(key, null)
     return key as keyof DefaultSettingsConfig
   }
 
   // Remove an entry and its children
   remove(key: string): void {
+    if (
+      typeof (defaultSettingsConfig as DefaultSettingsConfig)[
+        key as keyof DefaultSettingsConfig
+      ] === 'undefined'
+    )
+      throw Error(`You can't remove ${key} as this is a system setting`)
     const newSettings: Record<string, any> = { ...this.config }
     for (const k in newSettings) {
       if (k.startsWith(key)) {
@@ -103,25 +124,32 @@ export class Settings {
       }
     }
     this.config = newSettings as DefaultSettingsConfig
-    this.saveAndNotify()
+    this.saveAndNotify(key, null)
   }
 
   // Save settings to localStorage and notify listeners
-  private saveAndNotify(): void {
-    // Remove generated settings before saving
-    const clone = { ...this.config }
-    const saveSettings = Object.fromEntries(
-      Object.entries(clone).filter(([_, value]) => !(value as Entry).generated),
-    ) as DefaultSettingsConfig
-
-    localStorage.set('settings', saveSettings)
+  private saveAndNotify(key: any, value: any | null): void {
+    const values = { ...this.values }
+    for (const k in values) {
+      const entry = this.config[k as Params] as Entry
+      if (entry.generated) {
+        delete values[k as Params]
+      }
+    }
+    localStorage.set('settings', values)
 
     // Notify all listeners
-    this.listeners.get(null)?.forEach((listener) => listener(null))
+    this.listeners.get(null)?.forEach((listener) => listener(value, key))
+    if (value !== null) {
+      this.listeners.get(key)?.forEach((listener) => listener(value, key))
+    }
   }
 
-  // Add a change listener
-  subscribe(listener: () => void, key?: string): () => void {
+  // Add a change listener and return a function to unsubscribe
+  subscribe(listener: KeyListener, key: string): () => void
+  subscribe(listener: KeyParamListener, key: Params): () => void
+  subscribe(listener: Listener): () => void
+  subscribe(listener: Listener, key?: string): () => void {
     const index = key ?? null
     let listeners = this.listeners.get(index)
     if (typeof listeners === 'undefined') {
@@ -129,6 +157,7 @@ export class Settings {
     }
     listeners.push(listener)
     this.listeners.set(index, listeners)
+
     return () => {
       this.listeners.set(
         index,
