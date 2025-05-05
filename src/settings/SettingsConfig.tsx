@@ -3,6 +3,7 @@ import { MODE, CREAGEN_DEV_VERSION, CREAGEN_EDITOR_VERSION } from '../env'
 import { generateHumanReadableName, roundToDec } from '../util'
 import { LinearProgressWithLabelSetting } from './LinearProgressWithLabelSetting'
 import React from 'react'
+import { LibrarySetting } from './LibrarySetting'
 
 export interface Library {
   name: string
@@ -31,6 +32,7 @@ const defaultConfig = {
   'general.libraries': {
     type: 'param',
     label: 'Libraries',
+    render: () => <LibrarySetting />,
     generated: true,
     value: [] as Library[],
   },
