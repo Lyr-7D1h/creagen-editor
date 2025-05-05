@@ -3,7 +3,7 @@ import { CREAGEN_EDITOR_VERSION } from '../env'
 import { logger, Severity } from '../logs/logger'
 import { Sandbox } from './sandbox/Sandbox'
 import { Settings } from '../settings/Settings'
-import { IDFromString, IDToString, ID, createID } from './id'
+import { IDFromString, IDToString, ID, createID, IDToSub } from './id'
 import { LibraryImport, Importer } from './importer'
 import { LIBRARY_CONFIGS } from './libraryConfigs'
 import { parseCode } from './parseCode'
@@ -13,6 +13,8 @@ import { Keybindings } from './keybindings'
 
 /** Get code id from path and load code from indexdb */
 async function loadCodeFromPath(storage: Storage) {
+  const params = new URLSearchParams(window.location.search)
+
   const path = window.location.pathname.replace('/', '')
 
   if (path.length === 0) return null
@@ -25,11 +27,11 @@ async function loadCodeFromPath(storage: Storage) {
   }
   const value = await storage.get(id)
   if (value === null) {
-    logger.warn(`${IDToString(id)} not found in storage`)
+    logger.warn(`${IDToSub(id)} not found in storage`)
     return null
   }
 
-  return { id, code: value.code }
+  return { id, code: value.code, params }
 }
 
 export class CreagenEditor {
@@ -47,7 +49,34 @@ export class CreagenEditor {
   constructor() {
     // Handle popstate event
     addEventListener('popstate', () => {
-      this.loadCodeFromPath().catch(logger.error)
+      this.loadFromPath().catch(logger.error)
+    })
+  }
+
+  load() {
+    if (!this.editor) return
+    if (this.loaded) return
+    this.loaded = true
+
+    this.setupKeybindings()
+
+    // Load initial code and settings from url
+    this.loadFromPath().catch(logger.error)
+    this.loadLibraries()
+
+    this.settings.subscribe((value, k) => {
+      if (k === 'general.libraries') {
+        this.loadLibraries()
+      }
+
+      if (this.settings.isParam(k)) {
+        if (this.settings.config[k].queryParam) {
+          const url = new URL(window.location as any)
+          if (value === null || url.searchParams.get(k) === value) return
+          url.searchParams.set(k, value)
+          history.pushState(null, '', url)
+        }
+      }
     })
   }
 
@@ -104,7 +133,7 @@ export class CreagenEditor {
     this.keybindings.setupKeybindings(this)
   }
 
-  async loadCodeFromPath() {
+  async loadFromPath() {
     const result = await loadCodeFromPath(this.storage)
     if (result !== null && this.editor) {
       const { id, code } = result
@@ -115,7 +144,16 @@ export class CreagenEditor {
       this.setActiveId(id)
       this.editor.setValue(code)
     }
-    return result
+
+    const urlParams = new URLSearchParams(window.location.search)
+    for (const [key, value] of urlParams.entries()) {
+      if (this.settings.isParam(key)) {
+        if (this.settings.config[key].queryParam) {
+          const paramValue = this.settings.config[key].queryParam(value)
+          this.settings.set(key, paramValue)
+        }
+      }
+    }
   }
 
   loadLibraries() {
@@ -182,22 +220,6 @@ export class CreagenEditor {
         return newImports
       })
       .catch(logger.error)
-  }
-
-  load() {
-    if (!this.editor) return
-    if (this.loaded) return
-    this.loaded = true
-
-    this.setupKeybindings()
-
-    // Load initial code
-    this.loadCodeFromPath().catch(logger.error)
-    this.loadLibraries()
-
-    this.settings.subscribe(() => {
-      this.updateLibraries()
-    }, 'general.libraries')
   }
 
   updateLibraries() {

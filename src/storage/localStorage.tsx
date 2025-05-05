@@ -1,7 +1,5 @@
-import { DefaultSettingsConfig } from '../settings/SettingsConfig'
-
 class LocalStorage {
-  set(id: 'settings', item: DefaultSettingsConfig) {
+  set(id: 'settings', item: any) {
     globalThis.localStorage.setItem(id, JSON.stringify(item))
   }
 
