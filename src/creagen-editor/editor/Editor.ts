@@ -45,8 +45,7 @@ const creagenFullscreenTheme: monaco.editor.IStandaloneThemeData = {
   base: 'hc-black',
   inherit: true,
   colors: {
-    'editor.background': '#ffffff00',
-    'editor.selectionBackground': '#ffffff',
+    'editor.background': '#00000000',
     'editor.lineHighlightBackground': '#00000088',
     'editorCursor.foreground': '#ffffff',
   },
@@ -169,9 +168,10 @@ export class Editor {
   setFullscreenMode(value: boolean) {
     if (value) {
       monaco.editor.setTheme('creagen-fullscreen')
+      const value = this.getValue()
       this.fullscreendecorators = this.editor.createDecorationsCollection([
         {
-          range: new monaco.Range(0, 0, 500, 500),
+          range: new monaco.Range(0, 0, value.length + 1, 0),
           options: {
             inlineClassName: 'creagen-fullscreen',
           },
@@ -214,5 +214,17 @@ export class Editor {
 
   setValue(value: string) {
     this.editor.setValue(value)
+
+    if (this.fullscreendecorators) {
+      this.fullscreendecorators.clear()
+      this.fullscreendecorators = this.editor.createDecorationsCollection([
+        {
+          range: new monaco.Range(0, 0, value.length + 1, 0),
+          options: {
+            inlineClassName: 'creagen-fullscreen',
+          },
+        },
+      ])
+    }
   }
 }
