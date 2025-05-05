@@ -1,6 +1,21 @@
 import { Alert, AlertColor, Stack } from '@mui/material'
 import React, { JSX, useEffect, useState } from 'react'
-import { Message, logger } from './logger'
+import { Message, Severity, logger } from './logger'
+
+function severityToAlertColor(severity: Severity): AlertColor {
+  switch (severity) {
+    case Severity.Error:
+      return 'error'
+    case Severity.Warning:
+      return 'warning'
+    case Severity.Info:
+      return 'info'
+    case Severity.Debug:
+      return 'info'
+    default:
+      return 'info'
+  }
+}
 
 export function Logs() {
   const [logs, setLogs] = useState<Message[]>(logger.getMessages())
@@ -25,11 +40,11 @@ export function Logs() {
   for (const log of logs) {
     let severity = log.severity
     // TODO: custom debug color
-    if (severity === 'debug') severity = 'info'
+    if (severity === Severity.Debug) severity = Severity.Info
     Alerts.push(
       <Alert
         key={log.id}
-        severity={log.severity as AlertColor}
+        severity={severityToAlertColor(severity)}
         onClose={() => handleClose(log.id)}
         sx={{ minWidth: '250px' }}
       >

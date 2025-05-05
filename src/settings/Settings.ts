@@ -1,39 +1,11 @@
-import React from 'react'
 import { localStorage } from '../storage/localStorage'
 import {
   defaultSettingsConfig,
   DefaultSettingsConfig,
+  Entry,
+  Param,
   Params,
-} from './defaultSettingsConfig'
-
-export interface Folder {
-  type: 'folder'
-  title: string
-}
-
-export interface Button {
-  type: 'button'
-  title: string
-  onClick: () => void
-}
-
-/** A simple state value */
-export interface StateValue<T = any> {
-  type: 'state'
-  value: T
-}
-
-export interface Param<T = any> {
-  type: 'param'
-  label: string
-  render?: (value: T, set?: (value: T) => void) => React.ReactNode
-  value: T
-  readonly?: boolean
-}
-
-export type Entry = (Folder | Button | Param | StateValue) & {
-  generated?: boolean
-}
+} from './SettingsConfig'
 
 export function parentKey(key: string) {
   return key.split('.').slice(0, -1).join('.')
@@ -54,7 +26,7 @@ export type Listener = (value: any) => void
 
 // Core Settings class to handle the settings logic
 export class Settings {
-  private settings: DefaultSettingsConfig
+  config: DefaultSettingsConfig
   private listeners: Map<string | null, Listener[]> = new Map()
 
   constructor() {
@@ -65,6 +37,14 @@ export class Settings {
     const storageSettings = localStorage.get('settings')
     if (storageSettings !== null) {
       for (const [key, value] of Object.entries(storageSettings)) {
+        const entry = defaultConfig[key]
+        // skip if current stored has changed
+        if (
+          typeof entry === 'undefined' ||
+          typeof entry !== typeof value ||
+          entry.type !== (value as any).type
+        )
+          continue
         defaultConfig[key] = {
           ...(defaultConfig[key] ?? {}),
           ...(value as any),
@@ -72,30 +52,26 @@ export class Settings {
       }
     }
 
-    this.settings = defaultConfig as DefaultSettingsConfig
+    this.config = defaultConfig as DefaultSettingsConfig
   }
 
   get values(): Record<Params, any> {
     return Object.fromEntries(
-      Object.entries(this.settings)
-        .filter(([_, entry]) => (entry as Entry).type === 'param')
+      Object.entries(this.config)
+        .filter(([_, entry]) => (entry as Entry).type === 'param' || entry.type)
         .map(([key, entry]) => [key, (entry as Param).value]),
     ) as Record<Params, any>
   }
 
-  // Get all settings
-  get config(): DefaultSettingsConfig {
-    return this.settings
-  }
-
   get(key: Params): any {
-    return this.settings[key].value
+    return this.config[key].value
   }
 
-  // Set a param value
+  // Set a value
   set(key: Params, value: any): void {
-    const entry = this.settings[key]
-    if (entry.type !== 'param') throw Error('not a param')
+    const entry = this.config[key]
+    if (entry.type !== 'param')
+      throw Error(`You can't set a value for ${entry.type}`)
     entry.value = value
     this.saveAndNotify()
 
@@ -106,35 +82,34 @@ export class Settings {
   add(key: string, entry: Entry) {
     if (
       entry.type === 'param' &&
-      (this.settings[parentKey(key) as keyof DefaultSettingsConfig] as Entry)
+      (this.config[parentKey(key) as keyof DefaultSettingsConfig] as Entry)
         ?.type !== 'folder'
     ) {
       throw Error('parent is not a folder')
     }
 
-    this.settings[key as keyof DefaultSettingsConfig] = entry as any
-    ;(this.settings[key as keyof DefaultSettingsConfig] as Entry).generated =
-      true
+    this.config[key as keyof DefaultSettingsConfig] = entry as any
+    ;(this.config[key as keyof DefaultSettingsConfig] as Entry).generated = true
     this.saveAndNotify()
     return key as keyof DefaultSettingsConfig
   }
 
   // Remove an entry and its children
   remove(key: string): void {
-    const newSettings: Record<string, any> = { ...this.settings }
+    const newSettings: Record<string, any> = { ...this.config }
     for (const k in newSettings) {
       if (k.startsWith(key)) {
         delete newSettings[k]
       }
     }
-    this.settings = newSettings as DefaultSettingsConfig
+    this.config = newSettings as DefaultSettingsConfig
     this.saveAndNotify()
   }
 
   // Save settings to localStorage and notify listeners
   private saveAndNotify(): void {
     // Remove generated settings before saving
-    const clone = { ...this.settings }
+    const clone = { ...this.config }
     const saveSettings = Object.fromEntries(
       Object.entries(clone).filter(([_, value]) => !(value as Entry).generated),
     ) as DefaultSettingsConfig

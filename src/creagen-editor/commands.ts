@@ -1,6 +1,9 @@
+import { logger, MessageId, Severity } from '../logs/logger'
 import { CreagenEditor } from './CreagenEditor'
 
 export type CommandHandler = (editor: CreagenEditor) => void
+
+let toggleHideAllMessageId: MessageId | null = null
 
 export const COMMANDS = {
   'editor.run': (editor: CreagenEditor) => {
@@ -13,10 +16,17 @@ export const COMMANDS = {
     )
   },
   'editor.toggleHideAll': (editor: CreagenEditor) => {
-    editor.settings.set(
-      'editor.hide_all',
-      !editor.settings.get('editor.hide_all'),
-    )
+    const set = !editor.settings.get('hide_all')
+    if (set) {
+      toggleHideAllMessageId = logger.log(
+        Severity.Info,
+        `Toggled hide all press ${editor.keybindings.getKeybindingsToCommand('editor.toggleHideAll')[0]?.key} to unhide`,
+        10000,
+      )
+    } else {
+      if (toggleHideAllMessageId) logger.remove(toggleHideAllMessageId)
+    }
+    editor.settings.set('hide_all', set)
   },
 }
 

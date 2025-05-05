@@ -1,5 +1,5 @@
 import { CREAGEN_EDITOR_VERSION } from '../env'
-import { Library } from '../settings/defaultSettingsConfig'
+import { Library } from '../settings/SettingsConfig'
 
 export class Svg {
   svg: SVGElement
