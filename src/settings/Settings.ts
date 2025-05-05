@@ -29,13 +29,21 @@ export type KeyParamListener = (value: any) => void
 
 // Core Settings class to handle the settings logic
 export class Settings {
+  readonly defaultConfig = defaultSettingsConfig
   config: DefaultSettingsConfig
   /** Listeners listening to all events located at null */
   private listeners: Map<string | null, Listener[]> = new Map()
 
   constructor() {
-    // Initialize with default settings
-    const defaultConfig = { ...defaultSettingsConfig } as Record<string, any>
+    // Initialize with deep cloned default settings
+    const defaultConfig = Object.entries(defaultSettingsConfig).reduce<
+      Record<string, any>
+    >((acc, [key, entry]) => {
+      acc[key] = {
+        ...entry,
+      }
+      return acc
+    }, {})
 
     // Load stored settings from localStorage
     const storageSettings = localStorage.get('settings')
@@ -114,7 +122,7 @@ export class Settings {
     if (
       typeof (defaultSettingsConfig as DefaultSettingsConfig)[
         key as keyof DefaultSettingsConfig
-      ] === 'undefined'
+      ] !== 'undefined'
     )
       throw Error(`You can't remove ${key} as this is a system setting`)
     const newSettings: Record<string, any> = { ...this.config }

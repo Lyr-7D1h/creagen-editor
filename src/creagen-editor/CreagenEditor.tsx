@@ -3,7 +3,7 @@ import { CREAGEN_EDITOR_VERSION } from '../env'
 import { logger, Severity } from '../logs/logger'
 import { Sandbox } from '../sandbox/Sandbox'
 import { Settings } from '../settings/Settings'
-import { IDFromString, IDToString, ID, createID, IDToSub } from './id'
+import { ID } from './id'
 import { LIBRARY_CONFIGS } from './libraryConfigs'
 import { parseCode } from './parseCode'
 import { IndexDB, Storage } from '../storage/storage'
@@ -19,7 +19,7 @@ async function loadCodeFromPath(storage: Storage) {
 
   if (path.length === 0) return null
 
-  const id = IDFromString(path)
+  const id = ID.fromString(path)
 
   if (id === null) {
     logger.error('invalid id given')
@@ -27,7 +27,7 @@ async function loadCodeFromPath(storage: Storage) {
   }
   const value = await storage.get(id)
   if (value === null) {
-    logger.warn(`${IDToSub(id)} not found in storage`)
+    logger.warn(`${id.toSub()} not found in storage`)
     return null
   }
 
@@ -73,7 +73,17 @@ export class CreagenEditor {
         if (this.settings.config[k].queryParam) {
           const url = new URL(window.location as any)
           if (value === null || url.searchParams.get(k) === value) return
-          url.searchParams.set(k, value)
+
+          // remove query param if it is also the default behavior
+          if (
+            this.settings.defaultConfig[k].type === 'param' &&
+            this.settings.defaultConfig[k].hidden === true &&
+            this.settings.defaultConfig[k].value === value
+          ) {
+            url.searchParams.delete(k)
+          } else {
+            url.searchParams.set(k, value)
+          }
           history.pushState(null, '', url)
         }
       }
@@ -102,7 +112,7 @@ export class CreagenEditor {
 
   updateActiveId(id: ID) {
     if (JSON.stringify(id) === JSON.stringify(this.activeId)) return
-    window.history.pushState('Creagen', '', IDToString(id))
+    window.history.pushState('Creagen', '', id.toString())
     return this.setActiveId(id)
   }
 
@@ -225,13 +235,10 @@ export class CreagenEditor {
   updateLibraries() {
     this.loadLibraries()
     if (this.activeId !== null) {
-      const { hash, editorVersion, date } = this.activeId
-      this.updateActiveId({
-        hash,
-        editorVersion,
-        date,
-        libraries: this.settings.values['general.libraries'],
-      })
+      const { hash, editorVersion } = this.activeId
+      this.updateActiveId(
+        new ID(hash, editorVersion, this.settings.values['general.libraries']),
+      )
     }
   }
 
@@ -247,12 +254,15 @@ export class CreagenEditor {
       let code = this.editor.getValue()
 
       // store code and change url
-      const id = await createID(code, this.settings.values['general.libraries'])
+      const id = await ID.create(
+        code,
+        this.settings.values['general.libraries'],
+      )
       // store and add to history if not new
       if (id.hash !== this.activeId?.hash) {
         await this.storage.set(id, {
           code,
-          createdOn: id.date,
+          createdOn: new Date(),
           previous: this.activeId ?? undefined,
         })
         if (id.hash !== this.activeId?.hash) {
