@@ -1,8 +1,9 @@
 import React, { useEffect, useRef } from 'react'
-import type { editor } from 'monaco-editor'
+import { editor } from 'monaco-editor'
 import MonacoEditor, { Monaco } from '@monaco-editor/react'
 import { Editor } from './Editor'
 import { useSettings } from '../settings/SettingsProvider'
+import { History } from './History'
 
 export interface EditorProps {
   value?: string
@@ -19,11 +20,6 @@ export function EditorView({ value, width, height, onLoad }: EditorProps) {
   /** Update editor based on global settings */
   function update(editor: Editor) {
     editor.setVimMode(settings.values['editor.vim'])
-    if (settings.values['hide_all']) {
-      editor.hide()
-    } else {
-      editor.show()
-    }
     editor.setFullscreenMode(settings.values['editor.fullscreen'])
     if (settings.values['editor.relative_lines']) {
       editor.updateOptions({ lineNumbers: 'relative' })
@@ -32,12 +28,10 @@ export function EditorView({ value, width, height, onLoad }: EditorProps) {
     }
   }
 
-  // if (editorRef.current !== null) {
   useEffect(() => {
     if (editorRef.current === null) return
     update(editorRef.current)
   }, [
-    settings.values['hide_all'],
     settings.values['editor.vim'],
     settings.values['editor.fullscreen'],
     settings.values['editor.relative_lines'],
@@ -56,10 +50,16 @@ export function EditorView({ value, width, height, onLoad }: EditorProps) {
   }
 
   return (
-    <div style={{ zIndex: 1001 }}>
+    <div
+      style={{
+        zIndex: 1001,
+        height,
+        width,
+        display: settings.values['hide_all'] ? 'none' : 'block',
+      }}
+    >
+      {settings.values['editor.show_history'] ? <History /> : ''}
       <MonacoEditor
-        width={width}
-        height={height}
         defaultValue={value ?? ''}
         language="typescript"
         theme="creagen"

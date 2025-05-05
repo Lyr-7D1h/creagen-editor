@@ -75,6 +75,11 @@ const defaultConfig = {
     label: 'Relative Lines',
     value: false,
   },
+  'editor.show_history': {
+    type: 'param',
+    label: 'Show file history',
+    value: true,
+  },
   debug: {
     type: 'folder',
     title: 'Debug',

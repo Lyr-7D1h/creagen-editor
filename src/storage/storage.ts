@@ -1,17 +1,25 @@
-import { type ID } from '../creagen-editor/id'
+import { z } from 'zod'
+import { IDStringSchema, type ID } from '../creagen-editor/id'
 import { logger } from '../logs/logger'
+import { dateNumberSchema } from '../creagen-editor/schemaUtils'
 
 export abstract class Storage {
-  abstract set(id: ID, item: Generation): void
+  abstract set(id: ID, item: Generation): Promise<void>
 
-  abstract get(id: ID): any | null
+  abstract get(id: ID): Promise<Generation | null>
 }
 
-export interface Generation {
+interface StoredGeneration {
   code: string
-  createdOn: Date
-  previous?: ID
+  createdOn: number
+  previous?: string
 }
+const generationSchema = z.object({
+  code: z.string(),
+  createdOn: dateNumberSchema,
+  previous: IDStringSchema.optional(),
+})
+export type Generation = z.infer<typeof generationSchema>
 
 export class IndexDB extends Storage {
   db: IDBDatabase | null
@@ -89,7 +97,12 @@ export class IndexDB extends Storage {
       }
 
       const store = trans.objectStore('generations')
-      const req = store.add(item, id.hash)
+      const storedItem: StoredGeneration = {
+        code: item.code,
+        createdOn: item.createdOn.valueOf(),
+        previous: item.previous?.toString(),
+      }
+      const req = store.add(storedItem, id.toString())
       req.onsuccess = () => {
         resolve()
       }
@@ -99,10 +112,12 @@ export class IndexDB extends Storage {
   async get(id: ID): Promise<Generation | null> {
     const db = await this.load()
     const os = db.transaction('generations').objectStore('generations')
-    const req = os.get(id.hash)
+    const req = os.get(id.toString())
     return await new Promise((resolve, reject) => {
       req.onsuccess = () => {
-        resolve((req.result as Generation | undefined) ?? null)
+        if (typeof req.result === 'undefined') return resolve(null)
+        const gen = generationSchema.parse(req.result)
+        resolve(gen)
       }
       req.onerror = (_e) => {
         reject(new Error(`failed to get item: ${req.error?.message ?? ''}`))

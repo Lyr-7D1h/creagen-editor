@@ -12,7 +12,7 @@ import { SettingsView } from '../settings/SettingsView'
 import { EditorView } from '../editor/EditorView'
 import { SandboxView } from '../sandbox/SandboxView'
 
-const creagenEditor = new CreagenEditor()
+export const creagenEditor = new CreagenEditor()
 
 export function CreagenEditorView() {
   const editorRef = useRef<Editor>(null)
@@ -21,27 +21,6 @@ export function CreagenEditorView() {
   useEffect(() => {
     creagenEditor.updateStorageUsage()
   }, [])
-
-  // if (loaded) {
-  //   return (
-  //     <Box
-  //       sx={{
-  //         display: 'flex',
-  //         flexDirection: 'column',
-  //         alignItems: 'center',
-  //         justifyContent: 'center',
-  //         height: '100vh',
-  //         width: '100vw',
-  //         bgcolor: 'background.paper',
-  //         color: 'text.primary',
-  //       }}
-  //     >
-  //       <Logs />
-  //       <CircularProgress size={60} thickness={4} sx={{ mb: 3 }} />
-  //       <Typography variant="h6">Loading Editor...</Typography>
-  //     </Box>
-  //   )
-  // }
 
   return (
     <SettingsProvider settings={creagenEditor.settings}>
