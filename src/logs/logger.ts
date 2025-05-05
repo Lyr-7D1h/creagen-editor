@@ -1,5 +1,6 @@
 import { MODE } from '../env'
 
+export const AUTOHIDE_DURATION_DEFAULT = 6000
 export enum Severity {
   Success,
   Info,
@@ -12,7 +13,7 @@ export type Message = {
   id: MessageId
   message: string
   severity: Severity
-  autoHideDuration?: number
+  autoHideDuration?: number | null
 }
 
 export type MessageId = string
@@ -42,8 +43,11 @@ export function getMessages(): Message[] {
 export function log(
   severity: Severity,
   message: string,
-  autoHideDuration: number = 6000,
+  /** Set to null if you want to control when to remove the log */
+  autoHideDuration?: number | null,
 ): MessageId {
+  if (typeof autoHideDuration === 'undefined')
+    autoHideDuration = AUTOHIDE_DURATION_DEFAULT
   const id = Date.now().toString()
   const newAlert = { id, message, severity, autoHideDuration }
 
@@ -51,7 +55,7 @@ export function log(
   notifyListeners()
 
   // Auto-remove after duration if specified
-  if (autoHideDuration > 0) {
+  if (autoHideDuration !== null && autoHideDuration > 0) {
     setTimeout(() => {
       remove(id)
     }, autoHideDuration)

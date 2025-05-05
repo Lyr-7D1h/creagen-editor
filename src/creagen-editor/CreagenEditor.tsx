@@ -1,6 +1,6 @@
 import { Editor } from './editor/Editor'
 import { CREAGEN_EDITOR_VERSION } from '../env'
-import { logger } from '../logs/logger'
+import { logger, Severity } from '../logs/logger'
 import { Sandbox } from './sandbox/Sandbox'
 import { Settings } from '../settings/Settings'
 import { IDFromString, IDToString, ID, createID } from './id'
@@ -216,37 +216,41 @@ export class CreagenEditor {
   async render() {
     if (!this.editor) return
 
-    logger.clear()
-    const info = logger.info('rendering code')
-    if (this.settings.values['editor.format_on_render']) {
-      await this.editor.format()
-    }
-
-    let code = this.editor.getValue()
-
-    // store code and change url
-    const id = await createID(code, this.settings.values['general.libraries'])
-    // store and add to history if not new
-    if (id.hash !== this.activeId?.hash) {
-      await this.storage.set(id, {
-        code,
-        createdOn: id.date,
-        previous: this.activeId ?? undefined,
-      })
-      if (id.hash !== this.activeId?.hash) {
-        this.updateActiveId(id)
+    const info = logger.log(Severity.Info, 'rendering code', null)
+    try {
+      if (this.settings.values['editor.format_on_render']) {
+        await this.editor.format()
       }
+
+      let code = this.editor.getValue()
+
+      // store code and change url
+      const id = await createID(code, this.settings.values['general.libraries'])
+      // store and add to history if not new
+      if (id.hash !== this.activeId?.hash) {
+        await this.storage.set(id, {
+          code,
+          createdOn: id.date,
+          previous: this.activeId ?? undefined,
+        })
+        if (id.hash !== this.activeId?.hash) {
+          this.updateActiveId(id)
+        }
+      }
+
+      code = parseCode(code, this.libraryImports)
+
+      const imports = Object.values(this.libraryImports).filter((lib) =>
+        this.settings.values['general.libraries'].some(
+          (library: Library) => library.name === lib.name,
+        ),
+      )
+
+      this.sandbox?.render(code, imports)
+    } catch (e) {
+      logger.remove(info)
+      throw e
     }
-
-    code = parseCode(code, this.libraryImports)
-
-    const imports = Object.values(this.libraryImports).filter((lib) =>
-      this.settings.values['general.libraries'].some(
-        (library: Library) => library.name === lib.name,
-      ),
-    )
-
-    this.sandbox?.render(code, imports)
     logger.remove(info)
   }
 }
