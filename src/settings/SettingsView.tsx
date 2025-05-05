@@ -25,11 +25,11 @@ const expendedSettingKey = 'expandedSetting'
 
 export function SettingsView() {
   const settings = useSettings()
-  const [expanded, setExpandedState] = React.useState<string | false>(
+  const [expanded, setExpandedState] = React.useState<string>(
     localStorage.getItem(expendedSettingKey) ?? 'general',
   )
 
-  function setExpanded(expanded: string | false) {
+  function setExpanded(expanded: string) {
     localStorage.setItem(expendedSettingKey, expanded as string)
     setExpandedState(expanded)
   }
@@ -64,11 +64,11 @@ export function SettingsView() {
       {Object.entries(folders).map(([folderKey, entries]) => (
         <Accordion
           disableGutters
-          sx={{ width: expanded === false ? 100 : 300, margin: 0 }}
+          sx={{ width: expanded === '' ? 100 : 300, margin: 0 }}
           key={folderKey}
           expanded={expanded === folderKey}
           onChange={(_, expanded) => {
-            setExpanded(expanded ? folderKey : false)
+            setExpanded(expanded ? folderKey : '')
           }}
           slotProps={{ transition: { timeout: 0 } }}
         >
