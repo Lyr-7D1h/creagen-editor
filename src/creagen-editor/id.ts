@@ -2,6 +2,40 @@ import { SemVer } from 'semver'
 import { CREAGEN_EDITOR_VERSION } from '../env'
 import { Library } from '../settings/SettingsConfig'
 import { z } from 'zod'
+import { semverSchema } from './schemaUtils'
+
+export const IDStringSchema = z.string().transform((data, ctx) => {
+  const id = ID.fromString(data)
+  if (id === null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'No version',
+    })
+    return z.NEVER
+  }
+  return id
+})
+
+const libraryStringSchema = z.string().transform((data, ctx) => {
+  const parts = data.split('@')
+  const name = parts.splice(0, parts.length - 1).join('@')
+  if (typeof parts[0] === 'undefined') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'No version',
+    })
+    return z.NEVER
+  }
+  const version = semverSchema.safeParse(parts[0])
+  if (version.error) {
+    ctx.addIssue(version.error.errors[0]!)
+    return z.NEVER
+  }
+  return {
+    name,
+    version: version.data,
+  }
+})
 
 /**
  * ID: [64 byte hash][hex encoded Extension]
@@ -44,18 +78,14 @@ export class ID {
     const hash = idString.substring(0, 64)
     const ext = fromHex(idString.substring(64)).split(':')
     const editorVersion = new SemVer(ext[0]!)
-    const libs = z
-      .string()
+    const libs = libraryStringSchema
       .array()
-      .parse(JSON.parse(`[${ext[1]!}]`))
-      .map((lib: string) => {
-        const parts = lib.split('@')
-        return {
-          name: parts.splice(0, parts.length - 1).join('@'),
-          version: new SemVer(parts[0]!),
-        }
-      })
-    return new ID(hash, editorVersion, libs)
+      .safeParse(JSON.parse(`[${ext[1]!}]`))
+    if (libs.success === false) {
+      console.warn(libs.error)
+      return null
+    }
+    return new ID(hash, editorVersion, libs.data)
   }
 
   /**

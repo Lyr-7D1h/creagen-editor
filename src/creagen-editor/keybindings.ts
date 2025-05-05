@@ -22,6 +22,7 @@ const defaultKeybindings: Keybinding[] = [
     command: 'editor.toggleFullscreen',
   },
   {
+    // TODO: enable also in sandbox
     key: 'ctrl+f11',
     command: 'editor.toggleHideAll',
   },

@@ -6,15 +6,12 @@ import { Settings } from '../settings/Settings'
 import { ID } from './id'
 import { LIBRARY_CONFIGS } from './libraryConfigs'
 import { parseCode } from './parseCode'
-import { IndexDB, Storage } from '../storage/storage'
+import { Generation, IndexDB, Storage } from '../storage/storage'
 import { Library } from '../settings/SettingsConfig'
 import { Keybindings } from './keybindings'
 import { Importer, LibraryImport } from '../importer'
 
-/** Get code id from path and load code from indexdb */
-async function loadCodeFromPath(storage: Storage) {
-  const params = new URLSearchParams(window.location.search)
-
+function getActiveIdFromPath(): ID | null {
   const path = window.location.pathname.replace('/', '')
 
   if (path.length === 0) return null
@@ -25,23 +22,22 @@ async function loadCodeFromPath(storage: Storage) {
     logger.error('invalid id given')
     return null
   }
-  const value = await storage.get(id)
-  if (value === null) {
-    logger.warn(`${id.toSub()} not found in storage`)
-    return null
-  }
 
-  return { id, code: value.code, params }
+  return id
 }
 
+type Key = 'render'
+type Listener = () => void
 export class CreagenEditor {
-  editor: Editor | null = null
   storage: Storage = new IndexDB()
   settings: Settings = new Settings()
+  editor: Editor | null = null
   sandbox: Sandbox | null = null
   keybindings = new Keybindings()
 
-  private activeId: ID | null = null
+  listeners: Map<Key, Listener[]> = new Map()
+
+  activeId: ID | null = getActiveIdFromPath()
   // private commands: Map<string, (editor: CreagenEditor) => void> = new Map()
   private libraryImports: Record<string, LibraryImport> = {}
   private loaded = false
@@ -51,6 +47,29 @@ export class CreagenEditor {
     addEventListener('popstate', () => {
       this.loadFromPath().catch(logger.error)
     })
+  }
+
+  private notify(key: Key) {
+    const listeners = this.listeners.get(key)
+    if (!listeners) return
+    for (const listener of listeners) {
+      listener()
+    }
+  }
+
+  on(key: Key, listener: Listener) {
+    let listeners = this.listeners.get(key)
+    if (typeof listeners === 'undefined') {
+      listeners = [] as Listener[]
+    }
+    listeners.push(listener)
+    this.listeners.set(key, listeners)
+    return () => {
+      this.listeners.set(
+        key,
+        listeners!.filter((l) => l !== listener),
+      )
+    }
   }
 
   load() {
@@ -84,7 +103,7 @@ export class CreagenEditor {
           } else {
             url.searchParams.set(k, value)
           }
-          history.pushState(null, '', url)
+          window.history.pushState(null, '', url)
         }
       }
     })
@@ -105,15 +124,18 @@ export class CreagenEditor {
     this.storage = storage
   }
 
-  setActiveId(id: ID | null) {
+  private setActiveId(id: ID | null) {
     this.activeId = id
     return id
   }
 
   updateActiveId(id: ID) {
     if (JSON.stringify(id) === JSON.stringify(this.activeId)) return
-    window.history.pushState('Creagen', '', id.toString())
-    return this.setActiveId(id)
+    // set first because some components depend on history updates
+    this.setActiveId(id)
+    const url = new URL(window.location as any)
+    url.pathname = id.toString()
+    window.history.pushState('Creagen', '', url)
   }
 
   getLibraryImports() {
@@ -123,6 +145,23 @@ export class CreagenEditor {
   setLibraryImports(imports: Record<string, LibraryImport>) {
     this.libraryImports = imports
     return imports
+  }
+
+  /**
+   * Get history
+   * @param n - How far to go back
+   */
+  async history(n: number): Promise<[ID, Generation][]> {
+    const history: [ID, Generation][] = []
+    let id = this.activeId
+    for (let i = 0; i < n; i++) {
+      if (!id) break
+      const item = await this.storage.get(id)
+      if (item === null) break
+      history.push([id, item])
+      id = item?.previous ?? null
+    }
+    return history
   }
 
   updateStorageUsage() {
@@ -143,17 +182,22 @@ export class CreagenEditor {
     this.keybindings.setupKeybindings(this)
   }
 
-  async loadFromPath() {
-    const result = await loadCodeFromPath(this.storage)
-    if (result !== null && this.editor) {
-      const { id, code } = result
+  async loadCode(id: ID) {
+    const generation = await this.storage.get(id)
+    if (generation && this.editor) {
+      const { code } = generation
       if (id.editorVersion.compare(CREAGEN_EDITOR_VERSION)) {
         logger.warn("Editor version doesn't match")
       }
       this.settings.set('general.libraries', id.libraries)
-      this.setActiveId(id)
+      this.setActiveId(this.activeId)
       this.editor.setValue(code)
     }
+  }
+
+  async loadFromPath() {
+    if (this.activeId === null) return
+    this.loadCode(this.activeId)
 
     const urlParams = new URLSearchParams(window.location.search)
     for (const [key, value] of urlParams.entries()) {
@@ -284,5 +328,7 @@ export class CreagenEditor {
       throw e
     }
     logger.remove(info)
+
+    this.notify('render')
   }
 }

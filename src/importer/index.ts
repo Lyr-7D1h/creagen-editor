@@ -2,7 +2,7 @@ import { fetch } from '../fetch'
 import { SemVer } from 'semver'
 import { z } from 'zod'
 import { getTypings } from './typings'
-import { semver } from '../creagen-editor/schemaUtils'
+import { semverSchema } from '../creagen-editor/schemaUtils'
 import { CREAGEN_DEV_VERSION } from '../env'
 import { Library } from '../settings/SettingsConfig'
 
@@ -20,7 +20,7 @@ export interface LibraryImport extends Library {
 
 const packageJsonSchema = z.object({
   name: z.string(),
-  version: semver,
+  version: semverSchema,
   types: z.string().optional(),
   typings: z.string().optional(),
   module: z.string().optional(),
