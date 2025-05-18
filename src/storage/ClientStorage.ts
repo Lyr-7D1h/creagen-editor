@@ -1,27 +1,16 @@
-import { z } from 'zod'
-import { IDStringSchema, type ID } from '../creagen-editor/id'
+import { Storage } from './Storage'
 import { logger } from '../logs/logger'
-import { dateNumberSchema } from '../creagen-editor/schemaUtils'
-
-export abstract class Storage {
-  abstract set(id: ID, item: Generation): Promise<void>
-
-  abstract get(id: ID): Promise<Generation | null>
-}
+import { generationSchema } from '../vcs/Generation'
+import { localStorage } from './LocalStorage'
+import { StorageKey } from './Storage'
 
 interface StoredGeneration {
   code: string
   createdOn: number
   previous?: string
 }
-const generationSchema = z.object({
-  code: z.string(),
-  createdOn: dateNumberSchema,
-  previous: IDStringSchema.optional(),
-})
-export type Generation = z.infer<typeof generationSchema>
 
-export class IndexDB extends Storage {
+export class ClientStorage extends Storage {
   db: IDBDatabase | null
 
   constructor() {
@@ -82,7 +71,13 @@ export class IndexDB extends Storage {
     })
   }
 
-  async set(id: ID, item: Generation) {
+  async set(id: StorageKey, item: any) {
+    if (id === 'refs') {
+      return localStorage.set('refs', item)
+    } else if (id === 'settings') {
+      return localStorage.set('settings', item)
+    }
+
     // return on duplicate values
     if ((await this.get(id)) !== null) return
 
@@ -109,7 +104,10 @@ export class IndexDB extends Storage {
     })
   }
 
-  async get(id: ID): Promise<Generation | null> {
+  async get(id: StorageKey): Promise<any | null> {
+    if (id === 'refs') return localStorage.get(id)
+    if (id === 'settings') return localStorage.get(id)
+
     const db = await this.load()
     const os = db.transaction('generations').objectStore('generations')
     const req = os.get(id.toString())
