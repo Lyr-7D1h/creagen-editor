@@ -1,15 +1,17 @@
 import { Editor } from '../editor/Editor'
 import { CREAGEN_EDITOR_VERSION } from '../env'
 import { logger, Severity } from '../logs/logger'
+import { Storage } from '../storage/Storage'
 import { Sandbox } from '../sandbox/Sandbox'
 import { Settings } from '../settings/Settings'
 import { ID } from './id'
 import { LIBRARY_CONFIGS } from './libraryConfigs'
 import { parseCode } from './parseCode'
-import { Generation, IndexDB, Storage } from '../storage/storage'
+import { ClientStorage } from '../storage/ClientStorage'
 import { Library } from '../settings/SettingsConfig'
 import { Keybindings } from './keybindings'
 import { Importer, LibraryImport } from '../importer'
+import { VCS } from '../vcs/VCS'
 
 function getActiveIdFromPath(): ID | null {
   const path = window.location.pathname.replace('/', '')
@@ -26,18 +28,21 @@ function getActiveIdFromPath(): ID | null {
   return id
 }
 
+const storage = new ClientStorage()
+
 type Key = 'render'
 type Listener = () => void
 export class CreagenEditor {
-  storage: Storage = new IndexDB()
-  settings: Settings = new Settings()
+  storage: Storage = storage
+  settings: Settings = new Settings(storage)
   editor: Editor | null = null
   sandbox: Sandbox | null = null
   keybindings = new Keybindings()
 
+  vcs = new VCS(storage)
+
   listeners: Map<Key, Listener[]> = new Map()
 
-  activeId: ID | null = getActiveIdFromPath()
   // private commands: Map<string, (editor: CreagenEditor) => void> = new Map()
   private libraryImports: Record<string, LibraryImport> = {}
   private loaded = false
@@ -45,7 +50,7 @@ export class CreagenEditor {
   constructor() {
     // Handle popstate event
     addEventListener('popstate', () => {
-      this.loadFromPath().catch(logger.error)
+      this.loadSettingsFromPath().catch(logger.error)
     })
   }
 
@@ -80,7 +85,7 @@ export class CreagenEditor {
     this.setupKeybindings()
 
     // Load initial code and settings from url
-    this.loadFromPath().catch(logger.error)
+    this.loadSettingsFromPath().catch(logger.error)
     this.loadLibraries()
 
     this.settings.subscribe((value, k) => {
@@ -124,20 +129,6 @@ export class CreagenEditor {
     this.storage = storage
   }
 
-  private setActiveId(id: ID | null) {
-    this.activeId = id
-    return id
-  }
-
-  updateActiveId(id: ID) {
-    if (JSON.stringify(id) === JSON.stringify(this.activeId)) return
-    // set first because some components depend on history updates
-    this.setActiveId(id)
-    const url = new URL(window.location as any)
-    url.pathname = id.toString()
-    window.history.pushState('Creagen', '', url)
-  }
-
   getLibraryImports() {
     return this.libraryImports
   }
@@ -145,23 +136,6 @@ export class CreagenEditor {
   setLibraryImports(imports: Record<string, LibraryImport>) {
     this.libraryImports = imports
     return imports
-  }
-
-  /**
-   * Get history
-   * @param n - How far to go back
-   */
-  async history(n: number): Promise<[ID, Generation][]> {
-    const history: [ID, Generation][] = []
-    let id = this.activeId
-    for (let i = 0; i < n; i++) {
-      if (!id) break
-      const item = await this.storage.get(id)
-      if (item === null) break
-      history.push([id, item])
-      id = item?.previous ?? null
-    }
-    return history
   }
 
   updateStorageUsage() {
@@ -183,22 +157,22 @@ export class CreagenEditor {
   }
 
   async loadCode(id: ID) {
-    const generation = await this.storage.get(id)
-    if (generation && this.editor) {
-      const { code } = generation
-      if (id.editorVersion.compare(CREAGEN_EDITOR_VERSION)) {
-        logger.warn("Editor version doesn't match")
-      }
-      this.settings.set('general.libraries', id.libraries)
-      this.setActiveId(this.activeId)
-      this.editor.setValue(code)
+    if (this.editor === null) return
+    const generation = await this.vcs.checkout(id)
+    if (generation === null) {
+      logger.warn(`'${id.toSub()}' not found`)
+      return
     }
+    const { code } = generation
+    if (id.editorVersion.compare(CREAGEN_EDITOR_VERSION)) {
+      logger.warn("Editor version doesn't match")
+    }
+    this.settings.set('general.libraries', id.libraries)
+
+    this.editor.setValue(code)
   }
 
-  async loadFromPath() {
-    if (this.activeId === null) return
-    this.loadCode(this.activeId)
-
+  async loadSettingsFromPath() {
     const urlParams = new URLSearchParams(window.location.search)
     for (const [key, value] of urlParams.entries()) {
       if (this.settings.isParam(key)) {
@@ -278,12 +252,12 @@ export class CreagenEditor {
 
   updateLibraries() {
     this.loadLibraries()
-    if (this.activeId !== null) {
-      const { hash, editorVersion } = this.activeId
-      this.updateActiveId(
-        new ID(hash, editorVersion, this.settings.values['general.libraries']),
-      )
-    }
+
+    if (this.editor === null) return
+    if (this.vcs.head === null) return
+
+    let code = this.editor.getValue()
+    this.vcs.commit(code, this.settings.values['general.libraries'])
   }
 
   async render() {
@@ -298,22 +272,7 @@ export class CreagenEditor {
       let code = this.editor.getValue()
 
       // store code and change url
-      const id = await ID.create(
-        code,
-        this.settings.values['general.libraries'],
-      )
-      // store and add to history if not new
-      if (id.hash !== this.activeId?.hash) {
-        await this.storage.set(id, {
-          code,
-          createdOn: new Date(),
-          previous: this.activeId ?? undefined,
-        })
-        if (id.hash !== this.activeId?.hash) {
-          this.updateActiveId(id)
-        }
-      }
-
+      this.vcs.commit(code, this.settings.values['general.libraries'])
       code = parseCode(code, this.libraryImports)
 
       const imports = Object.values(this.libraryImports).filter((lib) =>

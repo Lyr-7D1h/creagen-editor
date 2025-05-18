@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import { creagenEditor } from '../creagen-editor/CreagenEditorView'
 import { ID } from '../creagen-editor/id'
 import { logger } from '../logs/logger'
-import { Generation } from '../storage/storage'
 import React from 'react'
 import {
   Chip,
@@ -13,11 +12,12 @@ import {
   Box,
 } from '@mui/material'
 import { ArrowLeft, ExpandMore, ExpandLess } from '@mui/icons-material'
+import { Generation } from '../vcs/Generation'
 
 const HISTORY_SIZE = 10
 export function History() {
-  const activeIdRef = useRef(
-    creagenEditor.activeId ? { ...creagenEditor.activeId } : null,
+  const activeIdRef = useRef<ID | null>(
+    creagenEditor.vcs.head ? creagenEditor.vcs.head : null,
   )
   const [history, setHistory] = useState<[ID, Generation][]>([])
   const [expanded, setExpanded] = useState(false)
@@ -25,7 +25,7 @@ export function History() {
   const [isOverflowing, setIsOverflowing] = useState(false)
 
   useEffect(() => {
-    creagenEditor
+    creagenEditor.vcs
       .history(HISTORY_SIZE)
       .then((history) => {
         setHistory(history)
@@ -33,10 +33,10 @@ export function History() {
       .catch(logger.error)
 
     creagenEditor.on('render', () => {
-      if (activeIdRef.current !== creagenEditor.activeId) {
+      if (activeIdRef.current !== creagenEditor.vcs.head) {
         console.debug('Updating history')
-        activeIdRef.current = creagenEditor.activeId
-        creagenEditor
+        activeIdRef.current = creagenEditor.vcs.head
+        creagenEditor.vcs
           .history(HISTORY_SIZE)
           .then((history) => {
             setHistory(history)
@@ -71,7 +71,7 @@ export function History() {
 
     return history.map(([id, _gen], index) => (
       <React.Fragment key={`chain-${id.toString()}`}>
-        {id === creagenEditor.activeId ? (
+        {id === creagenEditor.vcs.head ? (
           <Chip color="primary" size="small" label={id.toSub()} />
         ) : (
           <Typography
@@ -87,7 +87,6 @@ export function History() {
             }}
             onClick={() => {
               creagenEditor.loadCode(id)
-              creagenEditor.updateActiveId(id)
             }}
           >
             {id.toSub()}

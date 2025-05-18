@@ -1,4 +1,4 @@
-import { localStorage } from '../storage/localStorage'
+import { Storage } from '../storage/Storage'
 import {
   defaultSettingsConfig,
   DefaultSettingsConfig,
@@ -34,7 +34,11 @@ export class Settings {
   /** Listeners listening to all events located at null */
   private listeners: Map<string | null, Listener[]> = new Map()
 
-  constructor() {
+  private storage: Storage
+
+  constructor(storage: Storage) {
+    this.storage = storage
+
     // Initialize with deep cloned default settings
     const defaultConfig = Object.entries(defaultSettingsConfig).reduce<
       Record<string, any>
@@ -46,7 +50,7 @@ export class Settings {
     }, {})
 
     // Load stored settings from localStorage
-    const storageSettings = localStorage.get('settings')
+    const storageSettings = storage.get('settings')
     if (storageSettings !== null) {
       for (const [key, value] of Object.entries(storageSettings)) {
         const entry = defaultConfig[key]
@@ -144,7 +148,7 @@ export class Settings {
         delete values[k as Params]
       }
     }
-    localStorage.set('settings', values)
+    this.storage.set('settings', values)
 
     // Notify all listeners
     this.listeners.get(null)?.forEach((listener) => listener(value, key))
