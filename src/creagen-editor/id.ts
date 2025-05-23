@@ -6,10 +6,10 @@ import { semverSchema } from './schemaUtils'
 
 export const IDStringSchema = z.string().transform((data, ctx) => {
   const id = ID.fromString(data)
-  if (id === null) {
+  if (typeof id === 'string') {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: 'No version',
+      message: id,
     })
     return z.NEVER
   }
@@ -70,20 +70,28 @@ export class ID {
 
   /**
    * Converts an ID string back to an ID object
+   *
+   * returns error string if it didn't pass
    */
-  static fromString(idString: string): ID | null {
+  static fromString(idString: string): ID | string {
     if (!/^[0-9a-f]+$/g.test(idString)) {
-      return null
+      return 'Regex failed'
     }
     const hash = idString.substring(0, 64)
     const ext = fromHex(idString.substring(64)).split(':')
-    const editorVersion = new SemVer(ext[0]!)
+
+    let editorVersion
+    try {
+      editorVersion = new SemVer(ext[0]!)
+    } catch (e) {
+      return `Failed to parse version: ${ext[0]}`
+    }
+
     const libs = libraryStringSchema
       .array()
       .safeParse(JSON.parse(`[${ext[1]!}]`))
     if (libs.success === false) {
-      console.warn(libs.error)
-      return null
+      return `Failed to parse libraries: ${libs.error}`
     }
     return new ID(hash, editorVersion, libs.data)
   }

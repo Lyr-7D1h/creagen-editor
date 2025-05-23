@@ -1,5 +1,6 @@
 import React, { Children, PropsWithChildren, useEffect, useState } from 'react'
 import { useSettings } from '../settings/SettingsProvider'
+import { useTheme } from '@mui/material'
 
 /**
  * Split two given children and make them resizable
@@ -7,6 +8,8 @@ import { useSettings } from '../settings/SettingsProvider'
  * each child must have a width prop
  */
 export function VerticalSplitResizer({ children }: PropsWithChildren) {
+  const theme = useTheme()
+  theme.palette.primary
   const settings = useSettings()
   const [editorWidth, setEditorWidth] = useState<number>(window.innerWidth / 4)
   const [resizing, setResizing] = useState(false)
@@ -54,6 +57,9 @@ export function VerticalSplitResizer({ children }: PropsWithChildren) {
               height: '100%',
               width: '3px',
               position: 'absolute',
+              borderLeft: resizing
+                ? `2px solid ${theme.palette.primary.main}`
+                : undefined,
               top: 0,
               left: editorWidth,
               zIndex: 1001,

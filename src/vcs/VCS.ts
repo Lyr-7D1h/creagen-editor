@@ -12,8 +12,8 @@ export function getHeadFromPath(): ID | null {
 
   const id = ID.fromString(path)
 
-  if (id === null) {
-    logger.error('invalid id given')
+  if (typeof id === 'string') {
+    logger.error('Invalid id given: ', id)
     return null
   }
 
