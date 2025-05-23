@@ -110,6 +110,35 @@ export function debug(...msg: any[]): MessageId {
   return ''
 }
 
+export function createContextLogger(context: string) {
+  return {
+    getMessages,
+    log,
+    remove,
+    subscribe,
+    clear,
+    info: (...msg: any[]) => {
+      console.info(`[${context}]`, ...msg)
+      return log(Severity.Info, formatMsg(msg))
+    },
+    warn: (...msg: any[]) => {
+      console.warn(`[${context}]`, ...msg)
+      return log(Severity.Warning, formatMsg(msg))
+    },
+    error: (...msg: any[]) => {
+      console.error(`[${context}]`, ...msg)
+      return log(Severity.Error, formatMsg(msg))
+    },
+    debug: (...msg: any[]) => {
+      console.debug(`[${context}]`, ...msg)
+      if (MODE === 'dev') {
+        return log(Severity.Debug, formatMsg(msg))
+      }
+      return ''
+    },
+  }
+}
+
 export const logger = {
   getMessages,
   log,

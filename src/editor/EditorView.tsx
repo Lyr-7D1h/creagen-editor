@@ -1,53 +1,26 @@
 import React, { useEffect, useRef } from 'react'
-import { editor } from 'monaco-editor'
-import MonacoEditor, { Monaco } from '@monaco-editor/react'
-import { Editor } from './Editor'
 import { useSettings } from '../settings/SettingsProvider'
 import { History } from './History'
+import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
 
 export interface EditorProps {
-  value?: string
   width?: string
   height?: string
-  minimap?: boolean
-  onLoad?: (editor: Editor) => void
 }
 
-export function EditorView({ value, width, height, onLoad }: EditorProps) {
-  const editorRef = useRef<Editor>(null)
+export function EditorView({ width, height }: EditorProps) {
+  const creagenEditor = useCreagenEditor()
   const settings = useSettings()
-
-  /** Update editor based on global settings */
-  function update(editor: Editor) {
-    editor.setVimMode(settings.values['editor.vim'])
-    editor.setFullscreenMode(settings.values['editor.fullscreen'])
-    if (settings.values['editor.relative_lines']) {
-      editor.updateOptions({ lineNumbers: 'relative' })
-    } else {
-      editor.updateOptions({ lineNumbers: 'on' })
-    }
-  }
+  const editorContentRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (editorRef.current === null) return
-    update(editorRef.current)
-  }, [
-    settings.values['editor.vim'],
-    settings.values['editor.fullscreen'],
-    settings.values['editor.relative_lines'],
-    editorRef,
-  ])
-
-  function handleEditorDidMount(
-    monacoEditor: editor.IStandaloneCodeEditor,
-    monaco: Monaco,
-  ) {
-    const editor = new Editor(monacoEditor, monaco)
-    editorRef.current = editor
-
-    update(editor)
-    if (typeof onLoad !== 'undefined') onLoad(editor)
-  }
+    const editorContent = editorContentRef.current
+    if (editorContent) {
+      const htmlElement = creagenEditor.editor.html()
+      editorContent.appendChild(htmlElement)
+      creagenEditor.editor.layout()
+    }
+  }, [])
 
   return (
     <div
@@ -55,34 +28,14 @@ export function EditorView({ value, width, height, onLoad }: EditorProps) {
         zIndex: 1001,
         height,
         width,
-        display: settings.values['hide_all'] ? 'none' : 'block',
+        display: settings.values['hide_all'] ? 'none' : 'flex',
+        flexDirection: 'column',
       }}
     >
-      {settings.values['editor.show_history'] ? <History /> : ''}
-      <MonacoEditor
-        defaultValue={value ?? ''}
-        language="typescript"
-        theme="creagen"
-        beforeMount={Editor.handleBeforeMount}
-        onMount={handleEditorDidMount}
-        loading={<div>Loading...</div>}
-        value=""
-        options={{
-          minimap: { enabled: false },
-          tabSize: 2,
-          autoIndent: 'full',
-          formatOnPaste: true,
-          formatOnType: true,
-
-          // allow for resizing
-          automaticLayout: true,
-        }}
-      />
+      <History />
+      <div style={{ flex: 1, overflow: 'hidden' }} ref={editorContentRef}></div>
       {settings.values['editor.vim'] && (
-        <div
-          id="vim-status"
-          style={{ position: 'absolute', bottom: 0, left: 20 }}
-        />
+        <div id="vim-status" style={{ overflow: 'auto' }} />
       )}
     </div>
   )

@@ -19,12 +19,11 @@ export class ClientStorage extends Storage {
   }
 
   private async load(): Promise<IDBDatabase> {
-    return await new Promise((resolve, reject) => {
-      if (this.db !== null) {
-        resolve(this.db)
-        return
-      }
+    if (this.db !== null) {
+      return this.db
+    }
 
+    return await new Promise((resolve, reject) => {
       // Make storage persistent https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria#does_browser-stored_data_persist
       if (navigator.storage && navigator.storage.persist) {
         navigator.storage
@@ -72,6 +71,7 @@ export class ClientStorage extends Storage {
   }
 
   async set(id: StorageKey, item: any) {
+    console.debug(`[ClientStorage] Storing ${id} ${JSON.stringify(item)}`)
     if (id === 'refs') {
       return localStorage.set('refs', item)
     } else if (id === 'settings') {

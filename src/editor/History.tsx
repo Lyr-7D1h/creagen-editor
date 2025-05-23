@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import { creagenEditor } from '../creagen-editor/CreagenEditorView'
 import { ID } from '../creagen-editor/id'
 import { logger } from '../logs/logger'
 import React from 'react'
@@ -13,12 +12,16 @@ import {
 } from '@mui/material'
 import { ArrowLeft, ExpandMore, ExpandLess } from '@mui/icons-material'
 import { Generation } from '../vcs/Generation'
+import { useSettings } from '../settings/SettingsProvider'
+import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
 
 const HISTORY_SIZE = 10
-export function History() {
-  const activeIdRef = useRef<ID | null>(
-    creagenEditor.vcs.head ? creagenEditor.vcs.head : null,
+export function History({ height }: { height?: string }) {
+  const creagenEditor = useCreagenEditor()
+  const [head, setHead] = useState<string | null>(
+    creagenEditor.vcs.head ? creagenEditor.vcs.head.toString() : null,
   )
+  const settings = useSettings()
   const [history, setHistory] = useState<[ID, Generation][]>([])
   const [expanded, setExpanded] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -32,18 +35,29 @@ export function History() {
       })
       .catch(logger.error)
 
-    creagenEditor.on('render', () => {
-      if (activeIdRef.current !== creagenEditor.vcs.head) {
-        console.debug('Updating history')
-        activeIdRef.current = creagenEditor.vcs.head
-        creagenEditor.vcs
-          .history(HISTORY_SIZE)
-          .then((history) => {
-            setHistory(history)
-          })
-          .catch(logger.error)
+    const updateHistory = () => {
+      if (head !== creagenEditor.vcs.head) {
+        const head = creagenEditor.vcs.head
+        setHead(head ? head.toString() : head)
+        // if current history already includes change don't change history
+        if (
+          history.some(
+            ([id, _gen]: [ID, Generation]) =>
+              id.toString() === head?.toString(),
+          )
+        ) {
+          console.debug('Updating history')
+          creagenEditor.vcs
+            .history(HISTORY_SIZE)
+            .then((history) => {
+              setHistory(history)
+            })
+            .catch(logger.error)
+        }
       }
-    })
+    }
+    creagenEditor.on('render', updateHistory)
+    creagenEditor.on('code', updateHistory)
   }, [])
 
   // Check for overflow after history updates or window resizes
@@ -71,7 +85,7 @@ export function History() {
 
     return history.map(([id, _gen], index) => (
       <React.Fragment key={`chain-${id.toString()}`}>
-        {id === creagenEditor.vcs.head ? (
+        {(head ? id.toString() === head : false) ? (
           <Chip color="primary" size="small" label={id.toSub()} />
         ) : (
           <Typography
@@ -99,8 +113,12 @@ export function History() {
     ))
   }
 
+  if (settings.values['editor.show_history'] === false || history.length <= 1) {
+    return ''
+  }
+
   return (
-    <Box sx={{ position: 'relative', minHeight: 20 }}>
+    <Box sx={{ position: 'relative' }}>
       {isOverflowing && (
         <IconButton
           size="small"
@@ -139,6 +157,7 @@ export function History() {
             spacing={1}
             alignItems="center"
             sx={{
+              height,
               padding: 0.2,
               paddingLeft: 1,
               paddingRight: isOverflowing ? 4 : 1, // Add padding for the expand button

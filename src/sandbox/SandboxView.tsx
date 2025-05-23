@@ -1,28 +1,29 @@
 import React, { useEffect, useRef } from 'react'
-import { MODE } from '../env'
-import { Sandbox } from './Sandbox'
+import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
 
 export function SandboxView({
   width,
   height,
   left,
-  onLoad,
 }: {
   width?: string
   height?: string
   left?: string
-  onLoad: (sandbox: Sandbox) => void
 }) {
-  const iframeRef = useRef<HTMLIFrameElement>(null)
+  const creagenEditor = useCreagenEditor()
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (iframeRef.current === null) return
-    onLoad(new Sandbox(iframeRef.current))
-  }, [iframeRef])
+    const container = containerRef.current
+    if (container) {
+      const htmlElement = creagenEditor.sandbox.html()
+      container.appendChild(htmlElement)
+      creagenEditor.editor.layout()
+    }
+  }, [])
 
   return (
     <div
-      id="sandbox"
       style={{
         width,
         border: 'none',
@@ -32,13 +33,7 @@ export function SandboxView({
         // HACK: for some reason the iframe is not 100% height
         overflow: 'hidden',
       }}
-    >
-      <iframe
-        ref={iframeRef}
-        title="Sandbox"
-        style={{ width: '100%', height: '100%', border: 'none' }}
-        sandbox={`allow-scripts ${MODE === 'dev' ? 'allow-same-origin' : ''}`}
-      ></iframe>
-    </div>
+      ref={containerRef}
+    ></div>
   )
 }
