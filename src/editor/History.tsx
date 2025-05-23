@@ -2,18 +2,14 @@ import { useState, useEffect, useRef } from 'react'
 import { ID } from '../creagen-editor/id'
 import { logger } from '../logs/logger'
 import React from 'react'
-import {
-  Chip,
-  Stack,
-  Typography,
-  IconButton,
-  Collapse,
-  Box,
-} from '@mui/material'
-import { ArrowLeft, ExpandMore, ExpandLess } from '@mui/icons-material'
+import Box from '@mui/material/Box'
 import { Generation } from '../vcs/Generation'
 import { useSettings } from '../settings/SettingsProvider'
 import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
+import { Chip, Typography, IconButton, Collapse, Stack } from '@mui/material'
+import ArrowLeft from '@mui/icons-material/ArrowLeft'
+import ExpandLessIcon from '@mui/icons-material/ExpandLess'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 
 const HISTORY_SIZE = 10
 export function History({ height }: { height?: string }) {
@@ -36,9 +32,9 @@ export function History({ height }: { height?: string }) {
       .catch(logger.error)
 
     const updateHistory = () => {
-      if (head !== creagenEditor.vcs.head) {
+      if (head !== creagenEditor.vcs.head?.toString()) {
         const head = creagenEditor.vcs.head
-        setHead(head ? head.toString() : head)
+        setHead((head ? head.toString() : head) as string)
         // if current history already includes change don't change history
         if (
           history.some(
@@ -134,9 +130,9 @@ export function History({ height }: { height?: string }) {
           }}
         >
           {expanded ? (
-            <ExpandLess fontSize="small" />
+            <ExpandLessIcon fontSize="small" />
           ) : (
-            <ExpandMore fontSize="small" />
+            <ExpandMoreIcon fontSize="small" />
           )}
         </IconButton>
       )}
