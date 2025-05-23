@@ -53,6 +53,7 @@ export function CreagenEditorView() {
         }}
       >
         <CircularProgress />
+        <Logs />
       </Box>
     )
   }

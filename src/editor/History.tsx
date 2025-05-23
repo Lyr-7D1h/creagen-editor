@@ -30,31 +30,41 @@ export function History({ height }: { height?: string }) {
         setHistory(history)
       })
       .catch(logger.error)
+  }, [])
 
+  useEffect(() => {
     const updateHistory = () => {
-      if (head !== creagenEditor.vcs.head?.toString()) {
-        const head = creagenEditor.vcs.head
-        setHead((head ? head.toString() : head) as string)
+      const currentHead: string | null = creagenEditor.vcs.head
+        ? creagenEditor.vcs.head.toString()
+        : null
+
+      console.log(head, currentHead)
+      if (head !== currentHead) {
+        setHead(currentHead)
+
         // if current history already includes change don't change history
-        if (
-          history.some(
-            ([id, _gen]: [ID, Generation]) =>
-              id.toString() === head?.toString(),
-          )
-        ) {
-          console.debug('Updating history')
-          creagenEditor.vcs
-            .history(HISTORY_SIZE)
-            .then((history) => {
-              setHistory(history)
-            })
-            .catch(logger.error)
+        if (history.some(([id]) => id.toString() === currentHead)) {
+          return
         }
+
+        console.log(history)
+        console.debug('Updating history')
+        creagenEditor.vcs
+          .history(HISTORY_SIZE)
+          .then((history) => {
+            setHistory(history)
+          })
+          .catch(logger.error)
       }
     }
-    creagenEditor.on('render', updateHistory)
-    creagenEditor.on('code', updateHistory)
-  }, [])
+    const listeners = [
+      creagenEditor.on('render', updateHistory),
+      creagenEditor.on('code', updateHistory),
+    ]
+    return () => {
+      listeners.forEach((l) => l())
+    }
+  }, [creagenEditor, head, history])
 
   // Check for overflow after history updates or window resizes
   useEffect(() => {
