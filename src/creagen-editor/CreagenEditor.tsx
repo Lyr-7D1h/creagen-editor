@@ -165,14 +165,14 @@ export class CreagenEditor {
 
   async loadSettingsFromPath() {
     const urlParams = new URLSearchParams(window.location.search)
-    for (const [key, value] of urlParams.entries()) {
+    urlParams.forEach((value, key) => {
       if (this.settings.isParam(key)) {
         if (this.settings.config[key].queryParam) {
           const paramValue = this.settings.config[key].queryParam(value)
           this.settings.set(key, paramValue)
         }
       }
-    }
+    })
   }
 
   loadLibraries() {

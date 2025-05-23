@@ -1,4 +1,3 @@
 module.exports = {
-  ...require('eslint-config-love'),
-  files: ['**/*.js', '**/*.ts'],
+  extends: ['eslint:recommended', 'plugin:react/recommended'],
 }
