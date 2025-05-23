@@ -1,11 +1,11 @@
 import { ID } from '../creagen-editor/id'
-import { logger } from '../logs/logger'
+import { createContextLogger } from '../logs/logger'
 import { Library } from '../settings/SettingsConfig'
 import { Storage } from '../storage/Storage'
 import { Generation } from './Generation'
 import { Refs } from './Refs'
 
-function getActiveIdFromPath(): ID | null {
+export function getHeadFromPath(): ID | null {
   const path = window.location.pathname.replace('/', '')
 
   if (path.length === 0) return null
@@ -20,11 +20,13 @@ function getActiveIdFromPath(): ID | null {
   return id
 }
 
+const logger = createContextLogger('vcs')
+
 /** Version Control Software for creagen-editor */
 export class VCS {
   storage: Storage
 
-  private _head: ID | null = getActiveIdFromPath()
+  private _head: ID | null = getHeadFromPath()
   /** References to ids, null if not loaded */
   private _refs: Refs | null = null
 
@@ -66,7 +68,7 @@ export class VCS {
     const id = await ID.create(code, libraries)
     if (id.toString() === this.head?.toString()) return
 
-    this._head = id
+    logger.debug('commit')
     const gen: Generation = {
       code,
       createdOn: new Date(),
@@ -80,9 +82,19 @@ export class VCS {
     const url = new URL(window.location as any)
     url.pathname = id.toString()
     window.history.pushState('Creagen', '', url)
+
+    this._head = id
   }
 
   async checkout(id: ID): Promise<Generation | null> {
+    // update url
+    if (id.toString() !== getHeadFromPath()?.toString()) {
+      logger.debug(`Add ${id.toSub()} to window history`)
+      const url = new URL(window.location as any)
+      url.pathname = id.toString()
+      window.history.pushState('Creagen', '', url)
+    }
+
     this._head = id
     return await this.storage.get(id)
   }

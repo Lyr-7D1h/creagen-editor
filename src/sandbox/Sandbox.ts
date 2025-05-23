@@ -1,5 +1,5 @@
 import sandboxCode from '../../gen/sandbox'
-import { CREAGEN_EDITOR_VERSION } from '../env'
+import { CREAGEN_EDITOR_VERSION, MODE } from '../env'
 import { LibraryImport } from '../importer'
 import { logger } from '../logs/logger'
 
@@ -60,9 +60,18 @@ export class Sandbox {
     [K in SandboxEvent['type']]?: EventListener<any>[]
   } = {}
 
-  constructor(iframe: HTMLIFrameElement) {
-    this.iframe = iframe
+  constructor() {
+    this.iframe = document.createElement('iframe')
+    this.iframe.title = ''
+    this.iframe.style.width = '100%'
+    this.iframe.style.height = '100%'
+    this.iframe.style.border = 'none'
+    this.iframe.sandbox = `allow-scripts ${MODE === 'dev' ? 'allow-same-origin' : ''}`
     this.setup()
+  }
+
+  html() {
+    return this.iframe
   }
 
   setup() {
@@ -143,7 +152,7 @@ export class Sandbox {
     // Update iframe source
     this.iframe.src = blobURL
     console.log(
-      `Sandbox: Loading code with '${code.length}' characters into iframe with libraries: `,
+      `[Sandbox] Loading code with '${code.length}' characters into iframe with libraries: `,
       JSON.stringify(libraryImports),
     )
   }

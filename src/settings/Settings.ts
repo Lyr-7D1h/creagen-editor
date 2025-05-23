@@ -36,9 +36,12 @@ export class Settings {
 
   private storage: Storage
 
-  constructor(storage: Storage) {
+  private constructor(storage: Storage, config: DefaultSettingsConfig) {
     this.storage = storage
+    this.config = config
+  }
 
+  static async create(storage: Storage) {
     // Initialize with deep cloned default settings
     const defaultConfig = Object.entries(defaultSettingsConfig).reduce<
       Record<string, any>
@@ -50,7 +53,7 @@ export class Settings {
     }, {})
 
     // Load stored settings from localStorage
-    const storageSettings = storage.get('settings')
+    const storageSettings = await storage.get('settings')
     if (storageSettings !== null) {
       for (const [key, value] of Object.entries(storageSettings)) {
         const entry = defaultConfig[key]
@@ -65,7 +68,7 @@ export class Settings {
       }
     }
 
-    this.config = defaultConfig as DefaultSettingsConfig
+    return new Settings(storage, defaultConfig as DefaultSettingsConfig)
   }
 
   get values(): Record<Params, any> {
@@ -96,7 +99,7 @@ export class Settings {
 
   // Set a value
   set(key: Params, value: any): void {
-    console.debug(`Settings: setting ${key} to ${JSON.stringify(value)}`)
+    console.debug(`[Settings] setting ${key} to ${JSON.stringify(value)}`)
     const entry = this.config[key]
     if (typeof entry === 'undefined') throw Error(`Key ${key} does not exist`)
     if (entry.type !== 'param')

@@ -7,86 +7,66 @@ import { Settings } from '../settings/Settings'
 import { ID } from './id'
 import { LIBRARY_CONFIGS } from './libraryConfigs'
 import { parseCode } from './parseCode'
-import { ClientStorage } from '../storage/ClientStorage'
 import { Library } from '../settings/SettingsConfig'
 import { Keybindings } from './keybindings'
 import { Importer, LibraryImport } from '../importer'
-import { VCS } from '../vcs/VCS'
+import { getHeadFromPath, VCS } from '../vcs/VCS'
+import { ClientStorage } from '../storage/ClientStorage'
 
-function getActiveIdFromPath(): ID | null {
-  const path = window.location.pathname.replace('/', '')
-
-  if (path.length === 0) return null
-
-  const id = ID.fromString(path)
-
-  if (id === null) {
-    logger.error('invalid id given')
-    return null
-  }
-
-  return id
-}
-
-const storage = new ClientStorage()
-
-type Key = 'render'
+type Key = 'render' | 'code'
 type Listener = () => void
 export class CreagenEditor {
-  storage: Storage = storage
-  settings: Settings = new Settings(storage)
-  editor: Editor | null = null
-  sandbox: Sandbox | null = null
-  keybindings = new Keybindings()
+  storage: Storage
+  settings: Settings
+  editor: Editor
+  sandbox: Sandbox
+  vcs: VCS
 
-  vcs = new VCS(storage)
+  keybindings = new Keybindings()
 
   listeners: Map<Key, Listener[]> = new Map()
 
   // private commands: Map<string, (editor: CreagenEditor) => void> = new Map()
   private libraryImports: Record<string, LibraryImport> = {}
-  private loaded = false
 
-  constructor() {
-    // Handle popstate event
-    addEventListener('popstate', () => {
-      this.loadSettingsFromPath().catch(logger.error)
-    })
+  static async create() {
+    const storage = new ClientStorage()
+    const settings = await Settings.create(storage)
+    const editor = await Editor.create(settings)
+    const sandbox = await new Sandbox()
+
+    return new CreagenEditor(sandbox, editor, settings, storage)
   }
 
-  private notify(key: Key) {
-    const listeners = this.listeners.get(key)
-    if (!listeners) return
-    for (const listener of listeners) {
-      listener()
-    }
-  }
+  private constructor(
+    sandbox: Sandbox,
+    editor: Editor,
+    settings: Settings,
+    storage: Storage,
+  ) {
+    this.sandbox = sandbox
+    this.editor = editor
+    this.settings = settings
+    this.storage = storage
+    this.vcs = new VCS(storage)
 
-  on(key: Key, listener: Listener) {
-    let listeners = this.listeners.get(key)
-    if (typeof listeners === 'undefined') {
-      listeners = [] as Listener[]
-    }
-    listeners.push(listener)
-    this.listeners.set(key, listeners)
-    return () => {
-      this.listeners.set(
-        key,
-        listeners!.filter((l) => l !== listener),
-      )
-    }
-  }
-
-  load() {
-    if (!this.editor) return
-    if (this.loaded) return
-    this.loaded = true
-
-    this.setupKeybindings()
+    /// If head is set load corresponding code
+    if (this.vcs.head) this.loadCode(this.vcs.head)
 
     // Load initial code and settings from url
     this.loadSettingsFromPath().catch(logger.error)
     this.loadLibraries()
+
+    this.updateStorageUsage()
+
+    this.setupKeybindings()
+
+    // Update code from history
+    addEventListener('popstate', () => {
+      const id = getHeadFromPath()
+      if (id === null) return
+      this.loadCode(id)
+    })
 
     this.settings.subscribe((value, k) => {
       if (k === 'general.libraries') {
@@ -114,15 +94,27 @@ export class CreagenEditor {
     })
   }
 
-  setEditor(editor: Editor | null) {
-    this.editor = editor
-    if (editor && !this.loaded) {
-      this.load()
+  private notify(key: Key) {
+    const listeners = this.listeners.get(key)
+    if (!listeners) return
+    for (const listener of listeners) {
+      listener()
     }
   }
 
-  setSandbox(sandbox: Sandbox | null) {
-    this.sandbox = sandbox
+  on(key: Key, listener: Listener) {
+    let listeners = this.listeners.get(key)
+    if (typeof listeners === 'undefined') {
+      listeners = [] as Listener[]
+    }
+    listeners.push(listener)
+    this.listeners.set(key, listeners)
+    return () => {
+      this.listeners.set(
+        key,
+        listeners!.filter((l) => l !== listener),
+      )
+    }
   }
 
   setStorage(storage: Storage) {
@@ -151,18 +143,16 @@ export class CreagenEditor {
   }
 
   setupKeybindings() {
-    if (!this.editor) return
-
     this.keybindings.setupKeybindings(this)
   }
 
   async loadCode(id: ID) {
-    if (this.editor === null) return
     const generation = await this.vcs.checkout(id)
     if (generation === null) {
-      logger.warn(`'${id.toSub()}' not found`)
+      logger.warn(`'${id.toSub()}' not found in vcs`)
       return
     }
+
     const { code } = generation
     if (id.editorVersion.compare(CREAGEN_EDITOR_VERSION)) {
       logger.warn("Editor version doesn't match")
@@ -170,6 +160,7 @@ export class CreagenEditor {
     this.settings.set('general.libraries', id.libraries)
 
     this.editor.setValue(code)
+    this.notify('code')
   }
 
   async loadSettingsFromPath() {
@@ -185,8 +176,6 @@ export class CreagenEditor {
   }
 
   loadLibraries() {
-    if (!this.editor) return
-
     const libraries = this.settings.values['general.libraries'] as Library[]
     this.editor.clearTypings()
 
@@ -253,7 +242,6 @@ export class CreagenEditor {
   updateLibraries() {
     this.loadLibraries()
 
-    if (this.editor === null) return
     if (this.vcs.head === null) return
 
     let code = this.editor.getValue()
@@ -261,8 +249,6 @@ export class CreagenEditor {
   }
 
   async render() {
-    if (!this.editor) return
-
     const info = logger.log(Severity.Info, 'rendering code', null)
     try {
       if (this.settings.values['editor.format_on_render']) {

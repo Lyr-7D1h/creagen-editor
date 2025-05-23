@@ -88,6 +88,10 @@ export class ID {
     return new ID(hash, editorVersion, libs.data)
   }
 
+  compare(id: ID): boolean {
+    return this.toString() === id.toString()
+  }
+
   /**
    * Returns a shortened version of the hash for display purposes
    */

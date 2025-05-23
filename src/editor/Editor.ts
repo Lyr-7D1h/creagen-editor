@@ -11,6 +11,8 @@ import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 import './editor.css'
 
 import { initVimMode } from 'monaco-vim'
+import { Settings } from '../settings/Settings'
+import { createContextLogger } from '../logs/logger'
 
 // Use monaco without cdn: https://www.npmjs.com/package/@monaco-editor/react#loader-config
 self.MonacoEnvironment = {
@@ -65,6 +67,20 @@ export interface EditorSettings {
   value?: string
 }
 
+function handleBeforeMount(monaco: Monaco) {
+  monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+    noSemanticValidation: false,
+    noSyntaxValidation: false,
+    // 1378,1375: allow await on top level
+    diagnosticCodesToIgnore: [1375, 1378],
+  })
+  monaco.languages.typescript.typescriptDefaults.setCompilerOptions(
+    typescriptCompilerOptions,
+  )
+  monaco.editor.defineTheme('creagen', creagenLightTheme)
+  monaco.editor.defineTheme('creagen-fullscreen', creagenFullscreenTheme)
+}
+
 export class Editor {
   private readonly editor: m.editor.IStandaloneCodeEditor
   private readonly autoimport: AutoImport
@@ -72,22 +88,38 @@ export class Editor {
   private vimMode: m.editor.IStandaloneCodeEditor | null
   private fullscreendecorators: m.editor.IEditorDecorationsCollection | null
   private models: Record<string, monaco.editor.ITextModel> = {}
+  private _html
 
-  static handleBeforeMount(monaco: Monaco) {
-    monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
-      noSemanticValidation: false,
-      noSyntaxValidation: false,
-      // 1378,1375: allow await on top level
-      diagnosticCodesToIgnore: [1375, 1378],
+  static async create(settings: Settings) {
+    const monaco: Monaco = await loader.init()
+
+    handleBeforeMount(monaco)
+
+    const html = document.createElement('div')
+    html.style.width = '100%'
+    html.style.height = '100%'
+    const editor = monaco.editor.create(html, {
+      minimap: { enabled: false },
+      tabSize: 2,
+      autoIndent: 'full',
+      formatOnPaste: true,
+      formatOnType: true,
+      automaticLayout: true,
+      language: 'typescript',
+      theme: 'creagen',
+      scrollBeyondLastLine: false,
     })
-    monaco.languages.typescript.typescriptDefaults.setCompilerOptions(
-      typescriptCompilerOptions,
-    )
-    monaco.editor.defineTheme('creagen', creagenLightTheme)
-    monaco.editor.defineTheme('creagen-fullscreen', creagenFullscreenTheme)
+
+    return new Editor(html, settings, monaco, editor)
   }
 
-  constructor(editor: m.editor.IStandaloneCodeEditor, monaco: Monaco) {
+  constructor(
+    html: HTMLElement,
+    settings: Settings,
+    monaco: Monaco,
+    editor: m.editor.IStandaloneCodeEditor,
+  ) {
+    this._html = html
     this.editor = editor
     this.autoimport = new AutoImport({
       monaco,
@@ -99,10 +131,46 @@ export class Editor {
     })
     this.vimMode = null
     this.fullscreendecorators = null
+
+    // settings.subscribe((value) => {
+    //   this.setVimMode(value)
+    // }, 'editor.vim')
+    // settings.subscribe((value) => {
+    //   this.setFullscreenMode(value)
+    // }, 'editor.fullscreen')
+    // settings.subscribe((value) => {
+    //   if (value) {
+    //     this.editor.updateOptions({ lineNumbers: 'relative' })
+    //   } else {
+    //     this.editor.updateOptions({ lineNumbers: 'on' })
+    //   }
+    // }, 'editor.relative_lines')
+    settings.subscribe((_, key) => {
+      if (key.startsWith('editor')) {
+        this.updateFromSettings(settings)
+      }
+    })
+    this.updateFromSettings(settings)
+  }
+
+  updateFromSettings(settings: Settings) {
+    const values = settings.values
+
+    if (values['editor.relative_lines']) {
+      this.editor.updateOptions({ lineNumbers: 'relative' })
+    } else {
+      this.editor.updateOptions({ lineNumbers: 'on' })
+    }
+    this.setFullscreenMode(values['editor.fullscreen'])
+    this.setVimMode(values['editor.vim'])
   }
 
   html() {
-    return this.editor.getDomNode()!
+    return this._html
+  }
+
+  layout(dimension?: monaco.editor.IDimension) {
+    this.editor.layout(dimension)
   }
 
   async format() {
@@ -132,6 +200,14 @@ export class Editor {
     }
   }
 
+  setRelativeLineLength(value: boolean) {
+    if (value) {
+      this.editor.updateOptions({ lineNumbers: 'relative' })
+    } else {
+      this.editor.updateOptions({ lineNumbers: 'on' })
+    }
+  }
+
   updateOptions(
     options: m.editor.IEditorOptions & m.editor.IGlobalEditorOptions,
   ) {
@@ -139,14 +215,14 @@ export class Editor {
   }
 
   clearTypings() {
-    console.log('Editor: clearing typings')
+    console.log('[Editor] clearing typings')
     monaco.languages.typescript.typescriptDefaults.setExtraLibs([])
   }
 
   /** If `packageName` given will also add autoimports */
   addTypings(typings: string, uri: string, packageName?: string) {
     if (this.models[uri]) return
-    console.log(`Editor: Adding typings for ${uri}`)
+    console.log(`[Editor] Adding typings for ${uri}`)
     // monaco.languages.typescript.javascriptDefaults.addExtraLib(typings, uri)
     if (typeof packageName === 'string') {
       this.autoimport.imports.saveFile({
