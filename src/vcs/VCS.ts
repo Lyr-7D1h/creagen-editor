@@ -28,10 +28,16 @@ export class VCS {
 
   private _head: ID | null = getHeadFromPath()
   /** References to ids, null if not loaded */
-  private _refs: Refs | null = null
+  private _refs: Refs
 
-  constructor(storage: Storage) {
+  static async create(storage: Storage) {
+    const refs = (await storage.get('refs')) ?? new Refs([])
+    return new VCS(storage, refs)
+  }
+
+  private constructor(storage: Storage, refs: Refs) {
     this.storage = storage
+    this._refs = refs
   }
 
   get head() {
@@ -39,12 +45,8 @@ export class VCS {
   }
 
   get refs() {
-    if (this.refs === null) throw Error('VCS not yet loaded')
+    if (this._refs === null) throw Error('VCS not yet loaded')
     return this._refs
-  }
-
-  async load() {
-    this._refs = (await this.storage.get('refs')) ?? new Refs([])
   }
 
   /**

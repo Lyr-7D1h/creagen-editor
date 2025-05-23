@@ -34,8 +34,9 @@ export class CreagenEditor {
     const settings = await Settings.create(storage)
     const editor = await Editor.create(settings)
     const sandbox = await new Sandbox()
+    const vcs = await VCS.create(storage)
 
-    return new CreagenEditor(sandbox, editor, settings, storage)
+    return new CreagenEditor(sandbox, editor, settings, storage, vcs)
   }
 
   private constructor(
@@ -43,12 +44,13 @@ export class CreagenEditor {
     editor: Editor,
     settings: Settings,
     storage: Storage,
+    vcs: VCS,
   ) {
     this.sandbox = sandbox
     this.editor = editor
     this.settings = settings
     this.storage = storage
-    this.vcs = new VCS(storage)
+    this.vcs = vcs
 
     /// If head is set load corresponding code
     if (this.vcs.head) this.loadCode(this.vcs.head)
