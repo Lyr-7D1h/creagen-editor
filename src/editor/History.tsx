@@ -6,13 +6,27 @@ import Box from '@mui/material/Box'
 import { Generation } from '../vcs/Generation'
 import { useSettings } from '../settings/SettingsProvider'
 import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
-import { Chip, Typography, IconButton, Collapse, Stack } from '@mui/material'
+import {
+  Chip,
+  Typography,
+  IconButton,
+  Collapse,
+  Stack,
+  SxProps,
+  Theme,
+} from '@mui/material'
 import ArrowLeft from '@mui/icons-material/ArrowLeft'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 
 const HISTORY_SIZE = 10
-export function History({ height }: { height?: string }) {
+export function History({
+  height,
+  style,
+}: {
+  height?: string
+  style?: SxProps<Theme>
+}) {
   const creagenEditor = useCreagenEditor()
   const [head, setHead] = useState<string | null>(
     creagenEditor.vcs.head ? creagenEditor.vcs.head.toString() : null,
@@ -38,7 +52,6 @@ export function History({ height }: { height?: string }) {
         ? creagenEditor.vcs.head.toString()
         : null
 
-      console.log(head, currentHead)
       if (head !== currentHead) {
         setHead(currentHead)
 
@@ -47,8 +60,6 @@ export function History({ height }: { height?: string }) {
           return
         }
 
-        console.log(history)
-        console.debug('Updating history')
         creagenEditor.vcs
           .history(HISTORY_SIZE)
           .then((history) => {
@@ -124,7 +135,7 @@ export function History({ height }: { height?: string }) {
   }
 
   return (
-    <Box sx={{ position: 'relative' }}>
+    <Box sx={{ position: 'relative', ...style }}>
       {isOverflowing && (
         <IconButton
           size="small"

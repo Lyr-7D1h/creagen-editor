@@ -19,7 +19,7 @@ export class Refs {
     }
   }
 
-  getRefs() {
+  getRefs(): Ref[] {
     return Object.values(this.refs)
   }
 

@@ -1,7 +1,10 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useSettings } from '../settings/SettingsProvider'
 import { History } from './History'
 import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
+import MenuIcon from '@mui/icons-material/Menu'
+import { IconButton } from '@mui/material'
+import { VCSView } from './VCSView'
 
 export interface EditorProps {
   width?: string
@@ -12,15 +15,18 @@ export function EditorView({ width, height }: EditorProps) {
   const creagenEditor = useCreagenEditor()
   const settings = useSettings()
   const editorContentRef = useRef<HTMLDivElement>(null)
+  const [menu, setMenu] = useState(false)
 
   useEffect(() => {
-    const editorContent = editorContentRef.current
-    if (editorContent) {
-      const htmlElement = creagenEditor.editor.html()
-      editorContent.appendChild(htmlElement)
-      creagenEditor.editor.layout()
+    if (menu === false) {
+      const editorContent = editorContentRef.current
+      if (editorContent) {
+        const htmlElement = creagenEditor.editor.html()
+        editorContent.appendChild(htmlElement)
+        creagenEditor.editor.layout()
+      }
     }
-  }, [])
+  }, [menu])
 
   return (
     <div
@@ -32,8 +38,34 @@ export function EditorView({ width, height }: EditorProps) {
         flexDirection: 'column',
       }}
     >
-      <History />
-      <div style={{ flex: 1, overflow: 'hidden' }} ref={editorContentRef}></div>
+      <IconButton
+        sx={{
+          position: 'absolute',
+          zIndex: 99999999,
+          left: 0,
+          top: 0,
+          minWidth: 30,
+          width: 30,
+        }}
+        onClick={() => setMenu(!menu)}
+        size="small"
+      >
+        <MenuIcon
+          sx={{
+            transform: menu ? 'rotate(90deg)' : 'none',
+            transition: 'transform 0.3s',
+          }}
+        />
+      </IconButton>
+      <History style={{ marginLeft: 4 }} />
+      {menu ? (
+        <VCSView />
+      ) : (
+        <div
+          style={{ flex: 1, overflow: 'hidden' }}
+          ref={editorContentRef}
+        ></div>
+      )}
       {settings.values['editor.vim'] && (
         <div id="vim-status" style={{ overflow: 'auto' }} />
       )}
