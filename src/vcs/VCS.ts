@@ -3,7 +3,7 @@ import { createContextLogger } from '../logs/logger'
 import { Library } from '../settings/SettingsConfig'
 import { Storage } from '../storage/Storage'
 import { Generation } from './Generation'
-import { Refs } from './Refs'
+import { Ref, Refs } from './Refs'
 
 export function getHeadFromPath(): ID | null {
   const path = window.location.pathname.replace('/', '')
@@ -28,7 +28,7 @@ export class VCS {
 
   private _head: ID | null = getHeadFromPath()
   /** References to ids, null if not loaded */
-  private _refs: Refs
+  private readonly _refs: Refs
 
   static async create(storage: Storage) {
     const refs = (await storage.get('refs')) ?? new Refs([])
@@ -48,6 +48,8 @@ export class VCS {
     if (this._refs === null) throw Error('VCS not yet loaded')
     return this._refs
   }
+
+  async addRef(ref: Ref) {}
 
   /**
    * Get history

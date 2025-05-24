@@ -38,26 +38,34 @@ export function EditorView({ width, height }: EditorProps) {
         flexDirection: 'column',
       }}
     >
-      <IconButton
-        sx={{
-          position: 'absolute',
-          zIndex: 99999999,
-          left: 0,
-          top: 0,
-          minWidth: 30,
-          width: 30,
+      <div
+        style={{
+          height: '24px',
+          display: 'flex',
+          flexDirection: 'row',
+          padding: 2,
         }}
-        onClick={() => setMenu(!menu)}
-        size="small"
       >
-        <MenuIcon
+        <IconButton
           sx={{
-            transform: menu ? 'rotate(90deg)' : 'none',
-            transition: 'transform 0.3s',
+            zIndex: 99999999,
+            left: 0,
+            top: 0,
+            minWidth: 30,
+            padding: 0,
           }}
-        />
-      </IconButton>
-      <History style={{ marginLeft: 4 }} />
+          onClick={() => setMenu(!menu)}
+          size="small"
+        >
+          <MenuIcon
+            sx={{
+              transform: menu ? 'rotate(90deg)' : 'none',
+              transition: 'transform 0.3s',
+            }}
+          />
+        </IconButton>
+        <History style={{ flex: 1, height: '24px' }} />
+      </div>
       {menu ? (
         <VCSView />
       ) : (
