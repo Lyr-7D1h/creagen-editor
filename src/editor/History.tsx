@@ -18,6 +18,7 @@ import {
 import ArrowLeft from '@mui/icons-material/ArrowLeft'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import { Refs } from '../vcs/Refs'
 
 const HISTORY_SIZE = 10
 export function History({
@@ -31,6 +32,7 @@ export function History({
   const [head, setHead] = useState<string | null>(
     creagenEditor.vcs.head ? creagenEditor.vcs.head.toString() : null,
   )
+  const [refs, setRefs] = useState(new Refs([]))
   const settings = useSettings()
   const [history, setHistory] = useState<[ID, Generation][]>([])
   const [expanded, setExpanded] = useState(false)
@@ -175,7 +177,6 @@ export function History({
             alignItems="center"
             sx={{
               height,
-              padding: 0.2,
               paddingLeft: 1,
               paddingRight: isOverflowing ? 4 : 1, // Add padding for the expand button
               flexWrap: expanded ? 'wrap' : 'nowrap',
