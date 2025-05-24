@@ -167,7 +167,6 @@ export function History({
         <div
           ref={containerRef}
           style={{
-            maxHeight: expanded ? 'none' : '30px',
             overflow: expanded ? 'visible' : 'hidden',
           }}
         >
