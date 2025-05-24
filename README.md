@@ -16,6 +16,7 @@ npm start
 
 # Roadmap
 
+- Add Hydra support https://github.com/hydra-synth/hydra-synth?tab=readme-ov-file
 - use importmap to map module names to urls https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap
 - qp5.js
 - Custom Keybinds
