@@ -40,7 +40,6 @@ export function EditorView({ width, height }: EditorProps) {
     >
       <div
         style={{
-          height: '24px',
           display: 'flex',
           flexDirection: 'row',
           padding: 2,
@@ -51,8 +50,10 @@ export function EditorView({ width, height }: EditorProps) {
             zIndex: 99999999,
             left: 0,
             top: 0,
-            minWidth: 30,
+            width: 24,
+            height: 24,
             padding: 0,
+            margin: 0,
           }}
           onClick={() => setMenu(!menu)}
           size="small"
@@ -64,7 +65,7 @@ export function EditorView({ width, height }: EditorProps) {
             }}
           />
         </IconButton>
-        <History style={{ flex: 1, height: '24px' }} />
+        <History style={{ width: `calc(${width} - 30px)` }} />
       </div>
       {menu ? (
         <VCSView />
