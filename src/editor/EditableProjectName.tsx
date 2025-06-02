@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Typography } from '@mui/material'
 import { useSettings } from '../settings/SettingsProvider'
+import { logger } from '../logs/logger'
 
 export function EditableProjectName({ onUpdate }: { onUpdate: () => void }) {
   const settings = useSettings()
@@ -13,9 +14,25 @@ export function EditableProjectName({ onUpdate }: { onUpdate: () => void }) {
   }
 
   const handleProjectNameSave = () => {
+    if (projectNameValue.length < 3) {
+      logger.error('Name must have at least 3 characters')
+      return
+    }
+    if (projectNameValue.length > 40) {
+      logger.error('Name must be less than 40 characters')
+      return
+    }
+    if (!/^[a-zA-Z0-9\s]+$/.test(projectNameValue)) {
+      logger.error('Name can only contain letters, numbers, and spaces')
+      return
+    }
     settings.set('general.project_name', projectNameValue)
     setIsEditingProjectName(false)
-    onUpdate()
+
+    // ensure update after render
+    setTimeout(() => {
+      onUpdate()
+    }, 0)
   }
 
   const handleProjectNameKeyPress = (e: React.KeyboardEvent) => {

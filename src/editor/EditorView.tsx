@@ -68,6 +68,7 @@ export function EditorView({
         height,
         width,
         display: settings.values['hide_all'] ? 'none' : 'flex',
+        overflow: 'hidden',
         flexDirection: 'column',
       }}
     >
