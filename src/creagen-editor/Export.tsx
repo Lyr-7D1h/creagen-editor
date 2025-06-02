@@ -134,7 +134,7 @@ export function Export() {
                 boxShadow: 2,
               }}
             >
-              {result.map((svg, index) => (
+              {result.map((_, index) => (
                 <ListItem key={index} disablePadding>
                   <ListItemButton
                     selected={selectedIndex === index}
@@ -146,7 +146,11 @@ export function Export() {
                   >
                     <ListItemText
                       primary={`SVG ${index + 1}`}
-                      primaryTypographyProps={{ variant: 'body2' }}
+                      slotProps={{
+                        primary: {
+                          variant: 'body2',
+                        },
+                      }}
                     />
                   </ListItemButton>
                 </ListItem>

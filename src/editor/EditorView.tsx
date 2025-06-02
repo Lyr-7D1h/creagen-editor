@@ -28,27 +28,24 @@ export function EditorView({
   const projectNameRef = useRef<HTMLDivElement>(null)
   const [historyWidth, setHistoryWidth] = useState('100%')
 
-  useEffect(() => {
-    const updateHistoryWidth = () => {
-      if (iconButtonRef.current && projectNameRef.current && width) {
-        const iconWidth = iconButtonRef.current.offsetWidth
-        const projectNameWidth = projectNameRef.current.offsetWidth
-        const totalWidth =
-          typeof width === 'string'
-            ? width.includes('px')
-              ? parseInt(width)
-              : 0
-            : parseInt(width || '0')
+  function updateHistoryWidth() {
+    if (iconButtonRef.current && projectNameRef.current && width) {
+      const iconWidth = iconButtonRef.current.offsetWidth
+      const projectNameWidth = projectNameRef.current.offsetWidth
+      const totalWidth =
+        typeof width === 'string'
+          ? width.includes('px')
+            ? parseInt(width)
+            : 0
+          : parseInt(width || '0')
 
-        const availableWidth = totalWidth - iconWidth - projectNameWidth - 4 // 4px for padding
-        setHistoryWidth(`${availableWidth}px`)
-      }
+      const availableWidth = totalWidth - iconWidth - projectNameWidth - 4 // 4px for padding
+      setHistoryWidth(`${availableWidth}px`)
     }
+  }
 
+  useEffect(() => {
     updateHistoryWidth()
-    window.addEventListener('resize', updateHistoryWidth)
-
-    return () => window.removeEventListener('resize', updateHistoryWidth)
   }, [width, menu])
 
   useEffect(() => {
@@ -108,7 +105,7 @@ export function EditorView({
           </IconButton>
         </Tooltip>
         <div ref={projectNameRef}>
-          <EditableProjectName />
+          <EditableProjectName onUpdate={updateHistoryWidth} />
         </div>
         <History style={{ width: historyWidth }} />
       </div>
