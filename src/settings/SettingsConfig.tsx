@@ -1,5 +1,5 @@
 import { SemVer } from 'semver'
-import { MODE, CREAGEN_DEV_VERSION, CREAGEN_EDITOR_VERSION } from '../env'
+import { MODE, CREAGEN_EDITOR_VERSION } from '../env'
 import { generateHumanReadableName, roundToDec } from '../util'
 import { LinearProgressWithLabelSetting } from './LinearProgressWithLabelSetting'
 import React from 'react'
@@ -24,7 +24,7 @@ const defaultConfig = {
     type: 'folder',
     title: 'General',
   },
-  'general.name': {
+  'general.project_name': {
     type: 'param',
     label: 'Name',
     value: generateHumanReadableName(),
@@ -80,6 +80,22 @@ const defaultConfig = {
     label: 'Show file history',
     value: true,
   },
+
+  export: {
+    type: 'folder',
+    title: 'Export',
+  },
+  'export.enabled': {
+    type: 'param',
+    label: 'Enabled',
+    value: true,
+  },
+  'export.optimize': {
+    type: 'param',
+    label: 'Optimize',
+    value: true,
+  },
+
   debug: {
     type: 'folder',
     title: 'Debug',

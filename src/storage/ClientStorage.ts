@@ -1,7 +1,11 @@
 import { Storage } from './Storage'
 import { logger } from '../logs/logger'
 import { generationSchema } from '../vcs/Generation'
-import { localStorage } from './LocalStorage'
+import {
+  isLocalStorageKey,
+  localStorage,
+  LocalStorageKey,
+} from './LocalStorage'
 import { StorageKey } from './Storage'
 
 interface StoredGeneration {
@@ -70,16 +74,14 @@ export class ClientStorage extends Storage {
     })
   }
 
-  async set(id: StorageKey, item: any) {
-    console.debug(`[ClientStorage] Storing ${id} ${JSON.stringify(item)}`)
-    if (id === 'refs') {
-      return localStorage.set('refs', item)
-    } else if (id === 'settings') {
-      return localStorage.set('settings', item)
+  async set(key: StorageKey, item: any) {
+    console.debug(`[ClientStorage] Storing ${key} ${JSON.stringify(item)}`)
+    if (isLocalStorageKey(key)) {
+      return localStorage.set(key as LocalStorageKey, item)
     }
 
     // return on duplicate values
-    if ((await this.get(id)) !== null) return
+    if ((await this.get(key)) !== null) return
 
     const db = await this.load()
     const trans = db.transaction('generations', 'readwrite')
@@ -97,20 +99,21 @@ export class ClientStorage extends Storage {
         createdOn: item.createdOn.valueOf(),
         previous: item.previous?.toString(),
       }
-      const req = store.add(storedItem, id.toString())
+      const req = store.add(storedItem, key.toString())
       req.onsuccess = () => {
         resolve()
       }
     })
   }
 
-  async get(id: StorageKey): Promise<any | null> {
-    if (id === 'refs') return localStorage.get(id)
-    if (id === 'settings') return localStorage.get(id)
+  async get(key: StorageKey): Promise<any | null> {
+    if (isLocalStorageKey(key)) {
+      return Promise.resolve(localStorage.get(key))
+    }
 
     const db = await this.load()
     const os = db.transaction('generations').objectStore('generations')
-    const req = os.get(id.toString())
+    const req = os.get(key.toString())
     return await new Promise((resolve, reject) => {
       req.onsuccess = () => {
         if (typeof req.result === 'undefined') return resolve(null)
