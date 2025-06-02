@@ -2,20 +2,54 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useSettings } from '../settings/SettingsProvider'
 import { History } from './History'
 import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
-import MenuIcon from '@mui/icons-material/Menu'
-import { IconButton } from '@mui/material'
-import { VCSView } from './VCSView'
+import { IconButton, Tooltip } from '@mui/material'
+import { EditableProjectName } from './EditableProjectName'
+import { ChevronRight } from '@mui/icons-material'
 
 export interface EditorProps {
+  left?: string
   width?: string
   height?: string
+  menu: boolean
+  onMenuOpen: () => void
 }
 
-export function EditorView({ width, height }: EditorProps) {
+export function EditorView({
+  left,
+  width,
+  height,
+  menu,
+  onMenuOpen,
+}: EditorProps) {
   const creagenEditor = useCreagenEditor()
   const settings = useSettings()
   const editorContentRef = useRef<HTMLDivElement>(null)
-  const [menu, setMenu] = useState(false)
+  const iconButtonRef = useRef<HTMLButtonElement>(null)
+  const projectNameRef = useRef<HTMLDivElement>(null)
+  const [historyWidth, setHistoryWidth] = useState('100%')
+
+  useEffect(() => {
+    const updateHistoryWidth = () => {
+      if (iconButtonRef.current && projectNameRef.current && width) {
+        const iconWidth = iconButtonRef.current.offsetWidth
+        const projectNameWidth = projectNameRef.current.offsetWidth
+        const totalWidth =
+          typeof width === 'string'
+            ? width.includes('px')
+              ? parseInt(width)
+              : 0
+            : parseInt(width || '0')
+
+        const availableWidth = totalWidth - iconWidth - projectNameWidth - 4 // 4px for padding
+        setHistoryWidth(`${availableWidth}px`)
+      }
+    }
+
+    updateHistoryWidth()
+    window.addEventListener('resize', updateHistoryWidth)
+
+    return () => window.removeEventListener('resize', updateHistoryWidth)
+  }, [width, menu])
 
   useEffect(() => {
     if (menu === false) {
@@ -31,6 +65,8 @@ export function EditorView({ width, height }: EditorProps) {
   return (
     <div
       style={{
+        position: 'absolute',
+        left,
         zIndex: 1001,
         height,
         width,
@@ -45,36 +81,40 @@ export function EditorView({ width, height }: EditorProps) {
           padding: 2,
         }}
       >
-        <IconButton
-          sx={{
-            zIndex: 99999999,
-            left: 0,
-            top: 0,
-            width: 24,
-            height: 24,
-            padding: 0,
-            margin: 0,
-          }}
-          onClick={() => setMenu(!menu)}
-          size="small"
+        <Tooltip
+          title={menu ? 'Hide editor menu' : 'Show editor menu'}
+          placement="right"
         >
-          <MenuIcon
+          <IconButton
+            ref={iconButtonRef}
             sx={{
-              transform: menu ? 'rotate(90deg)' : 'none',
-              transition: 'transform 0.3s',
+              zIndex: 99999999,
+              left: 0,
+              top: 0,
+              width: 20,
+              height: 20,
+              padding: 0,
+              margin: 0,
             }}
-          />
-        </IconButton>
-        <History style={{ width: `calc(${width} - 30px)` }} />
+            onClick={() => onMenuOpen()}
+            size="small"
+          >
+            <ChevronRight
+              sx={{
+                transform: menu ? 'rotate(180deg)' : 'none',
+                transition: 'transform 0.3s',
+              }}
+            />
+          </IconButton>
+        </Tooltip>
+        <div ref={projectNameRef}>
+          <EditableProjectName />
+        </div>
+        <History style={{ width: historyWidth }} />
       </div>
-      {menu ? (
-        <VCSView />
-      ) : (
-        <div
-          style={{ flex: 1, overflow: 'hidden' }}
-          ref={editorContentRef}
-        ></div>
-      )}
+
+      <div style={{ flex: 1, overflow: 'hidden' }} ref={editorContentRef}></div>
+
       {settings.values['editor.vim'] && (
         <div id="vim-status" style={{ overflow: 'auto' }} />
       )}

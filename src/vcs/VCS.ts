@@ -49,7 +49,7 @@ export class VCS {
     return this._refs
   }
 
-  async addRef(ref: Ref) {}
+  async addRef(_ref: Ref) {}
 
   /**
    * Get history
