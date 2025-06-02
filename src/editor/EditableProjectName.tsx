@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Typography } from '@mui/material'
 import { useSettings } from '../settings/SettingsProvider'
 
-export function EditableProjectName() {
+export function EditableProjectName({ onUpdate }: { onUpdate: () => void }) {
   const settings = useSettings()
   const [isEditingProjectName, setIsEditingProjectName] = useState(false)
   const [projectNameValue, setProjectNameValue] = useState('')
@@ -15,6 +15,7 @@ export function EditableProjectName() {
   const handleProjectNameSave = () => {
     settings.set('general.project_name', projectNameValue)
     setIsEditingProjectName(false)
+    onUpdate()
   }
 
   const handleProjectNameKeyPress = (e: React.KeyboardEvent) => {
@@ -58,10 +59,13 @@ export function EditableProjectName() {
               backgroundColor: 'action.hover',
               borderRadius: 1,
             },
-            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
           }}
         >
-          {settings.values['general.project_name']}
+          {settings.values['general.project_name'].length > 30
+            ? settings.values['general.project_name'].substring(0, 30) + '...'
+            : settings.values['general.project_name']}
         </Typography>
       )}
     </>
