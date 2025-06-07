@@ -1,13 +1,19 @@
 import { ID } from '../creagen-editor/id'
 import { ViewType } from '../editor/Menu'
 import { Generation } from '../vcs/Generation'
-import { Refs } from '../vcs/Refs'
+import { Ref, Refs } from '../vcs/Refs'
 
-export type StorageKey = 'menu-current-view' | 'settings' | 'refs' | ID
+export type StorageKey =
+  | 'active-ref'
+  | 'menu-current-view'
+  | 'settings'
+  | 'refs'
+  | ID
 
 export abstract class Storage {
   abstract set(id: StorageKey, item: any): Promise<void>
 
+  abstract get(id: 'active-ref'): Promise<Ref | null>
   abstract get(id: 'menu-current-view'): Promise<ViewType | null>
   abstract get(id: 'settings'): Promise<any | null>
   abstract get(id: 'refs'): Promise<Refs | null>

@@ -2,7 +2,11 @@ import { ID } from '../creagen-editor/id'
 import { Refs, refSchema } from '../vcs/Refs'
 import { StorageKey } from './Storage'
 
-export type LocalStorageKey = 'menu-current-view' | 'settings' | 'refs'
+export type LocalStorageKey =
+  | 'menu-current-view'
+  | 'settings'
+  | 'refs'
+  | 'active-ref'
 
 export function isLocalStorageKey(key: StorageKey): key is LocalStorageKey {
   if (key instanceof ID) return false
@@ -27,6 +31,7 @@ class LocalStorage {
     const v = globalThis.localStorage.getItem(id)
     if (v === null) return null
 
+    if (id === 'active-ref') return refSchema.parse(JSON.parse(v))
     if (id === 'refs') {
       return new Refs(refSchema.array().parse(JSON.parse(v)))
     }

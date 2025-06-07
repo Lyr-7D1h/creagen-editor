@@ -1,6 +1,6 @@
 import { SemVer } from 'semver'
 import { MODE, CREAGEN_EDITOR_VERSION } from '../env'
-import { generateHumanReadableName, roundToDec } from '../util'
+import { roundToDec } from '../util'
 import { LinearProgressWithLabelSetting } from './LinearProgressWithLabelSetting'
 import React from 'react'
 import { LibrarySetting } from './LibrarySetting'
@@ -23,11 +23,6 @@ const defaultConfig = {
   general: {
     type: 'folder',
     title: 'General',
-  },
-  'general.project_name': {
-    type: 'param',
-    label: 'Name',
-    value: generateHumanReadableName(),
   },
   'general.libraries': {
     type: 'param',
