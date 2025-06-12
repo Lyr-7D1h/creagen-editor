@@ -85,13 +85,6 @@ export function CreagenEditorViewContent() {
     )
   }, [settings.values['editor.fullscreen'], settings.values['hide_all']])
 
-  useEffect(() => {
-    if (settings.values['editor.fullscreen']) {
-      setEditorWidth(window.innerWidth)
-      setMenuWidth(window.innerWidth)
-    }
-  }, [settings.values['editor.fullscreen']])
-
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (e.clientX < 200 || e.clientX > window.innerWidth - 200) return
 
@@ -176,7 +169,13 @@ export function CreagenEditorViewContent() {
 
       <EditorView
         left={(menu ? menuWidth + RESIZER_WIDTH_PX : 0) + 'px'}
-        width={(fullscreen ? window.innerWidth : editorWidth) + 'px'}
+        width={
+          (fullscreen
+            ? menu
+              ? window.innerWidth - (menuWidth + RESIZER_WIDTH_PX)
+              : window.innerWidth
+            : editorWidth) + 'px'
+        }
         menu={menu}
         onMenuOpen={() => setMenu(!menu)}
         height={'100vh'}
@@ -184,15 +183,20 @@ export function CreagenEditorViewContent() {
       <SandboxView
         left={
           (fullscreen
-            ? 0
+            ? menu
+              ? menuWidth + RESIZER_WIDTH_PX
+              : 0
             : menu
               ? menuWidth + editorWidth + RESIZER_WIDTH_PX
               : editorWidth) + 'px'
         }
         height={`100vh`}
         width={
-          (fullscreen ? window.innerWidth : window.innerWidth - editorWidth) +
-          'px'
+          (fullscreen
+            ? menu
+              ? window.innerWidth - (menuWidth + RESIZER_WIDTH_PX)
+              : window.innerWidth
+            : window.innerWidth - editorWidth) + 'px'
         }
       />
     </div>
