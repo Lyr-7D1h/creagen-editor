@@ -11,6 +11,7 @@ export type StorageKey =
   | ID
 
 export abstract class Storage {
+  abstract set(id: 'refs', item: Refs): Promise<void>
   abstract set(id: StorageKey, item: any): Promise<void>
 
   abstract get(id: 'active-ref'): Promise<Ref | null>

@@ -2,7 +2,6 @@ import React, { createContext, useContext, useEffect, useState } from 'react'
 import { CreagenEditorViewContent } from './CreagenEditorViewContent'
 import { logger } from '../logs/logger'
 import { CreagenEditor } from './CreagenEditor'
-import { SettingsProvider } from '../settings/SettingsProvider'
 import { Logs } from '../logs/Logs'
 import { Box, CircularProgress } from '@mui/material'
 
@@ -47,10 +46,8 @@ export function CreagenEditorView() {
 
   return (
     <CreagenEditorContext.Provider value={creagenEditor}>
-      <SettingsProvider settings={creagenEditor.settings}>
-        <CreagenEditorViewContent />
-        <Logs />
-      </SettingsProvider>
+      <CreagenEditorViewContent />
+      <Logs />
     </CreagenEditorContext.Provider>
   )
 }

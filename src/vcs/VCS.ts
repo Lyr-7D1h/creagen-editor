@@ -4,8 +4,9 @@ import { Library } from '../settings/SettingsConfig'
 import { Storage } from '../storage/Storage'
 import { Generation } from './Generation'
 import { Ref, Refs } from './Refs'
+import { editorEvents } from '../events/events'
 
-export function getHeadFromPath(): ID | null {
+export function getIdFromPath(): ID | null {
   const path = window.location.pathname.replace('/', '')
 
   if (path.length === 0) return null
@@ -20,13 +21,19 @@ export function getHeadFromPath(): ID | null {
   return id
 }
 
+export type HistoryItem = {
+  id: ID
+  generation: Generation
+  refs: Ref[]
+}
+
 const logger = createContextLogger('vcs')
 
 /** Version Control Software for creagen-editor */
 export class VCS {
   storage: Storage
 
-  private _head: ID | null = getHeadFromPath()
+  private _head: ID | null = getIdFromPath()
   /** References to ids, null if not loaded */
   private readonly _refs: Refs
 
@@ -44,6 +51,19 @@ export class VCS {
     return this._head
   }
 
+  async headRef() {
+    if (this._head === null) return null
+    return this.refLookup(this._head)
+  }
+
+  async renameRef(refName: string, newRefName: string) {
+    const ref = this.refs.getRef(refName)
+    if (!ref) return false
+    ref.name = newRefName
+    await this.storage.set('refs', this.refs)
+    return true
+  }
+
   get refs() {
     if (this._refs === null) throw Error('VCS not yet loaded')
     return this._refs
@@ -51,19 +71,24 @@ export class VCS {
 
   async addRef(_ref: Ref) {}
 
+  async refLookup(id: ID) {
+    return this._refs.refLookup(id)
+  }
+
   /**
    * Get history
    * @param n - How far to go back
    */
-  async history(n: number): Promise<[ID, Generation][]> {
-    const history: [ID, Generation][] = []
+  async history(n: number): Promise<HistoryItem[]> {
     let id = this._head
+    const history = [id]
     for (let i = 0; i < n; i++) {
       if (!id) break
-      const item = await this.storage.get(id)
-      if (item === null) break
-      history.push([id, item])
-      id = item?.previous ?? null
+      const generation = await this.storage.get(id)
+      if (generation === null) break
+      history.push({ id, generation, refs: this.refs.refLookup(id) })
+
+      id = generation?.previous ?? null
     }
     return history
   }
@@ -87,19 +112,30 @@ export class VCS {
     url.pathname = id.toString()
     window.history.pushState('Creagen', '', url)
 
+    // Emit global events
+    editorEvents.emit('vcs:commit', { id, generation: gen, code })
+    editorEvents.emit('vcs:checkout', { old: this.head, new: id })
+
     this._head = id
   }
 
   async checkout(id: ID): Promise<Generation | null> {
     // update url
-    if (id.toString() !== getHeadFromPath()?.toString()) {
+    if (id.toString() !== getIdFromPath()?.toString()) {
       logger.debug(`Add ${id.toSub()} to window history`)
       const url = new URL(window.location as any)
       url.pathname = id.toString()
       window.history.pushState('Creagen', '', url)
     }
 
+    const old = this._head
     this._head = id
-    return await this.storage.get(id)
+
+    const generation = await this.storage.get(id)
+
+    // Emit global events
+    editorEvents.emit('vcs:checkout', { old, new: id })
+
+    return generation
   }
 }

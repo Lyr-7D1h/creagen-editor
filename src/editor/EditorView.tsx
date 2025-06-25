@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { useSettings } from '../settings/SettingsProvider'
 import { History } from './History'
 import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
 import { IconButton, Tooltip } from '@mui/material'
 import { EditableProjectName } from './EditableProjectName'
 import { ChevronRight } from '@mui/icons-material'
+import { useSettings } from '../events/useEditorEvents'
 
 export interface EditorProps {
   left?: string
@@ -22,7 +22,8 @@ export function EditorView({
   onMenuOpen,
 }: EditorProps) {
   const creagenEditor = useCreagenEditor()
-  const settings = useSettings()
+  const hideAll = useSettings('hide_all')
+  const vimEnabled = useSettings('editor.vim')
   const editorContentRef = useRef<HTMLDivElement>(null)
   const iconButtonRef = useRef<HTMLButtonElement>(null)
   const projectNameRef = useRef<HTMLDivElement>(null)
@@ -67,7 +68,7 @@ export function EditorView({
         zIndex: 1001,
         height,
         width,
-        display: settings.values['hide_all'] ? 'none' : 'flex',
+        display: hideAll ? 'none' : 'flex',
         overflow: 'hidden',
         flexDirection: 'column',
       }}
@@ -113,9 +114,7 @@ export function EditorView({
 
       <div style={{ flex: 1, overflow: 'hidden' }} ref={editorContentRef}></div>
 
-      {settings.values['editor.vim'] && (
-        <div id="vim-status" style={{ overflow: 'auto' }} />
-      )}
+      {vimEnabled && <div id="vim-status" style={{ overflow: 'auto' }} />}
     </div>
   )
 }

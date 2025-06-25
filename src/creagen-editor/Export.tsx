@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useCreagenEditor } from './CreagenEditorView'
-import { SandboxEvent, SvgProps } from '../sandbox/Sandbox'
 import React from 'react'
 import { Download, ExpandMore } from '@mui/icons-material'
 import {
@@ -17,41 +16,18 @@ import {
 } from '@mui/material'
 import { logger } from '../logs/logger'
 import { Svg } from './svg'
-import { useSettings } from '../settings/SettingsProvider'
+import { useEditorEvent, useHead, useHeadRef } from '../events/useEditorEvents'
 
 export function Export() {
   const theme = useTheme()
-  const settings = useSettings()
+  const analysisResult = useEditorEvent('sandbox:analysis-complete')
   const creagenEditor = useCreagenEditor()
-  const [result, setResult] = useState<SvgProps[] | null>(null)
+  const exportName = useHeadRef()
+  const id = useHead()
+
   const [downloading, setDownloading] = useState<boolean>(false)
   const [selectedIndex, setSelectedIndex] = useState<number>(0)
   const [expanded, setExpanded] = useState<boolean>(false)
-
-  function handleAnalysisResult(result: SandboxEvent) {
-    if (result.type === 'analysisResult') {
-      if (result.analysisResult.svgs.length > 0) {
-        setResult(result.analysisResult.svgs)
-        setSelectedIndex(0)
-      } else {
-        setResult(null)
-      }
-    }
-  }
-
-  useEffect(() => {
-    creagenEditor.sandbox.addEventListener(
-      'analysisResult',
-      handleAnalysisResult,
-    )
-
-    return () => {
-      creagenEditor.sandbox.removeEventListener(
-        'analysisResult',
-        handleAnalysisResult,
-      )
-    }
-  }, [])
 
   async function download() {
     if (downloading) return
@@ -65,16 +41,13 @@ export function Export() {
     const parser = new DOMParser()
     const doc = parser.parseFromString(svgString, 'image/svg+xml')
     const svgInstance = new Svg(doc.documentElement as unknown as SVGElement)
-    svgInstance.export(
-      settings.values['general.project_name'],
-      settings.values['general.libraries'],
-    )
+    svgInstance.export({ name: exportName?.name ?? '', id: id ?? undefined })
     setDownloading(false)
   }
 
-  if (result === null) return ''
+  if (analysisResult === null) return ''
 
-  const hasMultipleSvgs = result.length > 1
+  const hasMultipleSvgs = analysisResult.result.svgs.length > 1
 
   return (
     <Box sx={{ position: 'relative' }}>
@@ -134,7 +107,7 @@ export function Export() {
                 boxShadow: 2,
               }}
             >
-              {result.map((_, index) => (
+              {analysisResult.result.svgs.map((_, index) => (
                 <ListItem key={index} disablePadding>
                   <ListItemButton
                     selected={selectedIndex === index}

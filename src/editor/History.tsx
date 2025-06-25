@@ -4,7 +4,6 @@ import { logger } from '../logs/logger'
 import React from 'react'
 import Box from '@mui/material/Box'
 import { Generation } from '../vcs/Generation'
-import { useSettings } from '../settings/SettingsProvider'
 import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
 import {
   Chip,
@@ -18,7 +17,7 @@ import {
 import ArrowLeft from '@mui/icons-material/ArrowLeft'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import { Refs } from '../vcs/Refs'
+import { useSettings } from '../events/useEditorEvents'
 
 const HISTORY_SIZE = 10
 export function History({
@@ -32,8 +31,7 @@ export function History({
   const [head, setHead] = useState<string | null>(
     creagenEditor.vcs.head ? creagenEditor.vcs.head.toString() : null,
   )
-  const [refs, setRefs] = useState(new Refs([]))
-  const settings = useSettings()
+  const historyEnabled = useSettings('editor.show_history')
   const [history, setHistory] = useState<[ID, Generation][]>([])
   const [expanded, setExpanded] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -132,7 +130,7 @@ export function History({
     ))
   }
 
-  if (settings.values['editor.show_history'] === false || history.length <= 1) {
+  if (historyEnabled === false || history.length <= 1) {
     return ''
   }
 

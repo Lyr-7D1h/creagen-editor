@@ -8,9 +8,9 @@ import React, { useState, useEffect } from 'react'
 import { SemVer } from 'semver'
 import { CREAGEN_DEV_VERSION } from '../env'
 import { logger } from '../logs/logger'
-import { Library } from './SettingsConfig'
-import { useSettings } from './SettingsProvider'
 import { Importer } from '../importer'
+import { useSettings } from '../events/useEditorEvents'
+import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
 
 const supportedLibraries = [
   { name: 'creagen' },
@@ -23,13 +23,12 @@ function isDevBuild(version: SemVer) {
 }
 
 export function LibrarySetting() {
-  const settings = useSettings()
+  const settings = useCreagenEditor().settings
+  const libraries = useSettings('general.libraries')
   const [versions, setVersions] = useState<Record<string, string[]>>({})
   const [selectedVersion, setSelectedVersion] = useState<
     Record<string, string>
   >({})
-
-  const libraries = settings.values['general.libraries'] as Library[]
 
   useEffect(() => {
     Promise.all(supportedLibraries.map((l) => Importer.versions(l.name)))

@@ -4,8 +4,9 @@ import {
   DefaultSettingsConfig,
   Entry,
   Param,
-  Params,
+  ParamKey,
 } from './SettingsConfig'
+import { editorEvents } from '../events/events'
 
 export function parentKey(key: string) {
   return key.split('.').slice(0, -1).join('.')
@@ -13,26 +14,19 @@ export function parentKey(key: string) {
 
 export interface SettingsContextType {
   /** Do not change any of these values use `set()` and `add()` */
-  values: Record<Params, any>
+  values: Record<ParamKey, any>
   /** Do not change any of these values use `set()` and `add()` */
   config: DefaultSettingsConfig
-  set: (key: Params, value: any) => void
+  set: (key: ParamKey, value: any) => void
   add: (key: string, entry: Entry) => void
   /** Remove all values under this key */
   remove: (key: string) => void
 }
 
-/** If value is null it means something has been removed/added or the value has been set to null */
-export type Listener = (value: any | null, key: string) => void
-export type KeyListener = (value: any | null) => void
-export type KeyParamListener = (value: any) => void
-
 // Core Settings class to handle the settings logic
 export class Settings {
   readonly defaultConfig = defaultSettingsConfig
   config: DefaultSettingsConfig
-  /** Listeners listening to all events located at null */
-  private listeners: Map<string | null, Listener[]> = new Map()
 
   private storage: Storage
 
@@ -71,15 +65,15 @@ export class Settings {
     return new Settings(storage, defaultConfig as DefaultSettingsConfig)
   }
 
-  get values(): Record<Params, any> {
+  get values(): Record<ParamKey, any> {
     return Object.fromEntries(
       Object.entries(this.config)
         .filter(([_, entry]) => (entry as Entry).type === 'param' || entry.type)
         .map(([key, entry]) => [key, (entry as Param).value]),
-    ) as Record<Params, any>
+    ) as Record<ParamKey, any>
   }
 
-  isParam(key: string): key is Params {
+  isParam(key: string): key is ParamKey {
     if (key in this.config) {
       const entry = this.config[key as keyof DefaultSettingsConfig]
       return entry.type === 'param'
@@ -93,19 +87,20 @@ export class Settings {
     return entry as Entry
   }
 
-  get(key: Params): any {
+  get(key: ParamKey): any {
     return this.config[key].value
   }
 
   // Set a value
-  set(key: Params, value: any): void {
+  set(key: ParamKey, value: any): void {
     console.debug(`[Settings] setting ${key} to ${JSON.stringify(value)}`)
     const entry = this.config[key]
     if (typeof entry === 'undefined') throw Error(`Key ${key} does not exist`)
     if (entry.type !== 'param')
       throw Error(`You can't set a value for ${entry.type}`)
+    const oldValue = entry.value
     entry.value = value
-    this.saveAndNotify(key, value)
+    this.saveAndNotify(key, value, oldValue)
   }
 
   // Add a new entry
@@ -143,41 +138,17 @@ export class Settings {
   }
 
   // Save settings to localStorage and notify listeners
-  private saveAndNotify(key: any, value: any | null): void {
+  private saveAndNotify(key: any, value: any | null, oldValue?: any): void {
     const values = { ...this.values }
     for (const k in values) {
-      const entry = this.config[k as Params] as Entry
+      const entry = this.config[k as ParamKey] as Entry
       if (entry.generated) {
-        delete values[k as Params]
+        delete values[k as ParamKey]
       }
     }
     this.storage.set('settings', values)
 
-    // Notify all listeners
-    this.listeners.get(null)?.forEach((listener) => listener(value, key))
-    if (value !== null) {
-      this.listeners.get(key)?.forEach((listener) => listener(value, key))
-    }
-  }
-
-  // Add a change listener and return a function to unsubscribe
-  subscribe(listener: KeyListener, key: string): () => void
-  subscribe(listener: KeyParamListener, key: Params): () => void
-  subscribe(listener: Listener): () => void
-  subscribe(listener: Listener, key?: string): () => void {
-    const index = key ?? null
-    let listeners = this.listeners.get(index)
-    if (typeof listeners === 'undefined') {
-      listeners = [] as Listener[]
-    }
-    listeners.push(listener)
-    this.listeners.set(index, listeners)
-
-    return () => {
-      this.listeners.set(
-        index,
-        listeners!.filter((l) => l !== listener),
-      )
-    }
+    // Emit settings changed event
+    editorEvents.emit('settings:changed', { key, value, oldValue })
   }
 }

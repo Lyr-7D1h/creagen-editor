@@ -11,11 +11,16 @@ export type Ref = z.infer<typeof refSchema>
 
 export class Refs {
   private refs: Map<String, Ref>
+  private lookup: Map<String, Ref[]>
 
   constructor(refs: Ref[]) {
     this.refs = new Map()
+    this.lookup = new Map()
     for (const ref of refs) {
-      this.refs.set(ref.id.hash, ref)
+      this.refs.set(ref.name, ref)
+
+      const currentRefs = this.lookup.get(ref.id.hash)
+      this.lookup.set(ref.id.hash, currentRefs ? [...currentRefs, ref] : [ref])
     }
   }
 
@@ -23,8 +28,12 @@ export class Refs {
     return Object.values(this.refs)
   }
 
-  refLookup(id: ID): Ref | null {
-    const v = this.refs.get(id.hash)
+  getRef(name: String) {
+    return this.refs.get(name)
+  }
+
+  refLookup(id: ID): Ref[] | null {
+    const v = this.lookup.get(id.hash)
     if (typeof v === 'undefined') return null
     return v
   }
