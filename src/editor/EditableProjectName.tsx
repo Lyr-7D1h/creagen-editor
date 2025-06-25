@@ -1,32 +1,36 @@
 import React, { useState } from 'react'
 import { Typography } from '@mui/material'
-import { useSettings } from '../settings/SettingsProvider'
 import { logger } from '../logs/logger'
+import { useHeadRef } from '../events/useEditorEvents'
+import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
 
 export function EditableProjectName({ onUpdate }: { onUpdate: () => void }) {
-  const settings = useSettings()
+  const vcs = useCreagenEditor().vcs
+  const headRef = useHeadRef()
   const [isEditingProjectName, setIsEditingProjectName] = useState(false)
-  const [projectNameValue, setProjectNameValue] = useState('')
+  const [headRefValue, setProjectNameValue] = useState('')
+
+  if (headRef === null) return ''
 
   const handleProjectNameClick = () => {
-    setProjectNameValue(settings.values['general.project_name'])
+    setProjectNameValue(headRef.name)
     setIsEditingProjectName(true)
   }
 
   const handleProjectNameSave = () => {
-    if (projectNameValue.length < 3) {
+    if (headRefValue.length < 3) {
       logger.error('Name must have at least 3 characters')
       return
     }
-    if (projectNameValue.length > 40) {
+    if (headRefValue.length > 40) {
       logger.error('Name must be less than 40 characters')
       return
     }
-    if (!/^[a-zA-Z0-9\s]+$/.test(projectNameValue)) {
+    if (!/^[a-zA-Z0-9\s]+$/.test(headRefValue)) {
       logger.error('Name can only contain letters, numbers, and spaces')
       return
     }
-    settings.set('general.project_name', projectNameValue)
+    vcs.renameRef(headRef.name, headRefValue)
     setIsEditingProjectName(false)
 
     // ensure update after render
@@ -48,7 +52,7 @@ export function EditableProjectName({ onUpdate }: { onUpdate: () => void }) {
       {isEditingProjectName ? (
         <input
           type="text"
-          value={projectNameValue}
+          value={headRefValue}
           onChange={(e) => setProjectNameValue(e.target.value)}
           onBlur={handleProjectNameSave}
           onKeyDown={handleProjectNameKeyPress}
@@ -80,9 +84,9 @@ export function EditableProjectName({ onUpdate }: { onUpdate: () => void }) {
             overflow: 'hidden',
           }}
         >
-          {settings.values['general.project_name'].length > 30
-            ? settings.values['general.project_name'].substring(0, 30) + '...'
-            : settings.values['general.project_name']}
+          {headRef.name.length > 30
+            ? headRef.name.substring(0, 30) + '...'
+            : headRef.name}
         </Typography>
       )}
     </>

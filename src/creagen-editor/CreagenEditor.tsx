@@ -10,8 +10,9 @@ import { parseCode } from './parseCode'
 import { Library } from '../settings/SettingsConfig'
 import { Keybindings } from './keybindings'
 import { Importer, LibraryImport } from '../importer'
-import { getHeadFromPath, VCS } from '../vcs/VCS'
+import { getIdFromPath, VCS } from '../vcs/VCS'
 import { ClientStorage } from '../storage/ClientStorage'
+import { editorEvents } from '../events/events'
 
 type Key = 'render' | 'code'
 type Listener = () => void
@@ -65,12 +66,12 @@ export class CreagenEditor {
 
     // Update code from history
     addEventListener('popstate', () => {
-      const id = getHeadFromPath()
+      const id = getIdFromPath()
       if (id === null) return
       this.loadCode(id)
     })
 
-    this.settings.subscribe((value, k) => {
+    editorEvents.on('settings:changed', ({ key: k, value }) => {
       if (k === 'general.libraries') {
         this.loadLibraries()
       }

@@ -1,5 +1,6 @@
 import sandboxCode from '../../gen/sandbox'
 import { CREAGEN_EDITOR_VERSION, MODE } from '../env'
+import { editorEvents } from '../events/events'
 import { LibraryImport } from '../importer'
 import { logger } from '../logs/logger'
 
@@ -14,26 +15,27 @@ export type SandboxEvent =
     }
   | {
       type: 'analysisResult'
-      analysisResult: AnalyzeContainerResult
+      result: AnalyzeContainerResult
     }
   | {
       type: 'error'
       error: Error
     }
   | {
-      type: 'svgExportRequest'
-      svgIndex: number
-      optimize: boolean
-    }
-  | {
       type: 'svgExportResponse'
       data: string | null
     }
+  /** Sent by Sandbox */
   | {
       type: 'init'
       constants: {
         creagenEditorVersion: string
       }
+    }
+  | {
+      type: 'svgExportRequest'
+      svgIndex: number
+      optimize: boolean
     }
 
 export interface AnalyzeContainerResult {
@@ -52,13 +54,8 @@ function isSandboxEvent(event: any): event is SandboxEvent {
   return event && typeof event.type === 'string'
 }
 
-type EventListener<T extends SandboxEvent> = (event: T) => void
-
 export class Sandbox {
   iframe: HTMLIFrameElement
-  private eventListeners: {
-    [K in SandboxEvent['type']]?: EventListener<any>[]
-  } = {}
 
   constructor() {
     this.iframe = document.createElement('iframe')
@@ -78,9 +75,12 @@ export class Sandbox {
     window.addEventListener('message', (event) => {
       const sandboxEvent = event.data
       if (isSandboxEvent(sandboxEvent)) {
-        this.dispatchEvent(sandboxEvent)
         switch (sandboxEvent.type) {
+          case 'analysisResult':
+            editorEvents.emit('sandbox:analysis-complete', sandboxEvent)
+            break
           case 'error':
+            editorEvents.emit('sandbox:error', sandboxEvent)
             throw sandboxEvent.error
           case 'log':
             if (sandboxEvent.level === 'error') {
@@ -90,6 +90,7 @@ export class Sandbox {
             console[sandboxEvent.level](...sandboxEvent.data)
             break
           case 'loaded':
+            editorEvents.emit('sandbox:loaded', undefined)
             this.sendMessage({
               type: 'init',
               constants: {
@@ -100,33 +101,6 @@ export class Sandbox {
         }
       }
     })
-  }
-
-  addEventListener<T extends SandboxEvent['type']>(
-    eventType: T,
-    listener: EventListener<Extract<SandboxEvent, { type: T }>>,
-  ) {
-    if (!this.eventListeners[eventType]) {
-      this.eventListeners[eventType] = []
-    }
-    this.eventListeners[eventType]!.push(listener)
-  }
-
-  removeEventListener<T extends SandboxEvent['type']>(
-    eventType: T,
-    listener: EventListener<Extract<SandboxEvent, { type: T }>>,
-  ) {
-    if (!this.eventListeners[eventType]) return
-    this.eventListeners[eventType] = this.eventListeners[eventType]!.filter(
-      (l) => l !== listener,
-    )
-  }
-
-  private dispatchEvent(event: SandboxEvent) {
-    const listeners = this.eventListeners[event.type] || []
-    for (const listener of listeners) {
-      listener(event)
-    }
   }
 
   render(code: string, libraryImports: LibraryImport[]) {

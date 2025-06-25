@@ -12,7 +12,7 @@ import './editor.css'
 
 import { initVimMode } from 'monaco-vim'
 import { Settings } from '../settings/Settings'
-import { createContextLogger } from '../logs/logger'
+import { editorEvents } from '../events/events'
 
 // Use monaco without cdn: https://www.npmjs.com/package/@monaco-editor/react#loader-config
 self.MonacoEnvironment = {
@@ -132,23 +132,8 @@ export class Editor {
     this.vimMode = null
     this.fullscreendecorators = null
 
-    // settings.subscribe((value) => {
-    //   this.setVimMode(value)
-    // }, 'editor.vim')
-    // settings.subscribe((value) => {
-    //   this.setFullscreenMode(value)
-    // }, 'editor.fullscreen')
-    // settings.subscribe((value) => {
-    //   if (value) {
-    //     this.editor.updateOptions({ lineNumbers: 'relative' })
-    //   } else {
-    //     this.editor.updateOptions({ lineNumbers: 'on' })
-    //   }
-    // }, 'editor.relative_lines')
-    settings.subscribe((_, key) => {
-      if (key.startsWith('editor')) {
-        this.updateFromSettings(settings)
-      }
+    editorEvents.onPattern('editor', ({}) => {
+      this.updateFromSettings(settings)
     })
     this.updateFromSettings(settings)
   }
@@ -235,10 +220,10 @@ export class Editor {
   }
 
   /** force update current model */
-  private forceUpdateModel() {
-    const currentModel = this.editor.getModel()!
-    monaco.editor.setModelLanguage(currentModel, 'typescript')
-  }
+  // private forceUpdateModel() {
+  //   const currentModel = this.editor.getModel()!
+  //   monaco.editor.setModelLanguage(currentModel, 'typescript')
+  // }
 
   /** set background transparent and make code highly visable */
   setFullscreenMode(value: boolean) {

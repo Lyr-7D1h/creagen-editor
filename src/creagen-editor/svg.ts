@@ -1,5 +1,9 @@
-import { CREAGEN_EDITOR_VERSION } from '../env'
-import { Library } from '../settings/SettingsConfig'
+import { ID } from './id'
+
+export type ExportOptions = {
+  name: string
+  id?: ID
+}
 
 export class Svg {
   svg: SVGElement
@@ -7,7 +11,7 @@ export class Svg {
     this.svg = svg
   }
 
-  export(name: string, libraries: Library[]) {
+  export({ name, id }: ExportOptions) {
     const svg = this.svg.cloneNode(true) as SVGElement
 
     // TODO: add params used, code hash, date generated
@@ -16,11 +20,7 @@ export class Svg {
       'metadata',
     )
     const creagen = document.createElement('creagen')
-    creagen.setAttribute(
-      'libraries',
-      libraries.map((l) => `${l.name}@${l.version.toString()}`).join(','),
-    )
-    creagen.setAttribute('editor-version', CREAGEN_EDITOR_VERSION.toString())
+    if (id) creagen.setAttribute('id', id.toString())
     metadata.appendChild(creagen)
     svg.appendChild(metadata)
 

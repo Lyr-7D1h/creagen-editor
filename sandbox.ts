@@ -110,8 +110,8 @@ function analyzeSvg(html: Element): SvgProps {
 window.onload = () => {
   postMessage({ type: 'loaded' })
   setTimeout(() => {
-    const analysisResult = analyzeContainer(document.body)
-    postMessage({ type: 'analysisResult', analysisResult })
+    const result = analyzeContainer(document.body)
+    postMessage({ type: 'analysisResult', result })
   }, 500)
 }
 

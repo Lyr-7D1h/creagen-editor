@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react'
-import { useSettings } from '../settings/SettingsProvider'
 import { useTheme } from '@mui/material'
 import { EditorView } from '../editor/EditorView'
 import { SandboxView } from '../sandbox/SandboxView'
 import { Menu } from '../editor/Menu'
 import { Export } from './Export'
+import { useSettings } from '../events/useEditorEvents'
 
 const RESIZER_WIDTH_PX = 3
 
@@ -65,25 +65,17 @@ function Resizer({
  * each child must have a width prop
  */
 export function CreagenEditorViewContent() {
-  const settings = useSettings()
-
   const [menuWidth, setMenuWidth] = useState<number>(window.innerWidth / 4)
   const [editorWidth, setEditorWidth] = useState<number>(window.innerWidth / 4)
 
+  const fullscreen = useSettings('editor.fullscreen') || useSettings('hide_all')
+  const exportEnabled = useSettings('export.enabled')
+
   const [resizing, setResizing] = useState<null | number>(null)
-  const [fullscreen, setFullscreen] = useState<boolean>(
-    settings.values['editor.fullscreen'],
-  )
   const [menu, setMenu] = useState(false)
 
   const currentResizerRef = useRef<number | null>(null)
   const animationFrameRef = useRef<number | null>(null)
-
-  useEffect(() => {
-    setFullscreen(
-      settings.values['editor.fullscreen'] || settings.values['hide_all'],
-    )
-  }, [settings.values['editor.fullscreen'], settings.values['hide_all']])
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (e.clientX < 200 || e.clientX > window.innerWidth - 200) return
@@ -159,7 +151,7 @@ export function CreagenEditorViewContent() {
         ''
       )}
 
-      {settings.values['export.enabled'] ? (
+      {exportEnabled ? (
         <div style={{ position: 'absolute', top: '10px', right: '10px' }}>
           <Export />
         </div>

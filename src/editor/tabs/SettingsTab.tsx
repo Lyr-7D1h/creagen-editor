@@ -1,5 +1,5 @@
 import React from 'react'
-import { Entry } from '../../settings/SettingsConfig'
+import { Entry, ParamKey } from '../../settings/SettingsConfig'
 import {
   Accordion,
   AccordionDetails,
@@ -12,10 +12,12 @@ import {
   Box,
 } from '@mui/material'
 import { ExpandMore } from '@mui/icons-material'
-import { useSettings } from '../../settings/SettingsProvider'
+import { useSettingsAll } from '../../events/useEditorEvents'
+import { useCreagenEditor } from '../../creagen-editor/CreagenEditorView'
 
 export function SettingsTab() {
-  const settings = useSettings()
+  const settings = useCreagenEditor().settings
+  const values = useSettingsAll()
   const [expanded, setExpanded] = React.useState<string>('general')
 
   const folders: Record<string, any[]> = Object.entries(settings.config)
@@ -63,6 +65,7 @@ export function SettingsTab() {
             >
               {entries.map(([paramKey, e]) => {
                 const entry = e as Entry
+                const value = values[paramKey as ParamKey]
 
                 if (entry.type === 'button')
                   return (
@@ -82,7 +85,7 @@ export function SettingsTab() {
                   return (
                     <React.Fragment key={paramKey}>
                       <FormLabel>{entry.label}</FormLabel>
-                      {entry.render(entry.value)}
+                      {entry.render(value)}
                     </React.Fragment>
                   )
                 }
@@ -90,9 +93,9 @@ export function SettingsTab() {
                 return (
                   <React.Fragment key={paramKey}>
                     <FormLabel>{entry.label}</FormLabel>
-                    {typeof entry.value === 'boolean' ? (
+                    {typeof value === 'boolean' ? (
                       <Checkbox
-                        checked={entry.value}
+                        checked={value}
                         sx={{
                           '&:hover': {
                             backgroundColor: 'transparent',
@@ -104,11 +107,9 @@ export function SettingsTab() {
                       />
                     ) : (
                       <TextField
-                        type={
-                          typeof entry.value === 'number' ? 'number' : 'text'
-                        }
+                        type={typeof value === 'number' ? 'number' : 'text'}
                         disabled={entry.readonly}
-                        defaultValue={entry.value}
+                        defaultValue={value}
                         size="small"
                         fullWidth
                       />
