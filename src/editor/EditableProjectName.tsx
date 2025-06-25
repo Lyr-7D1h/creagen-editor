@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
 import { Typography } from '@mui/material'
 import { logger } from '../logs/logger'
-import { useHeadRef } from '../events/useEditorEvents'
+import { useActiveRef } from '../events/useEditorEvents'
 import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
 
 export function EditableProjectName({ onUpdate }: { onUpdate: () => void }) {
   const vcs = useCreagenEditor().vcs
-  const headRef = useHeadRef()
+  const headRef = useActiveRef()
   const [isEditingProjectName, setIsEditingProjectName] = useState(false)
   const [headRefValue, setProjectNameValue] = useState('')
 
@@ -26,7 +26,9 @@ export function EditableProjectName({ onUpdate }: { onUpdate: () => void }) {
       logger.error('Name must be less than 40 characters')
       return
     }
-    if (!/^[a-zA-Z0-9\s]+$/.test(headRefValue)) {
+    if (
+      !/^[a-zA-Z0-9\s\-_.,!@#$%^&*()+={}[\]:;"'<>?/\\|`~]+$/.test(headRefValue)
+    ) {
       logger.error('Name can only contain letters, numbers, and spaces')
       return
     }

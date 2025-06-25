@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { logger } from '../logs/logger'
+import { LocalStorageKey } from './LocalStorage'
+import { localStorage } from './LocalStorage'
 
 // Extend WindowEventMap to include 'local-storage' event
 declare global {
@@ -20,12 +22,12 @@ function isCustomEvent(
 }
 
 export function useLocalStorage(
-  key: string,
-  initialValue: string | number | Function | object | boolean,
+  key: LocalStorageKey,
+  initialValue?: string | number | Function | object | boolean,
 ) {
   const [storedValue, setStoredValue] = useState(() => {
     try {
-      const item = window.localStorage.getItem(key)
+      const item = localStorage.get(key)
       return item ? JSON.parse(item) : initialValue
     } catch (error) {
       logger.error(error)
@@ -38,7 +40,7 @@ export function useLocalStorage(
       const valueToStore =
         value instanceof Function ? value(storedValue) : value
       setStoredValue(valueToStore)
-      window.localStorage.setItem(key, JSON.stringify(valueToStore))
+      localStorage.set(key, JSON.stringify(valueToStore))
       // Dispatch a custom event to notify other hooks
       // @TODO the event should only be for the localstorage key, now it triggers for all keys
       window.dispatchEvent(

@@ -16,14 +16,18 @@ import {
 } from '@mui/material'
 import { logger } from '../logs/logger'
 import { Svg } from './svg'
-import { useEditorEvent, useHead, useHeadRef } from '../events/useEditorEvents'
+import {
+  useActiveRef,
+  useEditorEvent,
+  useHead,
+} from '../events/useEditorEvents'
 
 export function Export() {
   const theme = useTheme()
   const analysisResult = useEditorEvent('sandbox:analysis-complete')
   const creagenEditor = useCreagenEditor()
-  const exportName = useHeadRef()
   const id = useHead()
+  const activeRef = useActiveRef()
 
   const [downloading, setDownloading] = useState<boolean>(false)
   const [selectedIndex, setSelectedIndex] = useState<number>(0)
@@ -41,7 +45,7 @@ export function Export() {
     const parser = new DOMParser()
     const doc = parser.parseFromString(svgString, 'image/svg+xml')
     const svgInstance = new Svg(doc.documentElement as unknown as SVGElement)
-    svgInstance.export({ name: exportName?.name ?? '', id: id ?? undefined })
+    svgInstance.export({ name: activeRef.name ?? '', id: id ?? undefined })
     setDownloading(false)
   }
 

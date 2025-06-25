@@ -1,4 +1,4 @@
-import { ID } from '../creagen-editor/id'
+import { ID } from '../vcs/id'
 import { AnalyzeContainerResult } from '../sandbox/Sandbox'
 import { Generation } from '../vcs/Generation'
 

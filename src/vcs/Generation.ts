@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { dateNumberSchema } from '../creagen-editor/schemaUtils'
-import { IDStringSchema } from '../creagen-editor/id'
+import { IDStringSchema } from './id'
 
 export const generationSchema = z.object({
   code: z.string(),

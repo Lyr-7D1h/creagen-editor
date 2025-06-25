@@ -1,4 +1,4 @@
-import { ID } from './id'
+import { ID } from '../vcs/id'
 
 export type ExportOptions = {
   name: string

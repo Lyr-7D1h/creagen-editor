@@ -1,10 +1,11 @@
-import { ID } from '../creagen-editor/id'
+import { ID } from './id'
 import { createContextLogger } from '../logs/logger'
 import { Library } from '../settings/SettingsConfig'
 import { Storage } from '../storage/Storage'
 import { Generation } from './Generation'
 import { Ref, Refs } from './Refs'
 import { editorEvents } from '../events/events'
+import { generateHumanReadableName } from './generateHumanReadableName'
 
 export function getIdFromPath(): ID | null {
   const path = window.location.pathname.replace('/', '')
@@ -27,33 +28,40 @@ export type HistoryItem = {
   refs: Ref[]
 }
 
+export type ActiveRef = Omit<Ref, 'id'> & { id?: ID }
+
 const logger = createContextLogger('vcs')
 
 /** Version Control Software for creagen-editor */
 export class VCS {
   storage: Storage
 
+  private _activeRef: ActiveRef
   private _head: ID | null = getIdFromPath()
   /** References to ids, null if not loaded */
   private readonly _refs: Refs
 
   static async create(storage: Storage) {
     const refs = (await storage.get('refs')) ?? new Refs([])
-    return new VCS(storage, refs)
+    const activeRef = (await storage.get('active-ref')) ?? {
+      name: generateHumanReadableName(),
+      createdOn: new Date(),
+    }
+    return new VCS(storage, refs, activeRef)
   }
 
-  private constructor(storage: Storage, refs: Refs) {
+  private constructor(storage: Storage, refs: Refs, activeRef: ActiveRef) {
     this.storage = storage
     this._refs = refs
+    this._activeRef = activeRef
   }
 
   get head() {
     return this._head
   }
 
-  async headRef() {
-    if (this._head === null) return null
-    return this.refLookup(this._head)
+  get activeRef() {
+    return this._activeRef
   }
 
   async renameRef(refName: string, newRefName: string) {
@@ -81,12 +89,18 @@ export class VCS {
    */
   async history(n: number): Promise<HistoryItem[]> {
     let id = this._head
-    const history = [id]
+    if (id === null) return []
+    const history: HistoryItem[] = []
     for (let i = 0; i < n; i++) {
       if (!id) break
-      const generation = await this.storage.get(id)
+      const generation: Generation | null = await this.storage.get(id)
       if (generation === null) break
-      history.push({ id, generation, refs: this.refs.refLookup(id) })
+      const refs = this.refs.refLookup(id)
+      if (refs === null) {
+        logger.warn(`${id.toString()} not found`)
+        continue
+      }
+      history.push({ id, generation, refs })
 
       id = generation?.previous ?? null
     }

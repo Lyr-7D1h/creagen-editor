@@ -3,8 +3,7 @@ import { editorEvents } from './events'
 import { EditorEvent, EditorEventData } from './EditorEvent'
 import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
 import { ParamKey, ParamValue } from '../settings/SettingsConfig'
-import { logger } from '../logs/logger'
-import { Ref } from '../vcs/Refs'
+import { ActiveRef } from '../vcs/VCS'
 
 /**
  * Hook that subscribes to an event and triggers re-render when emitted
@@ -95,23 +94,16 @@ export const useHead = () => {
   return value
 }
 
-/** Get the current reference */
-export const useHeadRef = () => {
+/** Get the current active reference */
+export const useActiveRef = () => {
   const editor = useCreagenEditor()
   const vcs = editor.vcs
 
-  const [value, setValue] = useState<Ref | null>(null)
+  const [value, setValue] = useState<ActiveRef>(vcs.activeRef)
 
   useEffect(() => {
-    vcs
-      .headRef()
-      .then((v) => setValue(v))
-      .catch(logger.error)
     return editorEvents.on('vcs:checkout', () => {
-      vcs
-        .headRef()
-        .then((v) => setValue(v))
-        .catch(logger.error)
+      setValue(vcs.activeRef)
     })
   }, [])
 

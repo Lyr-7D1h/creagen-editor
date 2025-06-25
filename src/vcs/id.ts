@@ -2,7 +2,7 @@ import { SemVer } from 'semver'
 import { CREAGEN_EDITOR_VERSION } from '../env'
 import { Library } from '../settings/SettingsConfig'
 import { z } from 'zod'
-import { semverSchema } from './schemaUtils'
+import { semverSchema } from '../creagen-editor/schemaUtils'
 
 export const IDStringSchema = z.string().transform((data, ctx) => {
   const id = ID.fromString(data)
