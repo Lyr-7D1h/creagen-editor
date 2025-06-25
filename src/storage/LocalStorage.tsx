@@ -1,5 +1,5 @@
-import { ID } from '../creagen-editor/id'
-import { Refs, refSchema } from '../vcs/Refs'
+import { ID } from '../vcs/id'
+import { Ref, Refs, refSchema } from '../vcs/Refs'
 import { StorageKey } from './Storage'
 
 export type LocalStorageKey =
@@ -14,6 +14,7 @@ export function isLocalStorageKey(key: StorageKey): key is LocalStorageKey {
 }
 
 class LocalStorage {
+  set(id: 'active-ref', item: Ref): void
   set(id: 'settings', item: any): void
   set(id: 'refs', item: Refs): void
   set(id: LocalStorageKey, item: any): void

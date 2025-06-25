@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { ID, IDStringSchema } from '../creagen-editor/id'
+import { ID, IDStringSchema } from './id'
 
 export const refSchema = z.object({
   name: z.string(),

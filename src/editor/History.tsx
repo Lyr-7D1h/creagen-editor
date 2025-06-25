@@ -1,9 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
-import { ID } from '../creagen-editor/id'
 import { logger } from '../logs/logger'
 import React from 'react'
 import Box from '@mui/material/Box'
-import { Generation } from '../vcs/Generation'
 import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
 import {
   Chip,
@@ -18,6 +16,7 @@ import ArrowLeft from '@mui/icons-material/ArrowLeft'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { useSettings } from '../events/useEditorEvents'
+import { HistoryItem } from '../vcs/VCS'
 
 const HISTORY_SIZE = 10
 export function History({
@@ -32,7 +31,7 @@ export function History({
     creagenEditor.vcs.head ? creagenEditor.vcs.head.toString() : null,
   )
   const historyEnabled = useSettings('editor.show_history')
-  const [history, setHistory] = useState<[ID, Generation][]>([])
+  const [history, setHistory] = useState<HistoryItem[]>([])
   const [expanded, setExpanded] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const [isOverflowing, setIsOverflowing] = useState(false)
@@ -56,7 +55,7 @@ export function History({
         setHead(currentHead)
 
         // if current history already includes change don't change history
-        if (history.some(([id]) => id.toString() === currentHead)) {
+        if (history.some(({ id }) => id.toString() === currentHead)) {
           return
         }
 
@@ -100,7 +99,7 @@ export function History({
   const renderHistoryItems = () => {
     if (history.length <= 1) return null
 
-    return history.map(([id, _gen], index) => (
+    return history.map(({ id }, index) => (
       <React.Fragment key={`chain-${id.toString()}`}>
         {(head ? id.toString() === head : false) ? (
           <Chip color="primary" size="small" label={id.toSub()} />
