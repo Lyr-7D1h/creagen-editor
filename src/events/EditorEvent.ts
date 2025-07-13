@@ -5,6 +5,7 @@ import { Generation } from '../vcs/Generation'
 interface EditorEvents {
   // VCS events
   'vcs:commit': { id: ID; generation: Generation; code: string }
+  /** Change active head */
   'vcs:checkout': { old: ID | null; new: ID }
 
   // Settings events
