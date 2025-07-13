@@ -7,6 +7,7 @@ export enum Severity {
   Warning,
   Error,
   Debug,
+  Trace,
 }
 
 export type Message = {
@@ -110,6 +111,11 @@ export function debug(...msg: any[]): MessageId {
   return ''
 }
 
+export function trace(...msg: any[]): MessageId {
+  console.debug(...msg)
+  return ''
+}
+
 export function createContextLogger(context: string) {
   return {
     getMessages,
@@ -136,6 +142,10 @@ export function createContextLogger(context: string) {
       }
       return ''
     },
+    trace: (...msg: any[]) => {
+      console.debug(`[${context}]`, ...msg)
+      return ''
+    },
   }
 }
 
@@ -149,4 +159,5 @@ export const logger = {
   warn,
   error,
   debug,
+  trace,
 }

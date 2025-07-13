@@ -18,25 +18,6 @@ export function useEditorEvent<K extends EditorEvent>(eventType: K) {
   return data
 }
 
-/**
- * Hook that subscribes to multiple events and triggers re-render when any emits
- */
-export function useEditorEvents<K extends EditorEvent>(eventTypes: K[]) {
-  const [lastEvent, setLastEvent] = useState<{
-    type: K
-    data: EditorEventData<K>
-  } | null>(null)
-
-  useEffect(() => {
-    const unsubscribes = eventTypes.map((type) =>
-      editorEvents.on(type, (data) => setLastEvent({ type, data })),
-    )
-    return () => unsubscribes.forEach((fn) => fn())
-  }, [eventTypes.join(',')])
-
-  return lastEvent
-}
-
 export const useSettingsAll = () => {
   const editor = useCreagenEditor()
 

@@ -1,9 +1,13 @@
+import { createContextLogger } from '../logs/logger'
 import { EDITOR_EVENTS, EditorEvent, EditorEventData } from './EditorEvent'
+
+const logger = createContextLogger('events')
 
 class _EditorEventBus {
   private target = new EventTarget()
 
   emit<K extends EditorEvent>(type: K, data: EditorEventData<K>) {
+    logger.trace(type, data)
     this.target.dispatchEvent(new CustomEvent(type, { detail: data }))
   }
 

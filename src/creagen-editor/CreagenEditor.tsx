@@ -14,8 +14,6 @@ import { getIdFromPath, VCS } from '../vcs/VCS'
 import { ClientStorage } from '../storage/ClientStorage'
 import { editorEvents } from '../events/events'
 
-type Key = 'render' | 'code'
-type Listener = () => void
 export class CreagenEditor {
   storage: Storage
   settings: Settings
@@ -24,8 +22,6 @@ export class CreagenEditor {
   vcs: VCS
 
   keybindings = new Keybindings()
-
-  listeners: Map<Key, Listener[]> = new Map()
 
   // private commands: Map<string, (editor: CreagenEditor) => void> = new Map()
   private libraryImports: Record<string, LibraryImport> = {}
@@ -97,29 +93,6 @@ export class CreagenEditor {
     })
   }
 
-  private notify(key: Key) {
-    const listeners = this.listeners.get(key)
-    if (!listeners) return
-    for (const listener of listeners) {
-      listener()
-    }
-  }
-
-  on(key: Key, listener: Listener) {
-    let listeners = this.listeners.get(key)
-    if (typeof listeners === 'undefined') {
-      listeners = [] as Listener[]
-    }
-    listeners.push(listener)
-    this.listeners.set(key, listeners)
-    return () => {
-      this.listeners.set(
-        key,
-        listeners!.filter((l) => l !== listener),
-      )
-    }
-  }
-
   setStorage(storage: Storage) {
     this.storage = storage
   }
@@ -163,7 +136,7 @@ export class CreagenEditor {
     this.settings.set('general.libraries', id.libraries)
 
     this.editor.setValue(code)
-    this.notify('code')
+    // Note: vcs.checkout already emitted 'vcs:checkout' event
   }
 
   async loadSettingsFromPath() {
@@ -276,7 +249,5 @@ export class CreagenEditor {
       throw e
     }
     logger.remove(info)
-
-    this.notify('render')
   }
 }

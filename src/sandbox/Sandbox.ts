@@ -129,6 +129,7 @@ export class Sandbox {
       `[Sandbox] Loading code with '${code.length}' characters into iframe with libraries: `,
       JSON.stringify(libraryImports),
     )
+    editorEvents.emit('sandbox:render-complete', undefined)
   }
 
   sendMessage(message: SandboxEvent) {
