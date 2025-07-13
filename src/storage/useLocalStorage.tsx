@@ -41,7 +41,6 @@ export function useLocalStorage<K extends LocalStorageOnlyKey>(
     try {
       setStoredValue(value)
       localStorage.set(key, value)
-      editorEvents.emit('local-storage', { key, value })
     } catch (error) {
       logger.error(error)
     }

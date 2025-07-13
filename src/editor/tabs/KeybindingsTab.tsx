@@ -1,21 +1,6 @@
 import React from 'react'
 import { useCreagenEditor } from '../../creagen-editor/CreagenEditorView'
-
-const getCommandDescription = (command: string): string => {
-  switch (command) {
-    case 'editor.run':
-      return 'Run/Render the current code'
-    case 'editor.toggleFullscreen':
-      return 'Toggle fullscreen mode'
-    case 'editor.toggleHideAll':
-      return 'Toggle hide all UI elements'
-    default:
-      return command
-        .replace(/\./g, ' ')
-        .replace(/([A-Z])/g, ' $1')
-        .trim()
-  }
-}
+import { COMMANDS } from '../../creagen-editor/commands'
 
 const formatKey = (key: string): string => {
   return key
@@ -137,7 +122,7 @@ export function KeybindingsTab() {
                   color: '#495057',
                 }}
               >
-                {getCommandDescription(bind.command)}
+                {COMMANDS[bind.command].description}
               </td>
               <td
                 style={{

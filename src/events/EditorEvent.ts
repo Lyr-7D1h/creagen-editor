@@ -1,7 +1,7 @@
 import { ID } from '../vcs/id'
 import { AnalyzeContainerResult } from '../sandbox/Sandbox'
 import { Generation } from '../vcs/Generation'
-import { LocalStorageOnlyKey, StorageValueType } from '../storage/StorageKey'
+import { LocalStorageKey, StorageValueType } from '../storage/StorageKey'
 
 type EditorEvents = {
   // VCS events
@@ -25,8 +25,8 @@ type EditorEvents = {
   'editor:save': { code: string }
 
   'local-storage': {
-    key: LocalStorageOnlyKey
-    value: StorageValueType<LocalStorageOnlyKey>
+    key: LocalStorageKey
+    value: StorageValueType<LocalStorageKey>
   }
 }
 

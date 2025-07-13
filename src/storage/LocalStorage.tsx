@@ -1,3 +1,4 @@
+import { editorEvents } from '../events/events'
 import { ID } from '../vcs/id'
 import { Refs, refSchema } from '../vcs/Refs'
 import { LocalStorageKey, StorageValueType } from './StorageKey'
@@ -14,27 +15,31 @@ export function isLocalStorageKey(key: string | ID): key is LocalStorageKey {
 }
 
 class LocalStorage {
-  set<K extends LocalStorageKey>(id: K, item: StorageValueType<K>): void {
-    if (id === 'refs') {
-      const refs = item as Refs
-      return globalThis.localStorage.setItem(id, JSON.stringify(refs.getRefs()))
+  set<K extends LocalStorageKey>(key: K, value: StorageValueType<K>): void {
+    if (key === 'refs') {
+      const refs = value as Refs
+      return globalThis.localStorage.setItem(
+        key,
+        JSON.stringify(refs.getRefs()),
+      )
     }
 
-    globalThis.localStorage.setItem(id, JSON.stringify(item))
+    globalThis.localStorage.setItem(key, JSON.stringify(value))
+    editorEvents.emit('local-storage', { key, value })
   }
 
-  get<K extends LocalStorageKey>(id: K): StorageValueType<K> | null {
-    const v = globalThis.localStorage.getItem(id)
-    if (v === null) return null
+  get<K extends LocalStorageKey>(key: K): StorageValueType<K> | null {
+    const value = globalThis.localStorage.getItem(key)
+    if (value === null) return null
 
-    if (id === 'active-ref')
-      return refSchema.parse(JSON.parse(v)) as StorageValueType<K>
-    if (id === 'refs') {
+    if (key === 'active-ref')
+      return refSchema.parse(JSON.parse(value)) as StorageValueType<K>
+    if (key === 'refs') {
       return new Refs(
-        refSchema.array().parse(JSON.parse(v)),
+        refSchema.array().parse(JSON.parse(value)),
       ) as StorageValueType<K>
     }
-    return JSON.parse(v) as StorageValueType<K>
+    return JSON.parse(value) as StorageValueType<K>
   }
 }
 
