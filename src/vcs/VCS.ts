@@ -95,11 +95,7 @@ export class VCS {
       if (!id) break
       const generation: Generation | null = await this.storage.get(id)
       if (generation === null) break
-      const refs = this.refs.refLookup(id)
-      if (refs === null) {
-        logger.warn(`${id.toString()} not found`)
-        continue
-      }
+      const refs = this.refs.refLookup(id) ?? []
       history.push({ id, generation, refs })
 
       id = generation?.previous ?? null

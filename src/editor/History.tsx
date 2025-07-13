@@ -17,6 +17,7 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { useSettings } from '../events/useEditorEvents'
 import { HistoryItem } from '../vcs/VCS'
+import { editorEvents } from '../events/events'
 
 const HISTORY_SIZE = 10
 export function History({
@@ -67,14 +68,9 @@ export function History({
           .catch(logger.error)
       }
     }
-    const listeners = [
-      creagenEditor.on('render', updateHistory),
-      creagenEditor.on('code', updateHistory),
-    ]
-    return () => {
-      listeners.forEach((l) => l())
-    }
-  }, [creagenEditor, head, history])
+
+    return editorEvents.on('vcs:checkout', updateHistory)
+  }, [creagenEditor.vcs.head, head, history])
 
   // Check for overflow after history updates or window resizes
   useEffect(() => {

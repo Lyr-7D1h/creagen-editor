@@ -14,6 +14,7 @@ interface EditorEvents {
   'sandbox:loaded': void
   'sandbox:analysis-complete': { result: AnalyzeContainerResult }
   'sandbox:error': { error: Error }
+  'sandbox:render-complete': void
 
   // Editor events
   'editor:code-changed': { code: string; hasChanges: boolean }
@@ -37,6 +38,7 @@ export const EDITOR_EVENTS: ReadonlyArray<EditorEvent> = [
   // Sandbox events
   'sandbox:loaded',
   'sandbox:error',
+  'sandbox:render-complete',
 
   // Editor events
   'editor:code-changed',
