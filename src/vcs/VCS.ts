@@ -122,11 +122,12 @@ export class VCS {
     url.pathname = id.toString()
     window.history.pushState('Creagen', '', url)
 
+    const old = this._head
+    this._head = id
+
     // Emit global events
     editorEvents.emit('vcs:commit', { id, generation: gen, code })
-    editorEvents.emit('vcs:checkout', { old: this.head, new: id })
-
-    this._head = id
+    editorEvents.emit('vcs:checkout', { old, new: id })
   }
 
   async checkout(id: ID): Promise<Generation | null> {
