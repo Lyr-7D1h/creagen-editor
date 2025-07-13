@@ -1,12 +1,7 @@
-import { Storage } from './Storage'
+import { StorageKey, StorageValueType } from './StorageKey'
 import { logger } from '../logs/logger'
 import { generationSchema } from '../vcs/Generation'
-import {
-  isLocalStorageKey,
-  localStorage,
-  LocalStorageKey,
-} from './LocalStorage'
-import { StorageKey } from './Storage'
+import { isLocalStorageKey, localStorage } from './LocalStorage'
 
 interface StoredGeneration {
   code: string
@@ -14,11 +9,10 @@ interface StoredGeneration {
   previous?: string
 }
 
-export class ClientStorage extends Storage {
+export class ClientStorage {
   db: IDBDatabase | null
 
   constructor() {
-    super()
     this.db = null
   }
 
@@ -74,10 +68,14 @@ export class ClientStorage extends Storage {
     })
   }
 
-  async set(key: StorageKey, item: any) {
+  async set<K extends StorageKey>(
+    key: K,
+    item: StorageValueType<K>,
+  ): Promise<void>
+  async set(key: StorageKey, item: any): Promise<void> {
     console.debug(`[ClientStorage] Storing ${key} ${JSON.stringify(item)}`)
     if (isLocalStorageKey(key)) {
-      return localStorage.set(key as LocalStorageKey, item)
+      return localStorage.set(key, item)
     }
 
     // return on duplicate values
@@ -106,7 +104,7 @@ export class ClientStorage extends Storage {
     })
   }
 
-  async get(key: StorageKey): Promise<any | null> {
+  async get<K extends StorageKey>(key: K): Promise<StorageValueType<K> | null> {
     if (isLocalStorageKey(key)) {
       return Promise.resolve(localStorage.get(key))
     }
@@ -118,7 +116,7 @@ export class ClientStorage extends Storage {
       req.onsuccess = () => {
         if (typeof req.result === 'undefined') return resolve(null)
         const gen = generationSchema.parse(req.result)
-        resolve(gen)
+        resolve(gen as StorageValueType<K>)
       }
       req.onerror = (_e) => {
         reject(new Error(`failed to get item: ${req.error?.message ?? ''}`))

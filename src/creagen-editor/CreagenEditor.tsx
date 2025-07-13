@@ -1,7 +1,6 @@
 import { Editor } from '../editor/Editor'
 import { CREAGEN_EDITOR_VERSION } from '../env'
 import { logger, Severity } from '../logs/logger'
-import { Storage } from '../storage/Storage'
 import { Sandbox } from '../sandbox/Sandbox'
 import { Settings } from '../settings/Settings'
 import { ID } from '../vcs/id'
@@ -15,7 +14,7 @@ import { ClientStorage } from '../storage/ClientStorage'
 import { editorEvents } from '../events/events'
 
 export class CreagenEditor {
-  storage: Storage
+  storage: ClientStorage
   settings: Settings
   editor: Editor
   sandbox: Sandbox
@@ -40,7 +39,7 @@ export class CreagenEditor {
     sandbox: Sandbox,
     editor: Editor,
     settings: Settings,
-    storage: Storage,
+    storage: ClientStorage,
     vcs: VCS,
   ) {
     this.sandbox = sandbox
@@ -58,7 +57,7 @@ export class CreagenEditor {
 
     this.updateStorageUsage()
 
-    this.setupKeybindings()
+    this.keybindings.setupKeybindings(this)
 
     // Update code from history
     addEventListener('popstate', () => {
@@ -93,7 +92,7 @@ export class CreagenEditor {
     })
   }
 
-  setStorage(storage: Storage) {
+  setStorage(storage: ClientStorage) {
     this.storage = storage
   }
 
@@ -116,10 +115,6 @@ export class CreagenEditor {
         }),
       )
       .catch(logger.error)
-  }
-
-  setupKeybindings() {
-    this.keybindings.setupKeybindings(this)
   }
 
   async loadCode(id: ID) {

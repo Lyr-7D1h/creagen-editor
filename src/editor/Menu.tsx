@@ -1,39 +1,44 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { Box, Button, ButtonGroup, CircularProgress } from '@mui/material'
-import {
-  Settings as SettingsIcon,
-  AccountTree as VcsIcon,
-} from '@mui/icons-material'
+import KeyboardIcon from '@mui/icons-material/Keyboard'
+import { AccountTree, Settings } from '@mui/icons-material'
 import { VCSTab } from './tabs/VCSTab'
 import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
-import { logger } from '../logs/logger'
 import { SettingsTab } from './tabs/SettingsTab'
-
-export type ViewType = 'vcs' | 'settings'
+import { KeybindingsTab } from './tabs/KeybindingsTab'
+import { useLocalStorage } from '../storage/useLocalStorage'
 
 export type MenuProps = {
   width: string
 }
 
+const tabs = {
+  vcs: {
+    icon: <AccountTree />,
+    title: 'Versions',
+    content: <VCSTab />,
+  },
+  keybinds: {
+    icon: <KeyboardIcon />,
+    title: 'Keybindings',
+    content: <KeybindingsTab />,
+  },
+  settings: {
+    icon: <Settings />,
+    title: 'Settings',
+    content: <SettingsTab />,
+  },
+}
+export type TabKey = keyof typeof tabs
+
+const defaultKey = Object.keys(tabs)[0]! as TabKey
+
 export function Menu({ width }: MenuProps) {
   const creagenEditor = useCreagenEditor()
-  const [currentView, setCurrentView] = useState<ViewType | null>(null)
-
-  useEffect(() => {
-    creagenEditor.storage
-      .get('menu-current-view')
-      .then((v) => {
-        if (v) {
-          setCurrentView(v)
-        } else {
-          setCurrentView('vcs')
-        }
-      })
-      .catch((e) => {
-        logger.error(e)
-        setCurrentView('vcs')
-      })
-  }, [])
+  const [currentView, setCurrentView] = useLocalStorage(
+    'menu-current-view',
+    defaultKey,
+  )
 
   useEffect(() => {
     if (currentView) creagenEditor.storage.set('menu-current-view', currentView)
@@ -64,34 +69,25 @@ export function Menu({ width }: MenuProps) {
           fullWidth
           sx={{ '& .MuiButton-root': { flex: 1 } }}
         >
-          <Button
-            variant={currentView === 'vcs' ? 'contained' : 'outlined'}
-            onClick={() => setCurrentView('vcs')}
-            startIcon={<VcsIcon />}
-            sx={{
-              textTransform: 'none',
-              fontWeight: currentView === 'vcs' ? 600 : 400,
-            }}
-          >
-            VCS
-          </Button>
-          <Button
-            variant={currentView === 'settings' ? 'contained' : 'outlined'}
-            onClick={() => setCurrentView('settings')}
-            startIcon={<SettingsIcon />}
-            sx={{
-              textTransform: 'none',
-              fontWeight: currentView === 'settings' ? 600 : 400,
-            }}
-          >
-            Settings
-          </Button>
+          {Object.entries(tabs).map(([key, tab]) => (
+            <Button
+              variant={currentView === key ? 'contained' : 'outlined'}
+              onClick={() => setCurrentView(key as TabKey)}
+              startIcon={tab.icon}
+              sx={{
+                textTransform: 'none',
+                fontWeight: currentView === key ? 600 : 400,
+              }}
+            >
+              {tab.title}
+            </Button>
+          ))}
         </ButtonGroup>
       </Box>
 
       {/* Content Area */}
       <Box sx={{ flex: 1, overflow: 'auto' }}>
-        {currentView === 'vcs' ? <VCSTab /> : <SettingsTab />}
+        {tabs[currentView as TabKey].content}
       </Box>
     </Box>
   )

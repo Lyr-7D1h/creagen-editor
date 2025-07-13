@@ -1,11 +1,11 @@
 import { ID } from './id'
 import { createContextLogger } from '../logs/logger'
 import { Library } from '../settings/SettingsConfig'
-import { Storage } from '../storage/Storage'
 import { Generation } from './Generation'
 import { Ref, Refs } from './Refs'
 import { editorEvents } from '../events/events'
 import { generateHumanReadableName } from './generateHumanReadableName'
+import { ClientStorage } from '../storage/ClientStorage'
 
 export function getIdFromPath(): ID | null {
   const path = window.location.pathname.replace('/', '')
@@ -34,14 +34,14 @@ const logger = createContextLogger('vcs')
 
 /** Version Control Software for creagen-editor */
 export class VCS {
-  storage: Storage
+  storage: ClientStorage
 
   private _activeRef: ActiveRef
   private _head: ID | null = getIdFromPath()
   /** References to ids, null if not loaded */
   private readonly _refs: Refs
 
-  static async create(storage: Storage) {
+  static async create(storage: ClientStorage) {
     const refs = (await storage.get('refs')) ?? new Refs([])
     const activeRef = (await storage.get('active-ref')) ?? {
       name: generateHumanReadableName(),
@@ -50,7 +50,11 @@ export class VCS {
     return new VCS(storage, refs, activeRef)
   }
 
-  private constructor(storage: Storage, refs: Refs, activeRef: ActiveRef) {
+  private constructor(
+    storage: ClientStorage,
+    refs: Refs,
+    activeRef: ActiveRef,
+  ) {
     this.storage = storage
     this._refs = refs
     this._activeRef = activeRef

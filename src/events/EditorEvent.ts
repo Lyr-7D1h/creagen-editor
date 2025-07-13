@@ -1,8 +1,9 @@
 import { ID } from '../vcs/id'
 import { AnalyzeContainerResult } from '../sandbox/Sandbox'
 import { Generation } from '../vcs/Generation'
+import { LocalStorageOnlyKey, StorageValueType } from '../storage/StorageKey'
 
-interface EditorEvents {
+type EditorEvents = {
   // VCS events
   'vcs:commit': { id: ID; generation: Generation; code: string }
   /** Change active head */
@@ -22,6 +23,11 @@ interface EditorEvents {
   'editor:libraries-changed': { libraries: any[] }
   'editor:tab-changed': { activeTab: string }
   'editor:save': { code: string }
+
+  'local-storage': {
+    key: LocalStorageOnlyKey
+    value: StorageValueType<LocalStorageOnlyKey>
+  }
 }
 
 export type EditorEvent = keyof EditorEvents

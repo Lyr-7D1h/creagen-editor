@@ -1,4 +1,3 @@
-import { Storage } from '../storage/Storage'
 import {
   defaultSettingsConfig,
   DefaultSettingsConfig,
@@ -7,6 +6,7 @@ import {
   ParamKey,
 } from './SettingsConfig'
 import { editorEvents } from '../events/events'
+import { ClientStorage } from '../storage/ClientStorage'
 
 export function parentKey(key: string) {
   return key.split('.').slice(0, -1).join('.')
@@ -28,14 +28,14 @@ export class Settings {
   readonly defaultConfig = defaultSettingsConfig
   config: DefaultSettingsConfig
 
-  private storage: Storage
+  private storage: ClientStorage
 
-  private constructor(storage: Storage, config: DefaultSettingsConfig) {
+  private constructor(storage: ClientStorage, config: DefaultSettingsConfig) {
     this.storage = storage
     this.config = config
   }
 
-  static async create(storage: Storage) {
+  static async create(storage: ClientStorage) {
     // Initialize with deep cloned default settings
     const defaultConfig = Object.entries(defaultSettingsConfig).reduce<
       Record<string, any>
