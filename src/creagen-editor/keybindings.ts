@@ -26,6 +26,10 @@ const defaultKeybindings: Keybinding[] = [
     key: 'ctrl+f11',
     command: 'editor.toggleHideAll',
   },
+  {
+    key: 'ctrl+e',
+    command: 'editor.toggleMenu',
+  },
 ]
 
 type Handler = (...args: any[]) => void
@@ -53,7 +57,7 @@ export class Keybindings {
     for (const group of Object.values(commandGroups)) {
       const command = group[0]?.command
       if (typeof command !== 'string') throw new Error('Invalid command type')
-      const handler = () => COMMANDS[command](editor)
+      const handler = () => COMMANDS[command].handler(editor)
       this.handlers.set(command, handler)
       for (const keybind of group) {
         this.addKeybind(editor.editor, keybind, handler)
