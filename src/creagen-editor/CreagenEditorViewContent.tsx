@@ -5,6 +5,7 @@ import { SandboxView } from '../sandbox/SandboxView'
 import { Menu } from '../editor/Menu'
 import { Export } from './Export'
 import { useSettings } from '../events/useEditorEvents'
+import { useLocalStorage } from '../storage/useLocalStorage'
 
 const RESIZER_WIDTH_PX = 3
 
@@ -68,11 +69,15 @@ export function CreagenEditorViewContent() {
   const [menuWidth, setMenuWidth] = useState<number>(window.innerWidth / 4)
   const [editorWidth, setEditorWidth] = useState<number>(window.innerWidth / 4)
 
-  const fullscreen = useSettings('editor.fullscreen') || useSettings('hide_all')
+  let fullscreen = useSettings('editor.fullscreen')
+  const hideAll = useSettings('hide_all')
+  fullscreen = hideAll ? true : fullscreen
+  console.log(fullscreen)
+
   const exportEnabled = useSettings('export.enabled')
 
   const [resizing, setResizing] = useState<null | number>(null)
-  const [menu, setMenu] = useState(false)
+  const [menu, setMenu] = useLocalStorage('menu-enabled', false)
 
   const currentResizerRef = useRef<number | null>(null)
   const animationFrameRef = useRef<number | null>(null)

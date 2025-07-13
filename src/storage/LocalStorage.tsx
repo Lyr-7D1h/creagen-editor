@@ -1,42 +1,40 @@
 import { ID } from '../vcs/id'
-import { Ref, Refs, refSchema } from '../vcs/Refs'
-import { StorageKey } from './Storage'
+import { Refs, refSchema } from '../vcs/Refs'
+import { LocalStorageKey, StorageValueType } from './StorageKey'
 
-export type LocalStorageKey =
-  | 'menu-current-view'
-  | 'settings'
-  | 'refs'
-  | 'active-ref'
-
-export function isLocalStorageKey(key: StorageKey): key is LocalStorageKey {
+export function isLocalStorageKey(key: string | ID): key is LocalStorageKey {
   if (key instanceof ID) return false
-  return true
+  return [
+    'menu',
+    'menu-current-view',
+    'settings',
+    'refs',
+    'active-ref',
+  ].includes(key)
 }
 
 class LocalStorage {
-  set(id: 'active-ref', item: Ref): void
-  set(id: 'settings', item: any): void
-  set(id: 'refs', item: Refs): void
-  set(id: LocalStorageKey, item: any): void
-  set(id: LocalStorageKey, item: any) {
-    if (id === 'refs')
-      return globalThis.localStorage.setItem(id, JSON.stringify(item.getRefs()))
+  set<K extends LocalStorageKey>(id: K, item: StorageValueType<K>): void {
+    if (id === 'refs') {
+      const refs = item as Refs
+      return globalThis.localStorage.setItem(id, JSON.stringify(refs.getRefs()))
+    }
 
     globalThis.localStorage.setItem(id, JSON.stringify(item))
   }
 
-  get(id: 'settings'): void
-  get(id: 'refs'): Refs
-  get(id: LocalStorageKey): any
-  get(id: LocalStorageKey): any | null {
+  get<K extends LocalStorageKey>(id: K): StorageValueType<K> | null {
     const v = globalThis.localStorage.getItem(id)
     if (v === null) return null
 
-    if (id === 'active-ref') return refSchema.parse(JSON.parse(v))
+    if (id === 'active-ref')
+      return refSchema.parse(JSON.parse(v)) as StorageValueType<K>
     if (id === 'refs') {
-      return new Refs(refSchema.array().parse(JSON.parse(v)))
+      return new Refs(
+        refSchema.array().parse(JSON.parse(v)),
+      ) as StorageValueType<K>
     }
-    return JSON.parse(v)
+    return JSON.parse(v) as StorageValueType<K>
   }
 }
 

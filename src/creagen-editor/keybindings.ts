@@ -100,7 +100,7 @@ export class Keybindings {
   }
 
   getKeybindings() {
-    return Array.from(this.keybindings.keys())
+    return this.keybindings
   }
 }
 

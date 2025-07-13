@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { logger } from '../logs/logger'
-import { LocalStorageKey } from './LocalStorage'
 import { localStorage } from './LocalStorage'
+import { LocalStorageOnlyKey, StorageValueType } from './StorageKey'
+import { editorEvents } from '../events/events'
 
 // Extend WindowEventMap to include 'local-storage' event
 declare global {
@@ -21,33 +22,26 @@ function isCustomEvent(
   return false
 }
 
-export function useLocalStorage(
-  key: LocalStorageKey,
-  initialValue?: string | number | Function | object | boolean,
-) {
+export function useLocalStorage<K extends LocalStorageOnlyKey>(
+  key: K,
+  initialValue: StorageValueType<K>,
+): [StorageValueType<K>, (value: StorageValueType<K>) => void] {
   const [storedValue, setStoredValue] = useState(() => {
     try {
       const item = localStorage.get(key)
-      return item ? JSON.parse(item) : initialValue
+      if (item) return item
+      return initialValue
     } catch (error) {
       logger.error(error)
       return initialValue
     }
   })
 
-  const setValue = (value: string | number | boolean | Function | object) => {
+  const setValue = (value: StorageValueType<K>) => {
     try {
-      const valueToStore =
-        value instanceof Function ? value(storedValue) : value
-      setStoredValue(valueToStore)
-      localStorage.set(key, JSON.stringify(valueToStore))
-      // Dispatch a custom event to notify other hooks
-      // @TODO the event should only be for the localstorage key, now it triggers for all keys
-      window.dispatchEvent(
-        new CustomEvent('local-storage', {
-          detail: { value: valueToStore, key },
-        }),
-      )
+      setStoredValue(value)
+      localStorage.set(key, value)
+      editorEvents.emit('local-storage', { key, value })
     } catch (error) {
       logger.error(error)
     }
@@ -67,13 +61,11 @@ export function useLocalStorage(
   )
 
   useEffect(() => {
-    window.addEventListener('storage', handleStorageChange)
-    window.addEventListener('local-storage', handleStorageChange)
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange)
-      window.removeEventListener('local-storage', handleStorageChange)
-    }
+    return editorEvents.on('local-storage', (e) => {
+      if (e.key === key) {
+        setStoredValue(e.value as StorageValueType<K>)
+      }
+    })
   }, [handleStorageChange])
 
   return [storedValue, setValue]
