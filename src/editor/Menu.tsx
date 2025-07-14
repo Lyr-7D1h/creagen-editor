@@ -36,12 +36,12 @@ const defaultKey = Object.keys(tabs)[0]! as TabKey
 export function Menu({ width }: MenuProps) {
   const creagenEditor = useCreagenEditor()
   const [currentView, setCurrentView] = useLocalStorage(
-    'menu-current-view',
+    'menu-view-tab',
     defaultKey,
   )
 
   useEffect(() => {
-    if (currentView) creagenEditor.storage.set('menu-current-view', currentView)
+    if (currentView) creagenEditor.storage.set('menu-view-tab', currentView)
   }, [currentView])
 
   if (currentView === null)
