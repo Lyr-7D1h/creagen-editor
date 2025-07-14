@@ -1,7 +1,7 @@
-import { StorageKey, StorageValueType } from './StorageKey'
+import { isLocalStorageKey, StorageKey, StorageValueType } from './StorageKey'
 import { logger } from '../logs/logger'
 import { generationSchema } from '../vcs/Generation'
-import { isLocalStorageKey, localStorage } from './LocalStorage'
+import { localStorage } from './LocalStorage'
 
 interface StoredGeneration {
   code: string

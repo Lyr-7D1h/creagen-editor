@@ -72,12 +72,11 @@ export function CreagenEditorViewContent() {
   let fullscreen = useSettings('editor.fullscreen')
   const hideAll = useSettings('hide_all')
   fullscreen = hideAll ? true : fullscreen
-  console.log(fullscreen)
 
   const exportEnabled = useSettings('export.enabled')
 
   const [resizing, setResizing] = useState<null | number>(null)
-  const [menu, setMenu] = useLocalStorage('menu-enabled', false)
+  const [menu, setMenu] = useLocalStorage('menu-view', false)
 
   const currentResizerRef = useRef<number | null>(null)
   const animationFrameRef = useRef<number | null>(null)

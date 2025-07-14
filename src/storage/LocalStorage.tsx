@@ -1,18 +1,6 @@
 import { editorEvents } from '../events/events'
-import { ID } from '../vcs/id'
 import { Refs, refSchema } from '../vcs/Refs'
 import { LocalStorageKey, StorageValueType } from './StorageKey'
-
-export function isLocalStorageKey(key: string | ID): key is LocalStorageKey {
-  if (key instanceof ID) return false
-  return [
-    'menu',
-    'menu-current-view',
-    'settings',
-    'refs',
-    'active-ref',
-  ].includes(key)
-}
 
 class LocalStorage {
   set<K extends LocalStorageKey>(key: K, value: StorageValueType<K>): void {

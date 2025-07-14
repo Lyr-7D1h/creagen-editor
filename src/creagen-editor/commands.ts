@@ -1,3 +1,4 @@
+import z from 'zod'
 import { logger, MessageId, Severity } from '../logs/logger'
 import { localStorage } from '../storage/LocalStorage'
 import { CreagenEditor } from './CreagenEditor'
@@ -40,9 +41,20 @@ export const COMMANDS = {
   'editor.toggleMenu': {
     description: 'Toggle side menu',
     handler: () => {
-      localStorage.set('menu-enabled', !localStorage.get('menu-enabled'))
+      localStorage.set('menu-view', !localStorage.get('menu-view'))
     },
   },
 }
+
+export const commandSchema = z.string().transform((data, ctx) => {
+  if (!(data in COMMANDS)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `Invalid command ${data}`,
+    })
+    return z.NEVER
+  }
+  return data as Command
+})
 
 export type Command = keyof typeof COMMANDS

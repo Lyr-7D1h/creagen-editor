@@ -7,7 +7,7 @@ import { ID } from '../vcs/id'
 import { LIBRARY_CONFIGS } from './libraryConfigs'
 import { parseCode } from './parseCode'
 import { Library } from '../settings/SettingsConfig'
-import { Keybindings } from './keybindings'
+import { CustomKeybinding, Keybindings } from './keybindings'
 import { Importer, LibraryImport } from '../importer'
 import { getIdFromPath, VCS } from '../vcs/VCS'
 import { ClientStorage } from '../storage/ClientStorage'
@@ -19,8 +19,7 @@ export class CreagenEditor {
   editor: Editor
   sandbox: Sandbox
   vcs: VCS
-
-  keybindings = new Keybindings()
+  keybindings: Keybindings
 
   // private commands: Map<string, (editor: CreagenEditor) => void> = new Map()
   private libraryImports: Record<string, LibraryImport> = {}
@@ -31,8 +30,16 @@ export class CreagenEditor {
     const editor = await Editor.create(settings)
     const sandbox = await new Sandbox()
     const vcs = await VCS.create(storage)
+    const customKeybindings = (await storage.get('custom-keybindings')) ?? []
 
-    return new CreagenEditor(sandbox, editor, settings, storage, vcs)
+    return new CreagenEditor(
+      sandbox,
+      editor,
+      settings,
+      storage,
+      vcs,
+      customKeybindings,
+    )
   }
 
   private constructor(
@@ -41,12 +48,14 @@ export class CreagenEditor {
     settings: Settings,
     storage: ClientStorage,
     vcs: VCS,
+    customKeybindings: CustomKeybinding[],
   ) {
     this.sandbox = sandbox
     this.editor = editor
     this.settings = settings
     this.storage = storage
     this.vcs = vcs
+    this.keybindings = new Keybindings(customKeybindings, this)
 
     /// If head is set load corresponding code
     if (this.vcs.head) this.loadCode(this.vcs.head)
@@ -56,8 +65,6 @@ export class CreagenEditor {
     this.loadLibraries()
 
     this.updateStorageUsage()
-
-    this.keybindings.setupKeybindings(this)
 
     // Update code from history
     addEventListener('popstate', () => {

@@ -18,8 +18,7 @@ npm start
 
 - Add Hydra support https://github.com/hydra-synth/hydra-synth?tab=readme-ov-file
 - use importmap to map module names to urls https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap
-- qp5.js
-- Custom Keybinds
+- Dynamically add npm packages
 - Download canvas as png
 - Improved storage
   - Fastcdc for file chunking https://www.usenix.org/system/files/conference/atc16/atc16-paper-xia.pdf
@@ -31,8 +30,6 @@ npm start
   - View history of sketch
 - Import code using ID `import('a123487e...')
 - Crop, compress and convert dropped images to base64 string
-- Make Settings moveable
-- Show only sandbox keybind/setting
 - Html meta tags
 
 # Resources

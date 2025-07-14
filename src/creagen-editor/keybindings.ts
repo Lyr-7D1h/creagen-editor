@@ -1,16 +1,27 @@
 import { KeyCode, KeyMod } from 'monaco-editor'
-import { Command, COMMANDS } from './commands'
+import { Command, COMMANDS, commandSchema } from './commands'
 import { CreagenEditor } from './CreagenEditor'
 import { Editor } from '../editor/Editor'
+import z from 'zod'
+import { groupBy } from '../util'
 
-type KeyInfo = string
+export type KeyInfo = string
 
-interface Keybinding {
-  key: KeyInfo
-  command: Command
-  /** Define context in which the keybind is active */
-  when?: 'editor' | 'sandbox'
-}
+const keybindingSchema = z.object({
+  key: z.string(),
+  command: commandSchema,
+  /** Define context in which the keybind is active, global by default */
+  when: z.enum(['editor', 'sandbox']).array().optional(),
+})
+export type Keybinding = z.infer<typeof keybindingSchema>
+export const customKeybindingSchema = keybindingSchema.extend({
+  /** Use in case of removing a default keybind */
+  remove: z.boolean(),
+})
+/** A keybinding to overwrite a default keybind */
+export type CustomKeybinding = z.infer<typeof customKeybindingSchema>
+
+export type ActiveKeybinding = Keybinding & { custom: boolean }
 
 const defaultKeybindings: Keybinding[] = [
   {
@@ -34,34 +45,49 @@ const defaultKeybindings: Keybinding[] = [
 
 type Handler = (...args: any[]) => void
 export class Keybindings {
-  private keybindings: Keybinding[] = []
+  /** list of all the keybindings, allows for multiple keybindings to a single command */
+  private keybindings: ActiveKeybinding[] = []
   private handlers: Map<Command, Handler> = new Map()
+  private browserHandlers: ((e: KeyboardEvent) => void)[] = []
+  private editor: CreagenEditor
 
-  constructor() {
-    this.keybindings = defaultKeybindings
+  /** User deltas for adding and removing keybinds */
+  private customKeybindings: CustomKeybinding[]
+
+  constructor(customKeybindings: CustomKeybinding[], editor: CreagenEditor) {
+    this.customKeybindings = customKeybindings
+    this.editor = editor
+    this.setupKeybindings()
   }
 
-  setupKeybindings(editor: CreagenEditor) {
-    if (editor.editor === null) return
+  private setupKeybindings() {
+    for (const handler of this.browserHandlers) {
+      document.removeEventListener('keydown', handler)
+    }
+    this.browserHandlers = []
+    this.handlers.clear()
 
-    const commandGroups = {} as Record<Command, Keybinding[]>
-    for (const keybind of this.keybindings) {
-      const group = commandGroups[keybind.command]
-      if (group) {
-        group.push(keybind)
-      } else {
-        commandGroups[keybind.command] = [keybind]
+    const binds = groupBy(
+      defaultKeybindings.map((kb) => ({ ...kb, custom: false })),
+      'command',
+    )
+
+    for (const bind of this.customKeybindings) {
+      if (bind.remove) {
+        binds[bind.command] = binds[bind.command].filter(
+          (kb) => kb.key !== bind.key,
+        )
+        continue
       }
+      binds[bind.command].push({ ...bind, custom: true })
     }
 
-    for (const group of Object.values(commandGroups)) {
-      const command = group[0]?.command
-      if (typeof command !== 'string') throw new Error('Invalid command type')
-      const handler = () => COMMANDS[command].handler(editor)
+    this.keybindings = Object.values(binds).flat()
+    for (const kb of this.keybindings) {
+      const command = kb.command
+      const handler = () => COMMANDS[command].handler(this.editor)
       this.handlers.set(command, handler)
-      for (const keybind of group) {
-        this.addKeybind(editor.editor, keybind, handler)
-      }
+      this.addKeybind(this.editor.editor, kb, handler)
     }
   }
 
@@ -74,7 +100,7 @@ export class Keybindings {
     const monacoKeybinding = getMonacoKeybinding(keybind.key)
     editor.addKeybind(monacoKeybinding, handler)
     // only in editor
-    if (keybind.when === 'editor') {
+    if (keybind.when?.includes('editor')) {
       return
     }
 
@@ -95,16 +121,70 @@ export class Keybindings {
       }
     }
     document.addEventListener('keydown', browserHandler)
+    this.browserHandlers.push(browserHandler)
   }
 
-  getKeybindingsToCommand(command: Command): Keybinding[] {
-    return Array.from(this.keybindings.entries())
-      .filter(([_, bind]) => bind.command === command)
-      .map(([_, bind]) => bind)
+  getKeybindingsToCommand(command: Command) {
+    return this.keybindings.filter((bind) => bind.command === command)
   }
 
   getKeybindings() {
     return this.keybindings
+  }
+
+  /** Add keybinding if doesn't already exist */
+  async addKeybinding(key: KeyInfo, command: Command) {
+    // don't allow empty keybinds
+    if (key.length === 0) return null
+    // Prevent adding a duplicate keybinding
+    if (
+      this.customKeybindings.some(
+        (kb) => kb.key === key && kb.command === command,
+      )
+    ) {
+      return null
+    }
+
+    // Add the new custom keybinding
+    this.customKeybindings.push({ key, command, remove: false })
+    await this.save()
+    return
+  }
+
+  /** Remove a keybinding with given `key` and `command` */
+  async removeKeybinding(key: string, command: Command) {
+    const index = this.customKeybindings.findIndex(
+      (kb) => kb.key === key && kb.command === command,
+    )
+    // in case its a default keybind add explicit remove
+    if (index === -1) {
+      this.customKeybindings.push({ key, command, remove: true })
+    }
+    // remove custom keybind
+    delete this.customKeybindings[index]
+    this.customKeybindings = this.customKeybindings.filter(
+      (kb) => typeof kb !== 'undefined',
+    )
+    await this.save()
+    return
+  }
+
+  async reset(command: Command) {
+    this.customKeybindings = this.customKeybindings.filter(
+      (k) => k.command !== command,
+    )
+    await this.save()
+  }
+
+  async resetAll() {
+    this.customKeybindings = []
+    await this.save()
+  }
+
+  /** Save changes (custom) made to keybindings */
+  private async save() {
+    this.setupKeybindings()
+    await this.editor.storage.set('custom-keybindings', this.customKeybindings)
   }
 }
 

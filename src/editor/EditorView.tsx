@@ -50,13 +50,11 @@ export function EditorView({
   }, [width, menu])
 
   useEffect(() => {
-    if (menu === false) {
-      const editorContent = editorContentRef.current
-      if (editorContent) {
-        const htmlElement = creagenEditor.editor.html()
-        editorContent.appendChild(htmlElement)
-        creagenEditor.editor.layout()
-      }
+    const editorContent = editorContentRef.current
+    if (editorContent) {
+      const htmlElement = creagenEditor.editor.html()
+      editorContent.appendChild(htmlElement)
+      creagenEditor.editor.layout()
     }
   }, [menu])
 
