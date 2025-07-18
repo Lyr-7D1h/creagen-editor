@@ -4,6 +4,7 @@ import { CreagenEditor } from './CreagenEditor'
 import { Editor } from '../editor/Editor'
 import z from 'zod'
 import { groupBy } from '../util'
+import { logger } from '../logs/logger'
 
 export type KeyInfo = string
 
@@ -97,6 +98,7 @@ export class Keybindings {
     handler: (...args: any[]) => void,
     preventDefault: boolean = true,
   ) {
+    logger.trace(`Setting ${JSON.stringify(keybind)}`)
     const monacoKeybinding = getMonacoKeybinding(keybind.key)
     editor.addKeybind(monacoKeybinding, handler)
     // only in editor
