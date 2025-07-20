@@ -92,18 +92,22 @@ export class Keybindings {
   }
 
   private addKeybind(
-    _editor: Editor,
+    editor: Editor,
     keybind: Keybinding,
     handler: (...args: any[]) => void,
     preventDefault: boolean = true,
   ) {
     logger.trace(`Setting ${JSON.stringify(keybind)}`)
-    // const monacoKeybinding = getMonacoKeybinding(keybind.key)
-    // editor.addKeybind(monacoKeybinding, handler)
+    const codemirrorKeyInfo = getCodeMirrorKeyInfo(keybind.key)
+    if (codemirrorKeyInfo) {
+      editor.addKeybind(codemirrorKeyInfo, handler)
+    } else {
+      logger.error('Failed to translate keyinfo for codemirror')
+    }
     // only in editor
-    // if (keybind.when?.includes('editor')) {
-    //   return
-    // }
+    if (keybind.when?.includes('editor')) {
+      return
+    }
 
     const keyInfo = toBrowserKeyInfo(keybind.key)
     if (!keyInfo) return
@@ -238,4 +242,44 @@ export function toBrowserKeyInfo(keybinding: KeyInfo): BrowserKeyInfo | null {
   }
 
   return result
+}
+
+export type CodeMirrorKeyInfo = string
+export function getCodeMirrorKeyInfo(key: KeyInfo): CodeMirrorKeyInfo | null {
+  if (!key) return null
+
+  const parts = key.toLowerCase().split('+')
+  const keyPart = parts.pop()
+
+  if (!keyPart) return null
+
+  const cmParts: string[] = []
+
+  for (const part of parts) {
+    switch (part) {
+      case 'ctrl':
+        cmParts.push('Ctrl')
+        break
+      case 'alt':
+        cmParts.push('Alt')
+        break
+      case 'shift':
+        cmParts.push('Shift')
+        break
+      case 'meta':
+        // In CodeMirror, 'Cmd' is typically used for the command key on macOS.
+        // We'll map 'meta' to 'Cmd'.
+        cmParts.push('Cmd')
+        break
+      default:
+        // Ignore unrecognized modifiers
+        break
+    }
+  }
+
+  // Capitalize the key part (e.g., 'f' -> 'F', 'enter' -> 'Enter')
+  const capitalizedKey = keyPart.charAt(0).toUpperCase() + keyPart.slice(1)
+  cmParts.push(capitalizedKey)
+
+  return cmParts.join('-')
 }
