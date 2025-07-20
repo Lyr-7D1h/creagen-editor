@@ -84,7 +84,6 @@ function handleBeforeMount(monaco: Monaco) {
 export class Editor {
   private readonly editor: m.editor.IStandaloneCodeEditor
   private readonly autoimport: AutoImport
-  private vimStatus: HTMLElement | null = document.getElementById('vim-status')
   private vimMode: m.editor.IStandaloneCodeEditor | null
   private fullscreendecorators: m.editor.IEditorDecorationsCollection | null
   private models: Record<string, monaco.editor.ITextModel> = {}
@@ -132,8 +131,8 @@ export class Editor {
     this.vimMode = null
     this.fullscreendecorators = null
 
-    editorEvents.onPattern('editor', ({}) => {
-      this.updateFromSettings(settings)
+    editorEvents.on('settings:changed', ({ key }) => {
+      if (key.startsWith('editor')) this.updateFromSettings(settings)
     })
     this.updateFromSettings(settings)
   }
@@ -141,11 +140,7 @@ export class Editor {
   updateFromSettings(settings: Settings) {
     const values = settings.values
 
-    if (values['editor.relative_lines']) {
-      this.editor.updateOptions({ lineNumbers: 'relative' })
-    } else {
-      this.editor.updateOptions({ lineNumbers: 'on' })
-    }
+    this.setRelativeLines(values['editor.relative_lines'])
     this.setFullscreenMode(values['editor.fullscreen'])
     this.setVimMode(values['editor.vim'])
   }
@@ -173,7 +168,15 @@ export class Editor {
     this.editor.addCommand(keybinding, handler)
   }
 
-  setVimMode(value: boolean) {
+  private setRelativeLines(value: boolean) {
+    if (value) {
+      this.editor.updateOptions({ lineNumbers: 'relative' })
+    } else {
+      this.editor.updateOptions({ lineNumbers: 'on' })
+    }
+  }
+
+  private setVimMode(value: boolean) {
     if (value && this.vimMode === null) {
       this.vimMode = initVimMode(
         this.editor,
@@ -185,18 +188,25 @@ export class Editor {
     }
   }
 
-  setRelativeLineLength(value: boolean) {
+  /** set background transparent and make code highly visable */
+  private setFullscreenMode(value: boolean) {
+    console.log(value)
     if (value) {
-      this.editor.updateOptions({ lineNumbers: 'relative' })
+      monaco.editor.setTheme('creagen-fullscreen')
+      const value = this.getValue()
+      this.fullscreendecorators = this.editor.createDecorationsCollection([
+        {
+          range: new monaco.Range(0, 0, value.length + 1, 0),
+          options: {
+            inlineClassName: 'creagen-fullscreen',
+          },
+        },
+      ])
     } else {
-      this.editor.updateOptions({ lineNumbers: 'on' })
+      if (this.fullscreendecorators) this.fullscreendecorators.clear()
+      this.fullscreendecorators = null
+      monaco.editor.setTheme('creagen')
     }
-  }
-
-  updateOptions(
-    options: m.editor.IEditorOptions & m.editor.IGlobalEditorOptions,
-  ) {
-    this.editor.updateOptions(options)
   }
 
   clearTypings() {
@@ -218,56 +228,6 @@ export class Editor {
     }
     monaco.languages.typescript.typescriptDefaults.addExtraLib(typings, uri)
   }
-
-  /** force update current model */
-  // private forceUpdateModel() {
-  //   const currentModel = this.editor.getModel()!
-  //   monaco.editor.setModelLanguage(currentModel, 'typescript')
-  // }
-
-  /** set background transparent and make code highly visable */
-  setFullscreenMode(value: boolean) {
-    if (value) {
-      monaco.editor.setTheme('creagen-fullscreen')
-      const value = this.getValue()
-      this.fullscreendecorators = this.editor.createDecorationsCollection([
-        {
-          range: new monaco.Range(0, 0, value.length + 1, 0),
-          options: {
-            inlineClassName: 'creagen-fullscreen',
-          },
-        },
-      ])
-    } else {
-      if (this.fullscreendecorators) this.fullscreendecorators.clear()
-      this.fullscreendecorators = null
-      monaco.editor.setTheme('creagen')
-    }
-  }
-
-  hide() {
-    if (this.vimStatus) this.vimStatus.style.display = 'none'
-    this.html().style.display = 'none'
-  }
-
-  show() {
-    if (this.vimStatus) this.vimStatus.style.display = 'block'
-    this.html().style.display = 'block'
-  }
-
-  // setOpacity(opacity: number) {
-  //   const h = Math.round(opacity).toString(16)
-  //   const hex = h.length === 1 ? '0' + h : h
-
-  //   monaco.editor.defineTheme('creagen', {
-  //     ...creagenLightTheme,
-  //     colors: {
-  //       'editor.background': `#333333${hex}`,
-  //     },
-  //   })
-  //   monaco.editor.setTheme('vs')
-  //   monaco.editor.setTheme('creagen')
-  // }
 
   getValue() {
     return this.editor.getValue()
