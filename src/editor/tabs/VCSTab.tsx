@@ -23,7 +23,6 @@ export function VCSTab() {
   )
 
   const handleRefClick = (ref: any) => {
-    console.log('Clicked ref:', ref.name, 'SHA:', ref.sha)
     // TODO: Add navigation or checkout functionality
   }
 

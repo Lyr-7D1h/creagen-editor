@@ -32,7 +32,6 @@ export function EditableProjectName({ onUpdate }: { onUpdate: () => void }) {
       logger.error('Name can only contain letters, numbers, and spaces')
       return
     }
-    console.log(headRef.name, headRefValue)
     if ((await vcs.renameRef(headRef.name, headRefValue)) === false) {
       logger.error(`Can't find ${headRef.name}`)
     }

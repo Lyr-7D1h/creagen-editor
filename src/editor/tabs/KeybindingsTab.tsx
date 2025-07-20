@@ -177,7 +177,6 @@ export function KeybindingsTab() {
     key: KeyInfo,
     oldKey?: KeyInfo,
   ) => {
-    console.log(oldKey, key)
     if (oldKey) await creagen.keybindings.removeKeybinding(oldKey, command)
     // only remove if empty
     if (key.length === 0) return

@@ -125,7 +125,7 @@ export class Sandbox {
 
     // Update iframe source
     this.iframe.src = blobURL
-    console.log(
+    logger.info(
       `[Sandbox] Loading code with '${code.length}' characters into iframe with libraries: `,
       JSON.stringify(libraryImports),
     )
