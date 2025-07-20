@@ -8,6 +8,7 @@ type EditorEvents = {
   'vcs:commit': { id: ID; generation: Generation; code: string }
   /** Change active head */
   'vcs:checkout': { old: ID | null; new: ID }
+  'vcs:renameRef': void
 
   // Settings events
   'settings:changed': { key: string; value: any; oldValue?: any }

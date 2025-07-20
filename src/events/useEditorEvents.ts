@@ -83,9 +83,15 @@ export const useActiveRef = () => {
   const [value, setValue] = useState<ActiveRef>(vcs.activeRef)
 
   useEffect(() => {
-    return editorEvents.on('vcs:checkout', () => {
-      setValue(vcs.activeRef)
-    })
+    const listeners = [
+      editorEvents.on('vcs:checkout', () => {
+        setValue(vcs.activeRef)
+      }),
+      editorEvents.on('vcs:renameRef', () => {
+        setValue(vcs.activeRef)
+      }),
+    ]
+    return () => listeners.forEach((l) => l())
   }, [])
 
   return value

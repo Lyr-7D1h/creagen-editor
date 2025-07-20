@@ -17,7 +17,7 @@ export function EditableProjectName({ onUpdate }: { onUpdate: () => void }) {
     setIsEditingProjectName(true)
   }
 
-  const handleProjectNameSave = () => {
+  const handleProjectNameSave = async () => {
     if (headRefValue.length < 3) {
       logger.error('Name must have at least 3 characters')
       return
@@ -32,7 +32,10 @@ export function EditableProjectName({ onUpdate }: { onUpdate: () => void }) {
       logger.error('Name can only contain letters, numbers, and spaces')
       return
     }
-    vcs.renameRef(headRef.name, headRefValue)
+    console.log(headRef.name, headRefValue)
+    if ((await vcs.renameRef(headRef.name, headRefValue)) === false) {
+      logger.error(`Can't find ${headRef.name}`)
+    }
     setIsEditingProjectName(false)
 
     // ensure update after render

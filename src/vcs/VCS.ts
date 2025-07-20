@@ -28,7 +28,11 @@ export type HistoryItem = {
   refs: Ref[]
 }
 
-export type ActiveRef = Omit<Ref, 'id'> & { id?: ID }
+/** Active Reference, a reference that might not be comitted yet */
+export type ActiveRef = Omit<Ref, 'id'> & {
+  /** If set it means that the ref is stored */
+  id?: ID
+}
 
 const logger = createContextLogger('vcs')
 
@@ -70,9 +74,17 @@ export class VCS {
 
   async renameRef(refName: string, newRefName: string) {
     const ref = this.refs.getRef(refName)
+
+    // if not yet commited change active ref name
+    if (ref === null && refName === this._activeRef.name) {
+      this.activeRef.name = newRefName
+      return
+    }
+
     if (!ref) return false
     ref.name = newRefName
     await this.storage.set('refs', this.refs)
+    editorEvents.emit('vcs:renameRef', undefined)
     return true
   }
 
@@ -122,6 +134,15 @@ export class VCS {
     if (id.hash !== this._head?.hash) {
       await this.storage.set(id, gen)
     }
+
+    // if current ref is uncomitted
+    if (typeof this._activeRef.id === 'undefined') {
+      const ref = { ...this._activeRef, id }
+      this.refs.add(ref)
+      this._activeRef = ref
+      await this.storage.set('refs', this.refs)
+    }
+
     const url = new URL(window.location as any)
     url.pathname = id.toString()
     window.history.pushState('Creagen', '', url)

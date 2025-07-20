@@ -1,5 +1,5 @@
 import { editorEvents } from '../events/events'
-import { Refs, refSchema } from '../vcs/Refs'
+import { Refs, refSchema, refToJson } from '../vcs/Refs'
 import { LocalStorageKey, StorageValueType } from './StorageKey'
 
 class LocalStorage {
@@ -8,7 +8,7 @@ class LocalStorage {
       const refs = value as Refs
       return globalThis.localStorage.setItem(
         key,
-        JSON.stringify(refs.getRefs()),
+        JSON.stringify(refs.getRefs().map(refToJson)),
       )
     }
 
