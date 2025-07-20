@@ -16,6 +16,9 @@ npm start
 
 # Roadmap
 
+- Shareable links without storage
+  - Option to put the code in the url instead of the id
+- Export to html with js inlined
 - Add Hydra support https://github.com/hydra-synth/hydra-synth?tab=readme-ov-file
 - use importmap to map module names to urls https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap
 - Dynamically add npm packages
