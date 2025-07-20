@@ -1,65 +1,43 @@
-import AutoImport, { regexTokeniser } from '@kareemkermad/monaco-auto-import'
-import { Monaco } from '@monaco-editor/react'
-import * as monaco from 'monaco-editor'
-import type * as m from 'monaco-editor'
-import { loader } from '@monaco-editor/react'
-import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
-import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
-import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
-import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker'
-import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
-import './editor.css'
-
-import { initVimMode } from 'monaco-vim'
+import {
+  EditorView,
+  keymap,
+  lineNumbers,
+  highlightActiveLineGutter,
+  highlightSpecialChars,
+  drawSelection,
+  dropCursor,
+  rectangularSelection,
+} from '@codemirror/view'
+import { EditorState, Compartment } from '@codemirror/state'
+import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
+import { searchKeymap, highlightSelectionMatches } from '@codemirror/search'
+import {
+  autocompletion,
+  completionKeymap,
+  closeBrackets,
+  closeBracketsKeymap,
+} from '@codemirror/autocomplete'
+import {
+  foldGutter,
+  indentOnInput,
+  indentUnit,
+  bracketMatching,
+  foldKeymap,
+} from '@codemirror/language'
+import { javascript } from '@codemirror/lang-javascript'
+import { vim } from '@replit/codemirror-vim'
+import { vscodeKeymap } from '@replit/codemirror-vscode-keymap'
 import { Settings } from '../settings/Settings'
 import { editorEvents } from '../events/events'
+import './editor.css'
+import ts, { ModuleKind, ModuleResolutionKind, ScriptTarget } from 'typescript'
 
-// Use monaco without cdn: https://www.npmjs.com/package/@monaco-editor/react#loader-config
-self.MonacoEnvironment = {
-  getWorker(_, label) {
-    if (label === 'json') {
-      return new jsonWorker()
-    }
-    if (label === 'css' || label === 'scss' || label === 'less') {
-      return new cssWorker()
-    }
-    if (label === 'html' || label === 'handlebars' || label === 'razor') {
-      return new htmlWorker()
-    }
-    if (label === 'typescript' || label === 'javascript') {
-      return new tsWorker()
-    }
-    return new editorWorker()
-  },
-}
-
-loader.config({ monaco })
-loader.init()
-
-// https://github.com/brijeshb42/monaco-themes/tree/master
-const creagenLightTheme: monaco.editor.IStandaloneThemeData = {
-  base: 'vs',
-  inherit: true,
-  colors: {},
-  rules: [],
-}
-const creagenFullscreenTheme: monaco.editor.IStandaloneThemeData = {
-  base: 'hc-black',
-  inherit: true,
-  colors: {
-    'editor.background': '#00000000',
-    'editor.lineHighlightBackground': '#00000088',
-    'editorCursor.foreground': '#ffffff',
-  },
-  rules: [],
-}
-
-export const typescriptCompilerOptions = {
-  target: monaco.languages.typescript.ScriptTarget.ESNext,
+export const typescriptCompilerOptions: ts.CompilerOptions = {
+  target: ScriptTarget.ESNext,
   allowNonTsExtensions: true,
-  moduleResolution: monaco.languages.typescript.ModuleResolutionKind.Classic,
+  moduleResolution: ModuleResolutionKind.Classic,
   esModuleInterop: true,
-  module: monaco.languages.typescript.ModuleKind.ESNext,
+  module: ModuleKind.ESNext,
   noEmit: true,
 }
 
@@ -67,182 +45,223 @@ export interface EditorSettings {
   value?: string
 }
 
-function handleBeforeMount(monaco: Monaco) {
-  monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
-    noSemanticValidation: false,
-    noSyntaxValidation: false,
-    // 1378,1375: allow await on top level
-    diagnosticCodesToIgnore: [1375, 1378],
-  })
-  monaco.languages.typescript.typescriptDefaults.setCompilerOptions(
-    typescriptCompilerOptions,
-  )
-  monaco.editor.defineTheme('creagen', creagenLightTheme)
-  monaco.editor.defineTheme('creagen-fullscreen', creagenFullscreenTheme)
-}
-
 export class Editor {
-  private readonly editor: m.editor.IStandaloneCodeEditor
-  private readonly autoimport: AutoImport
+  private view: EditorView
+  private themeCompartment = new Compartment()
+  private vimCompartment = new Compartment()
+  private lineNumberCompartment = new Compartment()
+  private _html: HTMLElement
   private vimStatus: HTMLElement | null = document.getElementById('vim-status')
-  private vimMode: m.editor.IStandaloneCodeEditor | null
-  private fullscreendecorators: m.editor.IEditorDecorationsCollection | null
-  private models: Record<string, monaco.editor.ITextModel> = {}
-  private _html
 
-  static async create(settings: Settings) {
-    const monaco: Monaco = await loader.init()
-
-    handleBeforeMount(monaco)
-
+  static async create(settings: Settings): Promise<Editor> {
     const html = document.createElement('div')
     html.style.width = '100%'
     html.style.height = '100%'
-    const editor = monaco.editor.create(html, {
-      minimap: { enabled: false },
-      tabSize: 2,
-      autoIndent: 'full',
-      formatOnPaste: true,
-      formatOnType: true,
-      automaticLayout: true,
-      language: 'typescript',
-      theme: 'creagen',
-      scrollBeyondLastLine: false,
-    })
+    html.style.overflow = 'hidden'
 
-    return new Editor(html, settings, monaco, editor)
+    return new Editor(html, settings)
   }
 
-  constructor(
-    html: HTMLElement,
-    settings: Settings,
-    monaco: Monaco,
-    editor: m.editor.IStandaloneCodeEditor,
-  ) {
+  private constructor(html: HTMLElement, settings: Settings) {
     this._html = html
-    this.editor = editor
-    this.autoimport = new AutoImport({
-      monaco,
-      editor: this.editor,
-      spacesBetweenBraces: true,
-      doubleQuotes: true,
-      semiColon: true,
-      alwaysApply: false,
-    })
-    this.vimMode = null
-    this.fullscreendecorators = null
 
+    // Create the initial state
+    const state = EditorState.create({
+      doc: '',
+      extensions: [
+        // Basic editor functionality
+        lineNumbers(),
+        highlightActiveLineGutter(),
+        highlightSpecialChars(),
+        history(),
+        foldGutter(),
+        drawSelection(),
+        dropCursor(),
+        EditorState.allowMultipleSelections.of(true),
+        indentOnInput(),
+        bracketMatching(),
+        closeBrackets(),
+        autocompletion(),
+        rectangularSelection(),
+        highlightSelectionMatches(),
+
+        // Language support
+        javascript({
+          typescript: true,
+          jsx: false,
+        }),
+
+        // Keymaps
+        keymap.of([
+          ...closeBracketsKeymap,
+          ...defaultKeymap,
+          ...searchKeymap,
+          ...historyKeymap,
+          ...foldKeymap,
+          ...completionKeymap,
+          ...vscodeKeymap,
+        ]),
+
+        // Theme compartment
+        this.themeCompartment.of([]),
+
+        // Vim compartment
+        this.vimCompartment.of([]),
+
+        // Line number compartment
+        this.lineNumberCompartment.of([]),
+
+        // Basic styling
+        EditorView.theme({
+          '&': {
+            height: '100%',
+            width: '100%',
+          },
+          '.cm-editor': {
+            height: '100%',
+          },
+          '.cm-scroller': {
+            fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
+            fontSize: '14px',
+            lineHeight: '1.4',
+          },
+          '.cm-focused': {
+            outline: 'none',
+          },
+          // VS Code-like styling
+          '.cm-editor.cm-focused .cm-selectionBackground': {
+            backgroundColor: '#316AC5',
+          },
+          '.cm-activeLine': {
+            backgroundColor: '#f5f5f5',
+          },
+          '.cm-activeLineGutter': {
+            backgroundColor: '#f5f5f5',
+          },
+          '.cm-gutters': {
+            backgroundColor: '#f8f8f8',
+            color: '#999',
+            border: 'none',
+          },
+          '.cm-lineNumbers .cm-gutterElement': {
+            padding: '0 8px 0 8px',
+          },
+        }),
+
+        // Basic options
+        indentUnit.of('  '),
+        EditorView.lineWrapping,
+      ],
+    })
+
+    // Create the view
+    this.view = new EditorView({
+      state,
+      parent: html,
+    })
+
+    // Listen for settings changes
     editorEvents.onPattern('editor', ({}) => {
       this.updateFromSettings(settings)
     })
+
     this.updateFromSettings(settings)
   }
 
   updateFromSettings(settings: Settings) {
     const values = settings.values
+    const effects = []
 
+    // Update line numbers
     if (values['editor.relative_lines']) {
-      this.editor.updateOptions({ lineNumbers: 'relative' })
+      effects.push(
+        this.lineNumberCompartment.reconfigure([
+          lineNumbers({
+            formatNumber: (n, state) => {
+              const line = state.doc.lineAt(state.selection.main.head)
+              const currentLine = line.number
+              const relativeNumber = Math.abs(n - currentLine)
+              return n === currentLine ? String(n) : String(relativeNumber)
+            },
+          }),
+        ]),
+      )
     } else {
-      this.editor.updateOptions({ lineNumbers: 'on' })
+      effects.push(this.lineNumberCompartment.reconfigure([lineNumbers()]))
     }
-    this.setFullscreenMode(values['editor.fullscreen'])
-    this.setVimMode(values['editor.vim'])
+
+    // Update theme
+    if (values['editor.fullscreen']) {
+      effects.push(
+        this.themeCompartment.reconfigure([
+          EditorView.theme({
+            '&': {
+              backgroundColor: 'transparent',
+            },
+            '.cm-editor': {
+              backgroundColor: 'transparent',
+            },
+            '.cm-scroller': {
+              backgroundColor: 'rgba(30, 30, 30, 0.8)',
+            },
+            '.cm-activeLine': {
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            },
+            '.cm-activeLineGutter': {
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            },
+            '.cm-gutters': {
+              backgroundColor: 'rgba(30, 30, 30, 0.8)',
+              color: '#ccc',
+            },
+            '.cm-content': {
+              color: '#fff',
+            },
+            '.cm-cursor': {
+              borderColor: '#fff',
+            },
+          }),
+        ]),
+      )
+    } else {
+      effects.push(this.themeCompartment.reconfigure([]))
+    }
+
+    // Update vim mode
+    if (values['editor.vim']) {
+      const vimConfig = vim()
+
+      effects.push(this.vimCompartment.reconfigure([vimConfig]))
+      if (this.vimStatus) {
+        this.vimStatus.style.display = 'block'
+      }
+    } else {
+      effects.push(this.vimCompartment.reconfigure([]))
+      if (this.vimStatus) {
+        this.vimStatus.style.display = 'none'
+      }
+    }
+
+    // Apply all effects
+    if (effects.length > 0) {
+      this.view.dispatch({ effects })
+    }
   }
 
-  html() {
+  html(): HTMLElement {
     return this._html
   }
 
-  layout(dimension?: monaco.editor.IDimension) {
-    this.editor.layout(dimension)
+  layout(_dimension?: { width: number; height: number }) {
+    // CodeMirror handles layout automatically
+    this.view.requestMeasure()
   }
 
-  async format() {
-    await this.editor.getAction('editor.action.formatDocument')!.run()
-  }
+  async format() {}
 
-  /**
-   * Adds a keybinding that works in both the editor and at the browser level
-   * @param keybinding Monaco keybinding code
-   * @param handler Function to call when the keybinding is triggered
-   * @param preventDefault Whether to prevent default browser behavior (default: true)
-   */
-  addKeybind(keybinding: number, handler: (...args: any[]) => void) {
-    // Register with Monaco editor
-    this.editor.addCommand(keybinding, handler)
-  }
-
-  setVimMode(value: boolean) {
-    if (value && this.vimMode === null) {
-      this.vimMode = initVimMode(
-        this.editor,
-        document.getElementById('vim-status'),
-      )
-    } else if (!value && this.vimMode !== null) {
-      this.vimMode.dispose()
-      this.vimMode = null
-    }
-  }
-
-  setRelativeLineLength(value: boolean) {
-    if (value) {
-      this.editor.updateOptions({ lineNumbers: 'relative' })
-    } else {
-      this.editor.updateOptions({ lineNumbers: 'on' })
-    }
-  }
-
-  updateOptions(
-    options: m.editor.IEditorOptions & m.editor.IGlobalEditorOptions,
-  ) {
-    this.editor.updateOptions(options)
-  }
-
-  clearTypings() {
-    console.log('[Editor] clearing typings')
-    monaco.languages.typescript.typescriptDefaults.setExtraLibs([])
-  }
-
-  /** If `packageName` given will also add autoimports */
-  addTypings(typings: string, uri: string, packageName?: string) {
-    if (this.models[uri]) return
-    console.log(`[Editor] Adding typings for ${uri}`)
-    // monaco.languages.typescript.javascriptDefaults.addExtraLib(typings, uri)
-    if (typeof packageName === 'string') {
-      this.autoimport.imports.saveFile({
-        path: packageName,
-        aliases: [packageName],
-        imports: regexTokeniser(typings),
-      })
-    }
-    monaco.languages.typescript.typescriptDefaults.addExtraLib(typings, uri)
-  }
-
-  /** force update current model */
-  // private forceUpdateModel() {
-  //   const currentModel = this.editor.getModel()!
-  //   monaco.editor.setModelLanguage(currentModel, 'typescript')
-  // }
-
-  /** set background transparent and make code highly visable */
-  setFullscreenMode(value: boolean) {
-    if (value) {
-      monaco.editor.setTheme('creagen-fullscreen')
-      const value = this.getValue()
-      this.fullscreendecorators = this.editor.createDecorationsCollection([
-        {
-          range: new monaco.Range(0, 0, value.length + 1, 0),
-          options: {
-            inlineClassName: 'creagen-fullscreen',
-          },
-        },
-      ])
-    } else {
-      if (this.fullscreendecorators) this.fullscreendecorators.clear()
-      this.fullscreendecorators = null
-      monaco.editor.setTheme('creagen')
-    }
+  addKeybind(_key: string, _handler: (...args: any[]) => void) {
+    // Add a keybinding to the editor - needs implementation with reconfiguration
+    console.log('[Editor] addKeybind - needs implementation')
   }
 
   hide() {
@@ -251,41 +270,51 @@ export class Editor {
   }
 
   show() {
-    if (this.vimStatus) this.vimStatus.style.display = 'block'
+    // Show vim status if enabled - simplified version
+    if (this.vimStatus) {
+      this.vimStatus.style.display = 'block'
+    }
     this.html().style.display = 'block'
   }
 
-  // setOpacity(opacity: number) {
-  //   const h = Math.round(opacity).toString(16)
-  //   const hex = h.length === 1 ? '0' + h : h
-
-  //   monaco.editor.defineTheme('creagen', {
-  //     ...creagenLightTheme,
-  //     colors: {
-  //       'editor.background': `#333333${hex}`,
-  //     },
-  //   })
-  //   monaco.editor.setTheme('vs')
-  //   monaco.editor.setTheme('creagen')
-  // }
-
-  getValue() {
-    return this.editor.getValue()
+  getValue(): string {
+    return this.view.state.doc.toString()
   }
 
   setValue(value: string) {
-    this.editor.setValue(value)
+    this.view.dispatch({
+      changes: {
+        from: 0,
+        to: this.view.state.doc.length,
+        insert: value,
+      },
+    })
+  }
 
-    if (this.fullscreendecorators) {
-      this.fullscreendecorators.clear()
-      this.fullscreendecorators = this.editor.createDecorationsCollection([
-        {
-          range: new monaco.Range(0, 0, value.length + 1, 0),
-          options: {
-            inlineClassName: 'creagen-fullscreen',
-          },
-        },
-      ])
+  // Compatibility methods for the existing interface
+  clearTypings() {}
+
+  addTypings(_typings: string, _uri: string, _packageName?: string) {}
+
+  updateOptions(_options: any) {
+    console.log(
+      '[Editor] updateOptions - needs implementation based on CodeMirror options',
+    )
+  }
+
+  private setVimMode(value: boolean) {
+    if (value) {
+      const vimConfig = vim()
+
+      if (this.vimStatus) this.vimStatus.style.display = 'block'
+      return this.vimCompartment.reconfigure([vimConfig])
+    } else {
+      if (this.vimStatus) this.vimStatus.style.display = 'none'
+      return this.vimCompartment.reconfigure([])
     }
   }
+
+  setRelativeLineLength(_value: boolean) {}
+
+  setFullscreenMode(_value: boolean) {}
 }

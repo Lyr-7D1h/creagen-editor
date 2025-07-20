@@ -1,11 +1,294 @@
-.creagen-fullscreen {
-  background-color: rgba(30, 30, 30, 40);
-}
-.inline-selected-text.creagen-fullscreen {
-  background-color: rgba(255, 255, 255, 40);
+/* CodeMirror editor styles */
+.cm-editor {
+  --cm-font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
 }
 
-/* Hide border around monaco */
-.monaco-editor {
-  --vscode-focusBorder: #00000000 !important;
+.cm-editor .cm-content {
+  font-family: var(--cm-font-family);
+  font-size: 14px;
+  line-height: 1.4;
+  padding: 0;
+}
+
+.cm-editor .cm-scroller {
+  font-family: var(--cm-font-family);
+}
+
+/* VS Code-like theme */
+.cm-editor {
+  background: #ffffff;
+  color: #24292e;
+}
+
+.cm-editor.cm-focused {
+  outline: none;
+  box-shadow: none;
+}
+
+.cm-activeLine {
+  background: #f6f8fa !important;
+}
+
+.cm-activeLineGutter {
+  background: #f6f8fa !important;
+}
+
+.cm-gutters {
+  background: #fafbfc;
+  color: #6a737d;
+  border: none;
+  border-right: 1px solid #e1e4e8;
+}
+
+.cm-lineNumbers .cm-gutterElement {
+  padding: 0 8px 0 8px;
+  min-width: 20px;
+}
+
+.cm-selectionBackground {
+  background: #316ac5 !important;
+}
+
+.cm-focused .cm-selectionBackground {
+  background: #316ac5 !important;
+}
+
+.cm-searchMatch {
+  background: #ffdf5d;
+  outline: 1px solid #ffd33d;
+}
+
+.cm-searchMatch.cm-searchMatch-selected {
+  background: #ff9500;
+  outline: 1px solid #ff9500;
+}
+
+/* Syntax highlighting */
+.cm-editor .tok-comment {
+  color: #6a737d;
+  font-style: italic;
+}
+
+.cm-editor .tok-keyword {
+  color: #d73a49;
+  font-weight: bold;
+}
+
+.cm-editor .tok-string {
+  color: #032f62;
+}
+
+.cm-editor .tok-number {
+  color: #005cc5;
+}
+
+.cm-editor .tok-function {
+  color: #6f42c1;
+}
+
+.cm-editor .tok-type {
+  color: #005cc5;
+}
+
+.cm-editor .tok-variable {
+  color: #e36209;
+}
+
+.cm-editor .tok-operator {
+  color: #d73a49;
+}
+
+.cm-editor .tok-punctuation {
+  color: #24292e;
+}
+
+/* Completion popup */
+.cm-tooltip.cm-tooltip-autocomplete {
+  background: #ffffff;
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(149, 157, 165, 0.2);
+  font-family: var(--cm-font-family);
+  font-size: 14px;
+}
+
+.cm-tooltip.cm-tooltip-autocomplete > ul {
+  margin: 0;
+  padding: 4px 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.cm-tooltip.cm-tooltip-autocomplete > ul > li {
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 3px;
+  margin: 0 4px;
+}
+
+.cm-tooltip.cm-tooltip-autocomplete > ul > li:hover {
+  background: #f6f8fa;
+}
+
+.cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected='true'] {
+  background: #0366d6;
+  color: #ffffff;
+}
+
+/* Search panel */
+.cm-panel.cm-search {
+  background: #f6f8fa;
+  border-bottom: 1px solid #e1e4e8;
+  padding: 4px 8px;
+}
+
+.cm-panel.cm-search input {
+  background: #ffffff;
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-family: var(--cm-font-family);
+  font-size: 14px;
+}
+
+.cm-panel.cm-search input:focus {
+  outline: none;
+  border-color: #0366d6;
+  box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.1);
+}
+
+.cm-panel.cm-search button {
+  background: #fafbfc;
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+  padding: 4px 8px;
+  margin-left: 4px;
+  cursor: pointer;
+  font-family: var(--cm-font-family);
+  font-size: 14px;
+}
+
+.cm-panel.cm-search button:hover {
+  background: #f3f4f6;
+}
+
+.cm-panel.cm-search button:active {
+  background: #edeff2;
+}
+
+/* Bracket matching */
+.cm-matchingBracket {
+  background: #34d05840;
+  outline: 1px solid #34d058;
+}
+
+.cm-nonmatchingBracket {
+  background: #d73a4940;
+  outline: 1px solid #d73a49;
+}
+
+/* Cursor */
+.cm-cursor {
+  border-left: 2px solid #24292e;
+}
+
+.cm-cursor.cm-cursor-primary {
+  border-left: 2px solid #0366d6;
+}
+
+/* Selection */
+.cm-selectionLayer .cm-selectionBackground {
+  background: #316ac540;
+}
+
+/* Fullscreen mode overrides */
+.creagen-fullscreen .cm-editor {
+  background: transparent;
+}
+
+.creagen-fullscreen .cm-scroller {
+  background: rgba(30, 30, 30, 0.8);
+}
+
+.creagen-fullscreen .cm-activeLine {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.creagen-fullscreen .cm-activeLineGutter {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.creagen-fullscreen .cm-gutters {
+  background: rgba(30, 30, 30, 0.8);
+  color: #ccc;
+}
+
+.creagen-fullscreen .cm-content {
+  color: #fff;
+}
+
+.creagen-fullscreen .cm-cursor {
+  border-color: #fff;
+}
+
+/* Vim status bar */
+#vim-status {
+  background: #f6f8fa;
+  border-top: 1px solid #e1e4e8;
+  padding: 4px 8px;
+  font-family: var(--cm-font-family);
+  font-size: 12px;
+  color: #24292e;
+  min-height: 20px;
+}
+
+#vim-status.cm-vim-mode .cm-vim-mode {
+  font-weight: bold;
+}
+
+/* Fold gutter */
+.cm-foldGutter {
+  width: 16px;
+}
+
+.cm-foldGutter .cm-gutterElement {
+  padding: 0 2px;
+  cursor: pointer;
+}
+
+.cm-foldGutter .cm-gutterElement:hover {
+  background: #f6f8fa;
+}
+
+/* Error/warning decorations */
+.cm-diagnostic {
+  border-bottom: 2px solid;
+}
+
+.cm-diagnostic.cm-diagnostic-error {
+  border-bottom-color: #d73a49;
+}
+
+.cm-diagnostic.cm-diagnostic-warning {
+  border-bottom-color: #f9c513;
+}
+
+.cm-diagnostic.cm-diagnostic-info {
+  border-bottom-color: #0366d6;
+}
+
+/* Tooltips */
+.cm-tooltip {
+  background: #24292e;
+  color: #ffffff;
+  border: 1px solid #444d56;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-family: var(--cm-font-family);
+  font-size: 12px;
+  max-width: 300px;
+}
+
+.cm-tooltip-arrow {
+  display: none;
 }
