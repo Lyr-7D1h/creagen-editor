@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Box, Button, ButtonGroup, CircularProgress } from '@mui/material'
 import KeyboardIcon from '@mui/icons-material/Keyboard'
 import { AccountTree, Settings } from '@mui/icons-material'
@@ -7,7 +7,11 @@ import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
 import { SettingsTab } from './tabs/SettingsTab'
 import { KeybindingsTab } from './tabs/KeybindingsTab'
 import { useLocalStorage } from '../storage/useLocalStorage'
-
+import AutoStoriesIcon from '@mui/icons-material/AutoStories'
+import { DependenciesTab } from './tabs/DependenciesTab'
+import { LinearProgressWithLabelSetting } from '../settings/LinearProgressWithLabelSetting'
+import { roundToDec } from '../util'
+import { logger } from '../logs/logger'
 export type MenuProps = {
   width: string
 }
@@ -17,6 +21,11 @@ const tabs = {
     icon: <AccountTree />,
     title: 'Versions',
     content: <VCSTab />,
+  },
+  dependencies: {
+    icon: <AutoStoriesIcon />,
+    title: 'Dependencies',
+    content: <DependenciesTab />,
   },
   keybinds: {
     icon: <KeyboardIcon />,
@@ -33,8 +42,13 @@ export type TabKey = keyof typeof tabs
 
 const defaultKey = Object.keys(tabs)[0]! as TabKey
 
+type Storage = {
+  current: number
+  max: number
+}
 export function Menu({ width }: MenuProps) {
   const creagenEditor = useCreagenEditor()
+  const [storage, setStorage] = useState<Storage | null>(null)
   const [currentView, setCurrentView] = useLocalStorage(
     'menu-view-tab',
     defaultKey,
@@ -43,6 +57,18 @@ export function Menu({ width }: MenuProps) {
   useEffect(() => {
     if (currentView) creagenEditor.storage.set('menu-view-tab', currentView)
   }, [currentView])
+
+  useEffect(() => {
+    navigator.storage
+      .estimate()
+      .then((storage) =>
+        setStorage({
+          current: storage.usage ?? 0,
+          max: storage.quota ?? 1,
+        }),
+      )
+      .catch(logger.error)
+  })
 
   if (currentView === null)
     return (
@@ -63,6 +89,12 @@ export function Menu({ width }: MenuProps) {
           borderColor: 'divider',
         }}
       >
+        <LinearProgressWithLabelSetting
+          minLabel="0GB"
+          maxLabel={`${storage ? roundToDec(storage.max / 1000000000, 3) : 0}GB`}
+          variant="determinate"
+          value={roundToDec(storage ? storage.current / storage.max : 0, 3)}
+        />
         <ButtonGroup
           variant="outlined"
           size="small"

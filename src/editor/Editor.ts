@@ -13,7 +13,7 @@ import './editor.css'
 import { initVimMode } from 'monaco-vim'
 import { Settings } from '../settings/Settings'
 import { editorEvents } from '../events/events'
-import { logger } from '../logs/logger'
+import { createContextLogger } from '../logs/logger'
 
 // Use monaco without cdn: https://www.npmjs.com/package/@monaco-editor/react#loader-config
 self.MonacoEnvironment = {
@@ -82,6 +82,7 @@ function handleBeforeMount(monaco: Monaco) {
   monaco.editor.defineTheme('creagen-fullscreen', creagenFullscreenTheme)
 }
 
+const logger = createContextLogger('editor')
 export class Editor {
   private readonly editor: m.editor.IStandaloneCodeEditor
   private readonly autoimport: AutoImport
@@ -210,14 +211,14 @@ export class Editor {
   }
 
   clearTypings() {
-    logger.info('[Editor] clearing typings')
+    logger.info('clearing typings')
     monaco.languages.typescript.typescriptDefaults.setExtraLibs([])
   }
 
   /** If `packageName` given will also add autoimports */
   addTypings(typings: string, uri: string, packageName?: string) {
     if (this.models[uri]) return
-    logger.info(`[Editor] Adding typings for ${uri}`)
+    logger.info(`Adding typings for ${uri}`)
     // monaco.languages.typescript.javascriptDefaults.addExtraLib(typings, uri)
     if (typeof packageName === 'string') {
       this.autoimport.imports.saveFile({

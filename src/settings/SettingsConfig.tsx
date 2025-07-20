@@ -1,9 +1,6 @@
 import { SemVer } from 'semver'
 import { MODE, CREAGEN_EDITOR_VERSION } from '../env'
-import { roundToDec } from '../util'
-import { LinearProgressWithLabelSetting } from './LinearProgressWithLabelSetting'
 import React from 'react'
-import { LibrarySetting } from './LibrarySetting'
 
 export interface Library {
   name: string
@@ -23,28 +20,14 @@ const defaultConfig = {
   general: {
     type: 'folder',
     title: 'General',
+    hidden: true,
   },
   'general.libraries': {
     type: 'param',
     label: 'Libraries',
-    render: () => <LibrarySetting />,
+    hidden: true,
     generated: true,
     value: [] as Library[],
-  },
-  'general.storage': {
-    type: 'param',
-    label: 'Available Storage',
-    render: ({ current, max }: { current: number; max: number }) => (
-      <LinearProgressWithLabelSetting
-        minLabel="0GB"
-        maxLabel={`${roundToDec(max / 1000000000, 3)}GB`}
-        variant="determinate"
-        value={roundToDec(current / max, 3)}
-      />
-    ),
-    value: { value: 0, max: 0 },
-    generated: true,
-    readonly: true,
   },
   editor: {
     type: 'folder',

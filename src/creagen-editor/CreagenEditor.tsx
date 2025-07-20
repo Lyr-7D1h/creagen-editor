@@ -64,8 +64,6 @@ export class CreagenEditor {
     this.loadSettingsFromPath().catch(logger.error)
     this.loadLibraries()
 
-    this.updateStorageUsage()
-
     // Update code from history
     addEventListener('popstate', () => {
       const id = getIdFromPath()
@@ -110,18 +108,6 @@ export class CreagenEditor {
   setLibraryImports(imports: Record<string, LibraryImport>) {
     this.libraryImports = imports
     return imports
-  }
-
-  updateStorageUsage() {
-    navigator.storage
-      .estimate()
-      .then((storage) =>
-        this.settings.set('general.storage', {
-          current: storage.usage ?? 0,
-          max: storage.quota ?? 1,
-        }),
-      )
-      .catch(logger.error)
   }
 
   async loadCode(id: ID) {

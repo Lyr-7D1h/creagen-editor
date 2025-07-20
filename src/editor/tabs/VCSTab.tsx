@@ -22,7 +22,7 @@ export function VCSTab() {
     {} as Record<string, any[]>,
   )
 
-  const handleRefClick = (ref: any) => {
+  const handleRefClick = (_ref: any) => {
     // TODO: Add navigation or checkout functionality
   }
 

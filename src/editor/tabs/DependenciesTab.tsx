@@ -6,11 +6,11 @@ import {
 } from '@mui/material'
 import React, { useState, useEffect } from 'react'
 import { SemVer } from 'semver'
-import { CREAGEN_DEV_VERSION } from '../env'
-import { logger } from '../logs/logger'
-import { Importer } from '../importer'
-import { useSettings } from '../events/useEditorEvents'
-import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
+import { useCreagenEditor } from '../../creagen-editor/CreagenEditorView'
+import { CREAGEN_DEV_VERSION } from '../../env'
+import { useSettings } from '../../events/useEditorEvents'
+import { Importer } from '../../importer'
+import { logger } from '../../logs/logger'
 
 const supportedLibraries = [
   { name: 'creagen' },
@@ -22,7 +22,7 @@ function isDevBuild(version: SemVer) {
   return version.prerelease.length > 0
 }
 
-export function LibrarySetting() {
+export function DependenciesTab() {
   const settings = useCreagenEditor().settings
   const libraries = useSettings('general.libraries')
   const [versions, setVersions] = useState<Record<string, string[]>>({})
