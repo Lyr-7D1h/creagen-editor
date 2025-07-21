@@ -49,7 +49,7 @@ export function log(
 ): MessageId {
   if (typeof autoHideDuration === 'undefined')
     autoHideDuration = AUTOHIDE_DURATION_DEFAULT
-  const id = Date.now().toString()
+  const id = Date.now().toString(36) + Math.random().toString(36).substring(4)
   const newAlert = { id, message, severity, autoHideDuration }
 
   ALERTS = [...ALERTS, newAlert]
