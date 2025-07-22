@@ -50,6 +50,7 @@ export function Export() {
   }
 
   if (analysisResult === null) return ''
+  if (analysisResult.result.svgs.length === 0) return ''
 
   const hasMultipleSvgs = analysisResult.result.svgs.length > 1
 
