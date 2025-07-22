@@ -1,5 +1,5 @@
 import { isLocalStorageKey, StorageKey, StorageValueType } from './StorageKey'
-import { logger } from '../logs/logger'
+import { createContextLogger } from '../logs/logger'
 import { generationSchema } from '../vcs/Generation'
 import { localStorage } from './LocalStorage'
 
@@ -9,6 +9,7 @@ interface StoredGeneration {
   previous?: string
 }
 
+const logger = createContextLogger('indexdb')
 export class ClientStorage {
   db: IDBDatabase | null
 
@@ -73,10 +74,10 @@ export class ClientStorage {
     item: StorageValueType<K>,
   ): Promise<void>
   async set(key: StorageKey, item: any): Promise<void> {
-    console.debug(`[ClientStorage] Storing ${key} ${JSON.stringify(item)}`)
     if (isLocalStorageKey(key)) {
       return localStorage.set(key, item)
     }
+    logger.debug(`Storing ${key} ${JSON.stringify(item)}`)
 
     // return on duplicate values
     if ((await this.get(key)) !== null) return

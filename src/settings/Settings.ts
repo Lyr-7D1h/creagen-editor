@@ -7,6 +7,9 @@ import {
 } from './SettingsConfig'
 import { editorEvents } from '../events/events'
 import { ClientStorage } from '../storage/ClientStorage'
+import { createContextLogger } from '../logs/logger'
+
+export const logger = createContextLogger('settings')
 
 export function parentKey(key: string) {
   return key.split('.').slice(0, -1).join('.')
@@ -93,7 +96,7 @@ export class Settings {
 
   // Set a value
   set(key: ParamKey, value: any): void {
-    console.debug(`[Settings] setting ${key} to ${JSON.stringify(value)}`)
+    logger.debug(`setting ${key} to ${JSON.stringify(value)}`)
     const entry = this.config[key]
     if (typeof entry === 'undefined') throw Error(`Key ${key} does not exist`)
     if (entry.type !== 'param')

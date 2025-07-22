@@ -121,7 +121,6 @@ export class VCS {
 
   async commit(code: string, libraries: Library[]): Promise<void> {
     const id = await ID.create(code, libraries)
-    if (id.toString() === this.head?.toString()) return
 
     logger.debug('commit')
     const gen: Generation = {
@@ -130,10 +129,7 @@ export class VCS {
       previous: this.head ?? undefined,
     }
 
-    // only save the generation if the code changed
-    if (id.hash !== this._head?.hash) {
-      await this.storage.set(id, gen)
-    }
+    await this.storage.set(id, gen)
 
     // if current ref is uncomitted
     if (typeof this._activeRef.id === 'undefined') {
