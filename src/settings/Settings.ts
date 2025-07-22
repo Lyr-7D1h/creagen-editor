@@ -96,7 +96,7 @@ export class Settings {
 
   // Set a value
   set(key: ParamKey, value: any): void {
-    logger.debug(`setting ${key} to ${JSON.stringify(value)}`)
+    logger.trace(`setting ${key} to ${JSON.stringify(value)}`)
     const entry = this.config[key]
     if (typeof entry === 'undefined') throw Error(`Key ${key} does not exist`)
     if (entry.type !== 'param')

@@ -77,7 +77,7 @@ export class ClientStorage {
     if (isLocalStorageKey(key)) {
       return localStorage.set(key, item)
     }
-    logger.debug(`Storing ${key} ${JSON.stringify(item)}`)
+    logger.trace(`Storing ${key} ${JSON.stringify(item)}`)
 
     // return on duplicate values
     if ((await this.get(key)) !== null) return

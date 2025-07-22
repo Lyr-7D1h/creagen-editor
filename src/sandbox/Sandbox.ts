@@ -2,7 +2,9 @@ import sandboxCode from '../../gen/sandbox'
 import { CREAGEN_EDITOR_VERSION, MODE } from '../env'
 import { editorEvents } from '../events/events'
 import { LibraryImport } from '../importer'
-import { logger } from '../logs/logger'
+import { createContextLogger } from '../logs/logger'
+
+const logger = createContextLogger('sandbox')
 
 export type SandboxEvent =
   | {
@@ -125,8 +127,8 @@ export class Sandbox {
 
     // Update iframe source
     this.iframe.src = blobURL
-    logger.info(
-      `[Sandbox] Loading code with '${code.length}' characters into iframe with libraries: `,
+    logger.trace(
+      `Loading code with '${code.length}' characters into iframe with libraries: `,
       JSON.stringify(libraryImports),
     )
     editorEvents.emit('sandbox:render-complete', undefined)
