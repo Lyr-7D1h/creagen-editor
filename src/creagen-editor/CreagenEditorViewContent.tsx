@@ -143,7 +143,7 @@ export function CreagenEditorViewContent() {
 
       {menu === true ? (
         <>
-          <Menu width={menuWidth + 'px'} />
+          <Menu width={menuWidth} />
           <Resizer
             resizing={resizing === 1}
             hidden={false}

@@ -13,7 +13,7 @@ import { LinearProgressWithLabelSetting } from '../settings/LinearProgressWithLa
 import { roundToDec } from '../util'
 import { logger } from '../logs/logger'
 export type MenuProps = {
-  width: string
+  width: number
 }
 
 const tabs = {
@@ -79,7 +79,12 @@ export function Menu({ width }: MenuProps) {
 
   return (
     <Box
-      sx={{ width, height: '100%', display: 'flex', flexDirection: 'column' }}
+      sx={{
+        width: width + 'px',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
     >
       <Box
         sx={{
@@ -99,7 +104,9 @@ export function Menu({ width }: MenuProps) {
           variant="outlined"
           size="small"
           fullWidth
-          sx={{ '& .MuiButton-root': { flex: 1 } }}
+          sx={{
+            '& .MuiButton-root': { flex: 1 },
+          }}
         >
           {Object.entries(tabs).map(([key, tab]) => (
             <Button
@@ -109,9 +116,11 @@ export function Menu({ width }: MenuProps) {
               sx={{
                 textTransform: 'none',
                 fontWeight: currentView === key ? 600 : 400,
+                minWidth: width < 400 ? 'auto' : undefined, // Show only icons on narrow screens
+                px: width < 400 ? 1 : undefined,
               }}
             >
-              {tab.title}
+              {width >= 400 && tab.title}
             </Button>
           ))}
         </ButtonGroup>
