@@ -4,77 +4,43 @@ import { Typography, Box } from '@mui/material'
 
 export function VCSTab() {
   const creagenEditor = useCreagenEditor()
-  const refs = creagenEditor.vcs.refs?.getRefs() ?? []
-
-  const groupedRefs = refs.reduce(
-    (groups, ref) => {
-      const groupName = ref.name.startsWith('refs/heads/')
-        ? 'Branches'
-        : ref.name.startsWith('refs/tags/')
-          ? 'Tags'
-          : 'Remotes'
-      if (!groups[groupName]) {
-        groups[groupName] = []
-      }
-      groups[groupName].push(ref)
-      return groups
-    },
-    {} as Record<string, any[]>,
-  )
-
-  const handleRefClick = (_ref: any) => {
-    // TODO: Add navigation or checkout functionality
-  }
+  const vcs = creagenEditor.vcs
+  const refs = vcs.refs.getRefs()
 
   return (
     <>
-      <Typography variant="h5" textAlign={'center'}>
-        References
-      </Typography>
-      {Object.entries(groupedRefs).map(([groupName, refsInGroup]) => (
-        <React.Fragment key={groupName}>
-          <Typography variant="h6" sx={{ marginTop: 2 }}>
-            {groupName}
-          </Typography>
-          {refsInGroup.map((ref) => {
-            const displayName = ref.name
-              .replace(/^refs\/heads\//, '')
-              .replace(/^refs\/tags\//, '')
-              .replace(/^refs\/remotes\//, '')
-            return (
-              <Box
-                key={ref.name}
-                onClick={() => handleRefClick(ref)}
-                sx={{
-                  marginLeft: 2,
-                  padding: 1,
-                  cursor: 'pointer',
-                  borderRadius: 1,
-                  '&:hover': {
-                    backgroundColor: 'action.hover',
-                  },
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                <Typography component="span">{displayName}</Typography>
-                <Typography
-                  component="span"
-                  variant="body2"
-                  sx={{
-                    fontFamily: 'monospace',
-                    color: 'text.secondary',
-                    backgroundColor: 'grey.100',
-                    padding: '2px 6px',
-                    borderRadius: '4px',
-                  }}
-                >
-                  {ref.sha?.substring(0, 7)}
-                </Typography>
-              </Box>
-            )
-          })}
+      {refs.map((ref) => (
+        <React.Fragment key={ref.id + ref.name}>
+          <Box
+            onClick={() => creagenEditor.loadCode(ref.id)}
+            sx={{
+              marginLeft: 2,
+              padding: 1,
+              cursor: 'pointer',
+              borderRadius: 1,
+              '&:hover': {
+                backgroundColor: 'action.hover',
+              },
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Typography component="span">{ref.name}</Typography>
+            <Typography
+              component="span"
+              variant="body2"
+              sx={{
+                fontFamily: 'monospace',
+                color: 'text.secondary',
+                backgroundColor: 'grey.100',
+                padding: '2px 6px',
+                borderRadius: '4px',
+              }}
+            >
+              {ref.id.hash.substring(0, 7)}
+            </Typography>
+          </Box>
         </React.Fragment>
       ))}
     </>

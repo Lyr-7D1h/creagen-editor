@@ -192,9 +192,6 @@ export function KeybindingsTab() {
 
   return (
     <div style={{ padding: '24px', fontFamily: 'sans-serif' }}>
-      <h1 style={{ fontSize: '28px', marginBottom: '24px', color: '#343a40' }}>
-        Keybindings
-      </h1>
       <table
         style={{
           width: '100%',

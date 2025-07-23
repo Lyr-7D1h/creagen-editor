@@ -38,11 +38,7 @@ export function SettingsTab() {
   }
 
   return (
-    <Box p={2}>
-      <Typography variant="h5" gutterBottom>
-        Settings
-      </Typography>
-
+    <>
       {Object.entries(folders)
         .filter(([folderKey, _]) => !(settings.config as any)[folderKey].hidden)
         .map(([folderKey, entries]) => (
@@ -125,6 +121,6 @@ export function SettingsTab() {
             </AccordionDetails>
           </Accordion>
         ))}
-    </Box>
+    </>
   )
 }

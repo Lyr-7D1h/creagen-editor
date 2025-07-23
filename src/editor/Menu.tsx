@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from 'react'
-import { Box, Button, ButtonGroup, CircularProgress } from '@mui/material'
+import {
+  Box,
+  Button,
+  ButtonGroup,
+  CircularProgress,
+  Typography,
+} from '@mui/material'
 import KeyboardIcon from '@mui/icons-material/Keyboard'
 import { AccountTree, Settings } from '@mui/icons-material'
 import { VCSTab } from './tabs/VCSTab'
@@ -19,7 +25,7 @@ export type MenuProps = {
 const tabs = {
   vcs: {
     icon: <AccountTree />,
-    title: 'Versions',
+    title: 'Bookmarks',
     content: <VCSTab />,
   },
   dependencies: {
@@ -126,8 +132,10 @@ export function Menu({ width }: MenuProps) {
         </ButtonGroup>
       </Box>
 
-      {/* Content Area */}
-      <Box sx={{ flex: 1, overflow: 'auto' }}>
+      <Box sx={{ flex: 1, overflow: 'auto' }} p={2}>
+        <Typography variant="h5" gutterBottom textAlign={'center'}>
+          {tabs[currentView as TabKey].title}
+        </Typography>
         {tabs[currentView as TabKey].content}
       </Box>
     </Box>
