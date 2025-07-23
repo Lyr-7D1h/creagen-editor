@@ -14,11 +14,12 @@ import {
 import { ExpandMore } from '@mui/icons-material'
 import { useSettingsAll } from '../../events/useEditorEvents'
 import { useCreagenEditor } from '../../creagen-editor/CreagenEditorView'
+import { useLocalStorage } from '../../storage/useLocalStorage'
 
 export function SettingsTab() {
   const settings = useCreagenEditor().settings
   const values = useSettingsAll()
-  const [expanded, setExpanded] = React.useState<string>('general')
+  const [hidden, setHidden] = useLocalStorage('menu-settings-hidden', [])
 
   const folders: Record<string, any[]> = Object.entries(settings.config)
     .filter(([_, entry]) => (entry as Entry).type === 'folder')
@@ -44,9 +45,15 @@ export function SettingsTab() {
         .map(([folderKey, entries]) => (
           <Accordion
             key={folderKey}
-            expanded={expanded === folderKey}
-            onChange={(_, isExpanded) => {
-              setExpanded(isExpanded ? folderKey : '')
+            expanded={!hidden.includes(folderKey)}
+            onChange={(_) => {
+              if (hidden.includes(folderKey)) {
+                // remove from hidden
+                setHidden(hidden.filter((k) => k !== folderKey))
+              } else {
+                // set hidden
+                setHidden([...hidden, folderKey])
+              }
             }}
           >
             <AccordionSummary expandIcon={<ExpandMore />}>

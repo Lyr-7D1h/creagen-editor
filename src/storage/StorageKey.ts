@@ -7,6 +7,7 @@ import { CustomKeybinding } from '../creagen-editor/keybindings'
 export const LOCAL_STORAGE_KEYS: LocalStorageKey[] = [
   'menu-view',
   'menu-view-tab',
+  'menu-settings-hidden',
   'custom-keybindings',
   'active-ref',
   'settings',
@@ -18,7 +19,10 @@ export function isLocalStorageKey(key: string | ID): key is LocalStorageKey {
 }
 
 /** These keys can only be used in local storage */
-export type LocalStorageOnlyKey = 'menu-view' | 'menu-view-tab'
+export type LocalStorageOnlyKey =
+  | 'menu-view'
+  | 'menu-view-tab'
+  | 'menu-settings-hidden'
 export type LocalStorageKey =
   | 'custom-keybindings'
   | 'active-ref'
@@ -31,6 +35,7 @@ export type StorageKeyValueMap = {
   'active-ref': Ref
   'menu-view': boolean
   'menu-view-tab': TabKey | null
+  'menu-settings-hidden': string[]
   'custom-keybindings': CustomKeybinding[]
   settings: any
   refs: Refs
