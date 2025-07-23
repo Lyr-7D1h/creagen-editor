@@ -5,11 +5,15 @@ import {
   AccordionDetails,
   AccordionSummary,
   Checkbox,
-  FormLabel,
   Typography,
   TextField,
   Button,
-  Box,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableRow,
+  Paper,
 } from '@mui/material'
 import { ExpandMore } from '@mui/icons-material'
 import { useSettingsAll } from '../../events/useEditorEvents'
@@ -48,10 +52,8 @@ export function SettingsTab() {
             expanded={!hidden.includes(folderKey)}
             onChange={(_) => {
               if (hidden.includes(folderKey)) {
-                // remove from hidden
                 setHidden(hidden.filter((k) => k !== folderKey))
               } else {
-                // set hidden
                 setHidden([...hidden, folderKey])
               }
             }}
@@ -61,70 +63,90 @@ export function SettingsTab() {
                 {(settings.config as any)[folderKey].title}
               </Typography>
             </AccordionSummary>
-            <AccordionDetails>
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: 'max-content auto',
-                  gap: 2,
-                  alignItems: 'center',
-                }}
-              >
-                {entries.map(([paramKey, e]) => {
-                  const entry = e as Entry
-                  const value = values[paramKey as ParamKey]
+            <AccordionDetails sx={{ padding: 0 }}>
+              <TableContainer component={Paper} elevation={0}>
+                <Table size="small">
+                  <TableBody>
+                    {entries.map(([paramKey, e]) => {
+                      const entry = e as Entry
+                      const value = values[paramKey as ParamKey]
 
-                  if (entry.type === 'button')
-                    return (
-                      <React.Fragment key={paramKey}>
-                        <div />
-                        <Button
-                          variant="contained"
-                          onClick={() => entry.onClick()}
-                        >
-                          {entry.title}
-                        </Button>
-                      </React.Fragment>
-                    )
-                  if (entry.type !== 'param') return
+                      if (entry.type === 'button')
+                        return (
+                          <TableRow key={paramKey}>
+                            <TableCell sx={{ border: 0, paddingLeft: 2 }}>
+                              <Typography variant="body2">
+                                {entry.title}
+                              </Typography>
+                            </TableCell>
+                            <TableCell sx={{ border: 0, paddingRight: 2 }}>
+                              <Button
+                                variant="contained"
+                                size="small"
+                                onClick={() => entry.onClick()}
+                              >
+                                {entry.title}
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        )
+                      if (entry.type !== 'param') return null
 
-                  if (typeof entry.render !== 'undefined') {
-                    return (
-                      <React.Fragment key={paramKey}>
-                        <FormLabel>{entry.label}</FormLabel>
-                        {entry.render(value)}
-                      </React.Fragment>
-                    )
-                  }
+                      if (typeof entry.render !== 'undefined') {
+                        return (
+                          <TableRow key={paramKey}>
+                            <TableCell sx={{ border: 0, paddingLeft: 2 }}>
+                              <Typography variant="body2">
+                                {entry.label}
+                              </Typography>
+                            </TableCell>
+                            <TableCell sx={{ border: 0, paddingRight: 2 }}>
+                              {entry.render(value)}
+                            </TableCell>
+                          </TableRow>
+                        )
+                      }
 
-                  return (
-                    <React.Fragment key={paramKey}>
-                      <FormLabel>{entry.label}</FormLabel>
-                      {typeof value === 'boolean' ? (
-                        <Checkbox
-                          checked={value}
-                          sx={{
-                            '&:hover': {
-                              backgroundColor: 'transparent',
-                            },
-                          }}
-                          onChange={(e) =>
-                            settings.set(paramKey, e.target.checked)
-                          }
-                        />
-                      ) : (
-                        <TextField
-                          type={typeof value === 'number' ? 'number' : 'text'}
-                          disabled={entry.readonly}
-                          defaultValue={value}
-                          size="small"
-                          fullWidth
-                        />
-                      )}
-                    </React.Fragment>
-                  )
-                })}
-              </Box>
+                      return (
+                        <TableRow key={paramKey}>
+                          <TableCell sx={{ border: 0, paddingLeft: 2 }}>
+                            <Typography variant="body2">
+                              {entry.label}
+                            </Typography>
+                          </TableCell>
+                          <TableCell sx={{ border: 0, paddingRight: 2 }}>
+                            {typeof value === 'boolean' ? (
+                              <Checkbox
+                                checked={value}
+                                size="small"
+                                sx={{
+                                  '&:hover': {
+                                    backgroundColor: 'transparent',
+                                  },
+                                }}
+                                onChange={(e) =>
+                                  settings.set(paramKey, e.target.checked)
+                                }
+                              />
+                            ) : (
+                              <TextField
+                                type={
+                                  typeof value === 'number' ? 'number' : 'text'
+                                }
+                                disabled={entry.readonly}
+                                defaultValue={value}
+                                size="small"
+                                fullWidth
+                                variant="outlined"
+                              />
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             </AccordionDetails>
           </Accordion>
         ))}
