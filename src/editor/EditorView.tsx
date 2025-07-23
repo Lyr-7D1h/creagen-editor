@@ -24,6 +24,7 @@ export function EditorView({
   const creagenEditor = useCreagenEditor()
   const hideAll = useSettings('hide_all')
   const vimEnabled = useSettings('editor.vim')
+  const showActiveBookmark = useSettings('editor.show_active_bookmark')
   const editorContentRef = useRef<HTMLDivElement>(null)
   const iconButtonRef = useRef<HTMLButtonElement>(null)
   const projectNameRef = useRef<HTMLDivElement>(null)
@@ -104,9 +105,13 @@ export function EditorView({
             />
           </IconButton>
         </Tooltip>
-        <div ref={projectNameRef}>
-          <EditableProjectName onUpdate={updateHistoryWidth} />
-        </div>
+        {showActiveBookmark ? (
+          <div ref={projectNameRef}>
+            <EditableProjectName onUpdate={updateHistoryWidth} />
+          </div>
+        ) : (
+          ''
+        )}
         <History style={{ width: historyWidth }} />
       </div>
 
