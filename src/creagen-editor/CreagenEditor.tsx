@@ -12,6 +12,7 @@ import { Importer, LibraryImport } from '../importer'
 import { getIdFromPath, VCS } from '../vcs/VCS'
 import { ClientStorage } from '../storage/ClientStorage'
 import { editorEvents } from '../events/events'
+import { Ref } from '../vcs/Refs'
 
 export class CreagenEditor {
   storage: ClientStorage
@@ -110,8 +111,15 @@ export class CreagenEditor {
     return imports
   }
 
-  async loadCode(id: ID) {
+  /** Load a reference */
+  loadCode(ref: Ref): void
+  /** Load an id */
+  loadCode(id: ID): void
+  async loadCode(id: ID | Ref) {
     const generation = await this.vcs.checkout(id)
+    if ('name' in id) {
+      id = id.id
+    }
     if (generation === null) {
       logger.warn(`'${id.toSub()}' not found in vcs`)
       return

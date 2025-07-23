@@ -93,8 +93,6 @@ export class VCS {
     return this._refs
   }
 
-  async addRef(_ref: Ref) {}
-
   async refLookup(id: ID) {
     return this._refs.refLookup(id)
   }
@@ -151,7 +149,15 @@ export class VCS {
     editorEvents.emit('vcs:checkout', { old, new: id })
   }
 
-  async checkout(id: ID): Promise<Generation | null> {
+  /** Checkout a Ref or ID */
+  checkout(id: ID): Promise<Generation | null>
+  checkout(ref: Ref): Promise<Generation | null>
+  checkout(id: ID | Ref): Promise<Generation | null>
+  async checkout(id: ID | Ref): Promise<Generation | null> {
+    if ('name' in id) {
+      this._activeRef = id
+      id = id.id
+    }
     // update url
     if (id.toString() !== getIdFromPath()?.toString()) {
       logger.debug(`Add ${id.toSub()} to window history`)

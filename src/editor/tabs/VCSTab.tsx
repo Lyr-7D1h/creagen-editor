@@ -7,12 +7,14 @@ export function VCSTab() {
   const vcs = creagenEditor.vcs
   const refs = vcs.refs.getRefs()
 
+  refs.sort((a, b) => b.createdOn.getTime() - a.createdOn.getTime())
+
   return (
     <>
       {refs.map((ref) => (
         <React.Fragment key={ref.id + ref.name}>
           <Box
-            onClick={() => creagenEditor.loadCode(ref.id)}
+            onClick={() => creagenEditor.loadCode(ref)}
             sx={{
               marginLeft: 2,
               padding: 1,
