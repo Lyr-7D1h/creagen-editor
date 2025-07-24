@@ -63,6 +63,13 @@ const defaultConfig = {
     label: 'Show active bookmark',
     value: true,
   },
+  'editor.code_in_url': {
+    type: 'param',
+    label: 'Use code in the url',
+    details:
+      'Use code in the url instead of an id to generate shareable links without using remote storage',
+    value: false,
+  },
 
   export: {
     type: 'folder',
@@ -148,6 +155,7 @@ export interface Param<T = any> {
   type: 'param'
   value: T
   label?: string
+  details?: string
   queryParam?: (value: string) => T
   hidden?: boolean
   render?: (value: T, set?: (value: T) => void) => React.ReactNode

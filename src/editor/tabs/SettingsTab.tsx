@@ -14,8 +14,9 @@ import {
   TableContainer,
   TableRow,
   Paper,
+  Tooltip,
 } from '@mui/material'
-import { ExpandMore } from '@mui/icons-material'
+import { ExpandMore, InfoOutline } from '@mui/icons-material'
 import { useSettingsAll } from '../../events/useEditorEvents'
 import { useCreagenEditor } from '../../creagen-editor/CreagenEditorView'
 import { useLocalStorage } from '../../storage/useLocalStorage'
@@ -110,9 +111,38 @@ export function SettingsTab() {
                       return (
                         <TableRow key={paramKey}>
                           <TableCell sx={{ border: 0, paddingLeft: 2 }}>
-                            <Typography variant="body2">
-                              {entry.label}
-                            </Typography>
+                            <Tooltip
+                              title={entry.details}
+                              arrow
+                              placement="right"
+                              componentsProps={{
+                                tooltip: {
+                                  sx: {
+                                    fontSize: '0.875rem',
+                                    maxWidth: 300,
+                                  },
+                                },
+                              }}
+                            >
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 0.5,
+                                }}
+                              >
+                                {entry.label}
+                                {(entry.details?.length ?? 0 > 0) ? (
+                                  <InfoOutline
+                                    sx={{
+                                      fontSize: 16,
+                                      color: 'text.secondary',
+                                    }}
+                                  />
+                                ) : null}
+                              </Typography>
+                            </Tooltip>
                           </TableCell>
                           <TableCell sx={{ border: 0, paddingRight: 2 }}>
                             {typeof value === 'boolean' ? (
