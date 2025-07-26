@@ -12,9 +12,9 @@ export function VCSTab() {
   return (
     <>
       {refs.map((ref) => (
-        <React.Fragment key={ref.id + ref.name}>
+        <React.Fragment key={ref.commit + ref.name}>
           <Box
-            onClick={() => creagenEditor.loadCode(ref)}
+            onClick={() => creagenEditor.checkout(ref.commit)}
             sx={{
               marginLeft: 2,
               padding: 1,
@@ -40,7 +40,7 @@ export function VCSTab() {
                 borderRadius: '4px',
               }}
             >
-              {ref.id.hash.substring(0, 7)}
+              {ref.commit.toSub()}
             </Typography>
           </Box>
         </React.Fragment>

@@ -1,0 +1,226 @@
+import { SemVer } from 'semver'
+import { CREAGEN_EDITOR_VERSION } from '../env'
+import { Library, librarySchema } from '../settings/SettingsConfig'
+import { z } from 'zod'
+import { semverSchema } from '../creagen-editor/schemaUtils'
+import { compressToBase64, decompressFromBase64 } from 'lz-string'
+import { Sha256Hash, sha256HashSchema } from '../Sha256Hash'
+import { Tagged } from '../util'
+
+export const commitHashSchema = sha256HashSchema.transform(
+  (data) => data as CommitHash,
+)
+export type CommitHash = Tagged<Sha256Hash, 'CommitHash'>
+
+export const blobHashSchema = sha256HashSchema.transform(
+  (data) => data as BlobHash,
+)
+export type BlobHash = Tagged<Sha256Hash, 'BlobHash'>
+
+export const commitSchema = z
+  .object({
+    blob: blobHashSchema,
+    editorVersion: semverSchema,
+    libraries: librarySchema.array(),
+    parent: commitHashSchema.optional(),
+    author: z.string().optional(),
+  })
+  .transform(
+    async ({ blob, editorVersion, libraries, parent, author }, ctx) => {
+      try {
+        return await Commit.create(
+          blob,
+          editorVersion,
+          libraries,
+          parent,
+          author,
+        )
+      } catch (e) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Failed to transform commit: ${e}`,
+        })
+        return z.NEVER
+      }
+    },
+  )
+
+export type Checkout = { commit: Commit; data: string }
+export type CommitWithData = { commit: Commit; data: string | undefined }
+
+export const libraryStringSchema = z.string().transform((data, ctx) => {
+  const parts = data.split('@')
+  const name = parts.splice(0, parts.length - 1).join('@')
+  if (typeof parts[0] === 'undefined') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'No version',
+    })
+    return z.NEVER
+  }
+  const version = semverSchema.safeParse(parts[0])
+  if (version.error) {
+    ctx.addIssue(version.error.errors[0]!)
+    return z.NEVER
+  }
+  return {
+    name,
+    version: version.data,
+  }
+})
+
+/**
+ * Commit of a change made: [64 byte hash][hex encoded Extension]
+ */
+export class Commit {
+  constructor(
+    readonly hash: CommitHash,
+    /** Hash of the blob of code */
+    readonly blob: BlobHash,
+    readonly editorVersion: SemVer,
+    /** libraries used for generating code */
+    readonly libraries: Library[],
+    /** Hash of parent commit */
+    readonly parent?: CommitHash,
+    /** Author undefined means its a local commit */
+    readonly author?: string,
+  ) {}
+
+  /**
+   * Creates a new ID
+   */
+  static async create(
+    /** Hash of the blob of code */
+    blob: BlobHash,
+    editorVersion: SemVer,
+    /** libraries used for generating code */
+    libraries: Library[],
+    /** Hash of parent commit */
+    parent?: CommitHash,
+    /** Author undefined means its a local commit */
+    author?: string,
+  ): Promise<Commit> {
+    const hash = (await Sha256Hash.create(
+      toInnerString(blob, CREAGEN_EDITOR_VERSION, libraries, parent),
+    )) as CommitHash
+
+    return new Commit(hash, blob, editorVersion, libraries, parent, author)
+  }
+
+  /**
+   * Converts an ID string back to an ID object
+   *
+   * returns error string if it didn't pass
+   */
+  static async fromUrlEncodedString(
+    input: string,
+  ): Promise<CommitWithData | string> {
+    if (input.length === 0) return 'Empty string'
+
+    input = input.replace(/-/g, '+').replace(/_/g, '/')
+    input = input + '==='.slice(0, (4 - (input.length % 4)) % 4)
+    input = decompressFromBase64(input)
+    console.log('in', input)
+
+    if (!input) return 'Failed to decompress id string'
+    const parts = input.split(':')
+    if (parts.length < 3) return 'Id must have more than 3 parts'
+
+    let blob
+    try {
+      blob = Sha256Hash.fromHex(parts[0]!) as BlobHash
+    } catch (e) {
+      return `Failed to parse blob: ${e}`
+    }
+
+    let editorVersion
+    try {
+      editorVersion = new SemVer(parts[1]!)
+    } catch (e) {
+      return `Failed to parse version: ${parts[1]}`
+    }
+
+    const libs = libraryStringSchema
+      .array()
+      .safeParse(JSON.parse(`[${parts[2]!}]`))
+    if (libs.success === false) {
+      return `Failed to parse libraries: ${libs.error}`
+    }
+
+    let parent
+    try {
+      if (parts[3]) parent = Sha256Hash.fromHex(parts[3]!) as CommitHash
+    } catch (e) {
+      return `Failed to parse blob: ${e}`
+    }
+
+    let author
+    if (parts[4]) author = parts[4]!
+
+    let data
+    if (parts[5]) data = parts.slice(5).join(':')
+
+    return {
+      commit: await Commit.create(
+        blob,
+        editorVersion,
+        libs.data,
+        parent,
+        author,
+      ),
+      data,
+    }
+  }
+
+  private toInnerString() {
+    return `${this.blob.toHex()}:${this.editorVersion}:${this.libraries.map((l) => `"${l.name}@${l.version.toString()}"`).join(',')}:${this.parent ? this.parent.toHex() : ''}:${this.author ?? ''}`
+  }
+
+  toJson() {
+    const { blob, editorVersion, libraries, parent, author } = this
+    return {
+      blob: blob.toHex(),
+      editorVersion: editorVersion.toString(),
+      libraries: libraries.map((lib) => ({
+        name: lib.name,
+        version: lib.version.toString(),
+      })),
+      parent: parent?.toHex(),
+      author,
+    }
+  }
+
+  toSub() {
+    return this.hash.toSub()
+  }
+
+  compare(commit: Commit): boolean {
+    return this.toInnerString() === commit.toInnerString()
+  }
+
+  /**
+   * Converts the ID object to a string representation
+   */
+  toUrlEncodedString(): string {
+    const compressed = compressToBase64(this.toInnerString())
+    return compressed.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+  }
+
+  /**
+   * Converts the ID object to a string representation with data encoded into it
+   */
+  toUrlEncodedStringWithData(data: string): string {
+    const compressed = compressToBase64(this.toInnerString() + `:${data}`)
+    return compressed.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+  }
+}
+
+function toInnerString(
+  blob: Sha256Hash,
+  editorVersion: SemVer,
+  libraries: Library[],
+  parent?: Sha256Hash,
+  author?: string,
+) {
+  return `${blob.toHex()}:${editorVersion}:${libraries.map((l) => `"${l.name}@${l.version.toString()}"`).join(',')}:${parent ? parent.toHex() : ''}:${author ?? ''}`
+}

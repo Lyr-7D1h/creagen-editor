@@ -1,8 +1,8 @@
-import { ID } from '../vcs/id'
+import { Commit } from '../vcs/commit'
 
 export type ExportOptions = {
   name: string
-  id?: ID
+  id?: Commit
 }
 
 export class Svg {

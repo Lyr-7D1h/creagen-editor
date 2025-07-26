@@ -1,13 +1,12 @@
-import { ID } from '../vcs/id'
+import { Commit } from '../vcs/commit'
 import { AnalyzeContainerResult } from '../sandbox/Sandbox'
-import { Generation } from '../vcs/Generation'
-import { LocalStorageKey, StorageValueType } from '../storage/StorageKey'
+import { LocalStorageKey, StorageValue } from '../storage/StorageKey'
 
 type EditorEvents = {
   // VCS events
-  'vcs:commit': { id: ID; generation: Generation; code: string }
+  'vcs:commit': { commit: Commit; code: string }
   /** Change active head */
-  'vcs:checkout': { old: ID | null; new: ID }
+  'vcs:checkout': { old: Commit | null; new: Commit }
   'vcs:renameRef': void
 
   // Settings events
@@ -27,7 +26,7 @@ type EditorEvents = {
 
   'local-storage': {
     key: LocalStorageKey
-    value: StorageValueType<LocalStorageKey>
+    value: StorageValue<LocalStorageKey>
   }
 }
 

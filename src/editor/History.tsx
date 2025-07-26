@@ -49,14 +49,14 @@ export function History({
   useEffect(() => {
     const updateHistory = () => {
       const currentHead: string | null = creagenEditor.vcs.head
-        ? creagenEditor.vcs.head.toString()
+        ? creagenEditor.vcs.head.hash.toHex()
         : null
 
       if (head !== currentHead) {
         setHead(currentHead)
 
         // if current history already includes change don't change history
-        if (history.some(({ id }) => id.toString() === currentHead)) {
+        if (history.some(({ commit: id }) => id.toString() === currentHead)) {
           return
         }
 
@@ -95,10 +95,10 @@ export function History({
   const renderHistoryItems = () => {
     if (history.length <= 1) return null
 
-    return history.map(({ id }, index) => (
-      <React.Fragment key={`chain-${id.toString()}`}>
-        {(head ? id.toString() === head : false) ? (
-          <Chip color="primary" size="small" label={id.toSub()} />
+    return history.map(({ commit }, index) => (
+      <React.Fragment key={commit.hash.toHex()}>
+        {(head ? commit.hash.toHex() === head : false) ? (
+          <Chip color="primary" size="small" label={commit.toSub()} />
         ) : (
           <Typography
             variant="body2"
@@ -112,10 +112,10 @@ export function History({
               },
             }}
             onClick={() => {
-              creagenEditor.loadCode(id)
+              creagenEditor.checkout(commit.hash)
             }}
           >
-            {id.toSub()}
+            {commit.toSub()}
           </Typography>
         )}
         {index < history.length - 1 && (

@@ -1,49 +1,57 @@
-import { ID } from '../vcs/id'
+import { BlobHash, Commit, CommitHash } from '../vcs/commit'
 import { TabKey } from '../editor/Menu'
-import { Generation } from '../vcs/Generation'
-import { Ref, Refs } from '../vcs/Refs'
+import { Refs } from '../vcs/Refs'
 import { CustomKeybinding } from '../creagen-editor/keybindings'
 
-export const LOCAL_STORAGE_KEYS: LocalStorageKey[] = [
+const LOCAL_STORAGE_KEYS: LocalStorageKey[] = [
   'menu-view',
   'menu-view-tab',
   'menu-settings-hidden',
   'custom-keybindings',
-  'active-ref',
   'settings',
   'refs',
 ]
-export function isLocalStorageKey(key: string | ID): key is LocalStorageKey {
-  if (key instanceof ID) return false
+export function isLocalStorageKey(key: StorageKey): key is LocalStorageKey {
   return LOCAL_STORAGE_KEYS.includes(key as LocalStorageKey)
 }
 
-/** These keys can only be used in local storage */
+const INDEX_DB_KEYS: IndexDbKey[] = ['blob', 'commit']
+export function isIndexDbKey(key: StorageKey): key is IndexDbKey {
+  return INDEX_DB_KEYS.includes(key as IndexDbKey)
+}
+
+/** LocalStorage */
 export type LocalStorageOnlyKey =
   | 'menu-view'
   | 'menu-view-tab'
   | 'menu-settings-hidden'
+/** LocalStorage + Remote */
 export type LocalStorageKey =
   | 'custom-keybindings'
-  | 'active-ref'
   | 'settings'
   | 'refs'
   | LocalStorageOnlyKey
-export type StorageKey = ID | LocalStorageKey
+/** IndexDB + Remote */
+export type IndexDbKey = 'commit' | 'blob'
+/** Any key used for storage */
+export type StorageKey = LocalStorageKey | IndexDbKey
 
-export type StorageKeyValueMap = {
-  'active-ref': Ref
+type StorageIdentifierMap = {
+  commit: CommitHash
+  blob: BlobHash
+}
+export type StorageIdentifier<K extends StorageKey> =
+  K extends keyof StorageIdentifierMap ? StorageIdentifierMap[K] : undefined
+
+type StorageKeyValueMap = {
   'menu-view': boolean
   'menu-view-tab': TabKey | null
   'menu-settings-hidden': string[]
   'custom-keybindings': CustomKeybinding[]
+  commit: Commit
+  blob: string
   settings: any
   refs: Refs
 }
-
-export type StorageValueType<K extends StorageKey> =
-  K extends keyof StorageKeyValueMap
-    ? StorageKeyValueMap[K]
-    : K extends ID
-      ? Generation
-      : never
+export type StorageValue<K extends StorageKey> =
+  K extends keyof StorageKeyValueMap ? StorageKeyValueMap[K] : never

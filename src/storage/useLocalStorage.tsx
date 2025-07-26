@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { logger } from '../logs/logger'
 import { localStorage } from './LocalStorage'
-import { LocalStorageOnlyKey, StorageValueType } from './StorageKey'
+import { LocalStorageOnlyKey, StorageValue } from './StorageKey'
 import { editorEvents } from '../events/events'
 
 // Extend WindowEventMap to include 'local-storage' event
@@ -24,8 +24,8 @@ function isCustomEvent(
 
 export function useLocalStorage<K extends LocalStorageOnlyKey>(
   key: K,
-  initialValue: StorageValueType<K>,
-): [StorageValueType<K>, (value: StorageValueType<K>) => void] {
+  initialValue: StorageValue<K>,
+): [StorageValue<K>, (value: StorageValue<K>) => void] {
   const [storedValue, setStoredValue] = useState(() => {
     try {
       const item = localStorage.get(key)
@@ -37,7 +37,7 @@ export function useLocalStorage<K extends LocalStorageOnlyKey>(
     }
   })
 
-  const setValue = (value: StorageValueType<K>) => {
+  const setValue = (value: StorageValue<K>) => {
     try {
       setStoredValue(value)
       localStorage.set(key, value)
@@ -62,7 +62,7 @@ export function useLocalStorage<K extends LocalStorageOnlyKey>(
   useEffect(() => {
     return editorEvents.on('local-storage', (e) => {
       if (e.key === key) {
-        setStoredValue(e.value as StorageValueType<K>)
+        setStoredValue(e.value as StorageValue<K>)
       }
     })
   }, [handleStorageChange])

@@ -3,16 +3,15 @@ import { CREAGEN_EDITOR_VERSION } from '../env'
 import { logger, Severity } from '../logs/logger'
 import { Sandbox } from '../sandbox/Sandbox'
 import { Settings } from '../settings/Settings'
-import { ID } from '../vcs/id'
+import { CommitHash } from '../vcs/commit'
 import { LIBRARY_CONFIGS } from './libraryConfigs'
 import { parseCode } from './parseCode'
 import { Library } from '../settings/SettingsConfig'
 import { CustomKeybinding, Keybindings } from './keybindings'
 import { Importer, LibraryImport } from '../importer'
-import { getIdFromPath, VCS } from '../vcs/VCS'
+import { getCommitFromPath, VCS } from '../vcs/VCS'
 import { ClientStorage } from '../storage/ClientStorage'
 import { editorEvents } from '../events/events'
-import { Ref } from '../vcs/Refs'
 
 export class CreagenEditor {
   storage: ClientStorage
@@ -26,11 +25,11 @@ export class CreagenEditor {
   private libraryImports: Record<string, LibraryImport> = {}
 
   static async create() {
-    const storage = new ClientStorage()
+    const storage = await ClientStorage.create()
     const settings = await Settings.create(storage)
     const editor = await Editor.create(settings)
     const sandbox = await new Sandbox()
-    const vcs = await VCS.create(storage)
+    const vcs = await VCS.create(storage, settings)
     const customKeybindings = (await storage.get('custom-keybindings')) ?? []
 
     return new CreagenEditor(
@@ -59,7 +58,7 @@ export class CreagenEditor {
     this.keybindings = new Keybindings(customKeybindings, this)
 
     /// If head is set load corresponding code
-    if (this.vcs.head) this.loadCode(this.vcs.head)
+    if (this.vcs.head) this.checkout(this.vcs.head.hash)
 
     // Load initial code and settings from url
     this.loadSettingsFromPath().catch(logger.error)
@@ -67,9 +66,10 @@ export class CreagenEditor {
 
     // Update code from history
     addEventListener('popstate', () => {
-      const id = getIdFromPath()
-      if (id === null) return
-      this.loadCode(id)
+      getCommitFromPath().then((commit) => {
+        if (commit === null) return
+        this.checkout(commit.commit.hash)
+      })
     })
 
     editorEvents.on('settings:changed', ({ key: k, value }) => {
@@ -111,28 +111,23 @@ export class CreagenEditor {
     return imports
   }
 
-  /** Load a reference */
-  loadCode(ref: Ref): void
-  /** Load an id */
-  loadCode(id: ID): void
-  async loadCode(id: ID | Ref) {
-    const generation = await this.vcs.checkout(id)
-    if ('name' in id) {
-      id = id.id
-    }
-    if (generation === null) {
-      logger.warn(`'${id.toSub()}' not found in vcs`)
+  async checkout(hash: CommitHash) {
+    const commitWithData = await this.vcs.checkout(hash)
+    if (commitWithData === null) {
+      logger.warn(`'${hash.toSub()}' not found in vcs`)
       return
     }
 
-    const { code } = generation
-    if (id.editorVersion.compare(CREAGEN_EDITOR_VERSION)) {
+    const {
+      commit: { editorVersion, libraries },
+      data,
+    } = commitWithData
+    if (editorVersion.compare(CREAGEN_EDITOR_VERSION)) {
       logger.warn("Editor version doesn't match")
     }
-    this.settings.set('general.libraries', id.libraries)
+    this.settings.set('general.libraries', libraries)
 
-    this.editor.setValue(code)
-    // Note: vcs.checkout already emitted 'vcs:checkout' event
+    this.editor.setValue(data)
   }
 
   async loadSettingsFromPath() {

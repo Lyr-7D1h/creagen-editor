@@ -1,11 +1,11 @@
 import { editorEvents } from '../events/events'
 import { createContextLogger } from '../logs/logger'
 import { Refs, refSchema, refToJson } from '../vcs/Refs'
-import { LocalStorageKey, StorageValueType } from './StorageKey'
+import { LocalStorageKey, StorageValue } from './StorageKey'
 
 const logger = createContextLogger('local-storage')
 class LocalStorage {
-  set<K extends LocalStorageKey>(key: K, value: StorageValueType<K>): void {
+  set<K extends LocalStorageKey>(key: K, value: StorageValue<K>): void {
     logger.trace(`Storing ${key} ${JSON.stringify(value)}`)
     if (key === 'refs') {
       const refs = value as Refs
@@ -19,18 +19,18 @@ class LocalStorage {
     editorEvents.emit('local-storage', { key, value })
   }
 
-  get<K extends LocalStorageKey>(key: K): StorageValueType<K> | null {
+  get<K extends LocalStorageKey>(key: K): StorageValue<K> | null {
     const value = globalThis.localStorage.getItem(key)
     if (value === null) return null
 
     if (key === 'active-ref')
-      return refSchema.parse(JSON.parse(value)) as StorageValueType<K>
+      return refSchema.parse(JSON.parse(value)) as StorageValue<K>
     if (key === 'refs') {
       return new Refs(
         refSchema.array().parse(JSON.parse(value)),
-      ) as StorageValueType<K>
+      ) as StorageValue<K>
     }
-    return JSON.parse(value) as StorageValueType<K>
+    return JSON.parse(value) as StorageValue<K>
   }
 }
 

@@ -1,9 +1,9 @@
 import { z } from 'zod'
-import { ID, IDStringSchema } from './id'
+import { Commit, CommitHash, commitHashSchema } from './commit'
 
 export const refSchema = z.object({
   name: z.string(),
-  id: IDStringSchema,
+  commit: commitHashSchema,
   createdOn: z.number().transform((epochMs) => new Date(epochMs)),
 })
 
@@ -12,7 +12,7 @@ export type Ref = z.infer<typeof refSchema>
 export function refToJson(ref: Ref) {
   return {
     ...ref,
-    id: ref.id.toString(),
+    commit: ref.commit.toHex(),
     createdOn: ref.createdOn.getTime(),
   }
 }
@@ -38,23 +38,30 @@ export class Refs {
     return this.refs.get(name) ?? null
   }
 
-  refLookup(id: ID): Ref[] | null {
-    const v = this.lookup.get(id.hash)
+  refLookup(commit: CommitHash): Ref[] | null {
+    const v = this.lookup.get(commit.toBase64())
     if (typeof v === 'undefined') return null
     return v
   }
 
   add(ref: Ref) {
     this.refs.set(ref.name, ref)
-    const currentRefs = this.lookup.get(ref.id.hash)
-    this.lookup.set(ref.id.hash, currentRefs ? [...currentRefs, ref] : [ref])
+    const currentRefs = this.lookup.get(ref.commit.toBase64())
+    this.lookup.set(
+      ref.commit.toBase64(),
+      currentRefs ? [...currentRefs, ref] : [ref],
+    )
   }
 
   remove(name: string) {
     const ref = this.getRef(name)
     if (!ref) return null
     this.refs.delete(name)
-    this.lookup.delete(ref?.id.hash)
+    this.lookup.delete(ref?.commit.toBase64())
     return ref
   }
+}
+
+export function isRef(ref: Ref | Commit | CommitHash): ref is Ref {
+  return 'name' in ref
 }

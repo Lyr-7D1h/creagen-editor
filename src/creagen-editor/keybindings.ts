@@ -4,7 +4,7 @@ import { CreagenEditor } from './CreagenEditor'
 import { Editor } from '../editor/Editor'
 import z from 'zod'
 import { groupBy } from '../util'
-import { logger } from '../logs/logger'
+import { createContextLogger } from '../logs/logger'
 
 export type KeyInfo = string
 
@@ -43,6 +43,8 @@ const defaultKeybindings: Keybinding[] = [
     command: 'editor.toggleMenu',
   },
 ]
+
+const logger = createContextLogger('keybindings')
 
 type Handler = (...args: any[]) => void
 export class Keybindings {

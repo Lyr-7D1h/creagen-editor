@@ -34,3 +34,8 @@ export function groupBy<T, K extends keyof T>(
     {} as Record<T[K] & PropertyKey, T[]>,
   )
 }
+
+declare const tags: unique symbol
+export type Tagged<BaseType, Tag extends PropertyKey> = BaseType & {
+  [tags]: { [K in Tag]: void }
+}

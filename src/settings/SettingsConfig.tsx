@@ -1,11 +1,13 @@
-import { SemVer } from 'semver'
 import { MODE, CREAGEN_EDITOR_VERSION } from '../env'
 import React from 'react'
+import { z } from 'zod'
+import { semverSchema } from '../creagen-editor/schemaUtils'
 
-export interface Library {
-  name: string
-  version: SemVer
-}
+export const librarySchema = z.object({
+  name: z.string(),
+  version: semverSchema,
+})
+export type Library = z.infer<typeof librarySchema>
 
 const defaultConfig = {
   // State parameters
