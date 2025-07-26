@@ -9,21 +9,6 @@ import { Settings } from '../settings/Settings'
 import { Sha256Hash } from '../Sha256Hash'
 import { CREAGEN_EDITOR_VERSION } from '../env'
 
-export async function getCommitFromPath() {
-  const path = window.location.pathname.replace('/', '')
-
-  if (path.length === 0) return null
-
-  const data = await Commit.fromUrlEncodedString(path)
-
-  if (typeof data === 'string') {
-    logger.error('Invalid id given: ', data)
-    return null
-  }
-
-  return data
-}
-
 export type HistoryItem = {
   commit: Commit
   refs: Ref[]
@@ -46,53 +31,88 @@ export class VCS {
       createdOn: new Date(),
     }
 
-    const commitWithData = await getCommitFromPath()
-    const vcs = new VCS(storage, settings, null, refs, activeRef)
-
-    // if commit was encoded with data commit it in own storage
-    if (commitWithData) {
-      let commit = commitWithData.commit
-
-      // load data from url
-      if (
-        commitWithData.data &&
-        // only if current commit does not exists load data
-        (await storage.get('commit', commit.hash)) === null
-      ) {
-        logger.info(
-          `Commiting data with length '${commitWithData.data.length}' and libraries '${JSON.stringify(commitWithData.commit.libraries)}' from url`,
-        )
-        let c = await vcs.commit(
-          commitWithData.data,
-          commitWithData.commit.libraries,
-        )
-        if (c !== null) commit = c
-        if (c === null) logger.error(`Failed to commit data from url`)
-      }
-      // set head to commit after making it to pass similarity check with head
-      vcs._head = commit
-    }
-
-    return vcs
+    return new VCS(storage, settings, refs, activeRef)
   }
 
+  private _head: Commit | null = null
   private constructor(
     private readonly storage: ClientStorage,
     private readonly settings: Settings,
-    private _head: Commit | null,
     private readonly _refs: Refs,
     private _activeRef: ActiveRef,
   ) {}
 
-  private updateUrl(data: string) {
+  /** update current state from url */
+  async updateFromUrl() {
+    const path = window.location.pathname.replace('/', '')
+
+    if (path.length === 0) return null
+
+    const data = await Commit.fromUrlEncodedString(path)
+
+    if (typeof data === 'string') {
+      logger.error('Invalid id given: ', data)
+      return null
+    }
+    if (typeof data.data === 'undefined') {
+      logger.error('Invalid data given: ', data)
+      return null
+    }
+
+    let commit = data.commit
+    let extension = this.fromUrlDataExtension(data.data)
+    if (extension.refName) {
+      const ref = this.refs.getRef(extension.refName)
+      if (ref === null) {
+        logger.error(`${extension.refName} not found`)
+      } else {
+        this._activeRef = ref
+      }
+    }
+
+    // load data from url
+    if (
+      extension.data &&
+      // only if current commit does not exists load data
+      (await this.storage.get('commit', commit.hash)) === null
+    ) {
+      logger.info(
+        `Commiting data with length '${extension.data.length}' and libraries '${JSON.stringify(commit.libraries)}' from url`,
+      )
+      let c = await this.commit(extension.data, commit.libraries)
+      if (c !== null) commit = c
+      if (c === null) logger.error(`Failed to commit data from url`)
+    }
+    // set head to commit after making it to pass similarity check with head
+    this._head = commit
+    return null
+  }
+
+  private fromUrlDataExtension(input: string) {
+    const parts = input.split(':')
+    return { refName: parts[0], data: parts[1] ?? null }
+  }
+
+  private urlDataExtension(data?: string) {
+    return `${this._activeRef.name}:${data ?? ''}`
+  }
+
+  private updateUrl(data: string, updateHistory: boolean = true) {
     if (!this._head) return
     const url = new URL(window.location as any)
+    let extension
     if (this.settings.get('editor.code_in_url')) {
-      url.pathname = this._head.toUrlEncodedStringWithData(data)
+      extension = this.urlDataExtension(data)
     } else {
-      url.pathname = this._head.toUrlEncodedString()
+      extension = this.urlDataExtension()
     }
-    window.history.pushState('Creagen', '', url)
+    const path = this._head.toUrlEncodedStringWithData(extension)
+    // only push to history if path changed
+    if (path === url.pathname) {
+      return
+    }
+    url.pathname = path
+    if (updateHistory === true) window.history.pushState('Creagen', '', url)
   }
 
   get head() {
@@ -196,10 +216,16 @@ export class VCS {
   }
 
   /** Checkout a Ref or ID */
-  checkout(id: CommitHash): Promise<Checkout | null>
-  checkout(ref: Ref): Promise<Checkout | null>
-  checkout(id: CommitHash | Ref): Promise<Checkout | null>
-  async checkout(id: CommitHash | Ref): Promise<Checkout | null> {
+  checkout(id: CommitHash, updateHistory?: boolean): Promise<Checkout | null>
+  checkout(ref: Ref, updateHistory?: boolean): Promise<Checkout | null>
+  checkout(
+    id: CommitHash | Ref,
+    updateHistory?: boolean,
+  ): Promise<Checkout | null>
+  async checkout(
+    id: CommitHash | Ref,
+    updateHistory = true,
+  ): Promise<Checkout | null> {
     let ref
     if (isRef(id)) {
       ref = id
@@ -219,7 +245,7 @@ export class VCS {
     const old = this._head
     this._head = commit
 
-    this.updateUrl(data)
+    this.updateUrl(data, updateHistory)
 
     // Emit global events
     editorEvents.emit('vcs:checkout', { old, new: commit })

@@ -9,7 +9,7 @@ import { parseCode } from './parseCode'
 import { Library } from '../settings/SettingsConfig'
 import { CustomKeybinding, Keybindings } from './keybindings'
 import { Importer, LibraryImport } from '../importer'
-import { getCommitFromPath, VCS } from '../vcs/VCS'
+import { VCS } from '../vcs/VCS'
 import { ClientStorage } from '../storage/ClientStorage'
 import { editorEvents } from '../events/events'
 
@@ -30,6 +30,7 @@ export class CreagenEditor {
     const editor = await Editor.create(settings)
     const sandbox = await new Sandbox()
     const vcs = await VCS.create(storage, settings)
+    await vcs.updateFromUrl()
     const customKeybindings = (await storage.get('custom-keybindings')) ?? []
 
     return new CreagenEditor(
@@ -66,9 +67,8 @@ export class CreagenEditor {
 
     // Update code from history
     addEventListener('popstate', () => {
-      getCommitFromPath().then((commit) => {
-        if (commit === null) return
-        this.checkout(commit.commit.hash)
+      this.vcs.updateFromUrl().then(() => {
+        if (this.vcs.head) this.checkout(this.vcs.head.hash, false)
       })
     })
 
@@ -111,8 +111,8 @@ export class CreagenEditor {
     return imports
   }
 
-  async checkout(hash: CommitHash) {
-    const commitWithData = await this.vcs.checkout(hash)
+  async checkout(hash: CommitHash, updateHistory?: boolean) {
+    const commitWithData = await this.vcs.checkout(hash, updateHistory)
     if (commitWithData === null) {
       logger.warn(`'${hash.toSub()}' not found in vcs`)
       return

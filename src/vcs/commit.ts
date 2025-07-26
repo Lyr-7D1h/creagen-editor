@@ -120,7 +120,6 @@ export class Commit {
     input = input.replace(/-/g, '+').replace(/_/g, '/')
     input = input + '==='.slice(0, (4 - (input.length % 4)) % 4)
     input = decompressFromBase64(input)
-    console.log('in', input)
 
     if (!input) return 'Failed to decompress id string'
     const parts = input.split(':')

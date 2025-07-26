@@ -23,8 +23,6 @@ class LocalStorage {
     const value = globalThis.localStorage.getItem(key)
     if (value === null) return null
 
-    if (key === 'active-ref')
-      return refSchema.parse(JSON.parse(value)) as StorageValue<K>
     if (key === 'refs') {
       return new Refs(
         refSchema.array().parse(JSON.parse(value)),
