@@ -17,7 +17,7 @@ import {
 import { logger } from '../logs/logger'
 import { Svg } from './svg'
 import {
-  useActiveRef,
+  useActiveBookmark,
   useEditorEvent,
   useHead,
 } from '../events/useEditorEvents'
@@ -27,7 +27,7 @@ export function Export() {
   const analysisResult = useEditorEvent('sandbox:analysis-complete')
   const creagenEditor = useCreagenEditor()
   const id = useHead()
-  const activeRef = useActiveRef()
+  const activeRef = useActiveBookmark()
 
   const [downloading, setDownloading] = useState<boolean>(false)
   const [selectedIndex, setSelectedIndex] = useState<number>(0)

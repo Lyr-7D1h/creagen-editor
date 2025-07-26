@@ -1,17 +1,17 @@
 import { editorEvents } from '../events/events'
 import { createContextLogger } from '../logs/logger'
-import { Refs, refSchema, refToJson } from '../vcs/Refs'
+import { Bookmarks, bookmarkSchema, bookmarkToJson } from '../vcs/Bookmarks'
 import { LocalStorageKey, StorageValue } from './StorageKey'
 
 const logger = createContextLogger('local-storage')
 class LocalStorage {
   set<K extends LocalStorageKey>(key: K, value: StorageValue<K>): void {
     logger.trace(`Storing ${key} ${JSON.stringify(value)}`)
-    if (key === 'refs') {
-      const refs = value as Refs
+    if (key === 'bookmarks') {
+      const bms = value as Bookmarks
       return globalThis.localStorage.setItem(
         key,
-        JSON.stringify(refs.getRefs().map(refToJson)),
+        JSON.stringify(bms.getBookmarks().map(bookmarkToJson)),
       )
     }
 
@@ -23,9 +23,9 @@ class LocalStorage {
     const value = globalThis.localStorage.getItem(key)
     if (value === null) return null
 
-    if (key === 'refs') {
-      return new Refs(
-        refSchema.array().parse(JSON.parse(value)),
+    if (key === 'bookmarks') {
+      return new Bookmarks(
+        bookmarkSchema.array().parse(JSON.parse(value)),
       ) as StorageValue<K>
     }
     return JSON.parse(value) as StorageValue<K>

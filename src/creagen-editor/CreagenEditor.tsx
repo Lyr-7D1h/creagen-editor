@@ -12,6 +12,7 @@ import { Importer, LibraryImport } from '../importer'
 import { VCS } from '../vcs/VCS'
 import { ClientStorage } from '../storage/ClientStorage'
 import { editorEvents } from '../events/events'
+import { Bookmark } from '../vcs/Bookmarks'
 
 export class CreagenEditor {
   storage: ClientStorage
@@ -111,10 +112,12 @@ export class CreagenEditor {
     return imports
   }
 
-  async checkout(hash: CommitHash, updateHistory?: boolean) {
-    const commitWithData = await this.vcs.checkout(hash, updateHistory)
+  async checkout(hash: CommitHash, updateHistory?: boolean): Promise<any>
+  async checkout(bookmark: Bookmark, updateHistory?: boolean): Promise<any>
+  async checkout(id: CommitHash | Bookmark, updateHistory?: boolean) {
+    const commitWithData = await this.vcs.checkout(id, updateHistory)
     if (commitWithData === null) {
-      logger.warn(`'${hash.toSub()}' not found in vcs`)
+      logger.warn(`'${id}' not found in vcs`)
       return
     }
 

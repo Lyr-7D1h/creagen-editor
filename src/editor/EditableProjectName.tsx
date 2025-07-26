@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
 import { Typography } from '@mui/material'
 import { logger } from '../logs/logger'
-import { useActiveRef } from '../events/useEditorEvents'
+import { useActiveBookmark } from '../events/useEditorEvents'
 import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
 
 export function EditableProjectName({ onUpdate }: { onUpdate: () => void }) {
   const vcs = useCreagenEditor().vcs
-  const headRef = useActiveRef()
+  const headRef = useActiveBookmark()
   const [isEditingProjectName, setIsEditingProjectName] = useState(false)
   const [headRefValue, setProjectNameValue] = useState('')
 
@@ -32,7 +32,7 @@ export function EditableProjectName({ onUpdate }: { onUpdate: () => void }) {
       logger.error('Name can only contain letters, numbers, and spaces')
       return
     }
-    if ((await vcs.renameRef(headRef.name, headRefValue)) === false) {
+    if ((await vcs.renameBookmark(headRef.name, headRefValue)) === false) {
       logger.error(`Can't find ${headRef.name}`)
     }
     setIsEditingProjectName(false)

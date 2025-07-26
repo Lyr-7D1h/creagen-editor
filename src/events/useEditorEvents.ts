@@ -3,7 +3,7 @@ import { editorEvents } from './events'
 import { EditorEvent, EditorEventData } from './EditorEvent'
 import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
 import { ParamKey, ParamValue } from '../settings/SettingsConfig'
-import { ActiveRef } from '../vcs/VCS'
+import { ActiveBookmark } from '../vcs/VCS'
 
 /**
  * Hook that subscribes to an event and triggers re-render when emitted
@@ -76,19 +76,19 @@ export const useHead = () => {
 }
 
 /** Get the current active reference */
-export const useActiveRef = () => {
+export const useActiveBookmark = () => {
   const editor = useCreagenEditor()
   const vcs = editor.vcs
 
-  const [value, setValue] = useState<ActiveRef>(vcs.activeRef)
+  const [value, setValue] = useState<ActiveBookmark>(vcs.activeBookmark)
 
   useEffect(() => {
     const listeners = [
       editorEvents.on('vcs:checkout', () => {
-        setValue(vcs.activeRef)
+        setValue(vcs.activeBookmark)
       }),
       editorEvents.on('vcs:renameRef', () => {
-        setValue(vcs.activeRef)
+        setValue(vcs.activeBookmark)
       }),
     ]
     return () => listeners.forEach((l) => l())

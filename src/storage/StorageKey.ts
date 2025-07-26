@@ -1,6 +1,6 @@
 import { BlobHash, Commit, CommitHash } from '../vcs/commit'
 import { TabKey } from '../editor/Menu'
-import { Refs } from '../vcs/Refs'
+import { Bookmarks } from '../vcs/Bookmarks'
 import { CustomKeybinding } from '../creagen-editor/keybindings'
 
 const LOCAL_STORAGE_KEYS: LocalStorageKey[] = [
@@ -9,7 +9,7 @@ const LOCAL_STORAGE_KEYS: LocalStorageKey[] = [
   'menu-settings-hidden',
   'custom-keybindings',
   'settings',
-  'refs',
+  'bookmarks',
 ]
 export function isLocalStorageKey(key: StorageKey): key is LocalStorageKey {
   return LOCAL_STORAGE_KEYS.includes(key as LocalStorageKey)
@@ -29,7 +29,7 @@ export type LocalStorageOnlyKey =
 export type LocalStorageKey =
   | 'custom-keybindings'
   | 'settings'
-  | 'refs'
+  | 'bookmarks'
   | LocalStorageOnlyKey
 /** IndexDB + Remote */
 export type IndexDbKey = 'commit' | 'blob'
@@ -51,7 +51,7 @@ type StorageKeyValueMap = {
   commit: Commit
   blob: string
   settings: any
-  refs: Refs
+  bookmarks: Bookmarks
 }
 export type StorageValue<K extends StorageKey> =
   K extends keyof StorageKeyValueMap ? StorageKeyValueMap[K] : never

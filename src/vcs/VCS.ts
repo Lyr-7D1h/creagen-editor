@@ -1,7 +1,7 @@
 import { Commit, CommitHash, Checkout as Checkout, BlobHash } from './commit'
 import { createContextLogger } from '../logs/logger'
 import { Library } from '../settings/SettingsConfig'
-import { isRef, Ref, Refs } from './Refs'
+import { isRef, Bookmark, Bookmarks } from './Bookmarks'
 import { editorEvents } from '../events/events'
 import { generateHumanReadableName } from './generateHumanReadableName'
 import { ClientStorage } from '../storage/ClientStorage'
@@ -11,11 +11,11 @@ import { CREAGEN_EDITOR_VERSION } from '../env'
 
 export type HistoryItem = {
   commit: Commit
-  refs: Ref[]
+  bookmarks: Bookmark[]
 }
 
 /** Active Reference, a reference that might not be comitted yet */
-export type ActiveRef = Omit<Ref, 'commit'> & {
+export type ActiveBookmark = Omit<Bookmark, 'commit'> & {
   /** If set it means that the ref is stored */
   commit?: CommitHash
 }
@@ -25,21 +25,21 @@ const logger = createContextLogger('vcs')
 /** Version Control Software for creagen-editor */
 export class VCS {
   static async create(storage: ClientStorage, settings: Settings) {
-    const refs = (await storage.get('refs')) ?? new Refs([])
-    const activeRef = {
+    const bms = (await storage.get('bookmarks')) ?? new Bookmarks([])
+    const activeBookmark = {
       name: generateHumanReadableName(),
       createdOn: new Date(),
     }
 
-    return new VCS(storage, settings, refs, activeRef)
+    return new VCS(storage, settings, bms, activeBookmark)
   }
 
   private _head: Commit | null = null
   private constructor(
     private readonly storage: ClientStorage,
     private readonly settings: Settings,
-    private readonly _refs: Refs,
-    private _activeRef: ActiveRef,
+    private readonly _bookmarks: Bookmarks,
+    private _activeBookmark: ActiveBookmark,
   ) {}
 
   /** update current state from url */
@@ -62,11 +62,11 @@ export class VCS {
     let commit = data.commit
     let extension = this.fromUrlDataExtension(data.data)
     if (extension.refName) {
-      const ref = this.refs.getRef(extension.refName)
+      const ref = this.bookmarks.getBookmark(extension.refName)
       if (ref === null) {
         logger.error(`${extension.refName} not found`)
       } else {
-        this._activeRef = ref
+        this._activeBookmark = ref
       }
     }
 
@@ -94,7 +94,7 @@ export class VCS {
   }
 
   private urlDataExtension(data?: string) {
-    return `${this._activeRef.name}:${data ?? ''}`
+    return `${this._activeBookmark.name}:${data ?? ''}`
   }
 
   private updateUrl(data: string, updateHistory: boolean = true) {
@@ -119,33 +119,33 @@ export class VCS {
     return this._head
   }
 
-  get activeRef() {
-    return this._activeRef
+  get activeBookmark() {
+    return this._activeBookmark
   }
 
-  async renameRef(refName: string, newRefName: string) {
-    const ref = this.refs.getRef(refName)
+  async renameBookmark(oldName: string, newName: string) {
+    const ref = this.bookmarks.getBookmark(oldName)
 
     // if not yet commited change active ref name
-    if (ref === null && refName === this._activeRef.name) {
-      this.activeRef.name = newRefName
+    if (ref === null && oldName === this._activeBookmark.name) {
+      this.activeBookmark.name = newName
       return
     }
 
     if (!ref) return false
-    ref.name = newRefName
-    await this.storage.set('refs', this.refs)
+    ref.name = newName
+    await this.storage.set('bookmarks', this.bookmarks)
     editorEvents.emit('vcs:renameRef', undefined)
     return true
   }
 
-  get refs() {
-    if (this._refs === null) throw Error('VCS not yet loaded')
-    return this._refs
+  get bookmarks() {
+    if (this._bookmarks === null) throw Error('VCS not yet loaded')
+    return this._bookmarks
   }
 
   async refLookup(commit: CommitHash) {
-    return this._refs.refLookup(commit)
+    return this._bookmarks.bookmarkLookup(commit)
   }
 
   /**
@@ -157,8 +157,8 @@ export class VCS {
     const history: HistoryItem[] = []
     for (let i = 0; i < n; i++) {
       if (next === null) break
-      const refs = this.refs.refLookup(next.hash) ?? []
-      history.push({ commit: next, refs })
+      const bms = this.bookmarks.bookmarkLookup(next.hash) ?? []
+      history.push({ commit: next, bookmarks: bms })
 
       if (typeof next.parent === 'undefined') break
       next = await this.storage.get('commit', await next.parent)
@@ -194,11 +194,11 @@ export class VCS {
     await this.storage.set('blob', code, commit.blob)
 
     // if current ref is uncomitted
-    if (typeof this._activeRef.commit === 'undefined') {
-      const ref: Ref = { ...this._activeRef, commit: commit.hash }
-      this.refs.add(ref)
-      this._activeRef = ref
-      await this.storage.set('refs', this.refs)
+    if (typeof this._activeBookmark.commit === 'undefined') {
+      const ref: Bookmark = { ...this._activeBookmark, commit: commit.hash }
+      this.bookmarks.add(ref)
+      this._activeBookmark = ref
+      await this.storage.set('bookmarks', this.bookmarks)
     }
 
     const old = this._head
@@ -217,13 +217,13 @@ export class VCS {
 
   /** Checkout a Ref or ID */
   checkout(id: CommitHash, updateHistory?: boolean): Promise<Checkout | null>
-  checkout(ref: Ref, updateHistory?: boolean): Promise<Checkout | null>
+  checkout(ref: Bookmark, updateHistory?: boolean): Promise<Checkout | null>
   checkout(
-    id: CommitHash | Ref,
+    id: CommitHash | Bookmark,
     updateHistory?: boolean,
   ): Promise<Checkout | null>
   async checkout(
-    id: CommitHash | Ref,
+    id: CommitHash | Bookmark,
     updateHistory = true,
   ): Promise<Checkout | null> {
     let ref
@@ -240,7 +240,7 @@ export class VCS {
     const data = await this.storage.get('blob', commit.blob)
     if (data === null) return null
 
-    if (ref) this._activeRef = ref
+    if (ref) this._activeBookmark = ref
 
     const old = this._head
     this._head = commit

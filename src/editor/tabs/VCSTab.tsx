@@ -5,16 +5,16 @@ import { Typography, Box } from '@mui/material'
 export function VCSTab() {
   const creagenEditor = useCreagenEditor()
   const vcs = creagenEditor.vcs
-  const refs = vcs.refs.getRefs()
+  const bms = vcs.bookmarks.getBookmarks()
 
-  refs.sort((a, b) => b.createdOn.getTime() - a.createdOn.getTime())
+  bms.sort((a, b) => b.createdOn.getTime() - a.createdOn.getTime())
 
   return (
     <>
-      {refs.map((ref) => (
+      {bms.map((ref) => (
         <React.Fragment key={ref.commit + ref.name}>
           <Box
-            onClick={() => creagenEditor.checkout(ref.commit)}
+            onClick={() => creagenEditor.checkout(ref)}
             sx={{
               marginLeft: 2,
               padding: 1,
