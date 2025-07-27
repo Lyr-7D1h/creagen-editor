@@ -1,4 +1,10 @@
-import { Commit, CommitHash, Checkout as Checkout, BlobHash } from './Commit'
+import {
+  Commit,
+  CommitHash,
+  Checkout as Checkout,
+  BlobHash,
+  commitHashSchema,
+} from './Commit'
 import { createContextLogger } from '../logs/logger'
 import { Library } from '../settings/SettingsConfig'
 import { isRef, Bookmark, Bookmarks } from './Bookmarks'
@@ -8,6 +14,7 @@ import { ClientStorage } from '../storage/ClientStorage'
 import { Settings } from '../settings/Settings'
 import { Sha256Hash } from '../Sha256Hash'
 import { CREAGEN_EDITOR_VERSION } from '../env'
+import { compressToBase64, decompressFromBase64 } from 'lz-string'
 
 export type HistoryItem = {
   commit: Commit
@@ -42,77 +49,146 @@ export class VCS {
     private _activeBookmark: ActiveBookmark,
   ) {}
 
+  private async updateFromUrlData(
+    commitHash: CommitHash,
+    {
+      code,
+      bookmarkName,
+      commit,
+    }: {
+      code: string
+      bookmarkName: string
+      commit: Commit
+    },
+  ) {
+    if (commitHash.compare(commit.hash) === false) {
+      logger.error('Commit from data is not matching commit from base')
+      return null
+    }
+
+    // if commit already exists ignore
+    if ((await this.storage.get('commit', commit.hash)) !== null) {
+      return null
+    }
+
+    logger.info(
+      `Creating commit from data '${code.length}' and libraries '${JSON.stringify(commit.libraries)}' from url`,
+    )
+    if (this.bookmarks.getBookmark(bookmarkName) === null) {
+      const bookmark: Bookmark = {
+        name: bookmarkName,
+        createdOn: new Date(),
+        commit: commit.hash,
+      }
+      this.bookmarks.add(bookmark)
+      this._activeBookmark = bookmark
+      await this.storage.set('bookmarks', this.bookmarks)
+    }
+    this.commit(code, commit.libraries)
+    await this.storage.set('commit', commit, commit.hash)
+    return
+  }
+
   /** update current state from url */
   async updateFromUrl() {
     const path = window.location.pathname.replace('/', '')
 
     if (path.length === 0) return null
 
-    const data = await Commit.fromUrlEncodedString(path)
+    const { commitHash, data } = await this.fromUrlPath()
 
-    if (typeof data === 'string') {
-      logger.error('Invalid commit given: ', data)
-      return null
-    }
-    if (typeof data.data === 'undefined') {
-      logger.error('Invalid data given: ', data)
+    if (commitHash.success === false) {
+      logger.error('Invalid commit hash given: ', commitHash.error)
       return null
     }
 
-    let commit = data.commit
-    let extension = this.fromUrlDataExtension(data.data)
-    if (extension.refName) {
-      const ref = this.bookmarks.getBookmark(extension.refName)
-      if (ref === null) {
-        logger.error(`${extension.refName} not found`)
-      } else {
-        this._activeBookmark = ref
-      }
+    if (data !== null) {
+      if (this.updateFromUrlData(commitHash.data, data) !== null) return
     }
 
-    // load data from url
-    if (
-      extension.data &&
-      // only if current commit does not exists load data
-      (await this.storage.get('commit', commit.hash)) === null
-    ) {
-      logger.info(
-        `Commiting data with length '${extension.data.length}' and libraries '${JSON.stringify(commit.libraries)}' from url`,
-      )
-      let c = await this.commit(extension.data, commit.libraries)
-      if (c !== null) commit = c
-      if (c === null) logger.error(`Failed to commit data from url`)
+    const commit = await this.storage.get('commit', commitHash.data)
+    if (commit === null) {
+      logger.error(`${commitHash.data.toSub()} not found`)
+      return null
     }
-    // set head to commit after making it to pass similarity check with head
+
+    const ref = this.bookmarks.bookmarkLookup(commit?.hash)
+    if (ref !== null) {
+      // TODO: select bookmark most recently used
+      this._activeBookmark = ref[0]!
+    }
+
+    // set head to commit
     this._head = commit
-    return null
+    return
   }
 
-  private fromUrlDataExtension(input: string) {
-    const parts = input.split('~')
-    return { refName: parts[0], data: parts[1] ?? null }
-  }
+  private async fromUrlPath() {
+    const path = window.location.pathname.replace('/', '')
+    let parts = path.split(':')
+    const commitHash = commitHashSchema.safeParse(parts[0])
 
-  private urlDataExtension(data?: string) {
-    return `${this._activeBookmark.name}~${data ?? ''}`
-  }
+    if (typeof parts[1] === 'undefined' || parts[1].length === 0)
+      return { commitHash, data: null }
 
-  private updateUrl(data: string, updateHistory: boolean = true) {
-    if (!this._head) return
-    const url = new URL(window.location as any)
-    let extension
-    if (this.settings.get('editor.code_in_url')) {
-      extension = this.urlDataExtension(data)
-    } else {
-      extension = this.urlDataExtension()
+    let decompressed = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+    decompressed =
+      decompressed + '==='.slice(0, (4 - (decompressed.length % 4)) % 4)
+    decompressed = decompressFromBase64(decompressed)
+    parts = decompressed.split('~')
+
+    if (parts.length < 3) {
+      logger.error(
+        'Failed to parse data from url: expecting 3 parts in url with data',
+      )
+      return { commitHash, data: null }
     }
-    const path = this._head.toUrlEncodedStringWithData(extension)
-    // only push to history if path changed
+    const code = parts[0]!
+    const bookmarkName = parts[1]!
+    const commit = await Commit.fromInnerString(parts[2]!)
+    if (typeof commit === 'string') {
+      logger.error(
+        `Failed to parse data from url: failed to parse commit '${commit}'`,
+      )
+      return { commitHash, data: null }
+    }
+    return {
+      commitHash,
+      data: {
+        code,
+        bookmarkName,
+        commit,
+      },
+    }
+  }
+
+  private toUrlPath(data: string) {
+    if (!this._head) return null
+
+    if (this.settings.get('editor.code_in_url')) {
+      const ext = `${data}~${this._activeBookmark.name}~${this._head.toInnerString()}`
+      const compressed = compressToBase64(ext)
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=/g, '')
+      return `${this._head.toHex()}:${compressed}`
+    } else {
+      return `${this._head.toHex()}`
+    }
+  }
+
+  private updateUrl(data: string) {
+    const path = this.toUrlPath(data)
+    if (path === null) return
+
+    const url = new URL(window.location as any)
+    // only push to history if path changed to prevent duplicates
     if (path === url.pathname) {
       return
     }
+
     url.pathname = path
-    if (updateHistory === true) window.history.pushState('Creagen', '', url)
+    window.history.pushState('Creagen', '', url)
   }
 
   get head() {
@@ -250,7 +326,7 @@ export class VCS {
     const old = this._head
     this._head = commit
 
-    this.updateUrl(data, updateHistory)
+    if (updateHistory) this.updateUrl(data)
 
     // Emit global events
     editorEvents.emit('vcs:checkout', { old, new: commit })

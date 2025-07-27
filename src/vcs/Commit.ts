@@ -3,18 +3,21 @@ import { CREAGEN_EDITOR_VERSION } from '../env'
 import { Library, librarySchema } from '../settings/SettingsConfig'
 import { z } from 'zod'
 import { dateNumberSchema, semverSchema } from '../creagen-editor/schemaUtils'
-import { compressToBase64, decompressFromBase64 } from 'lz-string'
 import { Sha256Hash, sha256HashSchema } from '../Sha256Hash'
 import { Tagged } from '../util'
 
-export const commitHashSchema = sha256HashSchema.transform(
-  (data) => data as CommitHash,
-)
+export const commitHashSchema = sha256HashSchema as z.ZodEffects<
+  z.ZodString,
+  CommitHash,
+  string
+>
 export type CommitHash = Tagged<Sha256Hash, 'CommitHash'>
 
-export const blobHashSchema = sha256HashSchema.transform(
-  (data) => data as BlobHash,
-)
+export const blobHashSchema = sha256HashSchema as z.ZodEffects<
+  z.ZodString,
+  BlobHash,
+  string
+>
 export type BlobHash = Tagged<Sha256Hash, 'BlobHash'>
 
 export const commitSchema = z
@@ -51,7 +54,6 @@ export const commitSchema = z
   )
 
 export type Checkout = { commit: Commit; data: string }
-export type CommitWithData = { commit: Commit; data: string | undefined }
 
 export const libraryStringSchema = z.string().transform((data, ctx) => {
   const parts = data.split('@')
@@ -123,25 +125,19 @@ export class Commit {
       blob,
       editorVersion,
       libraries,
-      new Date(),
+      createdOn,
       parent,
       author,
     )
   }
 
   /**
-   * Converts an ID string back to an ID object
+   * Convert a string representation to commit
    *
    * returns error string if it didn't pass
    */
-  static async fromUrlEncodedString(
-    input: string,
-  ): Promise<CommitWithData | string> {
+  static async fromInnerString(input: string): Promise<Commit | string> {
     if (input.length === 0) return 'Empty string'
-
-    input = input.replace(/-/g, '+').replace(/_/g, '/')
-    input = input + '==='.slice(0, (4 - (input.length % 4)) % 4)
-    input = decompressFromBase64(input)
 
     if (!input) return 'Failed to decompress id string'
     const parts = input.split(':')
@@ -188,23 +184,17 @@ export class Commit {
       return `Failed to parse creation date: ${createdOn.error.message}`
     }
 
-    let data
-    if (parts[5]) data = parts.slice(6).join(':')
-
-    return {
-      commit: await Commit.create(
-        blob,
-        editorVersion,
-        libs.data,
-        createdOn.data,
-        parent,
-        author,
-      ),
-      data,
-    }
+    return Commit.create(
+      blob,
+      editorVersion,
+      libs.data,
+      createdOn.data,
+      parent,
+      author,
+    )
   }
 
-  private toInnerString() {
+  toInnerString() {
     return toInnerString(
       this.blob,
       this.editorVersion,
@@ -240,22 +230,6 @@ export class Commit {
 
   compare(commit: Commit): boolean {
     return this.toInnerString() === commit.toInnerString()
-  }
-
-  /**
-   * Converts the ID object to a string representation
-   */
-  toUrlEncodedString(): string {
-    const compressed = compressToBase64(this.toInnerString())
-    return compressed.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
-  }
-
-  /**
-   * Converts the ID object to a string representation with data encoded into it
-   */
-  toUrlEncodedStringWithData(data: string): string {
-    const compressed = compressToBase64(this.toInnerString() + `:${data}`)
-    return compressed.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
   }
 }
 
