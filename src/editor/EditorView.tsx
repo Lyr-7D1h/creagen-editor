@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react'
 import { History } from './History'
 import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
 import { IconButton, Tooltip } from '@mui/material'
-import { EditableProjectName } from './EditableProjectName'
 import { ChevronRight } from '@mui/icons-material'
 import { useSettings } from '../events/useEditorEvents'
 
@@ -24,7 +23,6 @@ export function EditorView({
   const creagenEditor = useCreagenEditor()
   const hideAll = useSettings('hide_all')
   const vimEnabled = useSettings('editor.vim')
-  const showActiveBookmark = useSettings('editor.show_active_bookmark')
   const editorContentRef = useRef<HTMLDivElement>(null)
   const iconButtonRef = useRef<HTMLButtonElement>(null)
   const projectNameRef = useRef<HTMLDivElement>(null)
@@ -86,7 +84,7 @@ export function EditorView({
           <IconButton
             ref={iconButtonRef}
             sx={{
-              zIndex: 99999999,
+              zIndex: 1002,
               left: 0,
               top: 0,
               width: 20,
@@ -105,13 +103,6 @@ export function EditorView({
             />
           </IconButton>
         </Tooltip>
-        {showActiveBookmark ? (
-          <div ref={projectNameRef}>
-            <EditableProjectName onUpdate={updateHistoryWidth} />
-          </div>
-        ) : (
-          ''
-        )}
         <History style={{ width: historyWidth }} />
       </div>
 

@@ -16,11 +16,6 @@ export function CollapsibleButton({
   const button = (
     <IconButton
       sx={{
-        zIndex: 99999999,
-        left: 0,
-        top: 0,
-        width: 20,
-        height: 20,
         padding: 0,
         margin: 0,
       }}
@@ -29,7 +24,7 @@ export function CollapsibleButton({
     >
       <ChevronRight
         sx={{
-          transform: open ? 'rotate(180deg)' : 'none',
+          transform: open ? 'rotate(270deg)' : 'rotate(90deg)',
           transition: 'transform 0.3s',
         }}
       />
