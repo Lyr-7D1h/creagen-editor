@@ -15,4 +15,7 @@ export const semverSchema = z
     return data
   })
 
-export const dateNumberSchema = z.number().transform((n) => new Date(n))
+export const dateNumberSchema = z
+  .number()
+  .refine((epoch) => !isNaN(new Date(epoch).getTime()), 'Invalid timestamp')
+  .transform((n) => new Date(n))

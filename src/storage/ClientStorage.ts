@@ -9,7 +9,7 @@ import {
 } from './StorageKey'
 import { createContextLogger } from '../logs/logger'
 import { localStorage } from './LocalStorage'
-import { Commit, commitSchema } from '../vcs/commit'
+import { Commit, commitSchema } from '../vcs/Commit'
 import z from 'zod'
 
 const logger = createContextLogger('indexdb')

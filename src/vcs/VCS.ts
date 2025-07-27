@@ -1,4 +1,4 @@
-import { Commit, CommitHash, Checkout as Checkout, BlobHash } from './commit'
+import { Commit, CommitHash, Checkout as Checkout, BlobHash } from './Commit'
 import { createContextLogger } from '../logs/logger'
 import { Library } from '../settings/SettingsConfig'
 import { isRef, Bookmark, Bookmarks } from './Bookmarks'
@@ -51,7 +51,7 @@ export class VCS {
     const data = await Commit.fromUrlEncodedString(path)
 
     if (typeof data === 'string') {
-      logger.error('Invalid id given: ', data)
+      logger.error('Invalid commit given: ', data)
       return null
     }
     if (typeof data.data === 'undefined') {
@@ -89,12 +89,12 @@ export class VCS {
   }
 
   private fromUrlDataExtension(input: string) {
-    const parts = input.split(':')
+    const parts = input.split('~')
     return { refName: parts[0], data: parts[1] ?? null }
   }
 
   private urlDataExtension(data?: string) {
-    return `${this._activeBookmark.name}:${data ?? ''}`
+    return `${this._activeBookmark.name}~${data ?? ''}`
   }
 
   private updateUrl(data: string, updateHistory: boolean = true) {
@@ -157,11 +157,11 @@ export class VCS {
     const history: HistoryItem[] = []
     for (let i = 0; i < n; i++) {
       if (next === null) break
-      const bms = this.bookmarks.bookmarkLookup(next.hash) ?? []
-      history.push({ commit: next, bookmarks: bms })
+      const bookmarks = this.bookmarks.bookmarkLookup(next.hash) ?? []
+      history.push({ commit: next, bookmarks })
 
       if (typeof next.parent === 'undefined') break
-      next = await this.storage.get('commit', await next.parent)
+      next = await this.storage.get('commit', next.parent)
     }
     return history
   }
@@ -186,6 +186,7 @@ export class VCS {
       blob,
       CREAGEN_EDITOR_VERSION,
       libraries,
+      new Date(),
       this._head?.hash,
     )
     logger.debug('commit')
@@ -193,11 +194,15 @@ export class VCS {
     await this.storage.set('commit', commit, commit.hash)
     await this.storage.set('blob', code, commit.blob)
 
-    // if current ref is uncomitted
+    // if current bookmark is uncomitted
     if (typeof this._activeBookmark.commit === 'undefined') {
       const ref: Bookmark = { ...this._activeBookmark, commit: commit.hash }
       this.bookmarks.add(ref)
       this._activeBookmark = ref
+      await this.storage.set('bookmarks', this.bookmarks)
+    } else {
+      // otherwise update currently active bookmark to this new commit
+      this._activeBookmark.commit = commit.hash
       await this.storage.set('bookmarks', this.bookmarks)
     }
 

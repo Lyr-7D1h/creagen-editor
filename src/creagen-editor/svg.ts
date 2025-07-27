@@ -1,4 +1,4 @@
-import { Commit } from '../vcs/commit'
+import { Commit } from '../vcs/Commit'
 
 export type ExportOptions = {
   name: string

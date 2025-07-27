@@ -11,6 +11,7 @@ export function VCSTab() {
 
   return (
     <>
+      {bms.length === 0 ? 'No bookmarks found' : ''}
       {bms.map((ref) => (
         <React.Fragment key={ref.commit + ref.name}>
           <Box

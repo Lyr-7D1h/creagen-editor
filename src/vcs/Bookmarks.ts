@@ -1,8 +1,9 @@
 import { z } from 'zod'
-import { Commit, CommitHash, commitHashSchema } from './commit'
+import { Commit, CommitHash, commitHashSchema } from './Commit'
 
+export const bookmarkNameSchema = z.string().regex(/^[^~:\r\n]{1,32}$/)
 export const bookmarkSchema = z.object({
-  name: z.string(),
+  name: bookmarkNameSchema,
   commit: commitHashSchema,
   createdOn: z.number().transform((epochMs) => new Date(epochMs)),
 })

@@ -1,4 +1,4 @@
-import { Commit } from '../vcs/commit'
+import { Commit } from '../vcs/Commit'
 import { AnalyzeContainerResult } from '../sandbox/Sandbox'
 import { LocalStorageKey, StorageValue } from '../storage/StorageKey'
 

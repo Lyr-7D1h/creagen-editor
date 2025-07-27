@@ -2,7 +2,7 @@ import { SemVer } from 'semver'
 import { CREAGEN_EDITOR_VERSION } from '../env'
 import { Library, librarySchema } from '../settings/SettingsConfig'
 import { z } from 'zod'
-import { semverSchema } from '../creagen-editor/schemaUtils'
+import { dateNumberSchema, semverSchema } from '../creagen-editor/schemaUtils'
 import { compressToBase64, decompressFromBase64 } from 'lz-string'
 import { Sha256Hash, sha256HashSchema } from '../Sha256Hash'
 import { Tagged } from '../util'
@@ -24,14 +24,19 @@ export const commitSchema = z
     libraries: librarySchema.array(),
     parent: commitHashSchema.optional(),
     author: z.string().optional(),
+    createdOn: dateNumberSchema,
   })
   .transform(
-    async ({ blob, editorVersion, libraries, parent, author }, ctx) => {
+    async (
+      { blob, editorVersion, libraries, parent, author, createdOn },
+      ctx,
+    ) => {
       try {
         return await Commit.create(
           blob,
           editorVersion,
           libraries,
+          createdOn,
           parent,
           author,
         )
@@ -80,6 +85,7 @@ export class Commit {
     readonly editorVersion: SemVer,
     /** libraries used for generating code */
     readonly libraries: Library[],
+    readonly createdOn: Date,
     /** Hash of parent commit */
     readonly parent?: CommitHash,
     /** Author undefined means its a local commit */
@@ -87,7 +93,7 @@ export class Commit {
   ) {}
 
   /**
-   * Creates a new ID
+   * Creates a new Commit
    */
   static async create(
     /** Hash of the blob of code */
@@ -95,16 +101,32 @@ export class Commit {
     editorVersion: SemVer,
     /** libraries used for generating code */
     libraries: Library[],
+    createdOn = new Date(),
     /** Hash of parent commit */
     parent?: CommitHash,
     /** Author undefined means its a local commit */
     author?: string,
   ): Promise<Commit> {
     const hash = (await Sha256Hash.create(
-      toInnerString(blob, CREAGEN_EDITOR_VERSION, libraries, parent),
+      toInnerString(
+        blob,
+        CREAGEN_EDITOR_VERSION,
+        libraries,
+        createdOn,
+        parent,
+        author,
+      ),
     )) as CommitHash
 
-    return new Commit(hash, blob, editorVersion, libraries, parent, author)
+    return new Commit(
+      hash,
+      blob,
+      editorVersion,
+      libraries,
+      new Date(),
+      parent,
+      author,
+    )
   }
 
   /**
@@ -123,7 +145,7 @@ export class Commit {
 
     if (!input) return 'Failed to decompress id string'
     const parts = input.split(':')
-    if (parts.length < 3) return 'Id must have more than 3 parts'
+    if (parts.length < 5) return 'Commit must have more than 5 parts'
 
     let blob
     try {
@@ -148,22 +170,33 @@ export class Commit {
 
     let parent
     try {
-      if (parts[3]) parent = Sha256Hash.fromHex(parts[3]!) as CommitHash
+      if (parts[3]!.length > 0)
+        parent = Sha256Hash.fromHex(parts[3]!) as CommitHash
     } catch (e) {
       return `Failed to parse blob: ${e}`
     }
 
     let author
-    if (parts[4]) author = parts[4]!
+    if (parts[4]!.length > 0) author = parts[4]!
+
+    const createdOnNumber = Number(parts[5]!)
+    if (isNaN(createdOnNumber)) {
+      return `Failed to parse creation date: "${parts[5]}" is not a valid number`
+    }
+    const createdOn = dateNumberSchema.safeParse(createdOnNumber)
+    if (createdOn.success === false) {
+      return `Failed to parse creation date: ${createdOn.error.message}`
+    }
 
     let data
-    if (parts[5]) data = parts.slice(5).join(':')
+    if (parts[5]) data = parts.slice(6).join(':')
 
     return {
       commit: await Commit.create(
         blob,
         editorVersion,
         libs.data,
+        createdOn.data,
         parent,
         author,
       ),
@@ -172,7 +205,14 @@ export class Commit {
   }
 
   private toInnerString() {
-    return `${this.blob.toHex()}:${this.editorVersion}:${this.libraries.map((l) => `"${l.name}@${l.version.toString()}"`).join(',')}:${this.parent ? this.parent.toHex() : ''}:${this.author ?? ''}`
+    return toInnerString(
+      this.blob,
+      this.editorVersion,
+      this.libraries,
+      this.createdOn,
+      this.parent,
+      this.author,
+    )
   }
 
   toJson() {
@@ -184,6 +224,7 @@ export class Commit {
         name: lib.name,
         version: lib.version.toString(),
       })),
+      createdOn: this.createdOn.getTime(),
       parent: parent?.toHex(),
       author,
     }
@@ -191,6 +232,10 @@ export class Commit {
 
   toSub() {
     return this.hash.toSub()
+  }
+
+  toHex() {
+    return this.hash.toHex()
   }
 
   compare(commit: Commit): boolean {
@@ -218,8 +263,9 @@ function toInnerString(
   blob: Sha256Hash,
   editorVersion: SemVer,
   libraries: Library[],
+  createdOn: Date,
   parent?: Sha256Hash,
   author?: string,
 ) {
-  return `${blob.toHex()}:${editorVersion}:${libraries.map((l) => `"${l.name}@${l.version.toString()}"`).join(',')}:${parent ? parent.toHex() : ''}:${author ?? ''}`
+  return `${blob.toHex()}:${editorVersion}:${libraries.map((l) => `"${l.name}@${l.version.toString()}"`).join(',')}:${parent ? parent.toHex() : ''}:${author ?? ''}:${createdOn.getTime()}`
 }

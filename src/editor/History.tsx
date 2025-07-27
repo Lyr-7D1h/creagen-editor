@@ -18,6 +18,8 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { useSettings } from '../events/useEditorEvents'
 import { HistoryItem } from '../vcs/VCS'
 import { editorEvents } from '../events/events'
+import { CollapsibleButton } from './CollapsibleButton'
+import { HtmlTooltip } from './HtmlTooltip'
 
 const HISTORY_SIZE = 10
 export function History({
@@ -36,6 +38,7 @@ export function History({
   const [expanded, setExpanded] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const [isOverflowing, setIsOverflowing] = useState(false)
+  const [collapsed, setCollapsed] = useState<string | null>(null)
 
   useEffect(() => {
     creagenEditor.vcs
@@ -93,39 +96,65 @@ export function History({
   }
 
   const renderHistoryItems = () => {
-    if (history.length <= 1) return null
+    if (history.length == 0) return null
 
-    return history.map(({ commit }, index) => (
-      <React.Fragment key={commit.hash.toHex()}>
-        {(head ? commit.hash.toHex() === head : false) ? (
-          <Chip color="primary" size="small" label={commit.toSub()} />
-        ) : (
-          <Typography
-            variant="body2"
-            component="span"
-            sx={{
-              cursor: 'pointer',
-              color: 'text.secondary',
-              '&:hover': {
-                color: 'primary.main',
-                textDecoration: 'underline',
-              },
-            }}
-            onClick={() => {
-              creagenEditor.checkout(commit.hash)
-            }}
+    return history.map(({ commit, bookmarks }, index) => {
+      const label = bookmarks.length > 0 ? bookmarks[0]?.name : commit.toSub()
+      return (
+        <React.Fragment key={commit.hash.toHex()}>
+          <HtmlTooltip
+            title={
+              <div>
+                {bookmarks.map((bm) => (
+                  <Typography color="inherit">{bm.name}</Typography>
+                ))}
+                <em>{commit.toHex()}</em>
+              </div>
+            }
           >
-            {commit.toSub()}
-          </Typography>
-        )}
-        {index < history.length - 1 && (
-          <ArrowLeft fontSize="small" color="action" />
-        )}
-      </React.Fragment>
-    ))
+            {(head ? commit.hash.toHex() === head : false) ? (
+              <Chip
+                color="primary"
+                size="small"
+                label={
+                  <>
+                    {label}
+                    <CollapsibleButton
+                      open={collapsed === commit.toHex()}
+                      onClick={() => setCollapsed(commit.toHex())}
+                    />
+                  </>
+                }
+              />
+            ) : (
+              <Typography
+                variant="body2"
+                component="span"
+                sx={{
+                  cursor: 'pointer',
+                  color: 'text.secondary',
+                  '&:hover': {
+                    color: 'primary.main',
+                    textDecoration: 'underline',
+                  },
+                }}
+                onClick={() => {
+                  creagenEditor.checkout(commit.hash)
+                }}
+              >
+                {label}
+              </Typography>
+            )}
+          </HtmlTooltip>
+          {index < history.length - 1 && (
+            <ArrowLeft fontSize="small" color="action" />
+          )}
+        </React.Fragment>
+      )
+    })
   }
 
-  if (historyEnabled === false || history.length <= 1) {
+  if (historyEnabled === false || history.length == 0) {
     return ''
   }
 

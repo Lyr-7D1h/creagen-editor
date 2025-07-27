@@ -75,7 +75,11 @@ export function DependenciesTab() {
   }, [libraries])
 
   return (
-    <ToggleButtonGroup orientation="vertical" fullWidth={true}>
+    <ToggleButtonGroup
+      disabled={Object.keys(versions).length === 0}
+      orientation="vertical"
+      fullWidth={true}
+    >
       {supportedLibraries.map((lib) => (
         <ToggleButton
           key={lib.name}

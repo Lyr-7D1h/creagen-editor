@@ -1,4 +1,4 @@
-import { BlobHash, Commit, CommitHash } from '../vcs/commit'
+import { BlobHash, Commit, CommitHash } from '../vcs/Commit'
 import { TabKey } from '../editor/Menu'
 import { Bookmarks } from '../vcs/Bookmarks'
 import { CustomKeybinding } from '../creagen-editor/keybindings'
