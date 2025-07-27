@@ -278,7 +278,7 @@ export class VCS {
       await this.storage.set('bookmarks', this.bookmarks)
     } else {
       // otherwise update currently active bookmark to this new commit
-      this._activeBookmark.commit = commit.hash
+      this.bookmarks.update(this._activeBookmark.name, commit.hash)
       await this.storage.set('bookmarks', this.bookmarks)
     }
 
