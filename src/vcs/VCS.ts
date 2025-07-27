@@ -86,7 +86,7 @@ export class VCS {
     }
     this.commit(code, commit.libraries)
     await this.storage.set('commit', commit, commit.hash)
-    return
+    return true
   }
 
   /** update current state from url */
@@ -103,7 +103,7 @@ export class VCS {
     }
 
     if (data !== null) {
-      if (this.updateFromUrlData(commitHash.data, data) !== null) return
+      if ((await this.updateFromUrlData(commitHash.data, data)) === true) return
     }
 
     const commit = await this.storage.get('commit', commitHash.data)

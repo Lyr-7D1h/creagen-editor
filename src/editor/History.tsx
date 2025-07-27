@@ -31,7 +31,7 @@ export function History({
 }) {
   const creagenEditor = useCreagenEditor()
   const [head, setHead] = useState<string | null>(
-    creagenEditor.vcs.head ? creagenEditor.vcs.head.toString() : null,
+    creagenEditor.vcs.head ? creagenEditor.vcs.head.toHex() : null,
   )
   const historyEnabled = useSettings('editor.show_history')
   const [history, setHistory] = useState<HistoryItem[]>([])
@@ -106,7 +106,9 @@ export function History({
             title={
               <div>
                 {bookmarks.map((bm) => (
-                  <Typography color="inherit">{bm.name}</Typography>
+                  <Typography key={bm.name} color="inherit">
+                    {bm.name}
+                  </Typography>
                 ))}
                 <em>{commit.toHex()}</em>
               </div>
