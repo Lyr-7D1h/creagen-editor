@@ -84,10 +84,7 @@ export const useActiveBookmark = () => {
 
   useEffect(() => {
     const listeners = [
-      editorEvents.on('vcs:checkout', () => {
-        setValue(vcs.activeBookmark)
-      }),
-      editorEvents.on('vcs:renameRef', () => {
+      editorEvents.on('vcs:bookmarkUpdate', () => {
         setValue(vcs.activeBookmark)
       }),
     ]

@@ -4,6 +4,7 @@ import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
 import { IconButton, Tooltip } from '@mui/material'
 import { ChevronRight } from '@mui/icons-material'
 import { useSettings } from '../events/useEditorEvents'
+import { EditableProjectName } from './EditableProjectName'
 
 export interface EditorProps {
   left?: string
@@ -20,6 +21,7 @@ export function EditorView({
   menu,
   onMenuOpen,
 }: EditorProps) {
+  const showActiveBookmark = useSettings('editor.show_active_bookmark')
   const creagenEditor = useCreagenEditor()
   const hideAll = useSettings('hide_all')
   const vimEnabled = useSettings('editor.vim')
@@ -103,6 +105,13 @@ export function EditorView({
             />
           </IconButton>
         </Tooltip>
+        {showActiveBookmark ? (
+          <div ref={projectNameRef}>
+            <EditableProjectName onUpdate={updateHistoryWidth} />
+          </div>
+        ) : (
+          ''
+        )}
         <History style={{ width: historyWidth }} />
       </div>
 

@@ -199,29 +199,41 @@ export class VCS {
     return this._activeBookmark
   }
 
-  async renameBookmark(oldName: string, newName: string) {
-    const ref = this.bookmarks.getBookmark(oldName)
+  async addBookmark(name: string, commit: CommitHash) {
+    if (this.bookmarks.getBookmark(name) !== null) {
+      logger.warn(`Bookmark '${name}' already exists`)
+      return null
+    }
+    this.bookmarks.add({ name, commit, createdOn: new Date() })
+    await this.storage.set('bookmarks', this.bookmarks)
+    editorEvents.emit('vcs:bookmarkUpdate', undefined)
+    return true
+  }
 
-    // if not yet commited change active ref name
-    if (ref === null && oldName === this._activeBookmark.name) {
-      this.activeBookmark.name = newName
-      return
+  async renameBookmark(oldName: string, newName: string) {
+    const bookmark = this.bookmarks.getBookmark(oldName)
+
+    if (this.bookmarks.getBookmark(newName) !== null) {
+      logger.warn(`Bookmark '${newName}' already exists`)
+      return null
     }
 
-    if (!ref) return false
-    ref.name = newName
+    // if not yet commited change active bookmark name
+    if (oldName === this._activeBookmark.name && bookmark === null) {
+      this.activeBookmark.name = newName
+      return true
+    }
+
+    if (!bookmark) return false
+    bookmark.name = newName
     await this.storage.set('bookmarks', this.bookmarks)
-    editorEvents.emit('vcs:renameRef', undefined)
+    editorEvents.emit('vcs:bookmarkUpdate', undefined)
     return true
   }
 
   get bookmarks() {
     if (this._bookmarks === null) throw Error('VCS not yet loaded')
     return this._bookmarks
-  }
-
-  async refLookup(commit: CommitHash) {
-    return this._bookmarks.bookmarkLookup(commit)
   }
 
   /**
@@ -288,6 +300,7 @@ export class VCS {
     this.updateUrl(code)
 
     // Emit global events
+    editorEvents.emit('vcs:bookmarkUpdate', undefined)
     editorEvents.emit('vcs:commit', {
       commit,
       code,
@@ -307,9 +320,9 @@ export class VCS {
     id: CommitHash | Bookmark,
     updateHistory = true,
   ): Promise<Checkout | null> {
-    let ref
+    let bookmark
     if (isRef(id)) {
-      ref = id
+      bookmark = id
       id = id.commit
     }
 
@@ -321,7 +334,22 @@ export class VCS {
     const data = await this.storage.get('blob', commit.blob)
     if (data === null) return null
 
-    if (ref) this._activeBookmark = ref
+    if (bookmark) {
+      this._activeBookmark = bookmark
+    } else {
+      // if not checking out a bookmark set current active bookmark to this commit
+      const newBookmark = this.bookmarks.update(
+        this.activeBookmark.name,
+        commit.hash,
+      )
+      if (newBookmark === null) {
+        logger.error(`Failed to update active bookmark`)
+        return null
+      }
+      this._activeBookmark = newBookmark
+      await this.storage.set('bookmarks', this.bookmarks)
+      editorEvents.emit('vcs:bookmarkUpdate', undefined)
+    }
 
     const old = this._head
     this._head = commit

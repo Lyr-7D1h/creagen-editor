@@ -35,8 +35,9 @@ export class Bookmarks {
     const bookmark = this.getBookmark(name)
     if (bookmark === null) return null
     this.lookup.delete(bookmark.commit.toBase64())
-    this.add({ ...bookmark, commit })
-    return
+    const newBookmark = { ...bookmark, commit }
+    this.add(newBookmark)
+    return newBookmark
   }
 
   getBookmarks(): Bookmark[] {

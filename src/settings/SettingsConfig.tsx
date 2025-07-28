@@ -60,6 +60,11 @@ const defaultConfig = {
     label: 'Show file history',
     value: true,
   },
+  'editor.show_active_bookmark': {
+    type: 'param',
+    label: 'Show active bookmark in the top bar of the editor',
+    value: true,
+  },
   'editor.code_in_url': {
     type: 'param',
     label: 'Use code in the url',

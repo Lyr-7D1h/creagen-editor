@@ -7,7 +7,7 @@ type EditorEvents = {
   'vcs:commit': { commit: Commit; code: string }
   /** Change active head */
   'vcs:checkout': { old: Commit | null; new: Commit }
-  'vcs:renameRef': void
+  'vcs:bookmarkUpdate': void
 
   // Settings events
   'settings:changed': { key: string; value: any; oldValue?: any }
