@@ -254,6 +254,19 @@ export class VCS {
     return history
   }
 
+  /** update current active bookmark to this commit */
+  private async updateActiveBookmark(commit: CommitHash) {
+    const newBookmark = this.bookmarks.update(this.activeBookmark.name, commit)
+    if (newBookmark === null) {
+      logger.error(`Failed to update active bookmark`)
+      return null
+    }
+    this._activeBookmark = newBookmark
+    await this.storage.set('bookmarks', this.bookmarks)
+    editorEvents.emit('vcs:bookmarkUpdate', undefined)
+    return
+  }
+
   async commit(code: string, libraries: Library[]): Promise<null | Commit> {
     const blob = (await Sha256Hash.create(code)) as BlobHash
 
@@ -289,9 +302,9 @@ export class VCS {
       this._activeBookmark = ref
       await this.storage.set('bookmarks', this.bookmarks)
     } else {
-      // otherwise update currently active bookmark to this new commit
-      this.bookmarks.update(this._activeBookmark.name, commit.hash)
-      await this.storage.set('bookmarks', this.bookmarks)
+      if ((await this.updateActiveBookmark(commit.hash)) === null) {
+        return null
+      }
     }
 
     const old = this._head
@@ -338,17 +351,9 @@ export class VCS {
       this._activeBookmark = bookmark
     } else {
       // if not checking out a bookmark set current active bookmark to this commit
-      const newBookmark = this.bookmarks.update(
-        this.activeBookmark.name,
-        commit.hash,
-      )
-      if (newBookmark === null) {
-        logger.error(`Failed to update active bookmark`)
+      if ((await this.updateActiveBookmark(commit.hash)) === null) {
         return null
       }
-      this._activeBookmark = newBookmark
-      await this.storage.set('bookmarks', this.bookmarks)
-      editorEvents.emit('vcs:bookmarkUpdate', undefined)
     }
 
     const old = this._head
