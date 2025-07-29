@@ -1,5 +1,5 @@
 import { Alert, AlertColor, Stack, CircularProgress } from '@mui/material'
-import React, { JSX, useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback, useMemo } from 'react'
 import { AUTOHIDE_DURATION_DEFAULT, Message, Severity, logger } from './logger'
 
 function severityToAlertColor(severity: Severity): AlertColor {
@@ -17,16 +17,53 @@ function severityToAlertColor(severity: Severity): AlertColor {
   }
 }
 
+const LogAlert = React.memo(
+  ({
+    log,
+    progress,
+    onClose,
+  }: {
+    log: Message
+    progress: number
+    onClose: (id: string) => void
+  }) => {
+    const handleClose = useCallback(() => onClose(log.id), [log.id, onClose])
+
+    let severity = log.severity
+    if (severity === Severity.Debug) severity = Severity.Info
+
+    return (
+      <Alert
+        severity={severityToAlertColor(severity)}
+        sx={{ minWidth: '250px' }}
+        onClose={handleClose}
+        icon={
+          log.autoHideDuration !== null && (
+            <CircularProgress
+              variant="determinate"
+              value={progress}
+              size={20}
+              thickness={5}
+              sx={{ mr: 1, color: 'rgba(0, 0, 0, 0.3)' }}
+            />
+          )
+        }
+      >
+        {log.message}
+      </Alert>
+    )
+  },
+)
+
 export function Logs() {
   const [logs, setLogs] = useState<Message[]>(logger.getMessages())
   const [timeLeft, setTimeLeft] = useState<Record<string, number>>({})
-  const updateInterval = 50
+  const updateInterval = 200
 
   useEffect(() => {
     const unsubscribe = logger.subscribe((alerts) => {
       setLogs(alerts)
 
-      // add new logs to timeLeft
       setTimeLeft((prev) => {
         const updated = { ...prev }
         Object.values(alerts).forEach((msg) => {
@@ -42,9 +79,7 @@ export function Logs() {
       })
     })
 
-    return () => {
-      unsubscribe()
-    }
+    return unsubscribe
   }, [])
 
   useEffect(() => {
@@ -53,61 +88,55 @@ export function Logs() {
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
         const updated = { ...prev }
+        let hasChanges = false
 
         Object.keys(updated).forEach((id) => {
           const log = logs.find((log) => log.id === id)
-          // remove log if it doesn't exist anymore
           if (typeof log === 'undefined') {
             delete updated[id]
+            hasChanges = true
             return
           }
 
           const duration = log.autoHideDuration ?? AUTOHIDE_DURATION_DEFAULT
           const decrementValue = 100 / (duration / updateInterval)
-          updated[id] = Math.max(0, updated[id]! - decrementValue)
+          const newValue = Math.max(0, updated[id]! - decrementValue)
+
+          if (updated[id] !== newValue) {
+            updated[id] = newValue
+            hasChanges = true
+          }
         })
 
-        return updated
+        return hasChanges ? updated : prev
       })
     }, updateInterval)
 
     return () => clearInterval(interval)
-  }, [logs])
+  }, [logs, updateInterval])
 
-  const handleClose = (id: string) => {
+  const handleClose = useCallback((id: string) => {
     logger.remove(id)
-  }
+  }, [])
+
+  // Memoize the alerts to prevent recreation
+  const alerts = useMemo(() => {
+    return logs.map((log) => {
+      const progress =
+        log.autoHideDuration !== null ? 100 - (timeLeft[log.id] || 0) : 0
+
+      return (
+        <LogAlert
+          key={log.id}
+          log={log}
+          progress={progress}
+          onClose={handleClose}
+        />
+      )
+    })
+  }, [logs, timeLeft, handleClose])
 
   if (logs.length === 0) return null
-
-  const Alerts: JSX.Element[] = []
-
-  for (const log of logs) {
-    let severity = log.severity
-    // TODO: custom debug color
-    if (severity === Severity.Debug) severity = Severity.Info
-    Alerts.push(
-      <Alert
-        key={log.id}
-        severity={severityToAlertColor(severity)}
-        sx={{ minWidth: '250px' }}
-        onClose={() => handleClose(log.id)}
-        icon={
-          log.autoHideDuration !== null && (
-            <CircularProgress
-              variant="determinate"
-              value={100 - (timeLeft[log.id] || 0)}
-              size={20}
-              thickness={5}
-              sx={{ mr: 1, color: 'rgba(0, 0, 0, 0.3)' }}
-            />
-          )
-        }
-      >
-        {log.message}
-      </Alert>,
-    )
-  }
 
   return (
     <Stack
@@ -123,7 +152,7 @@ export function Logs() {
         overflowY: 'auto',
       }}
     >
-      {Alerts}
+      {alerts}
     </Stack>
   )
 }
