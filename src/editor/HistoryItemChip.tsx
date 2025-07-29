@@ -16,16 +16,18 @@ function AddBookmarkButton({ onClick }: { onClick: () => void }) {
       <IconButton
         onClick={onClick}
         sx={{
-          padding: 0,
+          padding: '1px',
           margin: 0,
           color: 'inherit',
+          width: '16px',
+          height: '16px',
           '&:hover': {
             backgroundColor: 'darkgray',
           },
         }}
         size="small"
       >
-        <Add />
+        <Add sx={{ fontSize: '12px' }} />
       </IconButton>
     </HtmlTooltip>
   )
@@ -41,9 +43,11 @@ function CollapsibleButton({
   return (
     <IconButton
       sx={{
-        padding: 0,
+        padding: '1px',
         margin: 0,
         color: 'inherit',
+        width: '16px',
+        height: '16px',
         '&:hover': {
           backgroundColor: 'darkgray',
         },
@@ -53,6 +57,7 @@ function CollapsibleButton({
     >
       <ChevronRight
         sx={{
+          fontSize: '12px',
           transform: open ? 'rotate(270deg)' : 'rotate(90deg)',
           transition: 'transform 0.3s',
         }}
@@ -88,17 +93,17 @@ export function HistoryItemChip({ item }: { item: HistoryItem }) {
         variant="body2"
         component="span"
         sx={{
-          cursor: 'pointer',
           color: 'inherit',
           lineHeight: 2,
-          '&:hover': isEditing
+          ...(isEditing || active
             ? {}
-            : active
-              ? { color: 'lightgrey' }
-              : {
+            : {
+                cursor: 'pointer',
+                '&:hover': {
                   color: 'primary.main',
                   textDecoration: 'underline',
                 },
+              }),
         }}
         onClick={() => {
           if (isEditing === false) {
@@ -146,16 +151,22 @@ export function HistoryItemChip({ item }: { item: HistoryItem }) {
       <Chip
         color={active ? 'primary' : 'default'}
         size="small"
-        label={label}
-        onDelete={() => {
-          setCollapsed(!collapsed)
-        }}
-        deleteIcon={actions}
+        label={
+          <>
+            {label}
+            {actions}
+          </>
+        }
         sx={{
           '& .MuiChip-label': {
             paddingRight: '2px',
+            paddingLeft: '6px',
           },
-          height: '24px',
+          '& .MuiChip-deleteIcon': {
+            margin: '0 2px 0 0',
+          },
+          height: '20px',
+          fontSize: '0.75rem',
           alignItems: 'center',
         }}
       />
@@ -168,8 +179,9 @@ export function HistoryItemChip({ item }: { item: HistoryItem }) {
         color: 'grey',
         display: 'flex',
         alignItems: 'center',
-        height: '24px',
-        gap: '4px',
+        height: '20px',
+        gap: '2px',
+        fontSize: '0.75rem',
       }}
     >
       {label}
