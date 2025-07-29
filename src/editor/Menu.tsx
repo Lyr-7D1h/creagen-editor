@@ -75,7 +75,7 @@ export function Menu({ width }: MenuProps) {
         }),
       )
       .catch(logger.error)
-  })
+  }, [])
 
   if (currentView === null)
     return (
