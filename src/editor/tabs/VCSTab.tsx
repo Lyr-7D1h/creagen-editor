@@ -12,10 +12,10 @@ export function VCSTab() {
   return (
     <>
       {bms.length === 0 ? 'No bookmarks found' : ''}
-      {bms.map((ref) => (
-        <React.Fragment key={ref.commit + ref.name}>
+      {bms.map((bookmark) => (
+        <React.Fragment key={bookmark.commit + bookmark.name}>
           <Box
-            onClick={() => creagenEditor.checkout(ref)}
+            onClick={() => creagenEditor.checkout(bookmark)}
             sx={{
               marginLeft: 2,
               padding: 1,
@@ -29,7 +29,7 @@ export function VCSTab() {
               alignItems: 'center',
             }}
           >
-            <Typography component="span">{ref.name}</Typography>
+            <Typography component="span">{bookmark.name}</Typography>
             <Typography
               component="span"
               variant="body2"
@@ -41,7 +41,7 @@ export function VCSTab() {
                 borderRadius: '4px',
               }}
             >
-              {ref.commit.toSub()}
+              {bookmark.commit.toSub()}
             </Typography>
           </Box>
         </React.Fragment>

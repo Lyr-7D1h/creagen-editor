@@ -7,7 +7,7 @@ import {
 } from './Commit'
 import { createContextLogger } from '../logs/logger'
 import { Library } from '../settings/SettingsConfig'
-import { isRef, Bookmark, Bookmarks } from './Bookmarks'
+import { isBookmark, Bookmark, Bookmarks } from './Bookmarks'
 import { editorEvents } from '../events/events'
 import { generateHumanReadableName } from './generateHumanReadableName'
 import { ClientStorage } from '../storage/ClientStorage'
@@ -212,6 +212,7 @@ export class VCS {
 
   async renameBookmark(oldName: string, newName: string) {
     const bookmark = this.bookmarks.getBookmark(oldName)
+    if (!bookmark) return null
 
     if (this.bookmarks.getBookmark(newName) !== null) {
       logger.warn(`Bookmark '${newName}' already exists`)
@@ -224,8 +225,14 @@ export class VCS {
       return true
     }
 
-    if (!bookmark) return false
-    bookmark.name = newName
+    const newBookmark = this.bookmarks.rename(oldName, newName)
+    if (newBookmark === null) {
+      logger.error(`Failed to update bookmark from ${oldName} to ${newName}`)
+      return null
+    }
+    if (this._activeBookmark.name === oldName) {
+      this._activeBookmark = newBookmark
+    }
     await this.storage.set('bookmarks', this.bookmarks)
     editorEvents.emit('vcs:bookmarkUpdate', undefined)
     return true
@@ -334,7 +341,7 @@ export class VCS {
     updateHistory = true,
   ): Promise<Checkout | null> {
     let bookmark
-    if (isRef(id)) {
+    if (isBookmark(id)) {
       bookmark = id
       id = id.commit
     }

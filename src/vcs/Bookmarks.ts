@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { Commit, CommitHash, commitHashSchema } from './Commit'
+import { logger } from '../logs/logger'
 
 export const bookmarkNameSchema = z.string().regex(/^[^~:\r\n]{1,32}$/)
 export const bookmarkSchema = z.object({
@@ -29,6 +30,26 @@ export class Bookmarks {
     for (const bm of bookmarks) {
       this.add(bm)
     }
+  }
+
+  rename(oldName: string, newName: string) {
+    // old doesn't exist
+    const old = this.bookmarks.get(oldName)
+    if (typeof old === 'undefined') {
+      logger.error(`'${oldName}' could not be found`)
+      return null
+    }
+    // already exists
+    if (typeof this.bookmarks.get(newName) !== 'undefined') {
+      logger.error(`'${newName}' already exists`)
+      return null
+    }
+
+    this.bookmarks.delete(oldName)
+    this.lookup.delete(old.commit.toBase64())
+    const newBookmark = { ...old, name: newName }
+    this.add(newBookmark)
+    return newBookmark
   }
 
   update(name: string, commit: CommitHash) {
@@ -72,6 +93,6 @@ export class Bookmarks {
   }
 }
 
-export function isRef(bm: Bookmark | Commit | CommitHash): bm is Bookmark {
+export function isBookmark(bm: Bookmark | Commit | CommitHash): bm is Bookmark {
   return 'name' in bm
 }

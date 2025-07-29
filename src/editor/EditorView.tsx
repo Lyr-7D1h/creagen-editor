@@ -4,7 +4,7 @@ import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
 import { IconButton, Tooltip } from '@mui/material'
 import { ChevronRight } from '@mui/icons-material'
 import { useSettings } from '../events/useEditorEvents'
-import { EditableProjectName } from './EditableProjectName'
+import { ActiveBookmark } from './ActiveBookmark'
 
 export interface EditorProps {
   left?: string
@@ -107,7 +107,7 @@ export function EditorView({
         </Tooltip>
         {showActiveBookmark ? (
           <div ref={projectNameRef}>
-            <EditableProjectName onUpdate={updateHistoryWidth} />
+            <ActiveBookmark onUpdate={updateHistoryWidth} />
           </div>
         ) : (
           ''
