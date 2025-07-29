@@ -52,6 +52,7 @@ type Storage = {
   current: number
   max: number
 }
+const MENU_WIDTH_SMALL = 480
 export function Menu({ width }: MenuProps) {
   const creagenEditor = useCreagenEditor()
   const [storage, setStorage] = useState<Storage | null>(null)
@@ -122,11 +123,11 @@ export function Menu({ width }: MenuProps) {
               sx={{
                 textTransform: 'none',
                 fontWeight: currentView === key ? 600 : 400,
-                minWidth: width < 400 ? 'auto' : undefined, // Show only icons on narrow screens
-                px: width < 400 ? 1 : undefined,
+                minWidth: width < MENU_WIDTH_SMALL ? 'auto' : undefined, // Show only icons on narrow screens
+                px: width < MENU_WIDTH_SMALL ? 1 : undefined,
               }}
             >
-              {width >= 400 && tab.title}
+              {width >= MENU_WIDTH_SMALL && tab.title}
             </Button>
           ))}
         </ButtonGroup>
