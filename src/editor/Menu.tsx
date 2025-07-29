@@ -52,7 +52,7 @@ type Storage = {
   current: number
   max: number
 }
-const MENU_WIDTH_SMALL = 480
+const MENU_WIDTH_SMALL = 490
 export function Menu({ width }: MenuProps) {
   const creagenEditor = useCreagenEditor()
   const [storage, setStorage] = useState<Storage | null>(null)
