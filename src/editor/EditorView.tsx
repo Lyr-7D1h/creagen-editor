@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { History } from './History'
 import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
-import { IconButton, Tooltip } from '@mui/material'
+import { IconButton } from '@mui/material'
 import { ChevronRight } from '@mui/icons-material'
 import { useSettings } from '../events/useEditorEvents'
 import { ActiveBookmark } from './ActiveBookmark'
+import { HtmlTooltip } from './HtmlTooltip'
 
 export interface EditorProps {
   left?: string
@@ -79,7 +80,7 @@ export function EditorView({
           padding: 2,
         }}
       >
-        <Tooltip
+        <HtmlTooltip
           title={menu ? 'Hide editor menu' : 'Show editor menu'}
           placement="right"
         >
@@ -104,7 +105,7 @@ export function EditorView({
               }}
             />
           </IconButton>
-        </Tooltip>
+        </HtmlTooltip>
         {showActiveBookmark ? (
           <div ref={projectNameRef}>
             <ActiveBookmark onUpdate={updateHistoryWidth} />

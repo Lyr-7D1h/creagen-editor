@@ -148,17 +148,8 @@ export function HistoryItemChip({ item }: { item: HistoryItem }) {
   bookmarks = bookmarks.filter((b) => b.name !== activeBookmark.name)
   const active = commit.hash.toHex() === activeBookmark.commit?.toHex()
 
-  const tooltip = (
-    <div>
-      {bookmarks.map((bm) => (
-        <Typography key={bm.name}>{bm.name}</Typography>
-      ))}
-      <em>{commit.toHex()}</em>
-    </div>
-  )
-
   const label = (
-    <HtmlTooltip title={tooltip}>
+    <VcsTooltip historyItem={item}>
       <Typography
         variant="body2"
         component="span"
@@ -205,7 +196,7 @@ export function HistoryItemChip({ item }: { item: HistoryItem }) {
           commit.toSub()
         )}
       </Typography>
-    </HtmlTooltip>
+    </VcsTooltip>
   )
 
   const actions =
@@ -312,4 +303,42 @@ export function HistoryItemChip({ item }: { item: HistoryItem }) {
       )}
     </>
   )
+}
+
+export function VcsTooltip({
+  historyItem,
+  children,
+}: {
+  historyItem: HistoryItem
+  children: React.ReactElement
+}) {
+  const { commit, bookmarks } = historyItem
+
+  const tooltip = (
+    <div style={{ lineHeight: 1.5 }}>
+      {bookmarks.map((bm) => (
+        <Typography key={bm.name}>
+          {bm.name}
+          <span style={{ color: 'grey', fontSize: '0.7em', marginLeft: '4px' }}>
+            {dateString(bm.createdOn)}
+          </span>
+        </Typography>
+      ))}
+      <em>{commit.toHex()}</em>
+      <div>{dateString(commit.createdOn)}</div>
+    </div>
+  )
+
+  return <HtmlTooltip title={tooltip}>{children}</HtmlTooltip>
+}
+
+function dateString(date: Date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  const seconds = String(date.getSeconds()).padStart(2, '0')
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }

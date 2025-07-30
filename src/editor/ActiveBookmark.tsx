@@ -1,37 +1,36 @@
 import React, { useState } from 'react'
-import { Typography, Box } from '@mui/material'
+import { Typography } from '@mui/material'
 import { logger } from '../logs/logger'
 import { useActiveBookmark } from '../events/useEditorEvents'
 import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
-import { TextInput } from './TextInput'
 
 export function ActiveBookmark({ onUpdate }: { onUpdate: () => void }) {
   const vcs = useCreagenEditor().vcs
-  const headBookmark = useActiveBookmark()
+  const activeBookmark = useActiveBookmark()
   const [isEditing, setIsEditing] = useState(false)
-  const [bookmarkName, setBookmarkName] = useState('')
+  const [value, setValue] = useState('')
 
-  if (headBookmark === null) return ''
+  if (activeBookmark === null) return ''
 
-  const handleBookmarkNameClick = () => {
-    setBookmarkName(headBookmark.name)
+  const handleOnClick = () => {
+    setValue(activeBookmark.name)
     setIsEditing(true)
   }
 
-  const handleBookmarkNameSave = async (newName: string) => {
-    if (newName.length < 3) {
+  const onSave = async () => {
+    if (value.length < 3) {
       logger.error('Name must have at least 3 characters')
       return
     }
-    if (newName.length > 40) {
+    if (value.length > 40) {
       logger.error('Name must be less than 40 characters')
       return
     }
-    if (!/^[a-zA-Z0-9\s\-_.,!@#$%^&*()+={}[\]:;"'<>?/\\|`~]+$/.test(newName)) {
+    if (!/^[a-zA-Z0-9\s\-_.,!@#$%^&*()+={}[\]:;"'<>?/\\|`~]+$/.test(value)) {
       logger.error('Name can only contain letters, numbers, and spaces')
       return
     }
-    if ((await vcs.renameBookmark(headBookmark.name, newName)) === null) {
+    if ((await vcs.renameBookmark(activeBookmark.name, value)) === null) {
       return
     }
     setIsEditing(false)
@@ -42,48 +41,59 @@ export function ActiveBookmark({ onUpdate }: { onUpdate: () => void }) {
     }, 0)
   }
 
-  const handleBookmarkNameClose = () => {
-    setIsEditing(false)
+  const handleOnKeydown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      onSave()
+    } else if (e.key === 'Escape') {
+      setIsEditing(false)
+    }
   }
 
   return (
-    <Box
-      sx={{
-        backgroundColor: 'primary.main',
-        borderRadius: 0.5,
-        padding: 0.25,
-        display: 'flex',
-        alignItems: 'center',
-        color: 'white',
-      }}
-    >
+    <>
       <Typography
         variant="body2"
-        onClick={handleBookmarkNameClick}
+        onClick={handleOnClick}
         sx={{
+          color: '#111',
           cursor: 'pointer',
-          paddingLeft: 0.25,
-          paddingRight: 0.25,
-          '&:hover': {
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            borderRadius: 0.5,
-          },
+          paddingLeft: 1,
+          paddingRight: 1,
           whiteSpace: 'nowrap',
           overflow: 'hidden',
+          ...(isEditing
+            ? {}
+            : {
+                '&:hover': {
+                  backgroundColor: 'action.hover',
+                  borderRadius: 1,
+                },
+              }),
         }}
       >
         {isEditing ? (
-          <TextInput
-            onSave={handleBookmarkNameSave}
-            onClose={handleBookmarkNameClose}
-            initialValue={bookmarkName}
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onBlur={onSave}
+            onKeyDown={handleOnKeydown}
+            autoFocus
+            style={{
+              flex: 1,
+              textAlign: 'center',
+              border: 'none',
+              outline: 'none',
+              background: 'transparent',
+              fontFamily: 'inherit',
+            }}
           />
-        ) : headBookmark.name.length > 30 ? (
-          headBookmark.name.substring(0, 30) + '...'
+        ) : activeBookmark.name.length > 30 ? (
+          activeBookmark.name.substring(0, 30) + '...'
         ) : (
-          headBookmark.name
+          activeBookmark.name
         )}
       </Typography>
-    </Box>
+    </>
   )
 }
