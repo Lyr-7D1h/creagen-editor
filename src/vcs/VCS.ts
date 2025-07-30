@@ -29,16 +29,19 @@ export type ActiveBookmark = Omit<Bookmark, 'commit'> & {
 
 const logger = createContextLogger('vcs')
 
+function generateUncommittedBookmark() {
+  return {
+    name: generateHumanReadableName(),
+    createdOn: new Date(),
+  }
+}
+
 /** Version Control Software for creagen-editor */
 export class VCS {
   static async create(storage: ClientStorage, settings: Settings) {
     const bms = (await storage.get('bookmarks')) ?? new Bookmarks([])
-    const activeBookmark = {
-      name: generateHumanReadableName(),
-      createdOn: new Date(),
-    }
 
-    return new VCS(storage, settings, bms, activeBookmark)
+    return new VCS(storage, settings, bms, generateUncommittedBookmark())
   }
 
   private _head: Commit | null = null
@@ -210,9 +213,26 @@ export class VCS {
     return true
   }
 
+  async removeBookmark(name: string) {
+    this.bookmarks.remove(name)
+    if (this._activeBookmark.name === name) {
+      this._activeBookmark = generateUncommittedBookmark()
+    }
+    await this.storage.set('bookmarks', this.bookmarks)
+    editorEvents.emit('vcs:bookmarkUpdate', undefined)
+  }
+
   async renameBookmark(oldName: string, newName: string) {
     const bookmark = this.bookmarks.getBookmark(oldName)
-    if (!bookmark) return null
+    if (
+      bookmark === null &&
+      oldName === this.activeBookmark.name &&
+      typeof this.activeBookmark.commit === 'undefined'
+    ) {
+      this.activeBookmark.name = newName
+      return true
+    }
+    if (bookmark === null) return null
 
     if (this.bookmarks.getBookmark(newName) !== null) {
       logger.warn(`Bookmark '${newName}' already exists`)

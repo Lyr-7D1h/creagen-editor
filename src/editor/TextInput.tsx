@@ -11,9 +11,18 @@ export function TextInput({
 }) {
   const [value, setValue] = useState(initialValue)
 
+  function handleOnSave(value: string) {
+    // don't save if nothing changed
+    if (value === initialValue) {
+      onClose()
+      return
+    }
+    onSave(value)
+  }
+
   const onChange = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      onSave(value)
+      handleOnSave(value)
     } else if (e.key === 'Escape') {
       onClose()
     }
@@ -24,7 +33,7 @@ export function TextInput({
       type="text"
       value={value}
       onChange={(e) => setValue(e.target.value)}
-      onBlur={() => onSave(value)}
+      onBlur={() => handleOnSave(value)}
       onKeyDown={onChange}
       autoFocus
       style={{

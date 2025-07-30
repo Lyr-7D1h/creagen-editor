@@ -3,7 +3,8 @@ import { editorEvents } from './events'
 import { EditorEvent, EditorEventData } from './EditorEvent'
 import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
 import { ParamKey, ParamValue } from '../settings/SettingsConfig'
-import { ActiveBookmark } from '../vcs/VCS'
+import { ActiveBookmark, HistoryItem } from '../vcs/VCS'
+import { logger } from '../logs/logger'
 
 /**
  * Hook that subscribes to an event and triggers re-render when emitted
@@ -95,4 +96,49 @@ export const useActiveBookmark = () => {
   }, [])
 
   return value
+}
+
+export const useBookmarks = () => {
+  const editor = useCreagenEditor()
+  const vcs = editor.vcs
+  const [, forceUpdate] = useState({})
+
+  useEffect(() => {
+    const listeners = [
+      editorEvents.on('vcs:checkout', () => {
+        forceUpdate({})
+      }),
+      editorEvents.on('vcs:bookmarkUpdate', () => {
+        forceUpdate({})
+      }),
+    ]
+    return () => listeners.forEach((l) => l())
+  }, [])
+
+  return vcs.bookmarks
+}
+
+export const useHistory = (size: number) => {
+  const creagenEditor = useCreagenEditor()
+  const [history, setHistory] = useState<HistoryItem[]>([])
+  useEffect(() => {
+    const updateHistory = () => {
+      creagenEditor.vcs
+        .history(size)
+        .then((history) => {
+          setHistory(history)
+        })
+        .catch(logger.error)
+    }
+
+    updateHistory()
+
+    const destroy = [
+      editorEvents.on('vcs:checkout', updateHistory),
+      editorEvents.on('vcs:bookmarkUpdate', updateHistory),
+    ]
+    return () => destroy.forEach((cb) => cb())
+  }, [setHistory])
+
+  return history
 }

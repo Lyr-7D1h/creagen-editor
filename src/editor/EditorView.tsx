@@ -26,6 +26,7 @@ export function EditorView({
   const creagenEditor = useCreagenEditor()
   const hideAll = useSettings('hide_all')
   const vimEnabled = useSettings('editor.vim')
+  const historyEnabled = useSettings('editor.show_history')
   const editorContentRef = useRef<HTMLDivElement>(null)
   const iconButtonRef = useRef<HTMLButtonElement>(null)
   const projectNameRef = useRef<HTMLDivElement>(null)
@@ -113,7 +114,7 @@ export function EditorView({
         ) : (
           ''
         )}
-        <History style={{ width: historyWidth }} />
+        {historyEnabled && <History style={{ width: historyWidth }} />}
       </div>
 
       <div style={{ flex: 1, overflow: 'hidden' }} ref={editorContentRef}></div>

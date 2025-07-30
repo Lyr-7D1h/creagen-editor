@@ -3,31 +3,19 @@ import { Typography } from '@mui/material'
 import { logger } from '../logs/logger'
 import { useActiveBookmark } from '../events/useEditorEvents'
 import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
+import { TextInput } from './TextInput'
+import { bookmarkNameSchema } from '../vcs/Bookmarks'
 
 export function ActiveBookmark({ onUpdate }: { onUpdate: () => void }) {
   const vcs = useCreagenEditor().vcs
   const activeBookmark = useActiveBookmark()
   const [isEditing, setIsEditing] = useState(false)
-  const [value, setValue] = useState('')
 
-  if (activeBookmark === null) return ''
-
-  const handleOnClick = () => {
-    setValue(activeBookmark.name)
-    setIsEditing(true)
-  }
-
-  const onSave = async () => {
-    if (value.length < 3) {
-      logger.error('Name must have at least 3 characters')
-      return
-    }
-    if (value.length > 40) {
-      logger.error('Name must be less than 40 characters')
-      return
-    }
-    if (!/^[a-zA-Z0-9\s\-_.,!@#$%^&*()+={}[\]:;"'<>?/\\|`~]+$/.test(value)) {
-      logger.error('Name can only contain letters, numbers, and spaces')
+  const onSave = async (value: string) => {
+    console.log(value)
+    const data = bookmarkNameSchema.safeParse(value)
+    if (data.success === false) {
+      logger.error(data.error)
       return
     }
     if ((await vcs.renameBookmark(activeBookmark.name, value)) === null) {
@@ -41,19 +29,12 @@ export function ActiveBookmark({ onUpdate }: { onUpdate: () => void }) {
     }, 0)
   }
 
-  const handleOnKeydown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      onSave()
-    } else if (e.key === 'Escape') {
-      setIsEditing(false)
-    }
-  }
-
+  const uncommitted = typeof activeBookmark.commit === 'undefined' ? '*' : ''
   return (
     <>
       <Typography
         variant="body2"
-        onClick={handleOnClick}
+        onClick={() => setIsEditing(true)}
         sx={{
           color: '#111',
           cursor: 'pointer',
@@ -72,26 +53,15 @@ export function ActiveBookmark({ onUpdate }: { onUpdate: () => void }) {
         }}
       >
         {isEditing ? (
-          <input
-            type="text"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            onBlur={onSave}
-            onKeyDown={handleOnKeydown}
-            autoFocus
-            style={{
-              flex: 1,
-              textAlign: 'center',
-              border: 'none',
-              outline: 'none',
-              background: 'transparent',
-              fontFamily: 'inherit',
-            }}
+          <TextInput
+            onSave={onSave}
+            onClose={() => setIsEditing(false)}
+            initialValue={activeBookmark.name}
           />
         ) : activeBookmark.name.length > 30 ? (
-          activeBookmark.name.substring(0, 30) + '...'
+          activeBookmark.name.substring(0, 30) + uncommitted + '...'
         ) : (
-          activeBookmark.name
+          activeBookmark.name + uncommitted
         )}
       </Typography>
     </>
