@@ -5,6 +5,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Typography,
 } from '@mui/material'
 import React from 'react'
 import { useWelcome } from '../events/useEditorEvents'
@@ -18,13 +19,43 @@ export function WelcomeScreen() {
   }
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Welcome to the Creagen Editor</DialogTitle>
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      fullWidth
+      maxWidth="sm"
+      sx={{
+        '& .MuiDialog-container': {
+          alignItems: 'flex-start',
+          paddingTop: '15vh',
+        },
+      }}
+    >
+      <DialogTitle>Welcome to Creagen Editor!</DialogTitle>
       <DialogContent>
         <DialogContentText>
           A creative coding web editor with focus on being minimal,
           customizable, fast and powerful. Its goal is to provide easy
           accessibility to make creative coding projects.
+        </DialogContentText>
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          Getting Started
+        </Typography>
+        <DialogContentText>
+          <ol>
+            <li>Write Code</li>
+            <li>
+              Press <b>Control+Shift+Enter</b> to render code
+            </li>
+            <li>
+              In the <b>Menu</b>{' '}
+              <span style={{ color: 'grey', fontSize: '0.9rem' }}>
+                (Press sideways arrow in the top left corner)
+              </span>
+              : Add dependencies, Look at saved changes, Change keybindings,
+              change settings and more
+            </li>
+          </ol>
         </DialogContentText>
       </DialogContent>
       <DialogActions>
