@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import {
   Box,
   Button,
@@ -15,9 +15,8 @@ import { KeybindingsTab } from './tabs/KeybindingsTab'
 import { useLocalStorage } from '../storage/useLocalStorage'
 import AutoStoriesIcon from '@mui/icons-material/AutoStories'
 import { DependenciesTab } from './tabs/DependenciesTab'
-import { LinearProgressWithLabelSetting } from '../settings/LinearProgressWithLabelSetting'
-import { roundToDec } from '../util'
-import { logger } from '../logs/logger'
+import { StorageBar } from './StorageBar'
+import { MenuLinks } from './MenuLinks'
 export type MenuProps = {
   width: number
 }
@@ -48,14 +47,9 @@ export type TabKey = keyof typeof tabs
 
 const defaultKey = Object.keys(tabs)[0]! as TabKey
 
-type Storage = {
-  current: number
-  max: number
-}
 const MENU_WIDTH_SMALL = 490
 export function Menu({ width }: MenuProps) {
   const creagenEditor = useCreagenEditor()
-  const [storage, setStorage] = useState<Storage | null>(null)
   const [currentView, setCurrentView] = useLocalStorage(
     'menu-view-tab',
     defaultKey,
@@ -64,18 +58,6 @@ export function Menu({ width }: MenuProps) {
   useEffect(() => {
     if (currentView) creagenEditor.storage.set('menu-view-tab', currentView)
   }, [currentView])
-
-  useEffect(() => {
-    navigator.storage
-      .estimate()
-      .then((storage) =>
-        setStorage({
-          current: storage.usage ?? 0,
-          max: storage.quota ?? 1,
-        }),
-      )
-      .catch(logger.error)
-  }, [])
 
   if (currentView === null)
     return (
@@ -95,23 +77,30 @@ export function Menu({ width }: MenuProps) {
     >
       <Box
         sx={{
-          p: 1,
+          padding: 1,
+          paddingTop: 0,
           backgroundColor: 'background.default',
           borderBottom: 1,
           borderColor: 'divider',
         }}
       >
-        <LinearProgressWithLabelSetting
-          minLabel="0GB"
-          maxLabel={`${storage ? roundToDec(storage.max / 1000000000, 3) : 0}GB`}
-          variant="determinate"
-          value={roundToDec(storage ? storage.current / storage.max : 0, 3)}
-        />
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <Typography>Creagen Editor</Typography>
+          <MenuLinks />
+        </Box>
+        <StorageBar />
         <ButtonGroup
           variant="outlined"
           size="small"
           fullWidth
           sx={{
+            marginTop: '5px',
             '& .MuiButton-root': { flex: 1 },
           }}
         >

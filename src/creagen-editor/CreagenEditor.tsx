@@ -13,6 +13,7 @@ import { VCS } from '../vcs/VCS'
 import { ClientStorage } from '../storage/ClientStorage'
 import { editorEvents } from '../events/events'
 import { Bookmark, isBookmark } from '../vcs/Bookmarks'
+import { Command } from './commands'
 
 export class CreagenEditor {
   storage: ClientStorage
@@ -243,5 +244,11 @@ export class CreagenEditor {
       throw e
     }
     logger.remove(info)
+  }
+
+  getKeybindKeyString(command: Command) {
+    const v = this.keybindings.getKeybindingsToCommand(command)[0]?.key
+    if (typeof v === 'undefined') return 'Unset'
+    return v
   }
 }

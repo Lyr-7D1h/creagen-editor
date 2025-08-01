@@ -82,7 +82,11 @@ export function EditorView({
         }}
       >
         <HtmlTooltip
-          title={menu ? 'Hide editor menu' : 'Show editor menu'}
+          title={
+            menu
+              ? 'Hide editor menu'
+              : `Show editor menu (${creagenEditor.getKeybindKeyString('editor.toggleMenu')})`
+          }
           placement="right"
         >
           <IconButton

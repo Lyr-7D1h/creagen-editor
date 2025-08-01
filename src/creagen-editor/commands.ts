@@ -29,7 +29,7 @@ export const COMMANDS = {
       if (set) {
         toggleHideAllMessageId = logger.log(
           Severity.Info,
-          `Toggled hide all press ${editor.keybindings.getKeybindingsToCommand('editor.toggleHideAll')[0]?.key} to unhide`,
+          `Toggled hide all press ${editor.getKeybindKeyString('editor.toggleHideAll')} to unhide`,
           10000,
         )
       } else {
