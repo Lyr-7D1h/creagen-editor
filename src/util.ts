@@ -39,3 +39,53 @@ declare const tags: unique symbol
 export type Tagged<BaseType, Tag extends PropertyKey> = BaseType & {
   [tags]: { [K in Tag]: void }
 }
+
+export function timeAgoString(date: Date) {
+  const now = new Date()
+  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+
+  let interval = seconds / 31536000 // seconds in a year
+  if (interval > 1) {
+    const years = Math.floor(interval)
+    return years === 1 ? 'a year ago' : `${years} years ago`
+  }
+
+  interval = seconds / 2592000 // seconds in a month
+  if (interval > 1) {
+    const months = Math.floor(interval)
+    return months === 1 ? 'a month ago' : `${months} months ago`
+  }
+
+  interval = seconds / 86400 // seconds in a day
+  if (interval > 1) {
+    const days = Math.floor(interval)
+    return days === 1 ? 'a day ago' : `${days} days ago`
+  }
+
+  interval = seconds / 3600 // seconds in an hour
+  if (interval > 1) {
+    const hours = Math.floor(interval)
+    return hours === 1 ? 'an hour ago' : `${hours} hours ago`
+  }
+
+  interval = seconds / 60 // seconds in a minute
+  if (interval > 1) {
+    const minutes = Math.floor(interval)
+    return minutes === 1 ? 'a minute ago' : `${minutes} minutes ago`
+  }
+
+  if (seconds < 10) {
+    return 'just now'
+  }
+
+  return `${Math.floor(seconds)} seconds ago`
+}
+export function dateString(date: Date) {
+  const year = date.getFullYear()
+  const month = date.toLocaleString('default', { month: 'long' })
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+
+  return `${month} ${day}, ${year} at ${hours}:${minutes}`
+}
