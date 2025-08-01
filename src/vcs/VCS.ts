@@ -180,7 +180,7 @@ export class VCS {
     }
   }
 
-  private updateUrl(data: string) {
+  updateUrl(data: string) {
     const path = this.toUrlPath(data)
     if (path === null) return
 

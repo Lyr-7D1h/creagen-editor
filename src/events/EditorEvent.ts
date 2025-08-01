@@ -1,6 +1,7 @@
 import { Commit } from '../vcs/Commit'
 import { AnalyzeContainerResult } from '../sandbox/Sandbox'
 import { LocalStorageKey, StorageValue } from '../storage/StorageKey'
+import { ParamKey, ParamValue } from '../settings/SettingsConfig'
 
 type EditorEvents = {
   // VCS events
@@ -10,7 +11,11 @@ type EditorEvents = {
   'vcs:bookmarkUpdate': void
 
   // Settings events
-  'settings:changed': { key: string; value: any; oldValue?: any }
+  'settings:changed': {
+    key: ParamKey
+    value: any
+    oldValue?: any
+  }
 
   // Sandbox events
   'sandbox:loaded': void

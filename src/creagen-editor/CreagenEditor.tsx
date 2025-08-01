@@ -75,6 +75,10 @@ export class CreagenEditor {
     })
 
     editorEvents.on('settings:changed', ({ key: k, value }) => {
+      if (k === 'editor.code_in_url') {
+        this.vcs.updateUrl(this.editor.getValue())
+      }
+
       if (k === 'general.libraries') {
         this.loadLibraries()
       }

@@ -49,7 +49,7 @@ export function WelcomeScreen() {
           <li>
             In the <b>Menu</b>{' '}
             <span style={{ color: 'grey', fontSize: '0.9rem' }}>
-              (Press sideways arrow in the top left corner)
+              (Press the sideways arrow in the top left corner)
             </span>
             : Add dependencies, Look at saved changes, Change keybindings,
             change settings and more
