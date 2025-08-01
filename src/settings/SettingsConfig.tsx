@@ -2,6 +2,7 @@ import { MODE, CREAGEN_EDITOR_VERSION } from '../env'
 import React from 'react'
 import { z } from 'zod'
 import { semverSchema } from '../creagen-editor/schemaUtils'
+import { isMobile } from '../creagen-editor/CreagenEditorView'
 
 export const librarySchema = z.object({
   name: z.string(),
@@ -44,6 +45,12 @@ const defaultConfig = {
     type: 'param',
     label: 'Fullscreen',
     value: false,
+    validate: (value: boolean) => {
+      if (value === false && isMobile()) {
+        return "Can't set fullscreen off when width is too small"
+      }
+      return null
+    },
   },
   'editor.vim': {
     type: 'param',

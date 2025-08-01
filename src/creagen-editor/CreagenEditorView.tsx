@@ -3,10 +3,15 @@ import { CreagenEditorViewContent } from './CreagenEditorViewContent'
 import { logger } from '../logs/logger'
 import { CreagenEditor } from './CreagenEditor'
 import { Logs } from '../logs/Logs'
-import { Box, CircularProgress } from '@mui/material'
+import { Box, CircularProgress, IconButton } from '@mui/material'
 import { WelcomeScreen } from './WelcomeScreen'
+import { PlayArrow } from '@mui/icons-material'
 
 const CreagenEditorContext = createContext<CreagenEditor>(null!)
+
+export function isMobile() {
+  return window.innerWidth < 800
+}
 
 // const theme = createTheme({})
 
@@ -30,6 +35,21 @@ export function CreagenEditorView() {
       })
       .catch((e) => logger.error(e))
   }, [])
+
+  useEffect(() => {
+    if (creagenEditor === null) return
+    const checkScreenSize = () => {
+      if (
+        creagenEditor.settings.get('editor.fullscreen') === false &&
+        isMobile()
+      ) {
+        creagenEditor.settings.set('editor.fullscreen', true)
+      }
+    }
+    checkScreenSize()
+    window.addEventListener('resize', checkScreenSize)
+    return () => window.removeEventListener('resize', checkScreenSize)
+  }, [creagenEditor])
 
   if (creagenEditor === null) {
     return (

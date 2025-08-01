@@ -1,7 +1,7 @@
 import { Commit } from '../vcs/Commit'
 import { AnalyzeContainerResult } from '../sandbox/Sandbox'
 import { LocalStorageKey, StorageValue } from '../storage/StorageKey'
-import { ParamKey, ParamValue } from '../settings/SettingsConfig'
+import { ParamKey } from '../settings/SettingsConfig'
 
 type EditorEvents = {
   // VCS events

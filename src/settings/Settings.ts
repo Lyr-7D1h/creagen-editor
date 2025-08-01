@@ -101,6 +101,13 @@ export class Settings {
     if (typeof entry === 'undefined') throw Error(`Key ${key} does not exist`)
     if (entry.type !== 'param')
       throw Error(`You can't set a value for ${entry.type}`)
+    if (typeof entry.validate !== 'undefined') {
+      const e = entry.validate(value as never)
+      if (typeof e === 'string') {
+        logger.error(e)
+        return
+      }
+    }
     const oldValue = entry.value
     entry.value = value
     this.saveAndNotify(key, value, oldValue)

@@ -1,11 +1,19 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react'
-import { useTheme } from '@mui/material'
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  useReducer,
+} from 'react'
+import { IconButton, useTheme } from '@mui/material'
 import { EditorView } from '../editor/EditorView'
 import { SandboxView } from '../sandbox/SandboxView'
 import { Menu } from '../editor/Menu'
 import { Export } from './Export'
 import { useSettings } from '../events/useEditorEvents'
 import { useLocalStorage } from '../storage/useLocalStorage'
+import { PlayArrow, PlayCircleFilled } from '@mui/icons-material'
+import { isMobile, useCreagenEditor } from './CreagenEditorView'
 
 const RESIZER_WIDTH_PX = 3
 
@@ -68,6 +76,9 @@ function Resizer({
 export function CreagenEditorViewContent() {
   const [menuWidth, setMenuWidth] = useState<number>(window.innerWidth / 4)
   const [editorWidth, setEditorWidth] = useState<number>(window.innerWidth / 4)
+  const [, forceUpdate] = useReducer((x) => x + 1, 0)
+
+  const creagenEditor = useCreagenEditor()
 
   let fullscreen = useSettings('editor.fullscreen')
   const hideAll = useSettings('hide_all')
@@ -129,6 +140,15 @@ export function CreagenEditorViewContent() {
       }
     }
   }, [handleMouseMove, stopResize])
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      forceUpdate()
+    }
+    checkScreenSize()
+    window.addEventListener('resize', checkScreenSize)
+    return () => window.removeEventListener('resize', checkScreenSize)
+  }, [])
 
   return (
     <div style={{ display: 'flex' }}>
@@ -195,6 +215,24 @@ export function CreagenEditorViewContent() {
             : window.innerWidth - editorWidth) + 'px'
         }
       />
+      {isMobile() ? (
+        <IconButton
+          size="large"
+          color="primary"
+          onClick={() => creagenEditor.executeCommand('editor.run')}
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            right: 0,
+            cursor: 'pointer',
+            zIndex: 1002,
+          }}
+        >
+          <PlayCircleFilled style={{ fontSize: 60 }} />
+        </IconButton>
+      ) : (
+        ''
+      )}
     </div>
   )
 }
