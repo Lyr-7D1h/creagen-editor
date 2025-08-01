@@ -3,25 +3,11 @@ import { CreagenEditorViewContent } from './CreagenEditorViewContent'
 import { logger } from '../logs/logger'
 import { CreagenEditor } from './CreagenEditor'
 import { Logs } from '../logs/Logs'
-import {
-  Box,
-  CircularProgress,
-  createTheme,
-  ThemeProvider,
-} from '@mui/material'
+import { Box, CircularProgress } from '@mui/material'
 
 const CreagenEditorContext = createContext<CreagenEditor>(null!)
 
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#a9cbec',
-    },
-    secondary: {
-      main: '#f6c3d0',
-    },
-  },
-})
+// const theme = createTheme({})
 
 export const useCreagenEditor = (): CreagenEditor => {
   const context = useContext(CreagenEditorContext)
@@ -61,11 +47,11 @@ export function CreagenEditorView() {
   }
 
   return (
-    <ThemeProvider theme={theme}>
-      <CreagenEditorContext.Provider value={creagenEditor}>
-        <CreagenEditorViewContent />
-        <Logs />
-      </CreagenEditorContext.Provider>
-    </ThemeProvider>
+    // <ThemeProvider theme={theme}>
+    <CreagenEditorContext.Provider value={creagenEditor}>
+      <CreagenEditorViewContent />
+      <Logs />
+    </CreagenEditorContext.Provider>
+    // </ThemeProvider>
   )
 }
