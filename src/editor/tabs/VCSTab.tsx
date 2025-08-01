@@ -1,8 +1,11 @@
 import React from 'react'
 import { useCreagenEditor } from '../../creagen-editor/CreagenEditorView'
-import { Typography, Box, IconButton } from '@mui/material'
+import { Typography, IconButton } from '@mui/material'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { useBookmarks } from '../../events/useEditorEvents'
+import { dateString } from '../../util'
+import { ColumnDef, Table } from '../../components/Table'
+import { Bookmark } from '../../vcs/Bookmarks'
 
 export function VCSTab() {
   const creagenEditor = useCreagenEditor()
@@ -19,61 +22,83 @@ export function VCSTab() {
     vcs.removeBookmark(bookmarkName)
   }
 
+  const columns: ColumnDef<Bookmark>[] = [
+    {
+      header: 'Name',
+      accessorKey: 'name',
+    },
+    {
+      header: 'Created On',
+      width: 140,
+      cell: (bookmark) => (
+        <Typography
+          component="span"
+          variant="body2"
+          sx={{
+            fontFamily: 'monospace',
+            color: 'text.secondary',
+          }}
+        >
+          {dateString(bookmark.createdOn)}
+        </Typography>
+      ),
+    },
+    {
+      header: 'Commit',
+      width: 80,
+      sx: { textAlign: 'center' },
+      cell: (bookmark) => (
+        <Typography
+          component="span"
+          variant="body2"
+          sx={{
+            fontFamily: 'monospace',
+            color: 'text.secondary',
+            backgroundColor: 'grey.100',
+            padding: '2px 6px',
+            borderRadius: '4px',
+          }}
+        >
+          {bookmark.commit.toSub()}
+        </Typography>
+      ),
+    },
+    {
+      header: '',
+      width: 34,
+      cell: (bookmark) => (
+        <IconButton
+          size="small"
+          onClick={(event) => handleDeleteBookmark(event, bookmark.name)}
+          sx={{
+            width: 34,
+            height: 34,
+            color: 'text.secondary',
+            '&:hover': {
+              color: 'error.main',
+            },
+          }}
+        >
+          <DeleteIcon fontSize="small" />
+        </IconButton>
+      ),
+    },
+  ]
+
   return (
     <>
       {bms.length === 0 ? (
-        <Typography component="span">No bookmarks found</Typography>
+        <Typography component="span" sx={{ m: 2 }}>
+          No bookmarks found
+        </Typography>
       ) : (
-        ''
+        <Table
+          columns={columns}
+          data={bms}
+          getRowKey={(bookmark) => bookmark.commit + bookmark.name}
+          onRowClick={(bookmark) => creagenEditor.checkout(bookmark)}
+        />
       )}
-      {bms.map((bookmark) => (
-        <React.Fragment key={bookmark.commit + bookmark.name}>
-          <Box
-            onClick={() => creagenEditor.checkout(bookmark)}
-            sx={{
-              marginLeft: 2,
-              padding: 1,
-              cursor: 'pointer',
-              borderRadius: 1,
-              '&:hover': {
-                backgroundColor: 'action.hover',
-              },
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Typography component="span">{bookmark.name}</Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography
-                component="span"
-                variant="body2"
-                sx={{
-                  fontFamily: 'monospace',
-                  color: 'text.secondary',
-                  backgroundColor: 'grey.100',
-                  padding: '2px 6px',
-                  borderRadius: '4px',
-                }}
-              >
-                {bookmark.commit.toSub()}
-              </Typography>
-              <IconButton
-                size="small"
-                onClick={(event) => handleDeleteBookmark(event, bookmark.name)}
-                sx={{
-                  color: 'text.secondary',
-                  '&:hover': {
-                    color: 'error.main',
-                  },
-                }}
-              >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </Box>
-          </Box>
-        </React.Fragment>
-      ))}
     </>
   )
 }
