@@ -14,12 +14,12 @@ import {
   TableContainer,
   TableRow,
   Paper,
-  Tooltip,
 } from '@mui/material'
 import { ExpandMore, InfoOutline } from '@mui/icons-material'
 import { useSettingsAll } from '../../events/useEditorEvents'
 import { useCreagenEditor } from '../../creagen-editor/CreagenEditorView'
 import { useLocalStorage } from '../../storage/useLocalStorage'
+import { HtmlTooltip } from '../HtmlTooltip'
 
 export function SettingsTab() {
   const settings = useCreagenEditor().settings
@@ -111,14 +111,13 @@ export function SettingsTab() {
                       return (
                         <TableRow key={paramKey}>
                           <TableCell sx={{ border: 0, paddingLeft: 2 }}>
-                            <Tooltip
+                            <HtmlTooltip
                               title={entry.details}
                               arrow
                               placement="right"
-                              componentsProps={{
+                              slotProps={{
                                 tooltip: {
                                   sx: {
-                                    fontSize: '0.875rem',
                                     maxWidth: 300,
                                   },
                                 },
@@ -142,7 +141,7 @@ export function SettingsTab() {
                                   />
                                 ) : null}
                               </Typography>
-                            </Tooltip>
+                            </HtmlTooltip>
                           </TableCell>
                           <TableCell sx={{ border: 0, paddingRight: 2 }}>
                             {typeof value === 'boolean' ? (

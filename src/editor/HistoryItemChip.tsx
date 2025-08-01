@@ -16,6 +16,7 @@ import { HistoryItem } from '../vcs/VCS'
 import { TextInput } from './TextInput'
 import { HtmlTooltip } from './HtmlTooltip'
 import React from 'react'
+import { dateString, timeAgoString } from '../util'
 
 interface BookmarkMenuProps {
   bookmarks: Bookmark[]
@@ -315,30 +316,20 @@ export function VcsTooltip({
   const { commit, bookmarks } = historyItem
 
   const tooltip = (
-    <div style={{ lineHeight: 1.5 }}>
+    <div style={{ lineHeight: 1.5, position: 'relative' }}>
+      <Typography textAlign="right" variant="body2" color="grey">
+        {timeAgoString(commit.createdOn)} ({dateString(commit.createdOn)})
+      </Typography>
       {bookmarks.map((bm) => (
-        <Typography key={bm.name}>
+        <Typography variant="body1" key={bm.name}>
           {bm.name}
-          <span style={{ color: 'grey', fontSize: '0.7em', marginLeft: '4px' }}>
-            {dateString(bm.createdOn)}
-          </span>
         </Typography>
       ))}
-      <em>{commit.toHex()}</em>
-      <div>{dateString(commit.createdOn)}</div>
+      <Typography variant="body2">
+        <em>{commit.toHex()}</em>
+      </Typography>
     </div>
   )
 
   return <HtmlTooltip title={tooltip}>{children}</HtmlTooltip>
-}
-
-function dateString(date: Date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  const seconds = String(date.getSeconds()).padStart(2, '0')
-
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }
