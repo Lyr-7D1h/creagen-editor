@@ -48,6 +48,7 @@ const defaultConfig = {
   'editor.vim': {
     type: 'param',
     label: 'Vim',
+    details: "Very experimental, don't expect all vim features",
     value: false,
   },
   'editor.relative_lines': {
