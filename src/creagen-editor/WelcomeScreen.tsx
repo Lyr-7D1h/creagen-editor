@@ -41,22 +41,20 @@ export function WelcomeScreen() {
         <Typography variant="h6" sx={{ mt: 2 }}>
           Getting Started
         </Typography>
-        <DialogContentText>
-          <ol>
-            <li>Write Code</li>
-            <li>
-              Press <b>Control+Shift+Enter</b> to render code
-            </li>
-            <li>
-              In the <b>Menu</b>{' '}
-              <span style={{ color: 'grey', fontSize: '0.9rem' }}>
-                (Press sideways arrow in the top left corner)
-              </span>
-              : Add dependencies, Look at saved changes, Change keybindings,
-              change settings and more
-            </li>
-          </ol>
-        </DialogContentText>
+        <ol>
+          <li>Write Code</li>
+          <li>
+            Press <b>Control+Shift+Enter</b> to render code
+          </li>
+          <li>
+            In the <b>Menu</b>{' '}
+            <span style={{ color: 'grey', fontSize: '0.9rem' }}>
+              (Press sideways arrow in the top left corner)
+            </span>
+            : Add dependencies, Look at saved changes, Change keybindings,
+            change settings and more
+          </li>
+        </ol>
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose} variant="contained">
