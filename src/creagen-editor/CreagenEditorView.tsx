@@ -3,9 +3,8 @@ import { CreagenEditorViewContent } from './CreagenEditorViewContent'
 import { logger } from '../logs/logger'
 import { CreagenEditor } from './CreagenEditor'
 import { Logs } from '../logs/Logs'
-import { Box, CircularProgress, IconButton } from '@mui/material'
+import { Box, CircularProgress } from '@mui/material'
 import { WelcomeScreen } from './WelcomeScreen'
-import { PlayArrow } from '@mui/icons-material'
 
 const CreagenEditorContext = createContext<CreagenEditor>(null!)
 

@@ -12,7 +12,7 @@ import { Menu } from '../editor/Menu'
 import { Export } from './Export'
 import { useSettings } from '../events/useEditorEvents'
 import { useLocalStorage } from '../storage/useLocalStorage'
-import { PlayArrow, PlayCircleFilled } from '@mui/icons-material'
+import { MenuBook, PlayCircleFilled } from '@mui/icons-material'
 import { isMobile, useCreagenEditor } from './CreagenEditorView'
 
 const RESIZER_WIDTH_PX = 3
@@ -77,8 +77,6 @@ export function CreagenEditorViewContent() {
   const [menuWidth, setMenuWidth] = useState<number>(window.innerWidth / 4)
   const [editorWidth, setEditorWidth] = useState<number>(window.innerWidth / 4)
   const [, forceUpdate] = useReducer((x) => x + 1, 0)
-
-  const creagenEditor = useCreagenEditor()
 
   let fullscreen = useSettings('editor.fullscreen')
   const hideAll = useSettings('hide_all')
@@ -150,6 +148,15 @@ export function CreagenEditorViewContent() {
     return () => window.removeEventListener('resize', checkScreenSize)
   }, [])
 
+  if (menu && isMobile()) {
+    return (
+      <>
+        <Menu width={window.innerWidth} />
+        <MobileButtons toggleMenu={() => setMenu(!menu)} />
+      </>
+    )
+  }
+
   return (
     <div style={{ display: 'flex' }}>
       {fullscreen === false && (
@@ -215,24 +222,43 @@ export function CreagenEditorViewContent() {
             : window.innerWidth - editorWidth) + 'px'
         }
       />
-      {isMobile() ? (
-        <IconButton
-          size="large"
-          color="primary"
-          onClick={() => creagenEditor.executeCommand('editor.run')}
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            right: 0,
-            cursor: 'pointer',
-            zIndex: 1002,
-          }}
-        >
-          <PlayCircleFilled style={{ fontSize: 60 }} />
-        </IconButton>
-      ) : (
-        ''
-      )}
+      {isMobile() && <MobileButtons toggleMenu={() => setMenu(!menu)} />}
     </div>
+  )
+}
+
+function MobileButtons({ toggleMenu }: { toggleMenu: () => void }) {
+  const creagenEditor = useCreagenEditor()
+  return (
+    <>
+      <IconButton
+        size="large"
+        color="primary"
+        onClick={toggleMenu}
+        style={{
+          position: 'absolute',
+          bottom: 80,
+          right: 0,
+          cursor: 'pointer',
+          zIndex: 1002,
+        }}
+      >
+        <MenuBook style={{ fontSize: 58 }} />
+      </IconButton>
+      <IconButton
+        size="large"
+        color="primary"
+        onClick={() => creagenEditor.executeCommand('editor.run')}
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          right: 0,
+          cursor: 'pointer',
+          zIndex: 1002,
+        }}
+      >
+        <PlayCircleFilled style={{ fontSize: 60 }} />
+      </IconButton>
+    </>
   )
 }
