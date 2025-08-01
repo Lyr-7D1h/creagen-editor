@@ -4,7 +4,7 @@ import ReplayIcon from '@mui/icons-material/Replay'
 import { COMMANDS, Command } from '../../creagen-editor/commands'
 import { ActiveKeybinding, KeyInfo } from '../../creagen-editor/keybindings'
 import { KeyCaptureInput } from './KeyCaptureInput'
-import { Chip, IconButton, Typography } from '@mui/material'
+import { Chip, IconButton } from '@mui/material'
 import { ColumnDef, Table } from '../../components/Table'
 
 const formatKey = (key: string): string => {

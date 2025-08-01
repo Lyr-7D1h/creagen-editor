@@ -91,8 +91,8 @@ export function EditorView({
               zIndex: 1002,
               left: 0,
               top: 0,
-              width: 20,
-              height: 20,
+              width: 15,
+              height: 15,
               padding: 0,
               margin: 0,
             }}

@@ -33,7 +33,7 @@ export function ActiveBookmark({ onUpdate }: { onUpdate: () => void }) {
   return (
     <>
       <Typography
-        variant="body2"
+        variant="body1"
         onClick={() => setIsEditing(true)}
         sx={{
           color: '#111',

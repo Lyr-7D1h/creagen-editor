@@ -5,18 +5,17 @@ import { z } from 'zod'
 import { dateNumberSchema, semverSchema } from '../creagen-editor/schemaUtils'
 import { Sha256Hash, sha256HashSchema } from '../Sha256Hash'
 import { Tagged } from '../util'
+import { $ZodSuperRefineIssue } from 'zod/v4/core/api.cjs'
 
-export const commitHashSchema = sha256HashSchema as z.ZodEffects<
+export const commitHashSchema = sha256HashSchema as z.ZodPipe<
   z.ZodString,
-  CommitHash,
-  string
+  z.ZodTransform<CommitHash, string>
 >
 export type CommitHash = Tagged<Sha256Hash, 'CommitHash'>
 
-export const blobHashSchema = sha256HashSchema as z.ZodEffects<
+export const blobHashSchema = sha256HashSchema as z.ZodPipe<
   z.ZodString,
-  BlobHash,
-  string
+  z.ZodTransform<BlobHash, string>
 >
 export type BlobHash = Tagged<Sha256Hash, 'BlobHash'>
 
@@ -60,14 +59,15 @@ export const libraryStringSchema = z.string().transform((data, ctx) => {
   const name = parts.splice(0, parts.length - 1).join('@')
   if (typeof parts[0] === 'undefined') {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: 'invalid_format',
       message: 'No version',
+      format: 'includes',
     })
     return z.NEVER
   }
   const version = semverSchema.safeParse(parts[0])
   if (version.error) {
-    ctx.addIssue(version.error.errors[0]!)
+    version.error.issues.forEach((i) => ctx.addIssue(i as $ZodSuperRefineIssue))
     return z.NEVER
   }
   return {

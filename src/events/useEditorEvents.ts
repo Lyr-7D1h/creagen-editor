@@ -138,7 +138,7 @@ export const useHistory = (size: number) => {
       editorEvents.on('vcs:bookmarkUpdate', updateHistory),
     ]
     return () => destroy.forEach((cb) => cb())
-  }, [setHistory])
+  }, [setHistory, size])
 
   return history
 }

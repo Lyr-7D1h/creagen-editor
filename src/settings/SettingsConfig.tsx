@@ -65,6 +65,16 @@ const defaultConfig = {
     label: 'Show active bookmark in the top bar of the editor',
     value: true,
   },
+  'editor.history_buffer_size': {
+    type: 'param',
+    label: 'History Buffer Size',
+    validate: (v: number) => {
+      const d = z.number().min(1).max(50).safeParse(v)
+      if (d.success === false) return z.prettifyError(d.error)
+      return null
+    },
+    value: 10,
+  },
   'editor.code_in_url': {
     type: 'param',
     label: 'Use code in the url',
@@ -157,6 +167,8 @@ export interface Param<T = any> {
   type: 'param'
   value: T
   label?: string
+  /** return null in case its valid, otherwise string explaining the error */
+  validate?: (value: T) => null | string
   details?: string
   queryParam?: (value: string) => T
   hidden?: boolean

@@ -5,10 +5,9 @@ import { IconButton, Collapse, Stack, SxProps, Theme } from '@mui/material'
 import ArrowLeft from '@mui/icons-material/ArrowLeft'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import { useHistory } from '../events/useEditorEvents'
+import { useHistory, useSettings } from '../events/useEditorEvents'
 import { HistoryItemChip } from './HistoryItemChip'
 
-const HISTORY_SIZE = 10
 export function History({
   height,
   style,
@@ -16,7 +15,8 @@ export function History({
   height?: string
   style?: SxProps<Theme>
 }) {
-  const history = useHistory(HISTORY_SIZE)
+  const historyBufferSize = useSettings('editor.history_buffer_size')
+  const history = useHistory(historyBufferSize)
   const [expanded, setExpanded] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const [isOverflowing, setIsOverflowing] = useState(false)

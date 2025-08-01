@@ -20,6 +20,7 @@ import { useSettingsAll } from '../../events/useEditorEvents'
 import { useCreagenEditor } from '../../creagen-editor/CreagenEditorView'
 import { useLocalStorage } from '../../storage/useLocalStorage'
 import { HtmlTooltip } from '../HtmlTooltip'
+import { logger } from '../../logs/logger'
 
 export function SettingsTab() {
   const settings = useCreagenEditor().settings
@@ -167,6 +168,22 @@ export function SettingsTab() {
                                 size="small"
                                 fullWidth
                                 variant="outlined"
+                                onChange={(e) => {
+                                  let v: number | string
+                                  if (typeof value === 'number') {
+                                    v = Number(e.target.value)
+                                  } else {
+                                    v = e.target.value
+                                  }
+                                  if (entry.validate) {
+                                    const error = entry.validate(v)
+                                    if (typeof error === 'string') {
+                                      logger.error(error)
+                                      return
+                                    }
+                                  }
+                                  settings.set(paramKey, v)
+                                }}
                               />
                             )}
                           </TableCell>
