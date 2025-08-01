@@ -251,6 +251,9 @@ export function HistoryItemChip({ item }: { item: HistoryItem }) {
           }
           sx={{
             '& .MuiChip-label': {
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
               paddingRight: '2px',
               paddingLeft: '6px',
             },
