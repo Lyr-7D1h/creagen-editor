@@ -22,6 +22,7 @@ export function isIndexDbKey(key: StorageKey): key is IndexDbKey {
 
 /** LocalStorage */
 export type LocalStorageOnlyKey =
+  | 'welcome'
   | 'menu-view'
   | 'menu-view-tab'
   | 'menu-settings-hidden'
@@ -44,6 +45,7 @@ export type StorageIdentifier<K extends StorageKey> =
   K extends keyof StorageIdentifierMap ? StorageIdentifierMap[K] : undefined
 
 type StorageKeyValueMap = {
+  welcome: boolean
   'menu-view': boolean
   'menu-view-tab': TabKey | null
   'menu-settings-hidden': string[]

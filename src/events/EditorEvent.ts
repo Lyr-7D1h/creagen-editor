@@ -28,6 +28,8 @@ type EditorEvents = {
     key: LocalStorageKey
     value: StorageValue<LocalStorageKey>
   }
+
+  welcome: boolean
 }
 
 export type EditorEvent = keyof EditorEvents

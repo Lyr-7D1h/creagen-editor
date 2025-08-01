@@ -4,10 +4,22 @@ import React from 'react'
 import BugReportIcon from '@mui/icons-material/BugReport'
 import { HtmlTooltip } from './HtmlTooltip'
 import { DiscordIcon } from './DiscordIcon'
+import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
 
 export function MenuLinks() {
+  const creagenEditor = useCreagenEditor()
   return (
     <div>
+      <HtmlTooltip title="Help">
+        <IconButton
+          size="small"
+          sx={{ padding: 1 }}
+          onClick={() => creagenEditor.executeCommand('welcome')}
+        >
+          <HelpOutlineIcon />
+        </IconButton>
+      </HtmlTooltip>
       <HtmlTooltip title="Join our discord">
         <IconButton
           size="small"

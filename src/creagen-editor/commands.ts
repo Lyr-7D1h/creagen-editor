@@ -2,12 +2,19 @@ import z from 'zod'
 import { logger, MessageId, Severity } from '../logs/logger'
 import { localStorage } from '../storage/LocalStorage'
 import { CreagenEditor } from './CreagenEditor'
+import { editorEvents } from '../events/events'
 
 export type CommandHandler = (editor: CreagenEditor) => void
 
 let toggleHideAllMessageId: MessageId | null = null
 
 export const COMMANDS = {
+  welcome: {
+    description: 'Open up the welcome screen',
+    handler: () => {
+      editorEvents.emit('welcome', true)
+    },
+  },
   'editor.run': {
     description: 'Run/Render the current code',
     handler: (editor: CreagenEditor) => {

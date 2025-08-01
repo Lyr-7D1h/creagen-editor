@@ -5,6 +5,7 @@ import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
 import { ParamKey, ParamValue } from '../settings/SettingsConfig'
 import { ActiveBookmark, HistoryItem } from '../vcs/VCS'
 import { logger } from '../logs/logger'
+import { useLocalStorage } from '../storage/useLocalStorage'
 
 /**
  * Hook that subscribes to an event and triggers re-render when emitted
@@ -141,4 +142,16 @@ export const useHistory = (size: number) => {
   }, [setHistory, size])
 
   return history
+}
+
+export const useWelcome = () => {
+  const [value, setValue] = useLocalStorage('welcome', false)
+
+  useEffect(() => {
+    return editorEvents.on('welcome', (value) => {
+      setValue(value)
+    })
+  }, [])
+
+  return value
 }
