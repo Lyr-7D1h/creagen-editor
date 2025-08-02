@@ -284,12 +284,23 @@ export class VCS {
     return history
   }
 
-  /** update current active bookmark to this commit */
+  /** update current active bookmark to this commit, or commit the bookmark */
   private async updateActiveBookmark(commit: CommitHash) {
-    if (this.activeBookmark.commit === null) return
-    const newBookmark = this.bookmarks.update(this.activeBookmark.name, commit)
-    if (newBookmark === null) return null
-    this._activeBookmark = newBookmark
+    if (this.activeBookmark.commit === null) {
+      // commit uncomitted bookmark
+      const ref: Bookmark = { ...this._activeBookmark, commit }
+      this.bookmarks.add(ref)
+      this._activeBookmark = ref as ActiveBookmark
+    } else {
+      // update currently active to this commit
+      const newBookmark = this.bookmarks.update(
+        this.activeBookmark.name,
+        commit,
+      )
+      if (newBookmark === null) return null
+      this._activeBookmark = newBookmark
+    }
+
     await this.storage.set('bookmarks', this.bookmarks)
     editorEvents.emit('vcs:bookmarkUpdate', undefined)
     return
@@ -301,20 +312,6 @@ export class VCS {
     updateBookmark: boolean = true,
   ): Promise<null | Commit> {
     const blob = (await Sha256Hash.create(code)) as BlobHash
-
-    // don't commit with same content
-    if (
-      this._head &&
-      this._head.blob.compare(blob) &&
-      libraries.every(
-        (l) =>
-          this._head!.libraries.findIndex(
-            (hl) => l.name === hl.name && l.version.compare(hl.version) === 0,
-          ) !== -1,
-      )
-    )
-      return null
-
     const commit = await Commit.create(
       blob,
       CREAGEN_EDITOR_VERSION,
@@ -322,24 +319,19 @@ export class VCS {
       new Date(),
       this._head?.hash,
     )
-    logger.debug('commit')
+
+    // don't commit if nothing changed
+    if (this._head && commit.compareData(this._head)) return null
 
     await this.storage.set('commit', commit, commit.hash)
     await this.storage.set('blob', code, commit.blob)
 
-    if (updateBookmark)
-      if (this._activeBookmark.commit === null) {
-        // commit uncomitted bookmark
-        const ref: Bookmark = { ...this._activeBookmark, commit: commit.hash }
-        this.bookmarks.add(ref)
-        this._activeBookmark = ref as ActiveBookmark
-        await this.storage.set('bookmarks', this.bookmarks)
-        editorEvents.emit('vcs:bookmarkUpdate', undefined)
-      } else {
-        if ((await this.updateActiveBookmark(commit.hash)) === null) {
-          return null
-        }
+    if (updateBookmark) {
+      console.log('update')
+      if ((await this.updateActiveBookmark(commit.hash)) === null) {
+        return null
       }
+    }
 
     const old = this._head
     this._head = commit
@@ -382,8 +374,8 @@ export class VCS {
 
     if (bookmark) {
       this._activeBookmark = bookmark
-    } else {
-      // if not checking out a bookmark set current active bookmark to this commit
+    } else if (this._activeBookmark.commit !== null) {
+      // set current active bookmark to this commit unless the bookmark is uncomitted
       if ((await this.updateActiveBookmark(commit.hash)) === null) {
         return null
       }

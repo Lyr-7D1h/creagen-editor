@@ -46,7 +46,7 @@ export class Bookmarks {
     }
 
     this.bookmarks.delete(oldName)
-    this.lookup.delete(old.commit.toBase64())
+    this.lookupDelete(oldName, old.commit)
     const newBookmark = { ...old, name: newName }
     this.add(newBookmark)
     return newBookmark
@@ -58,9 +58,9 @@ export class Bookmarks {
       logger.error(`Failed to update ${name}. Bookmark not found`)
       return null
     }
-    this.lookup.delete(bookmark.commit.toBase64())
+    this.lookupDelete(bookmark.name, bookmark.commit)
     const newBookmark = { ...bookmark, commit }
-    this.add(newBookmark)
+    this.bookmarks.set(name, newBookmark)
     return newBookmark
   }
 
@@ -78,6 +78,18 @@ export class Bookmarks {
     return v
   }
 
+  private lookupDelete(name: string, commit: CommitHash) {
+    const key = commit.toBase64()
+    const b = this.lookup.get(key)
+    if (typeof b === 'undefined') return
+    const bms = b.filter((x) => x.name === name)
+    if (bms.length === 0) {
+      this.lookup.delete(key)
+      return
+    }
+    this.lookup.set(key, bms)
+  }
+
   add(bookmark: Bookmark) {
     if (this.getBookmark(bookmark.name) !== null) return null
     this.bookmarks.set(bookmark.name, bookmark)
@@ -90,11 +102,11 @@ export class Bookmarks {
   }
 
   remove(name: string) {
-    const ref = this.getBookmark(name)
-    if (!ref) return null
+    const bm = this.getBookmark(name)
+    if (!bm) return null
     this.bookmarks.delete(name)
-    this.lookup.delete(ref?.commit.toBase64())
-    return ref
+    this.lookupDelete(bm.name, bm.commit)
+    return bm
   }
 }
 

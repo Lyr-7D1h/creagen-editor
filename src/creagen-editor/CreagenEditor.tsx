@@ -214,15 +214,6 @@ export class CreagenEditor {
       .catch(logger.error)
   }
 
-  updateLibraries() {
-    this.loadLibraries()
-
-    if (this.vcs.head === null) return
-
-    let code = this.editor.getValue()
-    this.vcs.commit(code, this.settings.values['general.libraries'])
-  }
-
   async render() {
     const info = logger.log(Severity.Info, 'rendering code', null)
     try {

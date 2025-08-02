@@ -228,8 +228,22 @@ export class Commit {
     return this.hash.toHex()
   }
 
-  compare(commit: Commit): boolean {
-    return this.toInnerString() === commit.toInnerString()
+  /** 
+   * Compare the data parts of a commit with another to see if anything has changed 
+
+   * returns `true` when they are equal
+   */
+  compareData(commit: Commit): boolean {
+    // don't commit with same content
+    return (
+      this.blob.compare(commit.blob) &&
+      this.libraries.every(
+        (l) =>
+          commit.libraries.findIndex(
+            (hl) => l.name === hl.name && l.version.compare(hl.version) === 0,
+          ) !== -1,
+      )
+    )
   }
 }
 
