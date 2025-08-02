@@ -31,36 +31,41 @@ export function DependenciesTab() {
   >({})
 
   useEffect(() => {
-    Promise.all(supportedLibraries.map((l) => Importer.versions(l.name)))
-      .then((vers) => {
-        const versions: Record<string, string[]> = {}
-        const latestVersions: Record<string, string> = {}
-        for (let i = 0; i < vers.length; i++) {
-          if (typeof supportedLibraries[i] === 'undefined')
-            throw Error('library not found')
-          const name = supportedLibraries[i]!.name
+    Promise.allSettled(
+      supportedLibraries.map((l) => Importer.versions(l.name)),
+    ).then((vers) => {
+      const versions: Record<string, string[]> = {}
+      const latestVersions: Record<string, string> = {}
+      for (let i = 0; i < vers.length; i++) {
+        if (typeof supportedLibraries[i] === 'undefined')
+          throw Error('library not found')
+        const name = supportedLibraries[i]!.name
 
-          versions[name] = vers[i]!
-          const latestIndex = vers[i]!.map((v) => new SemVer(v)).findIndex(
-            (v) => !isDevBuild(v),
-          )
-
-          latestVersions[name] = vers[i]![latestIndex]!
-
-          if (name === 'creagen' && CREAGEN_DEV_VERSION) {
-            const devVersion = CREAGEN_DEV_VERSION.toString()
-            versions[name].unshift(devVersion)
-            latestVersions[name] = devVersion
-          }
+        const ver = vers[i]!
+        if (ver.status === 'rejected') {
+          logger.error(ver.reason)
+          continue
         }
+        versions[name] = ver.value
+        const latestIndex = versions[name]
+          .map((v) => new SemVer(v))
+          .findIndex((v) => !isDevBuild(v))
 
-        setVersions(versions)
-        setSelectedVersion((selectedVersions) => ({
-          ...latestVersions,
-          ...selectedVersions,
-        }))
-      })
-      .catch(logger.error)
+        latestVersions[name] = versions[name][latestIndex]!
+
+        if (name === 'creagen' && CREAGEN_DEV_VERSION) {
+          const devVersion = CREAGEN_DEV_VERSION.toString()
+          versions[name].unshift(devVersion)
+          latestVersions[name] = devVersion
+        }
+      }
+
+      setVersions(versions)
+      setSelectedVersion((selectedVersions) => ({
+        ...latestVersions,
+        ...selectedVersions,
+      }))
+    })
   }, [])
 
   // update selected version when libraries change
@@ -75,18 +80,19 @@ export function DependenciesTab() {
   }, [libraries])
 
   return (
-    <ToggleButtonGroup
-      disabled={Object.keys(versions).length === 0}
-      orientation="vertical"
-      fullWidth={true}
-    >
+    <ToggleButtonGroup orientation="vertical" fullWidth={true}>
       {supportedLibraries.map((lib) => (
         <ToggleButton
           key={lib.name}
           value={lib.name}
           aria-label="list"
           size="small"
-          disabled={lib?.disabled ?? false}
+          disabled={
+            typeof versions[lib.name] === 'undefined' ||
+            versions[lib.name]?.length === 0 ||
+            lib.disabled ||
+            false
+          }
           sx={{
             display: 'flex',
             justifyContent: 'space-between',

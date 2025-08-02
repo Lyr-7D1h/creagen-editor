@@ -121,7 +121,7 @@ export class VCS {
     const ref = this.bookmarks.bookmarkLookup(commit.hash)
     if (ref !== null) {
       // TODO: select bookmark most recently used
-      this._activeBookmark = ref[0]!
+      this._activeBookmark = ref[0]! as ActiveBookmark
     }
 
     // set head to commit
@@ -254,7 +254,7 @@ export class VCS {
       return null
     }
     if (this._activeBookmark.name === oldName) {
-      this._activeBookmark = newBookmark
+      this._activeBookmark = newBookmark as ActiveBookmark
     }
     await this.storage.set('bookmarks', this.bookmarks)
     editorEvents.emit('vcs:bookmarkUpdate', undefined)
@@ -332,7 +332,7 @@ export class VCS {
         // commit uncomitted bookmark
         const ref: Bookmark = { ...this._activeBookmark, commit: commit.hash }
         this.bookmarks.add(ref)
-        this._activeBookmark = ref
+        this._activeBookmark = ref as ActiveBookmark
         await this.storage.set('bookmarks', this.bookmarks)
         editorEvents.emit('vcs:bookmarkUpdate', undefined)
       } else {

@@ -57,6 +57,8 @@ export class Importer {
 
   /** return a list of all the versions of a package from latest to oldest */
   static async versions(packageName: string) {
+    if (packageName === 'creagen' && CREAGEN_DEV_VERSION)
+      return [CREAGEN_DEV_VERSION.toString()]
     const url = `https://registry.npmjs.org/${packageName}`
 
     const response = await fetch(url)
