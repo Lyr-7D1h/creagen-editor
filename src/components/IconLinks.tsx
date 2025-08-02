@@ -14,10 +14,10 @@ export function MenuLinks() {
       <HtmlTooltip title="Help">
         <IconButton
           size="small"
-          sx={{ padding: 1 }}
+          sx={{ padding: '5px' }}
           onClick={() => creagenEditor.executeCommand('welcome')}
         >
-          <HelpOutlineIcon />
+          <HelpOutlineIcon style={{ fontSize: '1.3rem' }} />
         </IconButton>
       </HtmlTooltip>
       <HtmlTooltip title="Join our discord">
@@ -26,10 +26,10 @@ export function MenuLinks() {
           component="a"
           href="https://discord.gg/dJcSMZeU4M"
           target="_blank"
-          sx={{ padding: 1 }}
+          sx={{ padding: '5px' }}
           rel="noopener noreferrer"
         >
-          <DiscordIcon />
+          <DiscordIcon style={{ fontSize: '1.3rem' }} />
         </IconButton>
       </HtmlTooltip>
       <HtmlTooltip title="Its open-source!">
@@ -38,10 +38,10 @@ export function MenuLinks() {
           component="a"
           href="https://github.com/Lyr-7D1h/creagen-editor"
           target="_blank"
-          sx={{ padding: 1 }}
+          sx={{ padding: '5px' }}
           rel="noopener noreferrer"
         >
-          <GitHubIcon />
+          <GitHubIcon style={{ fontSize: '1.3rem' }} />
         </IconButton>
       </HtmlTooltip>
       <HtmlTooltip title="Report a bug">
@@ -50,10 +50,10 @@ export function MenuLinks() {
           component="a"
           href="https://github.com/Lyr-7D1h/creagen-editor/issues"
           target="_blank"
-          sx={{ padding: 1 }}
+          sx={{ padding: '5px' }}
           rel="noopener noreferrer"
         >
-          <BugReportIcon />
+          <BugReportIcon style={{ fontSize: '1.3rem' }} />
         </IconButton>
       </HtmlTooltip>
     </div>
