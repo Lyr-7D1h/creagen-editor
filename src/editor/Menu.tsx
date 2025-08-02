@@ -16,7 +16,7 @@ import { useLocalStorage } from '../storage/useLocalStorage'
 import AutoStoriesIcon from '@mui/icons-material/AutoStories'
 import { DependenciesTab } from './tabs/DependenciesTab'
 import { StorageBar } from './StorageBar'
-import { MenuLinks } from './MenuLinks'
+import { MenuLinks } from '../components/IconLinks'
 export type MenuProps = {
   width: number
 }

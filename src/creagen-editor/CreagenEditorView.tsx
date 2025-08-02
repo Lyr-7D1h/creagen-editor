@@ -5,6 +5,7 @@ import { CreagenEditor } from './CreagenEditor'
 import { Logs } from '../logs/Logs'
 import { Box, CircularProgress } from '@mui/material'
 import { WelcomeScreen } from './WelcomeScreen'
+import { ErrorBoundary } from './ErrorBoundary'
 
 const CreagenEditorContext = createContext<CreagenEditor>(null!)
 
@@ -69,8 +70,10 @@ export function CreagenEditorView() {
   return (
     // <ThemeProvider theme={theme}>
     <CreagenEditorContext.Provider value={creagenEditor}>
-      <WelcomeScreen />
-      <CreagenEditorViewContent />
+      <ErrorBoundary>
+        <WelcomeScreen />
+        <CreagenEditorViewContent />
+      </ErrorBoundary>
       <Logs />
     </CreagenEditorContext.Provider>
     // </ThemeProvider>
