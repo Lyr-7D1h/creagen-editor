@@ -29,7 +29,7 @@ export function ActiveBookmark({ onUpdate }: { onUpdate: () => void }) {
     }, 0)
   }
 
-  const uncommitted = typeof activeBookmark.commit === 'undefined' ? '*' : ''
+  const uncommitted = activeBookmark.commit === null ? '*' : ''
   return (
     <>
       <Typography

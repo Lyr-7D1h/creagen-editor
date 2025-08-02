@@ -120,8 +120,8 @@ export class CreagenEditor {
   async checkout(hash: CommitHash, updateHistory?: boolean): Promise<any>
   async checkout(bookmark: Bookmark, updateHistory?: boolean): Promise<any>
   async checkout(id: CommitHash | Bookmark, updateHistory?: boolean) {
-    const commitWithData = await this.vcs.checkout(id, updateHistory)
-    if (commitWithData === null) {
+    const checkout = await this.vcs.checkout(id, updateHistory)
+    if (checkout === null) {
       logger.warn(`'${isBookmark(id) ? id.name : id.toSub()}' not found in vcs`)
       return
     }
@@ -129,7 +129,7 @@ export class CreagenEditor {
     const {
       commit: { editorVersion, libraries },
       data,
-    } = commitWithData
+    } = checkout
     if (editorVersion.compare(CREAGEN_EDITOR_VERSION)) {
       logger.warn("Editor version doesn't match")
     }

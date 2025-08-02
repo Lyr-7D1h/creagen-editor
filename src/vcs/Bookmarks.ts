@@ -54,7 +54,10 @@ export class Bookmarks {
 
   update(name: string, commit: CommitHash) {
     const bookmark = this.getBookmark(name)
-    if (bookmark === null) return null
+    if (bookmark === null) {
+      logger.error(`Failed to update ${name}. Bookmark not found`)
+      return null
+    }
     this.lookup.delete(bookmark.commit.toBase64())
     const newBookmark = { ...bookmark, commit }
     this.add(newBookmark)
@@ -76,12 +79,14 @@ export class Bookmarks {
   }
 
   add(bookmark: Bookmark) {
+    if (this.getBookmark(bookmark.name) !== null) return null
     this.bookmarks.set(bookmark.name, bookmark)
     const currentBMs = this.lookup.get(bookmark.commit.toBase64())
     this.lookup.set(
       bookmark.commit.toBase64(),
       currentBMs ? [...currentBMs, bookmark] : [bookmark],
     )
+    return bookmark
   }
 
   remove(name: string) {
