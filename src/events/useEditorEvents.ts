@@ -145,7 +145,7 @@ export const useHistory = (size: number) => {
 }
 
 export const useWelcome = () => {
-  const [value, setValue] = useLocalStorage('welcome', false)
+  const [value, setValue] = useLocalStorage('welcome', true)
 
   useEffect(() => {
     return editorEvents.on('welcome', (value) => {

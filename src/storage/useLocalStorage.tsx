@@ -29,7 +29,7 @@ export function useLocalStorage<K extends LocalStorageOnlyKey>(
   const [storedValue, setStoredValue] = useState(() => {
     try {
       const item = localStorage.get(key)
-      if (item) return item
+      if (item !== null) return item
       return initialValue
     } catch (error) {
       logger.error(error)

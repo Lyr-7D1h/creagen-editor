@@ -4,6 +4,7 @@ import { Bookmarks } from '../vcs/Bookmarks'
 import { CustomKeybinding } from '../creagen-editor/keybindings'
 
 const LOCAL_STORAGE_KEYS: LocalStorageKey[] = [
+  'welcome',
   'menu-view',
   'menu-view-tab',
   'menu-settings-hidden',
