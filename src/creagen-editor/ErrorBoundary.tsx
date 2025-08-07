@@ -1,7 +1,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react'
 import { logger } from '../logs/logger'
 import { Box, Typography } from '@mui/material'
-import { MenuLinks } from '../components/IconLinks'
+import { MenuLinks } from '../shared/IconLinks'
 
 interface Props {
   children: ReactNode

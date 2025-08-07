@@ -138,12 +138,12 @@ export class Sandbox {
     this.iframe.contentWindow!.postMessage(message, '*')
   }
 
-  async svgExport(svgIndex: number): Promise<string | null> {
+  async svgExport(svgIndex: number, optimize: boolean): Promise<string | null> {
     return new Promise((resolve, reject) => {
       this.sendMessage({
         type: 'svgExportRequest',
         svgIndex,
-        optimize: true,
+        optimize,
       })
 
       const listener = (event: MessageEvent) => {

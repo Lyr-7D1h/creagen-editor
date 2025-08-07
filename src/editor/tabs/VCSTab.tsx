@@ -4,7 +4,7 @@ import { Typography, IconButton } from '@mui/material'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { useBookmarks } from '../../events/useEditorEvents'
 import { dateString } from '../../util'
-import { ColumnDef, Table } from '../../components/Table'
+import { ColumnDef, Table } from '../../shared/Table'
 import { Bookmark } from '../../vcs/Bookmarks'
 
 export function VCSTab() {

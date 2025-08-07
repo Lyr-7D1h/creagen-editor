@@ -5,15 +5,14 @@ import React, {
   useCallback,
   useReducer,
 } from 'react'
-import { IconButton, useTheme } from '@mui/material'
+import { useTheme } from '@mui/material'
 import { EditorView } from '../editor/EditorView'
 import { SandboxView } from '../sandbox/SandboxView'
 import { Menu } from '../editor/Menu'
-import { Export } from './Export'
 import { useSettings } from '../events/useEditorEvents'
 import { useLocalStorage } from '../storage/useLocalStorage'
-import { MenuBook, PlayCircleFilled } from '@mui/icons-material'
-import { isMobile, useCreagenEditor } from './CreagenEditorView'
+import { isMobile } from './CreagenEditorView'
+import { Actions } from './Actions'
 
 const RESIZER_WIDTH_PX = 3
 
@@ -78,11 +77,10 @@ export function CreagenEditorViewContent() {
   const [editorWidth, setEditorWidth] = useState<number>(window.innerWidth / 4)
   const [, forceUpdate] = useReducer((x) => x + 1, 0)
 
+  const actionsEnabled = useSettings('actions.enabled')
   let fullscreen = useSettings('editor.fullscreen')
   const hideAll = useSettings('hide_all')
   fullscreen = hideAll ? true : fullscreen
-
-  const exportEnabled = useSettings('export.enabled')
 
   const [resizing, setResizing] = useState<null | number>(null)
   const [menu, setMenu] = useLocalStorage('menu-view', false)
@@ -152,7 +150,7 @@ export function CreagenEditorViewContent() {
     return (
       <>
         <Menu width={window.innerWidth} />
-        <MobileButtons toggleMenu={() => setMenu(!menu)} />
+        {actionsEnabled && <Actions toggleMenu={() => setMenu(!menu)} />}
       </>
     )
   }
@@ -178,14 +176,6 @@ export function CreagenEditorViewContent() {
             onResize={() => handleResize(1)}
           />
         </>
-      ) : (
-        ''
-      )}
-
-      {exportEnabled ? (
-        <div style={{ position: 'absolute', top: '10px', right: '10px' }}>
-          <Export />
-        </div>
       ) : (
         ''
       )}
@@ -222,43 +212,7 @@ export function CreagenEditorViewContent() {
             : window.innerWidth - editorWidth) + 'px'
         }
       />
-      {isMobile() && <MobileButtons toggleMenu={() => setMenu(!menu)} />}
+      {actionsEnabled && <Actions toggleMenu={() => setMenu(!menu)} />}
     </div>
-  )
-}
-
-function MobileButtons({ toggleMenu }: { toggleMenu: () => void }) {
-  const creagenEditor = useCreagenEditor()
-  return (
-    <>
-      <IconButton
-        size="large"
-        color="primary"
-        onClick={toggleMenu}
-        style={{
-          position: 'absolute',
-          bottom: 80,
-          right: 0,
-          cursor: 'pointer',
-          zIndex: 1002,
-        }}
-      >
-        <MenuBook style={{ fontSize: 58 }} />
-      </IconButton>
-      <IconButton
-        size="large"
-        color="primary"
-        onClick={() => creagenEditor.executeCommand('editor.run')}
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          right: 0,
-          cursor: 'pointer',
-          zIndex: 1002,
-        }}
-      >
-        <PlayCircleFilled style={{ fontSize: 60 }} />
-      </IconButton>
-    </>
   )
 }

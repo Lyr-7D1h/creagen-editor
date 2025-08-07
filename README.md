@@ -1,6 +1,6 @@
 # Creagen Editor
 
-A creative coding web editor with focus on being minimal, customizable, fast and powerful. Its goal is to provide easy accessibility to make creative coding projects. 
+A creative coding web editor with focus on being locally available, minimal, customizable, fast and powerful. Its goal is to provide easy accessibility to make creative coding projects. 
 
 Features:
 
@@ -25,8 +25,25 @@ npm start
 
 ## Roadmap
 
-- Shareable links without storage
-  - Option to put the code in the url instead of the id
+- Add sketch params
+- Use hash/active bookmark in title
+- Keep commit history buffer when changing commits
+- Version Control Software
+  - Order bookmarks by recently used
+  - View entire history of sketch
+  - Show graph of all commits and bookmarks ever made
+  - Change id to keep a unique id even though commits might change content
+  - Show diffs between commits
+- Moveable and rescalable windows
+- Shareable links
+    - Url minifier for code urls
+- Actions
+    - For shareable link
+    - Export
+    - Run
+- Autorun sketches
+    - containerize iframe 
+    - prevent iframe from hogging all resources
 - Export to html with js inlined
 - Add Hydra support https://github.com/hydra-synth/hydra-synth?tab=readme-ov-file
 - use importmap to map module names to urls https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap
@@ -36,14 +53,12 @@ npm start
   - Fastcdc for file chunking https://www.usenix.org/system/files/conference/atc16/atc16-paper-xia.pdf
   - git pack files
   - Cloudflare r2
-- Version Control Software
-  - Order bookmarks by recently used
-  - View entire history of sketch
-  - Show graph of all commits and bookmarks ever made
 - Import code using ID `import('a123487e...')
 - Crop, compress and convert dropped images to base64 string
 - Html meta tags
-- use hash in title
+
+## Known bugs
+- Old bookmarks not going away: When renaming bookmark update history
 
 ## Resources
 

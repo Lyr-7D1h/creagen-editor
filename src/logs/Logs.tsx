@@ -145,7 +145,7 @@ export function Logs() {
         position: 'absolute',
         bottom: 16,
         right: 16,
-        zIndex: 2000,
+        zIndex: 1003,
         maxWidth: '100%',
         width: 'auto',
         maxHeight: '100vh',

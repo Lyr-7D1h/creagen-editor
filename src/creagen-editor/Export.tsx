@@ -5,7 +5,6 @@ import { Download, ExpandMore } from '@mui/icons-material'
 import {
   CircularProgress,
   IconButton,
-  Tooltip,
   useTheme,
   Collapse,
   List,
@@ -20,10 +19,13 @@ import {
   useActiveBookmark,
   useEditorEvent,
   useHead,
+  useSettings,
 } from '../events/useEditorEvents'
+import { HtmlTooltip } from '../editor/HtmlTooltip'
 
-export function Export() {
+export function Export({ color, size }: { color: string; size: string }) {
   const theme = useTheme()
+  const optimizeExport = useSettings('actions.export_optimize')
   const analysisResult = useEditorEvent('sandbox:analysis-complete')
   const creagenEditor = useCreagenEditor()
   const id = useHead()
@@ -36,7 +38,10 @@ export function Export() {
   async function download() {
     if (downloading) return
     setDownloading(true)
-    const svgString = await creagenEditor.sandbox.svgExport(selectedIndex)
+    const svgString = await creagenEditor.sandbox.svgExport(
+      selectedIndex,
+      optimizeExport,
+    )
     if (svgString === null) {
       logger.error('No svg found')
       setDownloading(false)
@@ -55,14 +60,12 @@ export function Export() {
   const hasMultipleSvgs = analysisResult.result.svgs.length > 1
 
   return (
-    <Box sx={{ position: 'relative' }}>
-      <Tooltip title="Download svg">
+    <Box sx={{ position: 'relative', fontSize: size }}>
+      <HtmlTooltip title="Download svg">
         <IconButton
           sx={{
-            color: theme.palette.grey[400],
-            zIndex: 99999999,
-            padding: 0,
-            margin: 0,
+            color,
+            paddingRight: 0,
             '&:hover': {
               color: 'inherit',
             },
@@ -70,19 +73,22 @@ export function Export() {
           onClick={() => download()}
           size="small"
         >
-          {downloading ? <CircularProgress size="20px" /> : <Download />}
+          {downloading ? (
+            <CircularProgress size={size} />
+          ) : (
+            <Download style={{ fontSize: size }} />
+          )}
         </IconButton>
-      </Tooltip>
+      </HtmlTooltip>
 
       {hasMultipleSvgs && (
         <>
-          <Tooltip title="Select SVG">
+          <HtmlTooltip title="Select SVG">
             <IconButton
               sx={{
                 color: theme.palette.grey[400],
-                zIndex: 99999999,
                 padding: 0,
-                margin: 0,
+                marginTop: '5px',
                 ml: 0.5,
                 transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
                 transition: 'transform 0.2s',
@@ -93,9 +99,9 @@ export function Export() {
               onClick={() => setExpanded(!expanded)}
               size="small"
             >
-              <ExpandMore />
+              <ExpandMore style={{ fontSize: size }} />
             </IconButton>
-          </Tooltip>
+          </HtmlTooltip>
 
           <Collapse in={expanded}>
             <List

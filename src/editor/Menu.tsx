@@ -16,7 +16,7 @@ import { useLocalStorage } from '../storage/useLocalStorage'
 import AutoStoriesIcon from '@mui/icons-material/AutoStories'
 import { DependenciesTab } from './tabs/DependenciesTab'
 import { StorageBar } from './StorageBar'
-import { MenuLinks } from '../components/IconLinks'
+import { MenuLinks } from '../shared/IconLinks'
 export type MenuProps = {
   width: number
 }
@@ -70,9 +70,10 @@ export function Menu({ width }: MenuProps) {
     <Box
       sx={{
         width: width + 'px',
-        height: '100%',
+        height: '100vh',
         display: 'flex',
         flexDirection: 'column',
+        overflow: 'scroll',
       }}
     >
       <Box

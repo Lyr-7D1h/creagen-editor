@@ -91,18 +91,23 @@ const defaultConfig = {
     value: false,
   },
 
-  export: {
+  actions: {
     type: 'folder',
-    title: 'Export',
+    title: 'Actions',
   },
-  'export.enabled': {
+  'actions.enabled': {
     type: 'param',
-    label: 'Enabled',
+    label: 'Enable action buttons',
     value: true,
   },
-  'export.optimize': {
+  'actions.export_enabled': {
     type: 'param',
-    label: 'Optimize',
+    label: 'Enable svg export action',
+    value: true,
+  },
+  'actions.export_optimize': {
+    type: 'param',
+    label: 'Optimize svg export',
     value: true,
   },
 

@@ -5,7 +5,7 @@ import { COMMANDS, Command } from '../../creagen-editor/commands'
 import { ActiveKeybinding, KeyInfo } from '../../creagen-editor/keybindings'
 import { KeyCaptureInput } from './KeyCaptureInput'
 import { Chip, IconButton } from '@mui/material'
-import { ColumnDef, Table } from '../../components/Table'
+import { ColumnDef, Table } from '../../shared/Table'
 
 const formatKey = (key: string): string => {
   return key
