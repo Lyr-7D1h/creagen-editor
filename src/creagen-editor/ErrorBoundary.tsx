@@ -24,7 +24,11 @@ class ErrorBoundaryComponent extends Component<Props, State> {
   }
 
   override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    logger.error(error, errorInfo.componentStack, React.captureOwnerStack())
+    logger.error(
+      error,
+      errorInfo.componentStack,
+      React.captureOwnerStack && React.captureOwnerStack(),
+    )
     this.setState({ errorInfo })
   }
 
