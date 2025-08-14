@@ -146,10 +146,23 @@ export default \`${output}\``,
   }
 }
 
+function commitHash() {
+  const head = fs.readFileSync('./.git/FETCH_HEAD', 'utf-8')
+  for (const line of head.split('\n')) {
+    const [commit, _, __, branch] = line.split(/ |\t+/)
+    if (branch && branch.replaceAll("'", '') === 'master') {
+      return commit
+    }
+  }
+  console.warn('No commit hash found')
+  return null
+}
+
 export default defineConfig(async ({ command, mode }) => {
   process.env = {
     ...process.env,
     ...loadEnv(mode, process.cwd()),
+    VITE_CREAGEN_EDITOR_COMMIT_HASH: commitHash(),
     VITE_CREAGEN_EDITOR_VERSION: process.env.npm_package_version,
     VITE_DEBUG: mode === 'dev',
     // if dev, get version from local creagen package.json
