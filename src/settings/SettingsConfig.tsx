@@ -110,24 +110,6 @@ const defaultConfig = {
     label: 'Optimize svg export',
     value: true,
   },
-
-  debug: {
-    type: 'folder',
-    title: 'Debug',
-    hidden: MODE !== 'dev',
-  },
-  'debug.mode': {
-    type: 'param',
-    label: 'Mode',
-    value: `${MODE}`,
-    readonly: true,
-  },
-  'debug.editor': {
-    type: 'param',
-    label: 'Editor Version',
-    value: `${CREAGEN_EDITOR_VERSION}`,
-    readonly: true,
-  },
 }
 
 type Generic<T> = {
