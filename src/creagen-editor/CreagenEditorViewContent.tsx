@@ -44,7 +44,7 @@ function Resizer({
               : `2px solid ${theme.palette.divider}`,
           top: 0,
           left: left + 'px',
-          zIndex: 1001,
+          zIndex: 1002,
         }}
       />
       {/* mouse capturing box */}
@@ -54,7 +54,7 @@ function Resizer({
             top: 0,
             // resize until reaching other full width
             left: Math.min(left - 400, window.innerWidth - 810) + 'px',
-            zIndex: 1001,
+            zIndex: 1002,
             // layer above other window that might capture mouse events
             width: '800px',
             height: '100%',

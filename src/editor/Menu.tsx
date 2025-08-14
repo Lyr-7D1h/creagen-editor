@@ -96,8 +96,9 @@ export function Menu({ width }: MenuProps) {
           <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
             <Typography sx={{ fontWeight: 'bold' }}>Creagen Editor</Typography>
             <Typography variant="caption" color="text.secondary">
-              {CREAGEN_EDITOR_VERSION.toString()} (
-              {VITE_CREAGEN_EDITOR_COMMIT_HASH.substring(0, 7)})
+              {CREAGEN_EDITOR_VERSION.toString()}{' '}
+              {VITE_CREAGEN_EDITOR_COMMIT_HASH &&
+                `(${VITE_CREAGEN_EDITOR_COMMIT_HASH.substring(0, 7)})`}
             </Typography>
           </Box>
           <MenuLinks />
