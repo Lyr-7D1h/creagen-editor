@@ -1,4 +1,3 @@
-import { MODE, CREAGEN_EDITOR_VERSION } from '../env'
 import React from 'react'
 import { z } from 'zod'
 import { semverSchema } from '../creagen-editor/schemaUtils'

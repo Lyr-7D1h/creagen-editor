@@ -6,6 +6,7 @@ import { ChevronRight } from '@mui/icons-material'
 import { useSettings } from '../events/useEditorEvents'
 import { ActiveBookmark } from './ActiveBookmark'
 import { HtmlTooltip } from './HtmlTooltip'
+import { Actions } from '../creagen-editor/Actions'
 
 export interface EditorProps {
   left?: string
@@ -13,6 +14,7 @@ export interface EditorProps {
   height?: string
   menu: boolean
   onMenuOpen: () => void
+  toggleMenu: () => void
 }
 
 export function EditorView({
@@ -21,6 +23,7 @@ export function EditorView({
   height,
   menu,
   onMenuOpen,
+  toggleMenu,
 }: EditorProps) {
   const showActiveBookmark = useSettings('editor.show_active_bookmark')
   const creagenEditor = useCreagenEditor()
@@ -67,6 +70,7 @@ export function EditorView({
         position: 'absolute',
         left,
         zIndex: 1001,
+        minHeight: '100svh',
         height,
         width,
         display: hideAll ? 'none' : 'flex',
@@ -124,6 +128,11 @@ export function EditorView({
       <div style={{ flex: 1, overflow: 'hidden' }} ref={editorContentRef}></div>
 
       {vimEnabled && <div id="vim-status" style={{ overflow: 'auto' }} />}
+
+      <Actions
+        toggleMenu={toggleMenu}
+        style={{ position: 'absolute', bottom: 10, right: 10 }}
+      />
     </div>
   )
 }

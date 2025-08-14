@@ -77,7 +77,6 @@ export function CreagenEditorViewContent() {
   const [editorWidth, setEditorWidth] = useState<number>(window.innerWidth / 4)
   const [, forceUpdate] = useReducer((x) => x + 1, 0)
 
-  const actionsEnabled = useSettings('actions.enabled')
   let fullscreen = useSettings('editor.fullscreen')
   const hideAll = useSettings('hide_all')
   fullscreen = hideAll ? true : fullscreen
@@ -150,7 +149,10 @@ export function CreagenEditorViewContent() {
     return (
       <>
         <Menu width={window.innerWidth} />
-        {actionsEnabled && <Actions toggleMenu={() => setMenu(!menu)} />}
+        <Actions
+          style={{ position: 'fixed', bottom: 10, right: 10 }}
+          toggleMenu={() => setMenu(!menu)}
+        />
       </>
     )
   }
@@ -181,6 +183,7 @@ export function CreagenEditorViewContent() {
       )}
 
       <EditorView
+        toggleMenu={() => setMenu(!menu)}
         left={(menu ? menuWidth + RESIZER_WIDTH_PX : 0) + 'px'}
         width={
           (fullscreen
@@ -212,7 +215,6 @@ export function CreagenEditorViewContent() {
             : window.innerWidth - editorWidth) + 'px'
         }
       />
-      {actionsEnabled && <Actions toggleMenu={() => setMenu(!menu)} />}
     </div>
   )
 }

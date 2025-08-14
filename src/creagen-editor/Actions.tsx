@@ -6,13 +6,21 @@ import { IconButton, useTheme } from '@mui/material'
 import { useSettings } from '../events/useEditorEvents'
 import { HtmlTooltip } from '../editor/HtmlTooltip'
 
-export function Actions({ toggleMenu }: { toggleMenu?: () => void }) {
+export function Actions({
+  toggleMenu,
+  style = {},
+}: {
+  toggleMenu: () => void
+  style?: React.CSSProperties
+}) {
   const theme = useTheme()
   const creagenEditor = useCreagenEditor()
+  const actionsEnabled = useSettings('actions.enabled')
   const exportEnabled = useSettings('actions.export_enabled')
 
-  console.log(exportEnabled)
-  const size = isMobile() ? '60px' : '40px'
+  if (actionsEnabled === false) return ''
+
+  const size = isMobile() ? '60px' : '50px'
   const buttons = []
   if (exportEnabled)
     buttons.push(
@@ -48,20 +56,16 @@ export function Actions({ toggleMenu }: { toggleMenu?: () => void }) {
     </HtmlTooltip>,
   )
 
-  const style: React.CSSProperties = {
-    position: 'fixed',
-    top: '10px',
-    right: '10px',
-    display: 'flex',
-    flexDirection: 'row',
-    zIndex: 1002,
-  }
-
-  if (isMobile()) {
-    style.flexDirection = 'column'
-    style.top = undefined
-    style.bottom = '10px'
-  }
-
-  return <div style={style}>{buttons}</div>
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        zIndex: 1003,
+        ...style,
+      }}
+    >
+      {buttons}
+    </div>
+  )
 }
