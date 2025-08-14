@@ -1,4 +1,16 @@
-import { Box, SxProps, Theme, Typography } from '@mui/material'
+import {
+  Box,
+  Paper,
+  SxProps,
+  Table as MuiTable,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Theme,
+  Typography,
+} from '@mui/material'
 import React, { useCallback, useLayoutEffect, useRef, useState } from 'react'
 
 export interface ColumnDef<T> {
@@ -31,14 +43,12 @@ export function Table<T extends object>({
   const resizingColumnIndex = useRef<number | null>(null)
   const startX = useRef(0)
   const startWidth = useRef(0)
-  const tableRef = useRef<HTMLDivElement>(null)
+  const tableRef = useRef<HTMLTableElement>(null)
 
   useLayoutEffect(() => {
     if (tableRef.current) {
-      const totalWidth = tableRef.current.clientWidth
-      const gap = 16 // theme.spacing(2)
-      const padding = 32 // 16px on each side
-      const marginLeft = 16 // theme.spacing(2)
+      const totalWidth = tableRef.current.parentElement?.clientWidth ?? 0
+      if (totalWidth === 0) return
 
       const columnsWithInitialWidth = columns.filter((c) => c.width)
       const fixedWidth = columnsWithInitialWidth.reduce(
@@ -46,20 +56,18 @@ export function Table<T extends object>({
           sum +
           (typeof c.width === 'number'
             ? c.width
-            : parseInt(c.width ?? '0', 10)),
+            : parseInt(c.width?.toString() ?? '0', 10)),
         0,
       )
       const flexColumns = columns.filter((c) => !c.width)
-      const totalGapWidth = (columns.length - 1) * gap
 
       if (flexColumns.length > 0) {
-        const availableWidth =
-          totalWidth - fixedWidth - totalGapWidth - padding - marginLeft
+        const availableWidth = totalWidth - fixedWidth
         const flexWidth = Math.max(50, availableWidth / flexColumns.length)
         setColumnWidths(columns.map((c) => c.width ?? flexWidth))
       }
     }
-  }, [columns])
+  }, [columns, data]) // Rerun when data changes as well to account for scrollbar
 
   const handleMouseDown = (
     index: number,
@@ -69,11 +77,8 @@ export function Table<T extends object>({
     e.stopPropagation()
     resizingColumnIndex.current = index
     startX.current = e.clientX
-    const currentWidth = columnWidths[index]
-    startWidth.current =
-      typeof currentWidth === 'number'
-        ? currentWidth
-        : parseInt(currentWidth ?? '150', 10) || 0
+    const th = tableRef.current?.querySelectorAll('th')[index]
+    startWidth.current = th?.offsetWidth ?? 0
     window.addEventListener('mousemove', handleMouseMove)
     window.addEventListener('mouseup', handleMouseUp)
   }
@@ -96,118 +101,110 @@ export function Table<T extends object>({
   }, [handleMouseMove])
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column' }} ref={tableRef}>
-      {/* Header */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 2,
-          padding: '4px 16px',
-          borderBottom: 1,
-          borderColor: 'divider',
-          marginLeft: 2,
-        }}
-      >
-        {columns.map((col, index) => (
-          <Box
-            key={index}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              width: columnWidths[index],
-              flex: 'none',
-              position: 'relative',
-            }}
-          >
-            <Typography
-              variant="body2"
-              sx={{
-                fontWeight: 'bold',
-                ...col.sx,
-                flexGrow: 1,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {col.header}
-            </Typography>
-            {col.resizable !== false && index < columns.length - 1 && (
-              <Box
-                onMouseDown={(e) => handleMouseDown(index, e)}
-                sx={{
-                  position: 'absolute',
-                  right: '-2px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  width: '4px',
-                  height: '60%',
-                  cursor: 'col-resize',
-                  backgroundColor: 'divider',
-                  '&:hover': {
-                    backgroundColor: 'primary.main',
-                  },
-                  zIndex: 1,
-                }}
-              />
-            )}
-          </Box>
-        ))}
-      </Box>
-      {/* Rows */}
-      {data.map((row) => (
-        <Box
-          key={getRowKey(row)}
-          onClick={() => onRowClick?.(row)}
-          sx={{
-            marginLeft: 2,
-            padding: '4px 16px',
-            cursor: onRowClick ? 'pointer' : 'default',
-            borderRadius: 1,
-            '&:hover': {
-              backgroundColor: onRowClick ? 'action.hover' : 'transparent',
-            },
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: 2,
-            borderBottom: 1,
-            borderColor: 'divider',
-            ...getRowSx?.(row),
-          }}
-        >
-          {columns.map((col, index) => {
-            const cellContent = col.cell
-              ? col.cell(row)
-              : col.accessorKey && row[col.accessorKey]
-                ? (row[col.accessorKey] as React.ReactNode)
-                : null
-
-            return (
-              <Box
+    <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 200px)' }}>
+      <MuiTable stickyHeader ref={tableRef} sx={{ tableLayout: 'auto' }}>
+        <TableHead>
+          <TableRow>
+            {columns.map((col, index) => (
+              <TableCell
                 key={index}
                 sx={{
                   width: columnWidths[index],
-                  flex: 'none',
+                  fontWeight: 'bold',
+                  position: 'relative',
                   overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
                   ...col.sx,
                 }}
               >
-                {typeof cellContent === 'string' ? (
-                  <Typography component="span" variant="body2">
-                    {cellContent}
-                  </Typography>
-                ) : (
-                  cellContent
+                <Box
+                  sx={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {col.header}
+                </Box>
+                {col.resizable !== false && (
+                  <Box
+                    onMouseDown={(e) => handleMouseDown(index, e)}
+                    sx={{
+                      position: 'absolute',
+                      right: 0,
+                      top: 0,
+                      bottom: 0,
+                      width: '5px',
+                      cursor: 'col-resize',
+                      zIndex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      '&:hover::after': {
+                        backgroundColor: 'primary.main',
+                      },
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: '1px',
+                        height: '50%',
+                        backgroundColor: 'divider',
+                        transition: 'background-color 0.2s',
+                      }}
+                      className="resize-handle"
+                    />
+                  </Box>
                 )}
-              </Box>
-            )
-          })}
-        </Box>
-      ))}
-    </Box>
+              </TableCell>
+            ))}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {data.map((row) => (
+            <TableRow
+              key={getRowKey(row)}
+              onClick={() => onRowClick?.(row)}
+              sx={{
+                cursor: onRowClick ? 'pointer' : 'default',
+                '&:hover': {
+                  backgroundColor: onRowClick ? 'action.hover' : 'transparent',
+                },
+                '&:last-child td, &:last-child th': { border: 0 },
+                ...getRowSx?.(row),
+              }}
+            >
+              {columns.map((col, index) => {
+                const cellContent = col.cell
+                  ? col.cell(row)
+                  : col.accessorKey && row[col.accessorKey]
+                    ? (row[col.accessorKey] as React.ReactNode)
+                    : null
+
+                return (
+                  <TableCell
+                    key={index}
+                    sx={{
+                      width: columnWidths[index],
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      ...col.sx,
+                    }}
+                  >
+                    {typeof cellContent === 'string' ? (
+                      <Typography component="span" variant="body2">
+                        {cellContent}
+                      </Typography>
+                    ) : (
+                      cellContent
+                    )}
+                  </TableCell>
+                )
+              })}
+            </TableRow>
+          ))}
+        </TableBody>
+      </MuiTable>
+    </TableContainer>
   )
 }

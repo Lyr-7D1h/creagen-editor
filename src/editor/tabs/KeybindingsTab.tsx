@@ -104,7 +104,7 @@ export function KeybindingsTab() {
                 {formatKey(keybinding.key)}
               </code>
             ) : (
-              <i style={{ cursor: 'pointer' }}>Unbound</i>
+              <b style={{ cursor: 'pointer' }}>Unbound</b>
             )}
             {keybinding?.custom && (
               <IconButton
