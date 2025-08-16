@@ -131,7 +131,7 @@ export function EditorView({
 
       <Actions
         toggleMenu={toggleMenu}
-        style={{ position: 'absolute', bottom: 10, right: 10 }}
+        style={{ position: 'absolute', bottom: 6, right: 14 }}
       />
     </div>
   )

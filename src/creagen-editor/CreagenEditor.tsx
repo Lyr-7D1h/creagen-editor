@@ -222,6 +222,7 @@ export class CreagenEditor {
       }
 
       let code = this.editor.getValue()
+      if (code.length === 0) return
 
       // store code and change url
       this.vcs.commit(code, this.settings.values['general.libraries'])

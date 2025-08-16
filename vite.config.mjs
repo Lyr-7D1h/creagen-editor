@@ -47,7 +47,7 @@ function watchExternal() {
   return {
     name: 'watch-external',
     async buildStart() {
-      const files = await fg(['src/**/*', `${CREAGEN_DEV_PATH}/src/**/*`])
+      const files = await fg([`${CREAGEN_DEV_PATH}/src/**/*`])
       for (const file of files) {
         this.addWatchFile(file)
       }
@@ -158,7 +158,7 @@ function commitHash() {
   return null
 }
 
-export default defineConfig(async ({ command, mode }) => {
+export default defineConfig(async ({ mode }) => {
   process.env = {
     ...process.env,
     ...loadEnv(mode, process.cwd()),
@@ -183,10 +183,16 @@ export default defineConfig(async ({ command, mode }) => {
         },
       },
     },
+    server: {
+      watch: {
+        usePolling: true,
+      },
+    },
     plugins: [
       ...(CREAGEN_DEV_PATH ? [localLibraryOnHttp(mode), watchExternal()] : []),
       sandboxJs(mode),
       react(),
+      // Add analytics
       createHtmlPlugin({
         minify: mode === 'production',
         inject: {

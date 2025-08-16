@@ -1,4 +1,4 @@
-import { Alert, AlertColor, Stack, CircularProgress } from '@mui/material'
+import { Alert, AlertColor, Stack, LinearProgress } from '@mui/material'
 import React, { useEffect, useState, useCallback, useMemo } from 'react'
 import { AUTOHIDE_DURATION_DEFAULT, Message, Severity, logger } from './logger'
 
@@ -17,7 +17,7 @@ function severityToAlertColor(severity: Severity): AlertColor {
   }
 }
 
-const LogAlert = React.memo(
+const MessageChip = React.memo(
   ({
     log,
     progress,
@@ -35,27 +35,34 @@ const LogAlert = React.memo(
     return (
       <Alert
         severity={severityToAlertColor(severity)}
-        sx={{ minWidth: '250px' }}
+        sx={{
+          minWidth: '250px',
+          position: 'relative',
+          overflow: 'hidden',
+          py: 0.25,
+        }}
         onClose={handleClose}
-        icon={
-          log.autoHideDuration !== null && (
-            <CircularProgress
-              variant="determinate"
-              value={progress}
-              size={20}
-              thickness={5}
-              sx={{ mr: 1, color: 'rgba(0, 0, 0, 0.3)' }}
-            />
-          )
-        }
       >
+        {log.autoHideDuration !== null && (
+          <LinearProgress
+            variant="determinate"
+            value={100 - progress}
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '4px',
+            }}
+          />
+        )}
         {log.message}
       </Alert>
     )
   },
 )
 
-export function Logs() {
+export function Messages() {
   const [logs, setLogs] = useState<Message[]>(logger.getMessages())
   const [timeLeft, setTimeLeft] = useState<Record<string, number>>({})
   const updateInterval = 200
@@ -72,7 +79,7 @@ export function Logs() {
             typeof updated[id] === 'undefined' &&
             msg.autoHideDuration !== null
           ) {
-            updated[id] = msg.autoHideDuration ?? AUTOHIDE_DURATION_DEFAULT
+            updated[id] = 100
           }
         })
         return updated
@@ -126,7 +133,7 @@ export function Logs() {
         log.autoHideDuration !== null ? 100 - (timeLeft[log.id] || 0) : 0
 
       return (
-        <LogAlert
+        <MessageChip
           key={log.id}
           log={log}
           progress={progress}
@@ -143,8 +150,8 @@ export function Logs() {
       spacing={1}
       sx={{
         position: 'absolute',
-        bottom: 16,
-        right: 16,
+        top: '0',
+        left: '50%',
         zIndex: 1003,
         maxWidth: '100%',
         width: 'auto',

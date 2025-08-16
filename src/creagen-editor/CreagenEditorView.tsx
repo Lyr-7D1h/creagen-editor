@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react'
 import { CreagenEditorViewContent } from './CreagenEditorViewContent'
 import { logger } from '../logs/logger'
 import { CreagenEditor } from './CreagenEditor'
-import { Logs } from '../logs/Logs'
+import { Messages } from '../logs/Messages'
 import { Box, CircularProgress } from '@mui/material'
 import { WelcomeScreen } from './WelcomeScreen'
 import { ErrorBoundary } from './ErrorBoundary'
@@ -62,7 +62,7 @@ export function CreagenEditorView() {
         }}
       >
         <CircularProgress />
-        <Logs />
+        <Messages />
       </Box>
     )
   }
@@ -74,7 +74,7 @@ export function CreagenEditorView() {
         <WelcomeScreen />
         <CreagenEditorViewContent />
       </ErrorBoundary>
-      <Logs />
+      <Messages />
     </CreagenEditorContext.Provider>
     // </ThemeProvider>
   )
