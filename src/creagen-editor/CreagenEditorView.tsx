@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import {
-  CreagenEditorViewContent,
+  CreagenEditorViewSplit,
   CreagenEditorViewContentMobile,
-} from './CreagenEditorViewContent'
+} from './CreagenEditorViewSplit'
 import { logger } from '../logs/logger'
 import { CreagenEditor } from './CreagenEditor'
 import { Messages } from '../logs/Messages'
@@ -79,7 +79,7 @@ export function CreagenEditorView() {
         {mobile ? (
           <CreagenEditorViewContentMobile />
         ) : (
-          <CreagenEditorViewContent />
+          <CreagenEditorViewSplit />
         )}
       </ErrorBoundary>
       <Messages />

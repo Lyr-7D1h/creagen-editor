@@ -6,7 +6,7 @@ import { useSettings } from '../events/useEditorEvents'
 import { useLocalStorage } from '../storage/useLocalStorage'
 import { Actions } from './Actions'
 import { Resizer } from './Resizer'
-import { isMobile, useCreagenEditor } from './CreagenEditorView'
+import { useCreagenEditor } from './CreagenEditorView'
 
 const MIN_WINDOW_SIZE = 200
 
@@ -17,7 +17,7 @@ const DEFAULT_EDITOR_WIDTH = Math.round(window.innerWidth / 3)
  *
  * each child must have a width prop
  */
-export function CreagenEditorViewContent() {
+export function CreagenEditorViewSplit() {
   const creagenEditor = useCreagenEditor()
   const resizer0 = useRef<HTMLDivElement>(null)
   const resizer1 = useRef<HTMLDivElement>(null)
