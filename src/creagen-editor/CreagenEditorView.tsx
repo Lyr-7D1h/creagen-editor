@@ -1,5 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { CreagenEditorViewContent } from './CreagenEditorViewContent'
+import {
+  CreagenEditorViewContent,
+  CreagenEditorViewContentMobile,
+} from './CreagenEditorViewContent'
 import { logger } from '../logs/logger'
 import { CreagenEditor } from './CreagenEditor'
 import { Messages } from '../logs/Messages'
@@ -28,6 +31,8 @@ export const useCreagenEditor = (): CreagenEditor => {
 export function CreagenEditorView() {
   const [creagenEditor, setCreagenEditor] = useState<CreagenEditor | null>(null)
 
+  const [mobile, setMobile] = useState(isMobile())
+
   useEffect(() => {
     CreagenEditor.create()
       .then((creagenEditor) => {
@@ -36,17 +41,16 @@ export function CreagenEditorView() {
       .catch((e) => logger.error(e))
   }, [])
 
+  // on window resize check to enable mobile version or not
   useEffect(() => {
     if (creagenEditor === null) return
     const checkScreenSize = () => {
-      if (
-        creagenEditor.settings.get('editor.fullscreen') === false &&
-        isMobile()
-      ) {
-        creagenEditor.settings.set('editor.fullscreen', true)
+      if (isMobile()) {
+        setMobile(true)
+      } else {
+        setMobile(false)
       }
     }
-    checkScreenSize()
     window.addEventListener('resize', checkScreenSize)
     return () => window.removeEventListener('resize', checkScreenSize)
   }, [creagenEditor])
@@ -72,7 +76,11 @@ export function CreagenEditorView() {
     <CreagenEditorContext.Provider value={creagenEditor}>
       <ErrorBoundary>
         <WelcomeScreen />
-        <CreagenEditorViewContent />
+        {mobile ? (
+          <CreagenEditorViewContentMobile />
+        ) : (
+          <CreagenEditorViewContent />
+        )}
       </ErrorBoundary>
       <Messages />
     </CreagenEditorContext.Provider>

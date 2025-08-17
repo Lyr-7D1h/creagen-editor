@@ -96,7 +96,6 @@ export class Settings {
 
   // Set a value
   set(key: ParamKey, value: any): void {
-    logger.trace(`setting ${key} to ${JSON.stringify(value)}`)
     const entry = this.config[key]
     if (typeof entry === 'undefined') throw Error(`Key ${key} does not exist`)
     if (entry.type !== 'param')
@@ -108,6 +107,8 @@ export class Settings {
         return
       }
     }
+    if (entry.value === value) return
+    logger.trace(`setting ${key} to ${JSON.stringify(value)}`)
     const oldValue = entry.value
     entry.value = value
     this.saveAndNotify(key, value, oldValue)

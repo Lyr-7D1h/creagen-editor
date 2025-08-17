@@ -15,10 +15,7 @@ export function Actions({
 }) {
   const theme = useTheme()
   const creagenEditor = useCreagenEditor()
-  const actionsEnabled = useSettings('actions.enabled')
   const exportEnabled = useSettings('actions.export_enabled')
-
-  if (actionsEnabled === false) return ''
 
   const size = isMobile() ? '60px' : '50px'
   const buttons = []

@@ -19,7 +19,8 @@ import { StorageBar } from './StorageBar'
 import { MenuLinks } from '../shared/IconLinks'
 import { CREAGEN_EDITOR_VERSION, VITE_CREAGEN_EDITOR_COMMIT_HASH } from '../env'
 export type MenuProps = {
-  width: number
+  ref?: React.RefObject<unknown>
+  width?: string
 }
 
 const tabs = {
@@ -48,8 +49,7 @@ export type TabKey = keyof typeof tabs
 
 const defaultKey = Object.keys(tabs)[0]! as TabKey
 
-const MENU_WIDTH_SMALL = 490
-export function Menu({ width }: MenuProps) {
+export function Menu({ ref, width }: MenuProps) {
   const creagenEditor = useCreagenEditor()
   const [currentView, setCurrentView] = useLocalStorage(
     'menu-view-tab',
@@ -69,9 +69,10 @@ export function Menu({ width }: MenuProps) {
 
   return (
     <Box
+      ref={ref}
       sx={{
-        width: width + 'px',
-        height: '100vh',
+        width: width,
+        height: '100%',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'scroll',
@@ -121,11 +122,11 @@ export function Menu({ width }: MenuProps) {
               sx={{
                 textTransform: 'none',
                 fontWeight: currentView === key ? 600 : 400,
-                minWidth: width < MENU_WIDTH_SMALL ? 'auto' : undefined, // Show only icons on narrow screens
-                px: width < MENU_WIDTH_SMALL ? 1 : undefined,
+                // minWidth: width < MENU_WIDTH_SMALL ? 'auto' : undefined, // Show only icons on narrow screens
+                // px: width < MENU_WIDTH_SMALL ? 1 : undefined,
               }}
             >
-              {width >= MENU_WIDTH_SMALL && tab.title}
+              {/* {width >= MENU_WIDTH_SMALL && tab.title} */}
             </Button>
           ))}
         </ButtonGroup>

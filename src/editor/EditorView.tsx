@@ -1,60 +1,29 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { History } from './History'
+import React, { useEffect, useRef } from 'react'
 import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
-import { IconButton } from '@mui/material'
-import { ChevronRight } from '@mui/icons-material'
 import { useSettings } from '../events/useEditorEvents'
-import { ActiveBookmark } from './ActiveBookmark'
-import { HtmlTooltip } from './HtmlTooltip'
 import { Actions } from '../creagen-editor/Actions'
+import { EditorBar } from './EditorBar'
 
 export interface EditorProps {
-  left?: string
   width?: string
-  height?: string
+  ref?: React.RefObject<HTMLDivElement | null>
   menu: boolean
   onMenuOpen: () => void
   toggleMenu: () => void
 }
 
 export function EditorView({
-  left,
   width,
-  height,
+  ref,
   menu,
   onMenuOpen,
   toggleMenu,
 }: EditorProps) {
-  const showActiveBookmark = useSettings('editor.show_active_bookmark')
   const creagenEditor = useCreagenEditor()
   const hideAll = useSettings('hide_all')
+  const actionsEnabled = useSettings('actions.enabled')
   const vimEnabled = useSettings('editor.vim')
-  const historyEnabled = useSettings('editor.show_history')
   const editorContentRef = useRef<HTMLDivElement>(null)
-  const iconButtonRef = useRef<HTMLButtonElement>(null)
-  const projectNameRef = useRef<HTMLDivElement>(null)
-  const [historyWidth, setHistoryWidth] = useState('100%')
-
-  function updateHistoryWidth() {
-    if (iconButtonRef.current && projectNameRef.current && width) {
-      const iconWidth = iconButtonRef.current.offsetWidth
-      const projectNameWidth = projectNameRef.current.offsetWidth
-      const totalWidth =
-        typeof width === 'string'
-          ? width.includes('px')
-            ? parseInt(width)
-            : 0
-          : parseInt(width || '0')
-
-      const availableWidth = totalWidth - iconWidth - projectNameWidth - 4 // 4px for padding
-      setHistoryWidth(`${availableWidth}px`)
-    }
-  }
-
-  useEffect(() => {
-    updateHistoryWidth()
-  }, [width, menu])
-
   useEffect(() => {
     const editorContent = editorContentRef.current
     if (editorContent) {
@@ -66,73 +35,29 @@ export function EditorView({
 
   return (
     <div
+      ref={ref}
       style={{
-        position: 'absolute',
-        left,
-        zIndex: 1001,
-        minHeight: '100svh',
-        height,
         width,
+        position: 'absolute',
+        zIndex: 1001,
+        height: '100%',
         display: hideAll ? 'none' : 'flex',
         overflow: 'hidden',
         flexDirection: 'column',
       }}
     >
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          padding: 2,
-        }}
-      >
-        <HtmlTooltip
-          title={
-            menu
-              ? 'Hide editor menu'
-              : `Show editor menu (${creagenEditor.getKeybindKeyString('editor.toggleMenu')})`
-          }
-          placement="right"
-        >
-          <IconButton
-            ref={iconButtonRef}
-            sx={{
-              zIndex: 1002,
-              left: 0,
-              top: 0,
-              width: 15,
-              height: 15,
-              padding: 0,
-              margin: 0,
-            }}
-            onClick={() => onMenuOpen()}
-            size="small"
-          >
-            <ChevronRight
-              sx={{
-                transform: menu ? 'rotate(180deg)' : 'none',
-                transition: 'transform 0.3s',
-              }}
-            />
-          </IconButton>
-        </HtmlTooltip>
-        {showActiveBookmark ? (
-          <div ref={projectNameRef}>
-            <ActiveBookmark onUpdate={updateHistoryWidth} />
-          </div>
-        ) : (
-          ''
-        )}
-        {historyEnabled && <History style={{ width: historyWidth }} />}
-      </div>
+      <EditorBar menu={menu} onMenuOpen={onMenuOpen} />
 
       <div style={{ flex: 1, overflow: 'hidden' }} ref={editorContentRef}></div>
 
       {vimEnabled && <div id="vim-status" style={{ overflow: 'auto' }} />}
 
-      <Actions
-        toggleMenu={toggleMenu}
-        style={{ position: 'absolute', bottom: 6, right: 14 }}
-      />
+      {actionsEnabled ?? (
+        <Actions
+          toggleMenu={toggleMenu}
+          style={{ position: 'absolute', bottom: 6, right: 14 }}
+        />
+      )}
     </div>
   )
 }

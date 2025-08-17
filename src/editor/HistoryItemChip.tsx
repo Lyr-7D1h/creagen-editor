@@ -260,7 +260,7 @@ export function HistoryItemChip({ item }: { item: HistoryItem }) {
             '& .MuiChip-deleteIcon': {
               margin: '0 2px 0 0',
             },
-            height: '20px',
+            height: '22px',
             fontSize: '0.75rem',
             alignItems: 'center',
           }}
@@ -287,7 +287,7 @@ export function HistoryItemChip({ item }: { item: HistoryItem }) {
           color: 'grey',
           display: 'flex',
           alignItems: 'center',
-          height: '20px',
+          height: '22px',
           gap: '2px',
           fontSize: '0.75rem',
         }}

@@ -40,6 +40,7 @@ const MessageChip = React.memo(
           position: 'relative',
           overflow: 'hidden',
           py: 0.25,
+          opacity: 0.95,
         }}
         onClose={handleClose}
       >
@@ -152,6 +153,7 @@ export function Messages() {
         position: 'absolute',
         top: '0',
         left: '50%',
+        transform: 'translateX(-50%)',
         zIndex: 1003,
         maxWidth: '100%',
         width: 'auto',

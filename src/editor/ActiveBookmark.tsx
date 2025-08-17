@@ -6,13 +6,12 @@ import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
 import { TextInput } from './TextInput'
 import { bookmarkNameSchema } from '../vcs/Bookmarks'
 
-export function ActiveBookmark({ onUpdate }: { onUpdate: () => void }) {
+export function ActiveBookmark() {
   const vcs = useCreagenEditor().vcs
   const activeBookmark = useActiveBookmark()
   const [isEditing, setIsEditing] = useState(false)
 
   const onSave = async (value: string) => {
-    console.log(value)
     const data = bookmarkNameSchema.safeParse(value)
     if (data.success === false) {
       logger.error(data.error)
@@ -22,11 +21,6 @@ export function ActiveBookmark({ onUpdate }: { onUpdate: () => void }) {
       return
     }
     setIsEditing(false)
-
-    // ensure update after render
-    setTimeout(() => {
-      onUpdate()
-    }, 0)
   }
 
   const uncommitted = activeBookmark.commit === null ? '*' : ''

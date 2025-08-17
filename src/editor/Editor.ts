@@ -191,7 +191,7 @@ export class Editor {
   }
 
   /** set background transparent and make code highly visable */
-  private setFullscreenMode(value: boolean) {
+  setFullscreenMode(value: boolean) {
     if (value) {
       monaco.editor.setTheme('creagen-fullscreen')
       const value = this.getValue()

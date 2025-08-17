@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import React from 'react'
 import Box from '@mui/material/Box'
-import { IconButton, Collapse, Stack, SxProps, Theme } from '@mui/material'
+import { IconButton, Collapse, Stack } from '@mui/material'
 import ArrowLeft from '@mui/icons-material/ArrowLeft'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
@@ -9,33 +9,38 @@ import { useHistory, useSettings } from '../events/useEditorEvents'
 import { HistoryItemChip } from './HistoryItemChip'
 
 export function History({
-  height,
-  style,
+  parentRef,
 }: {
-  height?: string
-  style?: SxProps<Theme>
+  parentRef: React.RefObject<HTMLDivElement | null>
 }) {
   const historyBufferSize = useSettings('editor.history_buffer_size')
   const history = useHistory(historyBufferSize)
   const [expanded, setExpanded] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
   const [isOverflowing, setIsOverflowing] = useState(false)
 
-  // Check for overflow after history updates or window resizes
-  useEffect(() => {
+  const historyRef = useRef<HTMLDivElement>(null)
+  const setupCheckOverflow = useCallback(() => {
+    const parent = parentRef.current
+    const history = historyRef.current
+    if (!history || !parent) return
+
     const checkOverflow = () => {
-      if (containerRef.current) {
-        const isContentOverflowing =
-          containerRef.current.scrollWidth > containerRef.current.clientWidth
-        setIsOverflowing(isContentOverflowing)
-      }
+      const isContentOverflowing = history.clientWidth > parent.clientWidth
+      setIsOverflowing(isContentOverflowing)
     }
 
     checkOverflow()
-    window.addEventListener('resize', checkOverflow)
+    const resizeObserver = new ResizeObserver(checkOverflow)
+    resizeObserver.observe(history)
 
-    return () => window.removeEventListener('resize', checkOverflow)
-  }, [history])
+    const mutationObserver = new MutationObserver(checkOverflow)
+    mutationObserver.observe(history, { childList: true, subtree: true })
+
+    return () => {
+      resizeObserver.disconnect()
+      mutationObserver.disconnect()
+    }
+  }, [])
 
   const toggleExpand = () => {
     setExpanded(!expanded)
@@ -53,8 +58,13 @@ export function History({
   }
 
   return (
-    <Box sx={{ position: 'relative', ...style }}>
-      {isOverflowing && (
+    <Box
+      ref={(node: HTMLDivElement | null) => {
+        historyRef.current = node
+        setupCheckOverflow()
+      }}
+    >
+      {(isOverflowing || expanded) && (
         <IconButton
           size="small"
           onClick={toggleExpand}
@@ -76,12 +86,8 @@ export function History({
         </IconButton>
       )}
 
-      <Collapse
-        in={expanded || !isOverflowing}
-        collapsedSize={isOverflowing ? '30px' : 'auto'}
-      >
+      <Collapse in={expanded || !isOverflowing} collapsedSize={24}>
         <div
-          ref={containerRef}
           style={{
             overflow: expanded ? 'visible' : 'hidden',
           }}
@@ -91,7 +97,6 @@ export function History({
             spacing={1}
             alignItems="center"
             sx={{
-              height,
               paddingLeft: 1,
               paddingRight: isOverflowing ? 4 : 1, // Add padding for the expand button
               flexWrap: expanded ? 'wrap' : 'nowrap',
