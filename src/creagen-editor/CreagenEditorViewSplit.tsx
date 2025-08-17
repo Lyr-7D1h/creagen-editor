@@ -10,6 +10,7 @@ import { useCreagenEditor } from './CreagenEditorView'
 
 const MIN_WINDOW_SIZE = 200
 
+const DEFAULT_MENU_WIDTH = Math.round(window.innerWidth / 3)
 const DEFAULT_EDITOR_WIDTH = Math.round(window.innerWidth / 3)
 
 /**
@@ -158,6 +159,8 @@ export function CreagenEditorViewSplit() {
   useEffect(() => {
     if (!editorRef.current) return
     if (menu && menuRef.current) {
+      menuRef.current.style.width = DEFAULT_MENU_WIDTH + 'px'
+
       editorRef.current.style.left = menuRef.current.clientWidth + 'px'
       if (resizer0.current)
         resizer0.current.style.left = menuRef.current.clientWidth + 'px'

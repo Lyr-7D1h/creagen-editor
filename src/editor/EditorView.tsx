@@ -50,7 +50,9 @@ export function EditorView({
 
       <div style={{ flex: 1, overflow: 'hidden' }} ref={editorContentRef}></div>
 
-      {vimEnabled && <div id="vim-status" style={{ overflow: 'auto' }} />}
+      {vimEnabled && (
+        <div id="vim-status" style={{ overflow: 'auto', height: 20 }} />
+      )}
 
       {actionsEnabled ?? (
         <Actions
