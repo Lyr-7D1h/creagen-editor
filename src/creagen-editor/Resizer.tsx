@@ -1,5 +1,5 @@
 import { useTheme } from '@mui/material'
-import React from 'react'
+import React, { RefAttributes } from 'react'
 
 export const RESIZER_WIDTH_PX = 3
 export function Resizer({
@@ -8,11 +8,10 @@ export function Resizer({
   onResize,
   hidden,
 }: {
-  ref: React.RefObject<HTMLDivElement | null>
   resizing: boolean
   onResize: () => void
   hidden?: boolean
-}) {
+} & RefAttributes<HTMLDivElement>) {
   const theme = useTheme()
   return (
     <div ref={ref} style={{ position: 'absolute', zIndex: 1002 }}>

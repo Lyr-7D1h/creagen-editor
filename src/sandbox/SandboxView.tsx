@@ -16,7 +16,6 @@ export function SandboxView({
     if (container) {
       const htmlElement = creagenEditor.sandbox.html()
       container.appendChild(htmlElement)
-      creagenEditor.editor.layout()
     }
   }, [ref])
 
@@ -27,6 +26,7 @@ export function SandboxView({
         width,
         border: 'none',
         position: 'absolute',
+        display: 'flex',
         height: '100svh',
       }}
     ></div>

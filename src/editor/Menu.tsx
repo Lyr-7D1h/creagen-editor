@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { RefAttributes, useEffect } from 'react'
 import {
   Box,
   Button,
@@ -19,7 +19,6 @@ import { StorageBar } from './StorageBar'
 import { MenuLinks } from '../shared/IconLinks'
 import { CREAGEN_EDITOR_VERSION, VITE_CREAGEN_EDITOR_COMMIT_HASH } from '../env'
 export type MenuProps = {
-  ref?: React.RefObject<unknown>
   width?: string
 }
 
@@ -49,7 +48,7 @@ export type TabKey = keyof typeof tabs
 
 const defaultKey = Object.keys(tabs)[0]! as TabKey
 
-export function Menu({ ref, width }: MenuProps) {
+export function Menu<T>({ ref, width }: MenuProps & RefAttributes<T>) {
   const creagenEditor = useCreagenEditor()
   const [currentView, setCurrentView] = useLocalStorage(
     'menu-view-tab',

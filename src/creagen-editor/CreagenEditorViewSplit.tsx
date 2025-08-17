@@ -133,21 +133,24 @@ export function CreagenEditorViewSplit() {
 
   // set width on fullscreen
   useEffect(() => {
-    if (!editorRef.current || !sandboxRef.current) return
+    if (!sandboxRef.current) return
+    const editor = editorRef.current
     const menuWidth = menuRef.current ? menuRef.current?.clientWidth : 0
     if (fullscreen) {
-      editorRef.current.style.width = window.innerWidth - menuWidth + 'px'
+      if (editor) editor.style.width = window.innerWidth - menuWidth + 'px'
       sandboxRef.current.style.width = window.innerWidth + 'px'
       sandboxRef.current.style.left = '0px'
     } else {
-      editorRef.current.style.width = DEFAULT_EDITOR_WIDTH + 'px'
-      const editorWidth = editorRef.current.clientWidth
+      let editorWidth = 0
+      if (editor) {
+        editorWidth = DEFAULT_EDITOR_WIDTH
+        editor.style.width = editorWidth + 'px'
+      }
       sandboxRef.current.style.width =
         window.innerWidth - menuWidth - editorWidth + 'px'
       sandboxRef.current.style.left = editorWidth + 'px'
       if (resizer1.current)
-        resizer1.current.style.left =
-          menuWidth + editorRef.current.clientWidth + 'px'
+        resizer1.current.style.left = menuWidth + editorWidth + 'px'
     }
   }, [menu, fullscreen])
 
@@ -195,6 +198,12 @@ export function CreagenEditorViewSplit() {
   if (hideAll) {
     return <SandboxView ref={sandboxRef} />
   }
+
+  // const init = (ref: React.RefObject<HTMLDivElement | null>) => {
+  //   return (node: HTMLDivElement | null) => {
+  //     ref.current = node
+  //   }
+  // }
 
   return (
     <div style={{ display: 'flex' }}>

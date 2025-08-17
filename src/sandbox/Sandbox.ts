@@ -62,9 +62,11 @@ export class Sandbox {
   constructor() {
     this.iframe = document.createElement('iframe')
     this.iframe.title = ''
-    this.iframe.style.width = '100%'
-    this.iframe.style.height = '100%'
+    this.iframe.style.display = 'block'
     this.iframe.style.border = 'none'
+    this.iframe.style.flexGrow = '1'
+    this.iframe.style.margin = '0px'
+    this.iframe.style.padding = '0px'
     this.iframe.sandbox = `allow-scripts ${MODE === 'dev' ? 'allow-same-origin' : ''}`
     this.setup()
   }
@@ -106,16 +108,27 @@ export class Sandbox {
   }
 
   render(code: string, libraryImports: LibraryImport[]) {
+    // HACK: canvas as block overflow protection due to default margin
     const html = `<!DOCTYPE html>
     <html lang="en">
       <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          html, body {
+            margin: 0;
+            padding: 0;
+            overflow: auto;
+          }
+          canvas {
+            display: block;
+          }
+        </style>
         ${libraryImports
           .filter((lib) => lib.importPath.type !== 'module')
           .map((lib) => `<script src="${lib.importPath.path}"></script>`)}
       </head>
-      <body style="margin: 0;">
+      <body style="margin: 0">
         <script type="module">${sandboxCode}</script>
         <script type="module">${code}</script>
       </body>
