@@ -89,8 +89,7 @@ export class VCS {
         commit: null,
       }
     }
-    await this.commit(code, commit.libraries, false)
-    return commit
+    return await this.commit(code, commit.libraries, false)
   }
 
   /** update current state from url */
