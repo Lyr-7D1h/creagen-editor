@@ -37,9 +37,11 @@ export function WelcomeScreen() {
           A creative coding web editor with focus on being minimal,
           customizable, fast and powerful. Its goal is to provide easy
           accessibility to make creative coding projects.
-          <Typography variant="h6" sx={{ mt: 2 }}>
-            Getting Started
-          </Typography>
+        </DialogContentText>
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          Getting Started
+        </Typography>
+        <DialogContentText component="div">
           <ol>
             <li>Write Code</li>
             <li>
