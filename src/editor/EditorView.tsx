@@ -54,11 +54,13 @@ export function EditorView({
         <div id="vim-status" style={{ overflow: 'auto', height: 20 }} />
       )}
 
-      {actionsEnabled ?? (
+      {actionsEnabled ? (
         <Actions
           toggleMenu={toggleMenu}
           style={{ position: 'absolute', bottom: 6, right: 14 }}
         />
+      ) : (
+        ''
       )}
     </div>
   )

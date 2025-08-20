@@ -277,10 +277,6 @@ export function CreagenEditorViewContentMobile() {
         menu={menu}
         onMenuOpen={() => setMenu(!menu)}
       />
-      <Actions
-        style={{ position: 'fixed', bottom: 10, right: 10 }}
-        toggleMenu={() => setMenu(!menu)}
-      />
       <SandboxView width="100svw" />
     </>
   )
