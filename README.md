@@ -25,7 +25,8 @@ npm start
 
 ## Roadmap
 
-- Add sketch params
+- Minor Editor fixes
+  - Keep scroll distance when reloading page
 - Use hash/active bookmark in title
 - Keep commit history buffer when changing commits
 - Version Control Software
@@ -39,11 +40,12 @@ npm start
     - Url minifier for code urls
 - Actions
     - For shareable link
-    - Export
-    - Run
 - Autorun sketches
     - containerize iframe 
     - prevent iframe from hogging all resources
+- Add sketch params
+  - Add dynamically
+  - Input mathematical functions
 - Export to html with js inlined
 - Add Hydra support https://github.com/hydra-synth/hydra-synth?tab=readme-ov-file
 - use importmap to map module names to urls https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap
