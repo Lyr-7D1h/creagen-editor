@@ -157,11 +157,13 @@ export function CreagenEditorViewSplit() {
 
   // set position on menu toggle
   useEffect(() => {
-    if (!editorRef.current) return
+    if (!editorRef.current || !sandboxRef.current) return
     if (menu && menuRef.current) {
       menuRef.current.style.width = DEFAULT_MENU_WIDTH + 'px'
 
       editorRef.current.style.left = menuRef.current.clientWidth + 'px'
+      sandboxRef.current.style.left =
+        menuRef.current.clientWidth + editorRef.current.clientWidth + 'px'
       if (resizer0.current)
         resizer0.current.style.left = menuRef.current.clientWidth + 'px'
       if (resizer1.current)
