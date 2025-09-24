@@ -85,7 +85,7 @@ async function getLibraryFromSource(
       version: CREAGEN_DEV_VERSION,
       importPath: {
         type: 'module',
-        path: `http://${window.location.host}/creagen.js`,
+        path: `http://${window.location.host}/creagen.mjs`,
       },
       typings: async () => {
         const res = await fetch('./creagen.d.ts', { timeout: 2000 })
