@@ -62,8 +62,6 @@ npm start
 ## Known bugs
 - Old bookmarks not going away: When renaming bookmark update history
 
-## Resources
-
 ## Useful links
 PNG to Base64:
 https://base64.guru/converter/encode/image/png
