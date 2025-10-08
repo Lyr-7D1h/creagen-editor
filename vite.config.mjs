@@ -29,11 +29,17 @@ function localLibraryOnHttp(mode) {
         if (allowedPaths.includes(req.originalUrl)) {
           res.setHeader('Content-Type', 'text/javascript; charset=utf-8')
           res.writeHead(200)
-          res.write(
-            fs.readFileSync(`${CREAGEN_DEV_PATH}/dist/${req.originalUrl}`),
-          )
-          res.end()
-          return
+          return new Promise((resolve) => {
+            fs.readFile(
+              `${CREAGEN_DEV_PATH}/dist/${req.originalUrl}`,
+              (err, data) => {
+                if (err) return console.error(err)
+                res.write(data)
+                res.end()
+                resolve()
+              },
+            )
+          })
         }
 
         next()
