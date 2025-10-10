@@ -29,6 +29,7 @@ export type LocalStorageOnlyKey =
   | 'menu-settings-hidden'
 /** LocalStorage + Remote */
 export type LocalStorageKey =
+  | 'editor-scroll-position'
   | 'custom-keybindings'
   | 'settings'
   | 'bookmarks'
@@ -50,6 +51,7 @@ type StorageKeyValueMap = {
   'menu-view': boolean
   'menu-view-tab': TabKey | null
   'menu-settings-hidden': string[]
+  'editor-scroll-position': number
   'custom-keybindings': CustomKeybinding[]
   commit: Commit
   blob: string

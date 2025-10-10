@@ -1,3 +1,4 @@
+import { localStorage } from '../storage/LocalStorage'
 import AutoImport, { regexTokeniser } from '@kareemkermad/monaco-auto-import'
 import { Monaco } from '@monaco-editor/react'
 import * as monaco from 'monaco-editor'
@@ -90,6 +91,9 @@ export class Editor {
   private fullscreendecorators: m.editor.IEditorDecorationsCollection | null
   private models: Record<string, monaco.editor.ITextModel> = {}
   private _html
+  private scrollSaveInterval: number | null = null
+  private static readonly SCROLL_STORAGE_KEY = 'editor:scroll-position'
+  private static readonly SCROLL_SAVE_INTERVAL_MS = 1000 // Save every second
 
   static async create(settings: Settings) {
     const monaco: Monaco = await loader.init()
@@ -137,6 +141,14 @@ export class Editor {
       if (key.startsWith('editor')) this.updateFromSettings(settings)
     })
     this.updateFromSettings(settings)
+
+    // Save scroll position when the page is about to unload
+    const scrollPosition = localStorage.get('editor-scroll-position')
+    if (scrollPosition) this.setScrollPosition(scrollPosition)
+    window.addEventListener('beforeunload', () => {
+      const position = this.editor.getScrollTop()
+      localStorage.set('editor-scroll-position', position)
+    })
   }
 
   updateFromSettings(settings: Settings) {
@@ -248,5 +260,17 @@ export class Editor {
         },
       ])
     }
+  }
+
+  /**
+   * Set the scroll position of the editor
+   * @param scrollTop Vertical scroll position in pixels
+   * @param scrollLeft Horizontal scroll position in pixels (optional, default: current position)
+   */
+  setScrollPosition(scrollTop: number, scrollLeft?: number) {
+    this.editor.setScrollPosition({
+      scrollTop,
+      scrollLeft: scrollLeft ?? this.editor.getScrollLeft(),
+    })
   }
 }
