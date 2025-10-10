@@ -25,8 +25,6 @@ npm start
 
 ## Roadmap
 
-- Minor Editor fixes
-  - Keep scroll distance when reloading page
 - Use hash/active bookmark in title
 - Keep commit history buffer when changing commits
 - Version Control Software
