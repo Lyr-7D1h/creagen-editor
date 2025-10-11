@@ -6,6 +6,7 @@
     "start": "vite -m dev",
     "start:prod": "vite -m production",
     "build": "vite build -m production",
+    "build:sandbox": "vite build -m production --config vite.sandbox.config.mjs",
     "format": "prettier -w src/",
     "lint": "eslint src/**/*"
   },
