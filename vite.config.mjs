@@ -80,6 +80,8 @@ function injectAnalytics(mode) {
 }
 
 function commitHash() {
+  if (process.env.CREAGEN_EDITOR_COMMIT_HASH)
+    return process.env.CREAGEN_EDITOR_COMMIT_HASH
   const head = fs.readFileSync('./.git/FETCH_HEAD', 'utf-8')
   for (const line of head.split('\n')) {
     const [commit, _, __, branch] = line.split(/ |\t+/)
