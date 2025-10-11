@@ -3,7 +3,6 @@ import { SemVer } from 'semver'
 import { z } from 'zod'
 import { getTypings } from './typings'
 import { semverSchema } from '../creagen-editor/schemaUtils'
-import { CREAGEN_DEV_VERSION } from '../env'
 import { Library } from '../settings/SettingsConfig'
 
 export interface ImportPath {
@@ -82,7 +81,7 @@ async function getLibraryFromSource(
   if (packageName === 'creagen' && CREAGEN_DEV_VERSION) {
     return {
       name: packageName,
-      version: CREAGEN_DEV_VERSION,
+      version: new SemVer(CREAGEN_DEV_VERSION),
       importPath: {
         type: 'module',
         path: `http://${window.location.host}/creagen.mjs`,

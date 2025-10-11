@@ -17,7 +17,6 @@ import AutoStoriesIcon from '@mui/icons-material/AutoStories'
 import { DependenciesTab } from './tabs/DependenciesTab'
 import { StorageBar } from './StorageBar'
 import { MenuLinks } from '../shared/IconLinks'
-import { CREAGEN_EDITOR_VERSION, VITE_CREAGEN_EDITOR_COMMIT_HASH } from '../env'
 export type MenuProps = {
   width?: string
 }
@@ -96,9 +95,9 @@ export function Menu<T>({ ref, width }: MenuProps & RefAttributes<T>) {
           <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
             <Typography sx={{ fontWeight: 'bold' }}>Creagen Editor</Typography>
             <Typography variant="caption" color="text.secondary">
-              {CREAGEN_EDITOR_VERSION.toString()}{' '}
-              {VITE_CREAGEN_EDITOR_COMMIT_HASH &&
-                `(${VITE_CREAGEN_EDITOR_COMMIT_HASH.substring(0, 7)})`}
+              {CREAGEN_EDITOR_VERSION}{' '}
+              {CREAGEN_EDITOR_COMMIT_HASH &&
+                `(${CREAGEN_EDITOR_COMMIT_HASH.substring(0, 7)})`}
             </Typography>
           </Box>
           <MenuLinks />

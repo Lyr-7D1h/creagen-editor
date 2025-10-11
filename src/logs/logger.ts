@@ -1,5 +1,3 @@
-import { MODE } from '../env'
-
 export const AUTOHIDE_DURATION_DEFAULT = 6000
 export enum Severity {
   Success,
@@ -105,7 +103,7 @@ export function error(...msg: any[]): MessageId {
 
 export function debug(...msg: any[]): MessageId {
   console.debug(...msg)
-  if (MODE === 'dev') {
+  if (CREAGEN_MODE === 'dev') {
     return log(Severity.Debug, formatMsg(msg))
   }
   return ''
@@ -137,7 +135,7 @@ export function createContextLogger(context: string) {
     },
     debug: (...msg: any[]) => {
       console.debug(`[${context}]`, ...msg)
-      if (MODE === 'dev') {
+      if (CREAGEN_MODE === 'dev') {
         return log(Severity.Debug, formatMsg(msg))
       }
       return ''

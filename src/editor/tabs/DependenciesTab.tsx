@@ -7,7 +7,6 @@ import {
 import React, { useState, useEffect } from 'react'
 import { SemVer } from 'semver'
 import { useCreagenEditor } from '../../creagen-editor/CreagenEditorView'
-import { CREAGEN_DEV_VERSION } from '../../env'
 import { useSettings } from '../../events/useEditorEvents'
 import { Importer } from '../../importer'
 import { logger } from '../../logs/logger'

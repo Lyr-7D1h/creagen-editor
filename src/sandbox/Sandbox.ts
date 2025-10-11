@@ -1,179 +1,99 @@
-import sandboxCode from '../../gen/sandbox'
-import { CREAGEN_EDITOR_VERSION, MODE } from '../env'
 import { editorEvents } from '../events/events'
 import { LibraryImport } from '../importer'
 import { createContextLogger } from '../logs/logger'
+import { CommitHash } from '../vcs/Commit'
+import {
+  SandboxMessageHandler,
+  SandboxMessageHandlerMode,
+} from './SandboxMessageHandler'
 
 const logger = createContextLogger('sandbox')
 
-export type SandboxEvent =
-  | {
-      type: 'log'
-      level: 'debug' | 'info' | 'warn' | 'error'
-      data: any[]
-    }
-  | {
-      type: 'loaded'
-    }
-  | {
-      type: 'analysisResult'
-      result: AnalyzeContainerResult
-    }
-  | {
-      type: 'error'
-      error: Error
-    }
-  | {
-      type: 'svgExportResponse'
-      data: string | null
-    }
-  /** Sent by Sandbox */
-  | {
-      type: 'init'
-      constants: {
-        creagenEditorVersion: string
-      }
-    }
-  | {
-      type: 'svgExportRequest'
-      svgIndex: number
-      optimize: boolean
-    }
-
-export interface AnalyzeContainerResult {
-  svgs: SvgProps[]
-}
-
-export interface SvgProps {
-  width?: number
-  height?: number
-  paths: number
-  circles: number
-  rects: number
-}
-
-function isSandboxEvent(event: any): event is SandboxEvent {
-  return event && typeof event.type === 'string'
-}
-
 export class Sandbox {
-  iframe: HTMLIFrameElement
+  static async create() {
+    const iframe = document.createElement('iframe')
+    iframe.title = ''
+    iframe.style.display = 'block'
+    iframe.style.border = 'none'
+    iframe.style.flexGrow = '1'
+    iframe.style.margin = '0px'
+    iframe.style.padding = '0px'
+    iframe.sandbox = `allow-scripts ${CREAGEN_MODE === 'dev' ? 'allow-same-origin' : ''}`
 
-  constructor() {
-    this.iframe = document.createElement('iframe')
-    this.iframe.title = ''
-    this.iframe.style.display = 'block'
-    this.iframe.style.border = 'none'
-    this.iframe.style.flexGrow = '1'
-    this.iframe.style.margin = '0px'
-    this.iframe.style.padding = '0px'
-    this.iframe.sandbox = `allow-scripts ${MODE === 'dev' ? 'allow-same-origin' : ''}`
-    this.setup()
+    // Use the separate sandbox URL
+    iframe.src = CREAGEN_EDITOR_SANDBOX_RUNTIME_URL
+
+    const messageHandler = await SandboxMessageHandler.create(
+      SandboxMessageHandlerMode.Parent,
+      iframe,
+    )
+    return new Sandbox(iframe, messageHandler)
+  }
+
+  private constructor(
+    private iframe: HTMLIFrameElement,
+    private messageHandler: SandboxMessageHandler,
+  ) {
+    this.messageHandler.on('analysisResult', (event) =>
+      editorEvents.emit('sandbox:analysis-complete', event),
+    )
+    this.messageHandler.on('error', (event) =>
+      editorEvents.emit('sandbox:error', event),
+    )
+    this.messageHandler.on('log', (event) => {
+      if (event.level === 'error') {
+        logger.error(...event.data)
+        return
+      }
+      logger[event.level](...event.data)
+    })
+    this.messageHandler.on('renderComplete', () => {
+      logger.info('render complete')
+    })
   }
 
   html() {
     return this.iframe
   }
 
-  setup() {
-    window.addEventListener('message', (event) => {
-      const sandboxEvent = event.data
-      if (isSandboxEvent(sandboxEvent)) {
-        switch (sandboxEvent.type) {
-          case 'analysisResult':
-            editorEvents.emit('sandbox:analysis-complete', sandboxEvent)
-            break
-          case 'error':
-            editorEvents.emit('sandbox:error', sandboxEvent)
-            throw sandboxEvent.error
-          case 'log':
-            if (sandboxEvent.level === 'error') {
-              logger.error(...sandboxEvent.data)
-              return
-            }
-            console[sandboxEvent.level](...sandboxEvent.data)
-            break
-          case 'loaded':
-            editorEvents.emit('sandbox:loaded', undefined)
-            this.sendMessage({
-              type: 'init',
-              constants: {
-                creagenEditorVersion: CREAGEN_EDITOR_VERSION.toString(),
-              },
-            })
-            break
-        }
-      }
+  async render(code: string, libraryImports: LibraryImport[]) {
+    this.messageHandler.send({
+      type: 'render',
+      code,
+      libraries: libraryImports.map((lib) => lib.importPath),
     })
-  }
 
-  render(code: string, libraryImports: LibraryImport[]) {
-    // HACK: canvas as block overflow protection due to default margin
-    const html = `<!DOCTYPE html>
-    <html lang="en">
-      <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-          html, body {
-            margin: 0;
-            padding: 0;
-            overflow: auto;
-          }
-          canvas {
-            display: block;
-          }
-        </style>
-        ${libraryImports
-          .filter((lib) => lib.importPath.type !== 'module')
-          .map((lib) => `<script src="${lib.importPath.path}"></script>`)}
-      </head>
-      <body style="margin: 0">
-        <script type="module">${sandboxCode}</script>
-        <script type="module">${code}</script>
-      </body>
-    </html>
-    `
-
-    const blob = new Blob([html], { type: 'text/html' })
-    const blobURL = URL.createObjectURL(blob)
-
-    // Update iframe source
-    this.iframe.src = blobURL
     logger.trace(
       `Loading code with '${code.length}' characters into iframe with libraries: `,
       JSON.stringify(libraryImports),
     )
-    editorEvents.emit('sandbox:render-complete', undefined)
   }
 
-  sendMessage(message: SandboxEvent) {
-    this.iframe.contentWindow!.postMessage(message, '*')
-  }
-
-  async svgExport(svgIndex: number, optimize: boolean): Promise<string | null> {
+  async svgExport(
+    svgIndex: number,
+    optimize: boolean,
+    head?: CommitHash,
+  ): Promise<Blob | null> {
     return new Promise((resolve, reject) => {
-      this.sendMessage({
+      const timeout = setTimeout(() => {
+        unsubscribe()
+        reject(new Error('SVG export timeout'))
+      }, 20000)
+
+      const unsubscribe = this.messageHandler.once(
+        'svgExportResponse',
+        (event) => {
+          clearTimeout(timeout)
+          resolve(event.svg)
+        },
+      )
+
+      this.messageHandler.send({
         type: 'svgExportRequest',
         svgIndex,
         optimize,
+        head: head ? head.toHex() : undefined,
       })
-
-      const listener = (event: MessageEvent) => {
-        if (isSandboxEvent(event.data)) {
-          if (event.data.type === 'svgExportResponse') {
-            window.removeEventListener('message', listener)
-            resolve(event.data.data)
-          }
-        }
-      }
-
-      window.addEventListener('message', listener)
-
-      setTimeout(() => {
-        window.removeEventListener('message', listener)
-        reject(new Error('Timeout'))
-      }, 5000)
     })
   }
 }

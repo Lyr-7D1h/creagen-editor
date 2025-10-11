@@ -13,8 +13,8 @@ import { generateHumanReadableName } from './generateHumanReadableName'
 import { ClientStorage } from '../storage/ClientStorage'
 import { Settings } from '../settings/Settings'
 import { Sha256Hash } from '../Sha256Hash'
-import { CREAGEN_EDITOR_VERSION } from '../env'
 import { compressToBase64, decompressFromBase64 } from 'lz-string'
+import { SemVer } from 'semver'
 
 export type HistoryItem = {
   commit: Commit
@@ -313,7 +313,7 @@ export class VCS {
     const blob = (await Sha256Hash.create(code)) as BlobHash
     const commit = await Commit.create(
       blob,
-      CREAGEN_EDITOR_VERSION,
+      new SemVer(CREAGEN_EDITOR_VERSION),
       libraries,
       new Date(),
       this._head?.hash,

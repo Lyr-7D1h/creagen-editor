@@ -1,5 +1,4 @@
 import { Editor } from '../editor/Editor'
-import { CREAGEN_EDITOR_VERSION } from '../env'
 import { logger, Severity } from '../logs/logger'
 import { Sandbox } from '../sandbox/Sandbox'
 import { Settings } from '../settings/Settings'
@@ -14,6 +13,7 @@ import { ClientStorage } from '../storage/ClientStorage'
 import { editorEvents } from '../events/events'
 import { Bookmark, isBookmark } from '../vcs/Bookmarks'
 import { Command, COMMANDS } from './commands'
+import { SemVer } from 'semver'
 
 export class CreagenEditor {
   storage: ClientStorage
@@ -30,7 +30,7 @@ export class CreagenEditor {
     const storage = await ClientStorage.create()
     const settings = await Settings.create(storage)
     const editor = await Editor.create(settings)
-    const sandbox = await new Sandbox()
+    const sandbox = await Sandbox.create()
     const vcs = await VCS.create(storage, settings)
     await vcs.updateFromUrl()
     const customKeybindings = (await storage.get('custom-keybindings')) ?? []
@@ -130,7 +130,7 @@ export class CreagenEditor {
       commit: { editorVersion, libraries },
       data,
     } = checkout
-    if (editorVersion.compare(CREAGEN_EDITOR_VERSION)) {
+    if (editorVersion.compare(new SemVer(CREAGEN_EDITOR_VERSION))) {
       logger.warn("Editor version doesn't match")
     }
     this.settings.set('general.libraries', libraries)
@@ -234,7 +234,7 @@ export class CreagenEditor {
         ),
       )
 
-      this.sandbox?.render(code, imports)
+      await this.sandbox?.render(code, imports)
     } catch (e) {
       logger.remove(info)
       throw e

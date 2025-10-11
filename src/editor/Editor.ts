@@ -91,9 +91,6 @@ export class Editor {
   private fullscreendecorators: m.editor.IEditorDecorationsCollection | null
   private models: Record<string, monaco.editor.ITextModel> = {}
   private _html
-  private scrollSaveInterval: number | null = null
-  private static readonly SCROLL_STORAGE_KEY = 'editor:scroll-position'
-  private static readonly SCROLL_SAVE_INTERVAL_MS = 1000 // Save every second
 
   static async create(settings: Settings) {
     const monaco: Monaco = await loader.init()

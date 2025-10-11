@@ -14,7 +14,6 @@ import {
   Box,
 } from '@mui/material'
 import { logger } from '../logs/logger'
-import { Svg } from './svg'
 import {
   useActiveBookmark,
   useEditorEvent,
@@ -28,7 +27,7 @@ export function Export({ color, size }: { color: string; size: string }) {
   const optimizeExport = useSettings('actions.export_optimize')
   const analysisResult = useEditorEvent('sandbox:analysis-complete')
   const creagenEditor = useCreagenEditor()
-  const id = useHead()
+  const head = useHead()
   const activeRef = useActiveBookmark()
 
   const [downloading, setDownloading] = useState<boolean>(false)
@@ -38,19 +37,27 @@ export function Export({ color, size }: { color: string; size: string }) {
   async function download() {
     if (downloading) return
     setDownloading(true)
-    const svgString = await creagenEditor.sandbox.svgExport(
+    const blob = await creagenEditor.sandbox.svgExport(
       selectedIndex,
       optimizeExport,
+      head?.hash,
     )
-    if (svgString === null) {
+    if (blob === null) {
       logger.error('No svg found')
       setDownloading(false)
       return
     }
-    const parser = new DOMParser()
-    const doc = parser.parseFromString(svgString, 'image/svg+xml')
-    const svgInstance = new Svg(doc.documentElement as unknown as SVGElement)
-    svgInstance.export({ name: activeRef.name ?? '', id: id ?? undefined })
+
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.setAttribute('download', `${activeRef.name}.svg`)
+    a.setAttribute('href', url)
+    a.style.display = 'none'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+
     setDownloading(false)
   }
 

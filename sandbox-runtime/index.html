@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Creagen Sandbox</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: auto;
+      }
+      /* HACK: canvas as block, for overflow protection due to default margin */
+      canvas {
+        display: block;
+      }
+    </style>
+  </head>
+  <body style="margin: 0">
+    <script type="module" src="./sandboxRuntime.ts"></script>
+  </body>
+</html>

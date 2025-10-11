@@ -1,5 +1,2 @@
 dist/
-gen/
 node_modules/
-bundle.ts
-src/sandbox.ts

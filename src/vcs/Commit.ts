@@ -1,5 +1,4 @@
 import { SemVer } from 'semver'
-import { CREAGEN_EDITOR_VERSION } from '../env'
 import { Library, librarySchema } from '../settings/SettingsConfig'
 import { z } from 'zod'
 import { dateNumberSchema, semverSchema } from '../creagen-editor/schemaUtils'
@@ -112,7 +111,7 @@ export class Commit {
     const hash = (await Sha256Hash.create(
       toInnerString(
         blob,
-        CREAGEN_EDITOR_VERSION,
+        new SemVer(CREAGEN_EDITOR_VERSION),
         libraries,
         createdOn,
         parent,
