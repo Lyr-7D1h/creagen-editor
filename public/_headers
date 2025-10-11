@@ -1,0 +1,24 @@
+# Cloudflare specific page return policy
+/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, HEAD, POST, OPTIONS
+  Access-Control-Allow-Headers: Content-Type, Authorization
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Content-Security-Policy: sandbox allow-scripts allow-same-origin
+
+# Headers for static assets
+/*.js
+  Access-Control-Allow-Origin: *
+  Content-Type: text/javascript
+
+/*.mjs
+  Access-Control-Allow-Origin: *
+  Content-Type: text/javascript
+
+/*.css
+  Access-Control-Allow-Origin: *
+
+/*.wasm
+  Access-Control-Allow-Origin: *
+  Content-Type: application/wasm
