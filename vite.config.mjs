@@ -108,9 +108,10 @@ export default defineConfig(async ({ mode }) => {
         : null,
       CREAGEN_EDITOR_VERSION: JSON.stringify(process.env.npm_package_version),
       CREAGEN_EDITOR_COMMIT_HASH: JSON.stringify(commitHash()),
-      CREAGEN_EDITOR_SANDBOX_RUNTIME_URL:
-        process.env.CREAGEN_EDITOR_SANDBOX_RUNTIME_URL ??
-        JSON.stringify('/sandbox-runtime/'),
+      CREAGEN_EDITOR_SANDBOX_RUNTIME_URL: process.env
+        .CREAGEN_EDITOR_SANDBOX_RUNTIME_URL
+        ? JSON.stringify(process.env.CREAGEN_EDITOR_SANDBOX_RUNTIME_URL)
+        : JSON.stringify('/sandbox-runtime/'),
     },
     build: {
       // don't include source maps to reduce upload size
