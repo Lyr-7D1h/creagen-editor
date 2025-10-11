@@ -4,11 +4,6 @@ import path from 'path'
 import fs from 'fs'
 import react from '@vitejs/plugin-react'
 
-let CREAGEN_DEV_PATH = process.env.CREAGEN_PATH ?? path.resolve('../creagen')
-if (!fs.existsSync(CREAGEN_DEV_PATH)) {
-  CREAGEN_DEV_PATH = null
-}
-
 /** Serve local build of creagen library */
 function localLibraryOnHttp(mode) {
   // don't load if not dev
@@ -24,7 +19,7 @@ function localLibraryOnHttp(mode) {
           res.writeHead(200)
           return new Promise((resolve) => {
             fs.readFile(
-              `${CREAGEN_DEV_PATH}/dist/${req.originalUrl}`,
+              `${creagenDevPath}/dist/${req.originalUrl}`,
               (err, data) => {
                 if (err) return console.error(err)
                 res.write(data)
@@ -46,13 +41,13 @@ function watchExternal() {
   return {
     name: 'watch-external',
     async buildStart() {
-      const files = await fg([`${CREAGEN_DEV_PATH}/src/**/*`])
+      const files = await fg([`${creagenDevPath}/src/**/*`])
       for (const file of files) {
         this.addWatchFile(file)
       }
     },
     handleHotUpdate({ file, server }) {
-      if (file.includes(CREAGEN_DEV_PATH)) {
+      if (file.includes(creagenDevPath)) {
         server.ws.send({
           type: 'full-reload',
           path: '*',
@@ -96,20 +91,26 @@ function commitHash() {
   return null
 }
 
+let creagenDevPath = process.env.CREAGEN_DEV_PATH ?? path.resolve('../creagen')
+if (!fs.existsSync(creagenDevPath)) {
+  creagenDevPath = null
+}
 export default defineConfig(async ({ mode }) => {
   return {
     define: {
       CREAGEN_MODE: JSON.stringify(mode),
       // if dev, get version from local creagen package.json
-      CREAGEN_DEV_VERSION: CREAGEN_DEV_PATH
+      CREAGEN_DEV_VERSION: creagenDevPath
         ? JSON.stringify(
-            JSON.parse(fs.readFileSync(`${CREAGEN_DEV_PATH}/package.json`))
+            JSON.parse(fs.readFileSync(`${creagenDevPath}/package.json`))
               .version,
           )
         : null,
       CREAGEN_EDITOR_VERSION: JSON.stringify(process.env.npm_package_version),
       CREAGEN_EDITOR_COMMIT_HASH: JSON.stringify(commitHash()),
-      CREAGEN_EDITOR_SANDBOX_RUNTIME_URL: JSON.stringify('/sandbox-runtime/'),
+      CREAGEN_EDITOR_SANDBOX_RUNTIME_URL:
+        process.env.CREAGEN_EDITOR_SANDBOX_RUNTIME_URL ??
+        JSON.stringify('/sandbox-runtime/'),
     },
     build: {
       // don't include source maps to reduce upload size
@@ -123,8 +124,16 @@ export default defineConfig(async ({ mode }) => {
       },
       rollupOptions: {
         input: {
-          main: path.resolve(__dirname, 'index.html'),
-          sandbox: path.resolve(__dirname, 'sandbox-runtime/index.html'),
+          ...(process.env.VITE_ENTRYPOINT !== 'sandbox'
+            ? {
+                main: path.resolve(__dirname, 'index.html'),
+              }
+            : {}),
+          ...(process.env.VITE_ENTRYPOINT !== 'editor'
+            ? {
+                sandbox: path.resolve(__dirname, 'sandbox-runtime/index.html'),
+              }
+            : {}),
         },
       },
     },
@@ -134,7 +143,7 @@ export default defineConfig(async ({ mode }) => {
       },
     },
     plugins: [
-      ...(CREAGEN_DEV_PATH ? [localLibraryOnHttp(mode), watchExternal()] : []),
+      ...(creagenDevPath ? [localLibraryOnHttp(mode), watchExternal()] : []),
       // sandboxJs(mode),
       injectAnalytics(mode),
       react(),

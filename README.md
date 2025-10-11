@@ -15,9 +15,9 @@ Features:
 npm install
 
 # Run with local creagen build
-# `CREAGEN_PATH`  - path to creagen library folder (defaults to ../creagen)
-# The full path to the package will be `$CREAGEN_PATH/dist/creagen.js`
-CREAGEN_PATH=<path to local creagen version> npm run dev
+# `CREAGEN_DEV_PATH`  - path to creagen library folder (defaults to ../creagen)
+# The full path to the package will be `$CREAGEN_DEV_PATH/dist/creagen.js`
+CREAGEN_DEV_PATH=<path to local creagen version> npm run dev
 
 # Run in standalone mode
 npm start
