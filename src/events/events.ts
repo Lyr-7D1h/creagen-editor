@@ -12,15 +12,25 @@ class _EditorEventBus {
   }
 
   on<K extends EditorEvent>(
-    type: K,
+    type: K | K[],
     callback: (data: EditorEventData<K>) => void,
   ): () => void {
     const handler = (e: Event) => {
       callback((e as CustomEvent).detail)
     }
 
-    this.target.addEventListener(type, handler)
+    if (Array.isArray(type)) {
+      type.forEach((type) => {
+        this.target.addEventListener(type, handler)
+      })
+      return () => {
+        type.forEach((type) => {
+          this.target.removeEventListener(type, handler)
+        })
+      }
+    }
 
+    this.target.addEventListener(type, handler)
     return () => {
       this.target.removeEventListener(type, handler)
     }

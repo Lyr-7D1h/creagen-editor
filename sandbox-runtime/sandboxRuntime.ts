@@ -28,8 +28,6 @@ async function init() {
     SandboxMessageHandlerMode.Iframe,
   )
 
-  messageHandler.send({ type: 'loaded' })
-
   let loadedLibraries: string[] = []
   messageHandler.on('render', async ({ code, libraries }) => {
     try {
@@ -56,7 +54,7 @@ async function init() {
       script.textContent = code
       document.body.appendChild(script)
 
-      messageHandler.send({ type: 'loaded' })
+      messageHandler.send({ type: 'renderComplete' })
 
       setTimeout(() => {
         const result = analyzeContainer(document.body)

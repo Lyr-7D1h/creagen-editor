@@ -51,6 +51,16 @@ export const COMMANDS = {
       localStorage.set('menu-view', !localStorage.get('menu-view'))
     },
   },
+  'editor.toggleFreeze': {
+    description: 'Freeze/Unfreeze sandbox',
+    handler: (editor: CreagenEditor) => {
+      if (editor.sandbox.isFrozen) {
+        editor.sandbox.unfreeze()
+      } else {
+        editor.sandbox.freeze()
+      }
+    },
+  },
 }
 
 export const commandSchema = z.string().transform((data, ctx) => {

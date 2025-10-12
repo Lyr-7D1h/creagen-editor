@@ -10,7 +10,7 @@ import { useLocalStorage } from '../storage/useLocalStorage'
 /**
  * Hook that subscribes to an event and triggers re-render when emitted
  */
-export function useEditorEvent<K extends EditorEvent>(eventType: K) {
+export function useEditorEvent<K extends EditorEvent>(eventType: K | K[]) {
   const [data, setData] = useState<EditorEventData<K> | null>(null)
 
   useEffect(() => {

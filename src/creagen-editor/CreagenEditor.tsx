@@ -14,8 +14,10 @@ import { editorEvents } from '../events/events'
 import { Bookmark, isBookmark } from '../vcs/Bookmarks'
 import { Command, COMMANDS } from './commands'
 import { SemVer } from 'semver'
+import { ResourceMonitor } from '../resource-monitor/ResourceMonitor'
 
 export class CreagenEditor {
+  resourceMonitor = new ResourceMonitor()
   storage: ClientStorage
   settings: Settings
   editor: Editor
@@ -66,6 +68,8 @@ export class CreagenEditor {
     // Load initial code and settings from url
     this.loadSettingsFromPath().catch(logger.error)
     this.loadLibraries()
+
+    this.resourceMonitor.listen()
 
     // Update code from history
     addEventListener('popstate', () => {

@@ -18,10 +18,12 @@ type EditorEvents = {
   }
 
   // Sandbox events
-  'sandbox:loaded': void
   'sandbox:analysis-complete': { result: AnalyzeContainerResult }
   'sandbox:error': { error: Error }
+  'sandbox:render': void
   'sandbox:render-complete': void
+  'sandbox:freeze': void
+  'sandbox:unfreeze': void
 
   // Editor events
   'editor:code-changed': { code: string; hasChanges: boolean }
@@ -45,12 +47,13 @@ export const EDITOR_EVENTS: ReadonlyArray<EditorEvent> = [
   // VCS events
   'vcs:commit',
   'vcs:checkout',
+  'vcs:bookmarkUpdate',
 
   // Settings events
   'settings:changed',
 
   // Sandbox events
-  'sandbox:loaded',
+  'sandbox:analysis-complete',
   'sandbox:error',
   'sandbox:render-complete',
 
@@ -59,4 +62,6 @@ export const EDITOR_EVENTS: ReadonlyArray<EditorEvent> = [
   'editor:libraries-changed',
   'editor:tab-changed',
   'editor:save',
+
+  'local-storage',
 ]

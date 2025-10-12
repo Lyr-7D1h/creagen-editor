@@ -10,6 +10,10 @@ import {
 const logger = createContextLogger('sandbox')
 
 export class Sandbox {
+  private parent: HTMLElement | null = null
+  private nextSibling: Node | null = null
+  isFrozen = false
+
   static async create() {
     const iframe = document.createElement('iframe')
     iframe.title = ''
@@ -34,6 +38,14 @@ export class Sandbox {
     private iframe: HTMLIFrameElement,
     private messageHandler: SandboxMessageHandler,
   ) {
+    this.setupMessageHandlers()
+  }
+
+  /**
+   * Set up message handler event listeners
+   * This is extracted to a separate method so it can be called after unfreezing
+   */
+  private setupMessageHandlers() {
     this.messageHandler.on('analysisResult', (event) =>
       editorEvents.emit('sandbox:analysis-complete', event),
     )
@@ -48,7 +60,7 @@ export class Sandbox {
       logger[event.level](...event.data)
     })
     this.messageHandler.on('renderComplete', () => {
-      logger.info('render complete')
+      editorEvents.emit('sandbox:render-complete', undefined)
     })
   }
 
@@ -57,6 +69,8 @@ export class Sandbox {
   }
 
   async render(code: string, libraryImports: LibraryImport[]) {
+    editorEvents.emit('sandbox:render', undefined)
+    if (this.isFrozen) await this.unfreeze()
     this.messageHandler.send({
       type: 'render',
       code,
@@ -67,6 +81,64 @@ export class Sandbox {
       `Loading code with '${code.length}' characters into iframe with libraries: `,
       JSON.stringify(libraryImports),
     )
+  }
+
+  /**
+   * Freeze the iframe by removing it from the DOM.
+   * This stops all JavaScript execution and resource usage.
+   */
+  freeze() {
+    if (this.isFrozen) {
+      logger.warn('Sandbox already frozen')
+      return
+    }
+
+    // Store the iframe's position in the DOM
+    this.parent = this.iframe.parentElement
+    this.nextSibling = this.iframe.nextSibling
+
+    // Remove from DOM to stop all execution
+    if (this.parent) {
+      this.parent.removeChild(this.iframe)
+      this.isFrozen = true
+      logger.info('Sandbox frozen (removed from DOM)')
+    } else {
+      logger.error('Cannot freeze: iframe has no parent element')
+    }
+    editorEvents.emit('sandbox:freeze', undefined)
+  }
+
+  /**
+   * Unfreeze the iframe by restoring it to the DOM.
+   * This resumes JavaScript execution.
+   */
+  async unfreeze() {
+    if (!this.isFrozen) {
+      logger.warn('Sandbox not frozen')
+      return
+    }
+
+    // Restore iframe to its original position
+    if (this.parent) {
+      if (this.nextSibling) {
+        this.parent.insertBefore(this.iframe, this.nextSibling)
+      } else {
+        this.parent.appendChild(this.iframe)
+      }
+      this.isFrozen = false
+    } else {
+      logger.error('Cannot unfreeze: parent element reference lost')
+      return
+    }
+
+    this.messageHandler = await SandboxMessageHandler.create(
+      SandboxMessageHandlerMode.Parent,
+      this.iframe,
+    )
+    this.setupMessageHandlers()
+    logger.info('Message handler reconnected')
+
+    editorEvents.emit('sandbox:unfreeze', undefined)
   }
 
   async svgExport(

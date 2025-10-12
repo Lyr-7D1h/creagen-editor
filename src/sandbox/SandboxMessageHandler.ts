@@ -14,17 +14,11 @@ export interface SvgProps {
 
 type SandboxMessageDefinitions =
   | {
-      type: '__init__'
-    }
-  | {
       type: 'log'
       msg: {
         level: 'debug' | 'info' | 'warn' | 'error'
         data: any
       }
-    }
-  | {
-      type: 'loaded'
     }
   | {
       type: 'analysisResult'
@@ -130,7 +124,10 @@ export class SandboxMessageHandler {
           iframe?.removeEventListener('load', initListener)
         }
 
-        if (iframe!.contentWindow) {
+        if (
+          iframe!.contentWindow &&
+          iframe!.contentDocument?.readyState === 'complete'
+        ) {
           initListener()
         } else {
           iframe?.addEventListener('load', initListener)
@@ -140,10 +137,12 @@ export class SandboxMessageHandler {
       case SandboxMessageHandlerMode.Iframe:
         return new Promise((res) => {
           window.addEventListener('message', (msg) => {
-            if (isSandboxMessage(msg.data)) {
-              if (msg.data.type === '__init__' && msg.ports[0]) {
-                res(new SandboxMessageHandler(msg.ports[0]))
-              }
+            if (
+              'type' in msg.data &&
+              msg.data.type === '__init__' &&
+              msg.ports[0]
+            ) {
+              res(new SandboxMessageHandler(msg.ports[0]))
             }
           })
         })

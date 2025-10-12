@@ -109,6 +109,16 @@ const defaultConfig = {
     label: 'Optimize svg export',
     value: true,
   },
+
+  sandbox: {
+    type: 'folder',
+    title: 'Sandbox',
+  },
+  'sandbox.resource_monitor': {
+    type: 'param',
+    label: 'View resource usage in the top right of the sandbox',
+    value: false,
+  },
 }
 
 type Generic<T> = {
