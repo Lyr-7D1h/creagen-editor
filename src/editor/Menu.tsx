@@ -70,7 +70,7 @@ export function Menu<T>({ ref, width }: MenuProps & RefAttributes<T>) {
       ref={ref}
       sx={{
         width: width,
-        height: '100%',
+        height: '100svh',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'scroll',
@@ -130,7 +130,7 @@ export function Menu<T>({ ref, width }: MenuProps & RefAttributes<T>) {
         </ButtonGroup>
       </Box>
 
-      <Box sx={{ flex: 1, overflow: 'auto' }} p={2}>
+      <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
         <Typography variant="h5" gutterBottom textAlign={'center'}>
           {tabs[currentView as TabKey].title}
         </Typography>
