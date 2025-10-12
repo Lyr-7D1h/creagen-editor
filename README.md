@@ -39,11 +39,11 @@ npm start
 - Actions
     - For shareable link
 - Autorun sketches
-    - containerize iframe 
     - prevent iframe from hogging all resources
 - Add sketch params
   - Add dynamically
   - Input mathematical functions
+- Live coding, no delay in updates
 - Export to html with js inlined
 - Add Hydra support https://github.com/hydra-synth/hydra-synth?tab=readme-ov-file
 - use importmap to map module names to urls https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap
