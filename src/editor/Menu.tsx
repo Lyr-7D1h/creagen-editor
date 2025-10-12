@@ -74,6 +74,7 @@ export function Menu<T>({ ref, width }: MenuProps & RefAttributes<T>) {
         display: 'flex',
         flexDirection: 'column',
         overflow: 'scroll',
+        backgroundColor: 'white',
       }}
     >
       <Box

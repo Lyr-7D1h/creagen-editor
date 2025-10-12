@@ -37,67 +37,79 @@ export function CreagenEditorViewSplit() {
   const currentResizerRef = useRef<number | null>(null)
   const animationFrameRef = useRef<number | null>(null)
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    // don't allow resizing past a certain point
-    if (
-      e.clientX < MIN_WINDOW_SIZE ||
-      e.clientX > window.innerWidth - MIN_WINDOW_SIZE
-    )
-      return
-
-    const resizer = currentResizerRef.current
-    switch (resizer) {
-      case 0:
-        if (e.clientX > window.innerWidth - MIN_WINDOW_SIZE * 2) return
-        // Use requestAnimationFrame to throttle updates
-        if (animationFrameRef.current) return
-        animationFrameRef.current = requestAnimationFrame(() => {
-          if (
-            !menuRef.current ||
-            !editorRef.current ||
-            !sandboxRef.current ||
-            !resizer0.current
-          )
-            return
-          menuRef.current.style.width = e.clientX + 'px'
-          // TODO(perf): use translate
-          editorRef.current.style.left = e.clientX + 'px'
-          resizer0.current.style.left = e.clientX + 'px'
-          if (resizer1.current)
-            resizer1.current.style.left =
-              e.clientX + editorRef.current.clientWidth + 'px'
-          sandboxRef.current.style.width =
-            window.innerWidth -
-            (e.clientX + editorRef.current.clientWidth) +
-            'px'
-          sandboxRef.current.style.left =
-            window.innerWidth - sandboxRef.current.clientWidth + 'px'
-
-          animationFrameRef.current = null
-        })
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      // don't allow resizing past a certain point
+      if (
+        e.clientX < MIN_WINDOW_SIZE ||
+        e.clientX > window.innerWidth - MIN_WINDOW_SIZE
+      )
         return
-      case 1:
-        if (animationFrameRef.current) return
-        animationFrameRef.current = requestAnimationFrame(() => {
-          if (!resizer1.current || !editorRef.current || !sandboxRef.current)
-            return
-          resizer1.current.style.left = e.clientX + 'px'
-          editorRef.current.style.width =
-            e.clientX -
-            (menuRef.current ? menuRef.current.clientWidth : 0) +
-            'px'
 
-          sandboxRef.current.style.width = window.innerWidth - e.clientX + 'px'
-          sandboxRef.current.style.left =
-            window.innerWidth - sandboxRef.current.clientWidth + 'px'
+      const resizer = currentResizerRef.current
+      switch (resizer) {
+        case 0:
+          if (e.clientX > window.innerWidth - MIN_WINDOW_SIZE * 2) return
+          // Use requestAnimationFrame to throttle updates
+          if (animationFrameRef.current) return
+          animationFrameRef.current = requestAnimationFrame(() => {
+            if (
+              !menuRef.current ||
+              !editorRef.current ||
+              !sandboxRef.current ||
+              !resizer0.current
+            )
+              return
+            menuRef.current.style.width = e.clientX + 'px'
+            // TODO(perf): use translate
+            editorRef.current.style.left = e.clientX + 'px'
+            resizer0.current.style.left = e.clientX + 'px'
+            if (resizer1.current)
+              resizer1.current.style.left =
+                e.clientX + editorRef.current.clientWidth + 'px'
 
-          animationFrameRef.current = null
-        })
-        return
-      default:
-        throw Error(`Unknown resizer ${resizer}`)
-    }
-  }, [])
+            if (fullscreen) {
+              editorRef.current.style.width =
+                window.innerWidth - e.clientX + 'px'
+              sandboxRef.current.style.width =
+                window.innerWidth - e.clientX + 'px'
+            } else {
+              sandboxRef.current.style.width =
+                window.innerWidth -
+                (e.clientX + editorRef.current.clientWidth) +
+                'px'
+            }
+            sandboxRef.current.style.left =
+              window.innerWidth - sandboxRef.current.clientWidth + 'px'
+
+            animationFrameRef.current = null
+          })
+          return
+        case 1:
+          if (animationFrameRef.current) return
+          animationFrameRef.current = requestAnimationFrame(() => {
+            if (!resizer1.current || !editorRef.current || !sandboxRef.current)
+              return
+            resizer1.current.style.left = e.clientX + 'px'
+            editorRef.current.style.width =
+              e.clientX -
+              (menuRef.current ? menuRef.current.clientWidth : 0) +
+              'px'
+
+            sandboxRef.current.style.width =
+              window.innerWidth - e.clientX + 'px'
+            sandboxRef.current.style.left =
+              window.innerWidth - sandboxRef.current.clientWidth + 'px'
+
+            animationFrameRef.current = null
+          })
+          return
+        default:
+          throw Error(`Unknown resizer ${resizer}`)
+      }
+    },
+    [fullscreen],
+  )
 
   const stopResize = useCallback(() => {
     setResizing(null)
@@ -132,29 +144,6 @@ export function CreagenEditorViewSplit() {
     }
   }, [resizing])
 
-  // set width on fullscreen
-  useEffect(() => {
-    if (!sandboxRef.current) return
-    const editor = editorRef.current
-    const menuWidth = menuRef.current ? menuRef.current?.clientWidth : 0
-    if (fullscreen) {
-      if (editor) editor.style.width = window.innerWidth - menuWidth + 'px'
-      sandboxRef.current.style.width = window.innerWidth + 'px'
-      sandboxRef.current.style.left = '0px'
-    } else {
-      let editorWidth = 0
-      if (editor) {
-        editorWidth = DEFAULT_EDITOR_WIDTH
-        editor.style.width = editorWidth + 'px'
-      }
-      sandboxRef.current.style.width =
-        window.innerWidth - menuWidth - editorWidth + 'px'
-      sandboxRef.current.style.left = editorWidth + 'px'
-      if (resizer1.current)
-        resizer1.current.style.left = menuWidth + editorWidth + 'px'
-    }
-  }, [menu, fullscreen])
-
   // set position on menu toggle
   useEffect(() => {
     if (!editorRef.current || !sandboxRef.current) return
@@ -164,6 +153,10 @@ export function CreagenEditorViewSplit() {
       editorRef.current.style.left = menuRef.current.clientWidth + 'px'
       sandboxRef.current.style.left =
         menuRef.current.clientWidth + editorRef.current.clientWidth + 'px'
+      sandboxRef.current.style.width =
+        window.innerWidth -
+        (menuRef.current.clientWidth + editorRef.current.clientWidth) +
+        'px'
       if (resizer0.current)
         resizer0.current.style.left = menuRef.current.clientWidth + 'px'
       if (resizer1.current)
@@ -175,6 +168,27 @@ export function CreagenEditorViewSplit() {
         resizer1.current.style.left = editorRef.current.clientWidth + 'px'
     }
   }, [menu])
+
+  // set width on fullscreen
+  useEffect(() => {
+    if (!sandboxRef.current) return
+
+    const menuWidth = menuRef.current ? menuRef.current?.clientWidth : 0
+
+    if (editorRef.current) {
+      let editorWidth = fullscreen ? window.innerWidth : DEFAULT_EDITOR_WIDTH
+      editorRef.current.style.width = editorWidth + 'px'
+    }
+
+    let editorWidth = fullscreen ? 0 : DEFAULT_EDITOR_WIDTH
+
+    sandboxRef.current.style.width =
+      window.innerWidth - menuWidth - editorWidth + 'px'
+    sandboxRef.current.style.left = menuWidth + editorWidth + 'px'
+
+    if (resizer1.current)
+      resizer1.current.style.left = menuWidth + editorWidth + 'px'
+  }, [menu, fullscreen])
 
   // resize on window resize
   useEffect(() => {
@@ -203,12 +217,6 @@ export function CreagenEditorViewSplit() {
   if (hideAll) {
     return <SandboxView ref={sandboxRef} />
   }
-
-  // const init = (ref: React.RefObject<HTMLDivElement | null>) => {
-  //   return (node: HTMLDivElement | null) => {
-  //     ref.current = node
-  //   }
-  // }
 
   return (
     <div style={{ display: 'flex' }}>
