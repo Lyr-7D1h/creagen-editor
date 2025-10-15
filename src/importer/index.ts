@@ -111,10 +111,12 @@ async function getLibraryFromSource(
     type: 'main',
     path: `${packageSourceUrl}/${packageName}${version ? `@${version}` : ''}/${pkg.main || pkg.browser}`,
   }
+
   if (pkg.module) {
     importPath.type = 'module'
     importPath.path = `${packageSourceUrl}/${packageName}${version ? `@${version}` : ''}/${pkg.module}`
   }
+
   return {
     name: packageName,
     version: pkg.version,

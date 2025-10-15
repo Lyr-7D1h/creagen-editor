@@ -1,87 +1,127 @@
 import ts from 'typescript'
 import { typescriptCompilerOptions } from '../editor/Editor'
-import { TYPESCRIPT_IMPORT_REGEX } from '../constants'
 import { LibraryImport } from '../importer'
 import { logger } from '../logs/logger'
 
-/** Parse code to make it compatible for the editor */
+const P5_LIFECYCLE_FUNCTIONS = [
+  'preload',
+  'setup',
+  'draw',
+  'mousePressed',
+  'mouseReleased',
+  'mouseClicked',
+  'mouseMoved',
+  'mouseDragged',
+  'mouseWheel',
+  'keyPressed',
+  'keyReleased',
+  'keyTyped',
+  'touchStarted',
+  'touchMoved',
+  'touchEnded',
+  'windowResized',
+  'deviceMoved',
+  'deviceTurned',
+  'deviceShaken',
+]
+
+/**
+ * Parse code to make it compatible for the editor
+ * Uses AST transformation to update imports
+ */
 export function parseCode(
   code: string,
   libraries: Record<string, LibraryImport>,
-) {
-  code = resolveImports(code, libraries)
-  if (libraries['p5']) code = makeP5FunctionsGlobal(code)
-
-  return ts.transpile(code, typescriptCompilerOptions)
-}
-
-function resolveImports(
-  code: string,
-  libraries: Record<string, LibraryImport>,
-) {
-  let match
-  while ((match = TYPESCRIPT_IMPORT_REGEX.exec(code)) !== null) {
-    const imports = match.groups!['imports']
-    const module = match.groups!['module']
-    if (typeof module === 'undefined') continue
-
-    // Replace the module path while leaving the imports intact
-    const newModulePath = libraries[module]?.importPath.path
-    if (typeof newModulePath === 'undefined') {
-      logger.error(`Library ${module} not found`)
-      continue
-    }
-    const updatedImport = imports
-      ? `import ${imports} from '${newModulePath}';`
-      : `import '${newModulePath}';`
-
-    code = code.replace(match[0], updatedImport)
-  }
-  return code
-}
-
-function makeP5FunctionsGlobal(code: string) {
-  // globally defined functions
-  const userDefinedFunctions = [
-    'setup',
-    'draw',
-    'mousePressed',
-    'mouseReleased',
-    'mouseClicked',
-    'mouseMoved',
-    'mouseDragged',
-    'mouseWheel',
-    'keyPressed',
-    'keyReleased',
-    'keyTyped',
-    'touchStarted',
-    'touchMoved',
-    'touchEnded',
-    'windowResized',
-    'preload',
-    'remove',
-    'deviceMoved',
-    'deviceTurned',
-    'deviceShaken',
-  ]
-
-  const functionRegex = new RegExp(
-    `\\b(${userDefinedFunctions.join('|')})\\b\\s*\\(`,
-    'g',
+): string {
+  const sourceFile = ts.createSourceFile(
+    'temp.ts',
+    code,
+    ts.ScriptTarget.Latest,
+    true,
   )
 
-  // Find all matches of the defined functions
-  let matches
-  const definedFunctions = new Set()
-  while ((matches = functionRegex.exec(code)) !== null) {
-    definedFunctions.add(matches[1])
+  const hasP5 = !!libraries['p5']
+  const p5FunctionsFound = new Set<string>()
+  const printer = ts.createPrinter()
+
+  const transformer = <T extends ts.Node>(
+    context: ts.TransformationContext,
+  ) => {
+    return (rootNode: T) => {
+      function visit(node: ts.Node): ts.Node {
+        // Transform import declarations
+        if (ts.isImportDeclaration(node)) {
+          const moduleSpecifier = node.moduleSpecifier
+
+          if (ts.isStringLiteral(moduleSpecifier)) {
+            const oldModule = moduleSpecifier.text
+            const newModulePath = libraries[oldModule]?.importPath.path
+
+            if (newModulePath) {
+              // Replace module path with the one from libraries
+              return ts.factory.updateImportDeclaration(
+                node,
+                node.modifiers,
+                node.importClause,
+                ts.factory.createStringLiteral(newModulePath),
+                node.assertClause,
+              )
+            } else if (
+              !oldModule.startsWith('.') &&
+              !oldModule.startsWith('/')
+            ) {
+              logger.error(`Library ${oldModule} not found`)
+            }
+          }
+        }
+
+        // Track p5 function declarations if p5 is enabled
+        if (hasP5) {
+          if (
+            ts.isFunctionDeclaration(node) &&
+            node.name &&
+            P5_LIFECYCLE_FUNCTIONS.includes(node.name.text)
+          ) {
+            p5FunctionsFound.add(node.name.text)
+          }
+
+          if (ts.isVariableStatement(node)) {
+            node.declarationList.declarations.forEach((decl) => {
+              if (
+                ts.isIdentifier(decl.name) &&
+                P5_LIFECYCLE_FUNCTIONS.includes(decl.name.text)
+              ) {
+                if (
+                  decl.initializer &&
+                  (ts.isArrowFunction(decl.initializer) ||
+                    ts.isFunctionExpression(decl.initializer))
+                ) {
+                  p5FunctionsFound.add(decl.name.text)
+                }
+              }
+            })
+          }
+        }
+
+        return ts.visitEachChild(node, visit, context)
+      }
+
+      return ts.visitNode(rootNode, visit) as T
+    }
   }
 
-  // Append window.{functionName} = {functionName} for each detected function
-  const globalCode = Array.from(definedFunctions)
-    .map((fn) => `window.${fn} = ${fn};`)
-    .join('\n')
+  // Apply transformation
+  const result = ts.transform(sourceFile, [transformer])
+  const transformedSourceFile = result.transformed[0] as ts.SourceFile
+  let transformedCode = printer.printFile(transformedSourceFile)
 
-  // Add the global code to the original code
-  return code + '\n\n' + globalCode
+  // For p5, assign all found lifecycle functions to window and trigger global mode
+  if (hasP5 && p5FunctionsFound.size > 0) {
+    const assignments = Array.from(p5FunctionsFound)
+      .map((fn) => `if (typeof ${fn} !== 'undefined') window.${fn} = ${fn};`)
+      .join('\n')
+    transformedCode = transformedCode + '\n' + assignments + '\nnew p5();'
+  }
+
+  return ts.transpile(transformedCode, typescriptCompilerOptions)
 }
