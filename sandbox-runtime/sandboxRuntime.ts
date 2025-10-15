@@ -34,19 +34,47 @@ async function init() {
       // Clear previous content
       document.body.innerHTML = ''
 
-      // Load new libraries if needed
       for (const lib of libraries) {
-        if (lib.type !== 'module' && !loadedLibraries.includes(lib.path)) {
-          const script = document.createElement('script')
-          script.src = lib.path
-          await new Promise((resolve, reject) => {
-            script.onload = resolve
-            script.onerror = reject
-            document.head.appendChild(script)
-          })
-          loadedLibraries.push(lib.path)
+        if (loadedLibraries.includes(lib.path)) continue
+        switch (lib.type) {
+          case 'main': {
+            const script = document.createElement('script')
+            script.src = lib.path
+            await new Promise((resolve, reject) => {
+              script.onload = resolve
+              script.onerror = reject
+              document.head.appendChild(script)
+            })
+            break
+          }
+          case 'module': {
+            const link = document.createElement('link')
+            link.rel = 'modulepreload'
+            link.href = lib.path
+            document.head.appendChild(link)
+            break
+          }
         }
+        loadedLibraries.push(lib.path)
       }
+
+      // Remove libraries that are no longer active
+      loadedLibraries = loadedLibraries.filter((path) => {
+        for (const lib of libraries) {
+          if (lib.path === path) {
+            return true
+          }
+        }
+        // Remove script tags with this src
+        const scripts = document.querySelectorAll(`script[src="${path}"]`)
+        scripts.forEach((script) => script.remove())
+
+        // Remove link tags with this href
+        const links = document.querySelectorAll(`link[href="${path}"]`)
+        links.forEach((link) => link.remove())
+
+        return false
+      })
 
       // Execute user code
       const script = document.createElement('script')
