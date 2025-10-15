@@ -6,7 +6,7 @@ import { EditorBar } from './EditorBar'
 
 export interface EditorProps {
   width?: string
-  ref?: React.RefObject<HTMLDivElement | null>
+  height?: string
   menu: boolean
   onMenuOpen: () => void
   toggleMenu: () => void
@@ -14,7 +14,7 @@ export interface EditorProps {
 
 export function EditorView({
   width,
-  ref,
+  height,
   menu,
   onMenuOpen,
   toggleMenu,
@@ -35,12 +35,11 @@ export function EditorView({
 
   return (
     <div
-      ref={ref}
       style={{
-        width,
-        position: 'absolute',
+        width: width || '100%',
+        height: height || '100%',
+        position: 'relative',
         zIndex: 1001,
-        height: '100%',
         display: hideAll ? 'none' : 'flex',
         overflow: 'hidden',
         flexDirection: 'column',

@@ -69,8 +69,8 @@ export function Menu<T>({ ref, width }: MenuProps & RefAttributes<T>) {
     <Box
       ref={ref}
       sx={{
-        width: width,
-        height: '100svh',
+        width: width || '100%',
+        height: '100%',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'scroll',

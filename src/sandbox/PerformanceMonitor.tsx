@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Paper,
   IconButton,
@@ -8,6 +8,7 @@ import {
   Stack,
 } from '@mui/material'
 import { ExpandMore, ExpandLess } from '@mui/icons-material'
+import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
 
 interface PerformanceStats {
   averageFPS: number
@@ -16,12 +17,31 @@ interface PerformanceStats {
   minFrameTime: number
 }
 
-interface PerformanceMonitorProps {
-  stats: PerformanceStats
-}
-
-export function PerformanceMonitor({ stats }: PerformanceMonitorProps) {
+export function PerformanceMonitor() {
+  const creagenEditor = useCreagenEditor()
   const [isExpanded, setIsExpanded] = useState(true)
+  const [stats, setStats] = useState<PerformanceStats>({
+    averageFPS: 0,
+    averageFrameTime: 0,
+    maxFrameTime: 0,
+    minFrameTime: 0,
+  })
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      const currentStats = creagenEditor.resourceMonitor.getStats()
+      setStats({
+        averageFPS: currentStats.averageFPS,
+        averageFrameTime: currentStats.averageFrameTime,
+        maxFrameTime: currentStats.maxFrameTime,
+        minFrameTime: currentStats.minFrameTime,
+      })
+    }, 200)
+
+    return () => {
+      clearInterval(id)
+    }
+  }, [creagenEditor.resourceMonitor])
 
   return (
     <Paper

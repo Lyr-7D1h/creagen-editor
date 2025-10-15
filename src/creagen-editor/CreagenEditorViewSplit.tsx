@@ -1,254 +1,91 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react'
+import React, { useEffect } from 'react'
+import { Allotment } from 'allotment'
+import 'allotment/dist/style.css'
 import { EditorView } from '../editor/EditorView'
 import { SandboxView } from '../sandbox/SandboxView'
 import { Menu } from '../editor/Menu'
 import { useSettings } from '../events/useEditorEvents'
 import { useLocalStorage } from '../storage/useLocalStorage'
 import { Actions } from './Actions'
-import { Resizer } from './Resizer'
 import { useCreagenEditor } from './CreagenEditorView'
+import { PerformanceMonitor } from '../sandbox/PerformanceMonitor'
 
 const MIN_WINDOW_SIZE = 200
 
-const DEFAULT_MENU_WIDTH = Math.round(window.innerWidth / 3)
-const DEFAULT_EDITOR_WIDTH = Math.round(window.innerWidth / 3)
-
 /**
- * Split two given children and make them resizable
- *
- * each child must have a width prop
+ * Split view with resizable panels using Allotment
  */
 export function CreagenEditorViewSplit() {
   const creagenEditor = useCreagenEditor()
-  const resizer0 = useRef<HTMLDivElement>(null)
-  const resizer1 = useRef<HTMLDivElement>(null)
-
-  const editorRef = useRef<HTMLDivElement>(null)
-  const sandboxRef = useRef<HTMLDivElement>(null)
-  const menuRef = useRef<HTMLDivElement>(null)
-
   let fullscreen = useSettings('editor.fullscreen')
   const hideAll = useSettings('hide_all')
+  const resourceMonitorEnabled = useSettings('sandbox.resource_monitor')
   fullscreen = hideAll ? true : fullscreen
 
-  const [resizing, setResizing] = useState<null | number>(null)
   const [menu, setMenu] = useLocalStorage('menu-view', false)
 
-  const currentResizerRef = useRef<number | null>(null)
-  const animationFrameRef = useRef<number | null>(null)
-
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
-      // don't allow resizing past a certain point
-      if (
-        e.clientX < MIN_WINDOW_SIZE ||
-        e.clientX > window.innerWidth - MIN_WINDOW_SIZE
-      )
-        return
-
-      const resizer = currentResizerRef.current
-      switch (resizer) {
-        case 0:
-          if (e.clientX > window.innerWidth - MIN_WINDOW_SIZE * 2) return
-          // Use requestAnimationFrame to throttle updates
-          if (animationFrameRef.current) return
-          animationFrameRef.current = requestAnimationFrame(() => {
-            if (
-              !menuRef.current ||
-              !editorRef.current ||
-              !sandboxRef.current ||
-              !resizer0.current
-            )
-              return
-            menuRef.current.style.width = e.clientX + 'px'
-            // TODO(perf): use translate
-            editorRef.current.style.left = e.clientX + 'px'
-            resizer0.current.style.left = e.clientX + 'px'
-            if (resizer1.current)
-              resizer1.current.style.left =
-                e.clientX + editorRef.current.clientWidth + 'px'
-
-            if (fullscreen) {
-              editorRef.current.style.width =
-                window.innerWidth - e.clientX + 'px'
-              sandboxRef.current.style.width =
-                window.innerWidth - e.clientX + 'px'
-            } else {
-              sandboxRef.current.style.width =
-                window.innerWidth -
-                (e.clientX + editorRef.current.clientWidth) +
-                'px'
-            }
-            sandboxRef.current.style.left =
-              window.innerWidth - sandboxRef.current.clientWidth + 'px'
-
-            animationFrameRef.current = null
-          })
-          return
-        case 1:
-          if (animationFrameRef.current) return
-          animationFrameRef.current = requestAnimationFrame(() => {
-            if (!resizer1.current || !editorRef.current || !sandboxRef.current)
-              return
-            resizer1.current.style.left = e.clientX + 'px'
-            editorRef.current.style.width =
-              e.clientX -
-              (menuRef.current ? menuRef.current.clientWidth : 0) +
-              'px'
-
-            sandboxRef.current.style.width =
-              window.innerWidth - e.clientX + 'px'
-            sandboxRef.current.style.left =
-              window.innerWidth - sandboxRef.current.clientWidth + 'px'
-
-            animationFrameRef.current = null
-          })
-          return
-        default:
-          throw Error(`Unknown resizer ${resizer}`)
-      }
-    },
-    [fullscreen],
-  )
-
-  const stopResize = useCallback(() => {
-    setResizing(null)
-    currentResizerRef.current = null
-    window.removeEventListener('mousemove', handleMouseMove, false)
-    window.removeEventListener('mouseup', stopResize, false)
-  }, [handleMouseMove])
-
-  const handleResize = useCallback(
-    (resizer: number) => {
-      setResizing(resizer)
-      currentResizerRef.current = resizer
-      window.addEventListener('mousemove', handleMouseMove, false)
-      window.addEventListener('mouseup', stopResize, false)
-    },
-    [handleMouseMove, stopResize],
-  )
-
-  /** Disable text selection on resizing */
+  // Layout the editor when the menu or fullscreen state changes
   useEffect(() => {
-    const originalUserSelect = document.body.style.userSelect
-    const originalCursor = document.body.style.cursor
-
-    if (resizing !== null) {
-      document.body.style.userSelect = 'none'
-      document.body.style.cursor = 'col-resize'
+    if (creagenEditor) {
+      creagenEditor.editor.layout()
     }
-
-    return () => {
-      document.body.style.userSelect = originalUserSelect
-      document.body.style.cursor = originalCursor
-    }
-  }, [resizing])
-
-  // set position on menu toggle
-  useEffect(() => {
-    if (!editorRef.current || !sandboxRef.current) return
-    if (menu && menuRef.current) {
-      menuRef.current.style.width = DEFAULT_MENU_WIDTH + 'px'
-
-      editorRef.current.style.left = menuRef.current.clientWidth + 'px'
-      sandboxRef.current.style.left =
-        menuRef.current.clientWidth + editorRef.current.clientWidth + 'px'
-      sandboxRef.current.style.width =
-        window.innerWidth -
-        (menuRef.current.clientWidth + editorRef.current.clientWidth) +
-        'px'
-      if (resizer0.current)
-        resizer0.current.style.left = menuRef.current.clientWidth + 'px'
-      if (resizer1.current)
-        resizer1.current.style.left =
-          menuRef.current.clientWidth + editorRef.current.clientWidth + 'px'
-    } else {
-      editorRef.current.style.left = '0px'
-      if (resizer1.current)
-        resizer1.current.style.left = editorRef.current.clientWidth + 'px'
-    }
-  }, [menu])
-
-  // set width on fullscreen
-  useEffect(() => {
-    if (!sandboxRef.current) return
-
-    const menuWidth = menuRef.current ? menuRef.current?.clientWidth : 0
-
-    if (editorRef.current) {
-      let editorWidth = fullscreen ? window.innerWidth : DEFAULT_EDITOR_WIDTH
-      editorRef.current.style.width = editorWidth + 'px'
-    }
-
-    let editorWidth = fullscreen ? 0 : DEFAULT_EDITOR_WIDTH
-
-    sandboxRef.current.style.width =
-      window.innerWidth - menuWidth - editorWidth + 'px'
-    sandboxRef.current.style.left = menuWidth + editorWidth + 'px'
-
-    if (resizer1.current)
-      resizer1.current.style.left = menuWidth + editorWidth + 'px'
-  }, [menu, fullscreen])
-
-  // resize on window resize
-  useEffect(() => {
-    if (creagenEditor === null) return
-    const checkScreenSize = () => {
-      if (!editorRef.current || !resizer1.current || !sandboxRef.current) return
-      const menuWidth = menuRef.current ? menuRef.current.clientWidth : 0
-      const editorWidth = editorRef.current.clientWidth
-      const newSandboxWidth = window.innerWidth - (menuWidth + editorWidth)
-
-      if (newSandboxWidth < MIN_WINDOW_SIZE) {
-        const newEditorWidth = window.innerWidth - menuWidth - MIN_WINDOW_SIZE
-        if (newEditorWidth > MIN_WINDOW_SIZE) {
-          editorRef.current.style.width = `${newEditorWidth}px`
-          resizer1.current.style.left = `${menuWidth + newEditorWidth}px`
-          sandboxRef.current.style.width = `${MIN_WINDOW_SIZE}px`
-        }
-      } else {
-        sandboxRef.current.style.width = `${newSandboxWidth}px`
-      }
-    }
-    window.addEventListener('resize', checkScreenSize)
-    return () => window.removeEventListener('resize', checkScreenSize)
-  }, [creagenEditor])
+  }, [menu, fullscreen, creagenEditor])
 
   if (hideAll) {
-    return <SandboxView ref={sandboxRef} />
+    return <SandboxView />
   }
 
   return (
-    <div style={{ display: 'flex' }}>
-      {menu === true ? (
-        <>
-          <Menu ref={menuRef} />
-          <Resizer
-            ref={resizer0}
-            resizing={resizing === 0}
-            hidden={false}
-            onResize={() => handleResize(0)}
-          />
-        </>
-      ) : (
-        ''
-      )}
+    <div style={{ height: '100vh', width: '100vw' }}>
+      <Allotment>
+        {menu && (
+          <Allotment.Pane minSize={MIN_WINDOW_SIZE} preferredSize="33%">
+            <Menu />
+          </Allotment.Pane>
+        )}
 
-      <EditorView
-        ref={editorRef}
-        toggleMenu={() => setMenu(!menu)}
-        menu={menu}
-        onMenuOpen={() => setMenu(!menu)}
-      />
-      {fullscreen === false && (
-        <Resizer
-          ref={resizer1}
-          resizing={resizing === 1}
-          hidden={true}
-          onResize={() => handleResize(1)}
-        />
-      )}
-      <SandboxView ref={sandboxRef} />
+        <Allotment.Pane minSize={MIN_WINDOW_SIZE}>
+          {fullscreen ? (
+            <div
+              style={{ position: 'relative', width: '100%', height: '100%' }}
+            >
+              <div style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
+                <SandboxView />
+              </div>
+              <div style={{ position: 'absolute', inset: 0, zIndex: 2 }}>
+                <EditorView
+                  toggleMenu={() => setMenu(!menu)}
+                  menu={menu}
+                  onMenuOpen={() => setMenu(!menu)}
+                />
+              </div>
+              {resourceMonitorEnabled && <PerformanceMonitor />}
+            </div>
+          ) : (
+            <Allotment vertical={false}>
+              <Allotment.Pane minSize={MIN_WINDOW_SIZE} preferredSize="33%">
+                <EditorView
+                  toggleMenu={() => setMenu(!menu)}
+                  menu={menu}
+                  onMenuOpen={() => setMenu(!menu)}
+                />
+              </Allotment.Pane>
+              <Allotment.Pane minSize={MIN_WINDOW_SIZE}>
+                <div
+                  style={{
+                    position: 'relative',
+                    width: '100%',
+                    height: '100%',
+                  }}
+                >
+                  <SandboxView />
+                  {resourceMonitorEnabled && <PerformanceMonitor />}
+                </div>
+              </Allotment.Pane>
+            </Allotment>
+          )}
+        </Allotment.Pane>
+      </Allotment>
     </div>
   )
 }
@@ -263,7 +100,7 @@ export function CreagenEditorViewContentMobile() {
     return () => {
       creagenEditor.editor.setFullscreenMode(false)
     }
-  }, [])
+  }, [creagenEditor])
 
   if (menu) {
     return (
