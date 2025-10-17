@@ -2,7 +2,7 @@ import {
   defaultSettingsConfig,
   DefaultSettingsConfig,
   Entry,
-  Param,
+  SettingsParam,
   ParamKey,
 } from './SettingsConfig'
 import { editorEvents } from '../events/events'
@@ -31,7 +31,7 @@ export class Settings {
   readonly defaultConfig = defaultSettingsConfig
   config: DefaultSettingsConfig
 
-  private storage: ClientStorage
+  private readonly storage: ClientStorage
 
   private constructor(storage: ClientStorage, config: DefaultSettingsConfig) {
     this.storage = storage
@@ -72,7 +72,7 @@ export class Settings {
     return Object.fromEntries(
       Object.entries(this.config)
         .filter(([_, entry]) => (entry as Entry).type === 'param' || entry.type)
-        .map(([key, entry]) => [key, (entry as Param).value]),
+        .map(([key, entry]) => [key, (entry as SettingsParam).value]),
     ) as Record<ParamKey, any>
   }
 

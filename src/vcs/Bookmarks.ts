@@ -21,8 +21,8 @@ export function bookmarkToJson(ref: Bookmark) {
 
 /** Simple data structure for modifying and looking up vcs bookmarks */
 export class Bookmarks {
-  private bookmarks: Map<string, Bookmark>
-  private lookup: Map<string, Bookmark[]>
+  private readonly bookmarks: Map<string, Bookmark>
+  private readonly lookup: Map<string, Bookmark[]>
 
   constructor(bookmarks: Bookmark[]) {
     this.bookmarks = new Map()

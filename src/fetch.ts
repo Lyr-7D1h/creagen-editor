@@ -16,14 +16,14 @@ export async function fetch(
 ): Promise<Response> {
   const validate = options?.validate ?? true
   const timeout = options?.timeout ?? 5000
-  let controller = new AbortController()
+  const controller = new AbortController()
   setTimeout(() => controller.abort(), timeout)
   let resp
   try {
     const { validate, ...fetchOpts } = options ?? {}
     resp = await window.fetch(url, { ...fetchOpts, signal: controller.signal })
   } catch (e) {
-    let error = e as Error
+    const error = e as Error
     if (error.name === 'AbortError')
       throw new TimeoutError(
         `Request exceeded ${Math.round(timeout / 1000)}s timeout`,

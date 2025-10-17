@@ -133,9 +133,9 @@ export function Menu<T>({ ref, width }: MenuProps & RefAttributes<T>) {
 
       <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
         <Typography variant="h5" gutterBottom textAlign={'center'}>
-          {tabs[currentView as TabKey].title}
+          {tabs[currentView].title}
         </Typography>
-        {tabs[currentView as TabKey].content}
+        {tabs[currentView].content}
       </Box>
     </Box>
   )

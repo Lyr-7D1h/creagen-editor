@@ -9,12 +9,14 @@
     "build:editor": "VITE_ENTRYPOINT=editor vite build -m production",
     "build:sandbox": "VITE_ENTRYPOINT=sandbox vite build -m production && mv dist/sandbox-runtime/index.html dist/index.html && rm -r dist/sandbox-runtime",
     "format": "prettier -w src/",
-    "lint": "eslint src/**/*"
+    "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix"
   },
   "keywords": [],
   "author": "Lyr",
   "license": "Apache-2.0",
   "devDependencies": {
+    "@eslint/js": "^9.37.0",
     "@rollup/plugin-commonjs": "^28.0.2",
     "@rollup/plugin-node-resolve": "^16.0.0",
     "@rollup/plugin-terser": "^0.4.4",
@@ -22,8 +24,12 @@
     "@types/react": "^19.0.5",
     "@types/react-dom": "^19.0.3",
     "@types/semver": "^7.5.8",
+    "@typescript-eslint/eslint-plugin": "^8.46.1",
+    "@typescript-eslint/parser": "^8.46.1",
     "eslint": "^9.27.0",
     "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.0",
+    "eslint-plugin-react-refresh": "^0.4.24",
     "prettier": "3.5.3",
     "rollup": "^4.34.8",
     "typescript": "^5.5.4",

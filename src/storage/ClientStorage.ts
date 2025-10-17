@@ -17,7 +17,7 @@ const logger = createContextLogger('indexdb')
 const COMMITS_STORE = 'commits'
 const BLOB_STORE = 'blobs'
 export class ClientStorage {
-  private constructor(private db: IDBDatabase) {}
+  private constructor(private readonly db: IDBDatabase) {}
 
   static async create(): Promise<ClientStorage> {
     return await new Promise((resolve, reject) => {

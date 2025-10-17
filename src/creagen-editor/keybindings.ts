@@ -50,9 +50,9 @@ type Handler = (...args: any[]) => void
 export class Keybindings {
   /** list of all the keybindings, allows for multiple keybindings to a single command */
   private keybindings: ActiveKeybinding[] = []
-  private handlers: Map<Command, Handler> = new Map()
+  private readonly handlers: Map<Command, Handler> = new Map()
   private browserHandlers: ((e: KeyboardEvent) => void)[] = []
-  private editor: CreagenEditor
+  private readonly editor: CreagenEditor
 
   /** User deltas for adding and removing keybinds */
   private customKeybindings: CustomKeybinding[]
@@ -462,10 +462,10 @@ export function monacoKeyToBrowserKey(
   }
 
   // Extract modifiers and keyCode
-  const ctrlKey = !!(keybinding & KeyMod.CtrlCmd)
-  const altKey = !!(keybinding & KeyMod.Alt)
-  const shiftKey = !!(keybinding & KeyMod.Shift)
-  const metaKey = !!(keybinding & KeyMod.WinCtrl) // Corrected to use KeyMod.WinCtrl
+  const ctrlKey = Boolean(keybinding & KeyMod.CtrlCmd)
+  const altKey = Boolean(keybinding & KeyMod.Alt)
+  const shiftKey = Boolean(keybinding & KeyMod.Shift)
+  const metaKey = Boolean(keybinding & KeyMod.WinCtrl) // Corrected to use KeyMod.WinCtrl
 
   // Get the key without modifiers
   const keyCode = keybinding & 0xff

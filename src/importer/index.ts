@@ -43,7 +43,7 @@ export class Importer {
       )
       return res
     } catch (e) {
-      let error = e as Error
+      const error = e as Error
       if (error.name === 'TimeoutError')
         return getLibraryFromSource(
           'https://cdn.jsdelivr.net/npm',
@@ -96,7 +96,7 @@ async function getLibraryFromSource(
 
   const url = `${packageSourceUrl}/${packageName}${version ? `@${version}` : ''}`
   // HACK: unpkg does not send cors headers for error reponses
-  let res = await fetch(`${url}/package.json`, {
+  const res = await fetch(`${url}/package.json`, {
     validate: false,
   })
   if (res.status === 404) return null
@@ -107,7 +107,7 @@ async function getLibraryFromSource(
 
   const typings = async () => getTypings(url, pkg)
 
-  let importPath: ImportPath = {
+  const importPath: ImportPath = {
     type: 'main',
     path: `${packageSourceUrl}/${packageName}${version ? `@${version}` : ''}/${pkg.main || pkg.browser}`,
   }

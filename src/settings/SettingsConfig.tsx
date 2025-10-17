@@ -126,11 +126,11 @@ type Generic<T> = {
 }
 type GenericSettingsConfig = Record<
   string,
-  Generic<Param> | Generic<Folder> | Generic<Button>
+  Generic<SettingsParam> | Generic<Folder> | Generic<Button>
 >
 type SettingsConfig<T extends GenericSettingsConfig> = {
   [K in keyof T]: T[K] extends { value: any }
-    ? Param<T[K]['value']>
+    ? SettingsParam<T[K]['value']>
     : T[K] extends { onClick: any }
       ? Button
       : Folder
@@ -138,7 +138,7 @@ type SettingsConfig<T extends GenericSettingsConfig> = {
 export type DefaultSettingsConfig = SettingsConfig<typeof defaultConfig>
 
 type GenericParams<T extends SettingsConfig<T>> = {
-  [K in keyof T]: T[K] extends Param ? K : never
+  [K in keyof T]: T[K] extends SettingsParam ? K : never
 }[keyof T]
 export type ParamKey = GenericParams<DefaultSettingsConfig>
 export type ParamValue<P extends ParamKey> = (typeof defaultConfig)[P]['value']
@@ -167,7 +167,7 @@ export interface Button {
   onClick: () => void
 }
 
-export interface Param<T = any> {
+export interface SettingsParam<T = any> {
   type: 'param'
   value: T
   label?: string
@@ -180,6 +180,6 @@ export interface Param<T = any> {
   readonly?: boolean
 }
 
-export type Entry = (Folder | Button | Param) & {
+export type Entry = (Folder | Button | SettingsParam) & {
   generated?: boolean
 }

@@ -15,9 +15,11 @@ import { Bookmark, isBookmark } from '../vcs/Bookmarks'
 import { Command, COMMANDS } from './commands'
 import { SemVer } from 'semver'
 import { ResourceMonitor } from '../resource-monitor/ResourceMonitor'
+import { Params } from '../params/Params'
 
 export class CreagenEditor {
   resourceMonitor = new ResourceMonitor()
+  params = new Params()
   storage: ClientStorage
   settings: Settings
   editor: Editor
@@ -63,7 +65,7 @@ export class CreagenEditor {
     this.keybindings = new Keybindings(customKeybindings, this)
 
     /// If head is set load corresponding code
-    if (this.vcs.head) this.checkout(this.vcs.head.hash)
+    if (this.vcs.head) this.checkout(this.vcs.head.hash).catch(logger.error)
 
     // Load initial code and settings from url
     this.loadSettingsFromPath().catch(logger.error)
@@ -72,10 +74,14 @@ export class CreagenEditor {
     this.resourceMonitor.listen()
 
     // Update code from history
-    addEventListener('popstate', () => {
-      this.vcs.updateFromUrl().then(() => {
-        if (this.vcs.head) this.checkout(this.vcs.head.hash, false)
-      })
+    window.addEventListener('popstate', () => {
+      this.vcs
+        .updateFromUrl()
+        .then(() => {
+          if (this.vcs.head)
+            this.checkout(this.vcs.head.hash, false).catch(logger.error)
+        })
+        .catch(logger.error)
     })
 
     editorEvents.on('settings:changed', ({ key: k, value }) => {
@@ -89,7 +95,7 @@ export class CreagenEditor {
 
       if (this.settings.isParam(k)) {
         if (this.settings.config[k].queryParam) {
-          const url = new URL(window.location as any)
+          const url = new URL(window.location.href)
           if (value === null || url.searchParams.get(k) === value) return
 
           // remove query param if it is also the default behavior
@@ -121,8 +127,8 @@ export class CreagenEditor {
     return imports
   }
 
-  async checkout(hash: CommitHash, updateHistory?: boolean): Promise<any>
-  async checkout(bookmark: Bookmark, updateHistory?: boolean): Promise<any>
+  async checkout(hash: CommitHash, updateHistory?: boolean): Promise<void>
+  async checkout(bookmark: Bookmark, updateHistory?: boolean): Promise<void>
   async checkout(id: CommitHash | Bookmark, updateHistory?: boolean) {
     const checkout = await this.vcs.checkout(id, updateHistory)
     if (checkout === null) {
@@ -134,7 +140,7 @@ export class CreagenEditor {
       commit: { editorVersion, libraries },
       data,
     } = checkout
-    if (editorVersion.compare(new SemVer(CREAGEN_EDITOR_VERSION))) {
+    if (editorVersion.compare(new SemVer(CREAGEN_EDITOR_VERSION)) !== 0) {
       logger.warn("Editor version doesn't match")
     }
     this.settings.set('general.libraries', libraries)
@@ -142,7 +148,7 @@ export class CreagenEditor {
     this.editor.setValue(data)
   }
 
-  async loadSettingsFromPath() {
+  loadSettingsFromPath() {
     const urlParams = new URLSearchParams(window.location.search)
     urlParams.forEach((value, key) => {
       if (this.settings.isParam(key)) {
@@ -168,10 +174,7 @@ export class CreagenEditor {
       }
 
       return new Promise<LibraryImport>((resolve, reject) => {
-        if (
-          this.libraryImports[name] &&
-          this.libraryImports[name].version === version
-        ) {
+        if (this.libraryImports[name]?.version === version) {
           return resolve(this.libraryImports[name])
         }
 
@@ -240,6 +243,7 @@ export class CreagenEditor {
 
       await this.sandbox?.render(code, imports)
     } catch (e) {
+      logger.error('Failed to render:' + e)
       logger.remove(info)
       throw e
     }

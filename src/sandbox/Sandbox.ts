@@ -35,7 +35,7 @@ export class Sandbox {
   }
 
   private constructor(
-    private iframe: HTMLIFrameElement,
+    private readonly iframe: HTMLIFrameElement,
     private messageHandler: SandboxMessageHandler,
   ) {
     this.setupMessageHandlers()

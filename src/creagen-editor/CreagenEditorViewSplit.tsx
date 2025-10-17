@@ -9,6 +9,7 @@ import { useLocalStorage } from '../storage/useLocalStorage'
 import { Actions } from './Actions'
 import { useCreagenEditor } from './CreagenEditorView'
 import { PerformanceMonitor } from '../sandbox/PerformanceMonitor'
+import { ParamsView } from '../params/ParamsView'
 
 const MIN_WINDOW_SIZE = 200
 
@@ -64,11 +65,18 @@ export function CreagenEditorViewSplit() {
           ) : (
             <Allotment vertical={false}>
               <Allotment.Pane minSize={MIN_WINDOW_SIZE} preferredSize="33%">
-                <EditorView
-                  toggleMenu={() => setMenu(!menu)}
-                  menu={menu}
-                  onMenuOpen={() => setMenu(!menu)}
-                />
+                <Allotment vertical={true}>
+                  <Allotment.Pane minSize={MIN_WINDOW_SIZE} preferredSize="70%">
+                    <EditorView
+                      toggleMenu={() => setMenu(!menu)}
+                      menu={menu}
+                      onMenuOpen={() => setMenu(!menu)}
+                    />
+                  </Allotment.Pane>
+                  <Allotment.Pane minSize={100}>
+                    <ParamsView />
+                  </Allotment.Pane>
+                </Allotment>
               </Allotment.Pane>
               <Allotment.Pane minSize={MIN_WINDOW_SIZE}>
                 <div

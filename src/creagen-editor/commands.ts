@@ -1,5 +1,5 @@
 import z from 'zod'
-import { logger, MessageId, Severity } from '../logs/logger'
+import { createContextLogger, MessageId, Severity } from '../logs/logger'
 import { localStorage } from '../storage/LocalStorage'
 import { CreagenEditor } from './CreagenEditor'
 import { editorEvents } from '../events/events'
@@ -8,6 +8,7 @@ export type CommandHandler = (editor: CreagenEditor) => void
 
 let toggleHideAllMessageId: MessageId | null = null
 
+const logger = createContextLogger('command')
 export const COMMANDS = {
   welcome: {
     description: 'Open up the welcome screen',
@@ -18,7 +19,12 @@ export const COMMANDS = {
   'editor.run': {
     description: 'Run/Render the current code',
     handler: (editor: CreagenEditor) => {
+      let a
+      if (CREAGEN_MODE === 'dev') a = performance.now()
       editor.render()
+      if (CREAGEN_MODE === 'dev') {
+        logger.debug('Render took ' + (performance.now() - a) + 'ms')
+      }
     },
   },
   'editor.toggleFullscreen': {

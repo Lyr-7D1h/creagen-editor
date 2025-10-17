@@ -9,7 +9,7 @@ export class ResourceMonitor {
   private framesSinceRecalc = 0
   private readonly RECALC_INTERVAL = 100 // Recalculate every 100 frames
 
-  constructor(private frameSamplingRate = 60) {}
+  constructor(private readonly frameSamplingRate = 60) {}
 
   listen() {
     if (this.isListening) return

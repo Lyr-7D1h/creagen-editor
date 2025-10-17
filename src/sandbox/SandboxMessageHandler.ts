@@ -114,7 +114,7 @@ export class SandboxMessageHandler {
         const channel = new MessageChannel()
 
         function initListener() {
-          let window = iframe?.contentWindow!
+          const window = iframe?.contentWindow!
           // Must send an object message, not a plain string
           window.postMessage(
             { type: '__init__', constants: { creagenEditorVersion: '' } },
@@ -150,8 +150,8 @@ export class SandboxMessageHandler {
   }
 
   constructor(
-    private port: MessagePort,
-    private listeners: Map<
+    private readonly port: MessagePort,
+    private readonly listeners: Map<
       SandboxMessageType,
       Set<(msg: SandboxMessageDefinitions) => void>
     > = new Map(),

@@ -89,8 +89,8 @@ export class Editor {
   private readonly autoimport: AutoImport
   private vimMode: m.editor.IStandaloneCodeEditor | null
   private fullscreendecorators: m.editor.IEditorDecorationsCollection | null
-  private models: Record<string, monaco.editor.ITextModel> = {}
-  private _html
+  private readonly models: Record<string, monaco.editor.ITextModel> = {}
+  private readonly _html
 
   static async create(settings: Settings) {
     const monaco: Monaco = await loader.init()
@@ -228,7 +228,6 @@ export class Editor {
   addTypings(typings: string, uri: string, packageName?: string) {
     if (this.models[uri]) return
     logger.info(`Adding typings for ${uri}`)
-    // monaco.languages.typescript.javascriptDefaults.addExtraLib(typings, uri)
     if (typeof packageName === 'string') {
       this.autoimport.imports.saveFile({
         path: packageName,

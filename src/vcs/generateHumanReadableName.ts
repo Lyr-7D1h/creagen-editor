@@ -1350,7 +1350,7 @@ export function generateHumanReadableName(): string {
     'rocky',
   ]
 
-  var name2 = [
+  const name2 = [
     'people',
     'history',
     'way',

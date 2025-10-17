@@ -32,6 +32,7 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
     "noPropertyAccessFromIndexSignature": true,
+    "strictNullChecks": true,
     "noEmitOnError": true,
 
     "useDefineForClassFields": true,

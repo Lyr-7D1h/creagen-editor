@@ -2,8 +2,11 @@ import { Commit } from '../vcs/Commit'
 import { LocalStorageKey, StorageValue } from '../storage/StorageKey'
 import { ParamKey } from '../settings/SettingsConfig'
 import { AnalyzeContainerResult } from '../sandbox/SandboxMessageHandler'
+import { ParamConfig } from '../params/Params'
 
 type EditorEvents = {
+  render: { params: ParamConfig[] }
+
   // VCS events
   'vcs:commit': { commit: Commit; code: string }
   /** Change active head */
