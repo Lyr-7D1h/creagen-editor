@@ -28,9 +28,49 @@ async function init() {
     SandboxMessageHandlerMode.Iframe,
   )
 
+  function sendError(error: Error) {
+    messageHandler.send({ type: 'error', error })
+  }
+
+  // Track event listeners added to window
+  const windowEventListeners = new Map<
+    string,
+    Set<{
+      listener: EventListenerOrEventListenerObject
+      options?: AddEventListenerOptions | boolean
+    }>
+  >()
+
+  // Override addEventListener to track listeners
+  const originalAddEventListener = window.addEventListener.bind(window)
+  window.addEventListener = function (
+    type: string,
+    listener: EventListenerOrEventListenerObject,
+    options?: AddEventListenerOptions | boolean,
+  ) {
+    if (!windowEventListeners.has(type)) {
+      windowEventListeners.set(type, new Set())
+    }
+    windowEventListeners.get(type)!.add({ listener, options })
+    return originalAddEventListener(type, listener, options)
+  } as typeof window.addEventListener
+
+  // Function to reset all window event handlers
+  function resetWindowEventHandlers() {
+    windowEventListeners.forEach((listeners, eventType) => {
+      listeners.forEach(({ listener, options }) => {
+        window.removeEventListener(eventType, listener, options)
+      })
+    })
+    windowEventListeners.clear()
+  }
+
   let loadedLibraries: string[] = []
-  messageHandler.on('render', async ({ code, libraries }) => {
-    try {
+  messageHandler.on('render', ({ code, libraries }) => {
+    ;(async () => {
+      // Reset window event handlers
+      resetWindowEventHandlers()
+
       // Clear previous content
       document.body.innerHTML = ''
 
@@ -88,12 +128,7 @@ async function init() {
         const result = analyzeContainer(document.body)
         messageHandler.send({ type: 'analysisResult', result })
       }, 500)
-    } catch (error) {
-      messageHandler.send({
-        type: 'error',
-        error: error instanceof Error ? error : new Error(String(error)),
-      })
-    }
+    })().catch(sendError)
   })
 
   messageHandler.on('init', (msg) => {
@@ -124,4 +159,4 @@ async function init() {
   }
 }
 
-init()
+init().catch(console.error)
