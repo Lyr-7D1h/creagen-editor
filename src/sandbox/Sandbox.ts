@@ -53,11 +53,14 @@ export class Sandbox {
       editorEvents.emit('sandbox:error', event),
     )
     this.messageHandler.on('log', (event) => {
+      const args: unknown[] = Array.isArray(event.data)
+        ? event.data
+        : [event.data]
       if (event.level === 'error') {
-        logger.error(...event.data)
+        logger.error(...args)
         return
       }
-      logger[event.level](...event.data)
+      logger[event.level](...args)
     })
     this.messageHandler.on('renderComplete', () => {
       editorEvents.emit('sandbox:render-complete', undefined)

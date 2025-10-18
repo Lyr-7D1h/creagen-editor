@@ -68,7 +68,7 @@ export class CreagenEditor {
     if (this.vcs.head) this.checkout(this.vcs.head.hash).catch(logger.error)
 
     // Load initial code and settings from url
-    this.loadSettingsFromPath().catch(logger.error)
+    this.loadSettingsFromPath()
     this.loadLibraries()
 
     this.resourceMonitor.listen()
@@ -106,7 +106,7 @@ export class CreagenEditor {
           ) {
             url.searchParams.delete(k)
           } else {
-            url.searchParams.set(k, value)
+            url.searchParams.set(k, value as string)
           }
           window.history.pushState(null, '', url)
         }
@@ -163,12 +163,13 @@ export class CreagenEditor {
   loadLibraries() {
     const libraries = this.settings.values['general.libraries'] as Library[]
     this.editor.clearTypings()
+    this.editor.addTypings(Params.TYPINGS, 'creagen-editor')
 
     const updatedImports = libraries.map(({ name, version }) => {
       if (name in LIBRARY_CONFIGS) {
         const config = LIBRARY_CONFIGS[name]
-        if (config?.template) {
-          this.editor?.getValue() === '' &&
+        if (config?.template != null) {
+          if (this.editor.getValue() === '')
             this.editor.setValue(config.template)
         }
       }
@@ -181,14 +182,14 @@ export class CreagenEditor {
         Importer.getLibrary(name, version)
           .then((library) => {
             if (library === null) {
-              reject(`Library ${name} not found`)
+              reject(new Error(`Library ${name} not found`))
               return
             }
 
             library
               .typings()
               .then((typings) => {
-                if (typings && this.editor) {
+                if (typings != null) {
                   this.editor.addTypings(
                     typings,
                     `ts:${library.name}.d.ts`,
@@ -222,9 +223,10 @@ export class CreagenEditor {
   }
 
   async render() {
+    const libraries = this.settings.values['general.libraries'] as Library[]
     const info = logger.log(Severity.Info, 'rendering code', null)
     try {
-      if (this.settings.values['editor.format_on_render']) {
+      if (this.settings.values['editor.format_on_render'] != null) {
         await this.editor.format()
       }
 
@@ -232,22 +234,22 @@ export class CreagenEditor {
       if (code.length === 0) return
 
       // store code and change url
-      this.vcs.commit(code, this.settings.values['general.libraries'])
-      code = parseCode(code, this.libraryImports)
+      this.vcs.commit(code, libraries).catch(logger.error)
+      code = parseCode(code, this.libraryImports, this.params)
 
       const imports = Object.values(this.libraryImports).filter((lib) =>
-        this.settings.values['general.libraries'].some(
-          (library: Library) => library.name === lib.name,
-        ),
+        libraries.some((library: Library) => library.name === lib.name),
       )
+      console.log(code)
 
-      await this.sandbox?.render(code, imports)
+      await this.sandbox.render(code, imports)
     } catch (e) {
-      logger.error('Failed to render:' + e)
+      logger.error('Failed to render:', e)
       logger.remove(info)
       throw e
     }
     logger.remove(info)
+    editorEvents.emit('render', undefined)
   }
 
   getKeybindKeyString(command: Command) {

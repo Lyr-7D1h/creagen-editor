@@ -27,9 +27,7 @@ export function CreagenEditorViewSplit() {
 
   // Layout the editor when the menu or fullscreen state changes
   useEffect(() => {
-    if (creagenEditor) {
-      creagenEditor.editor.layout()
-    }
+    creagenEditor.editor.layout()
   }, [menu, fullscreen, creagenEditor])
 
   if (hideAll) {

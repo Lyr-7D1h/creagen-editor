@@ -2,10 +2,9 @@ import { Commit } from '../vcs/Commit'
 import { LocalStorageKey, StorageValue } from '../storage/StorageKey'
 import { ParamKey } from '../settings/SettingsConfig'
 import { AnalyzeContainerResult } from '../sandbox/SandboxMessageHandler'
-import { ParamConfig } from '../params/Params'
 
 type EditorEvents = {
-  render: { params: ParamConfig[] }
+  render: void
 
   // VCS events
   'vcs:commit': { commit: Commit; code: string }
@@ -16,8 +15,8 @@ type EditorEvents = {
   // Settings events
   'settings:changed': {
     key: ParamKey
-    value: any
-    oldValue?: any
+    value: unknown
+    oldValue?: unknown
   }
 
   // Sandbox events
@@ -30,7 +29,7 @@ type EditorEvents = {
 
   // Editor events
   'editor:code-changed': { code: string; hasChanges: boolean }
-  'editor:libraries-changed': { libraries: any[] }
+  'editor:libraries-changed': { libraries: unknown[] }
   'editor:tab-changed': { activeTab: string }
   'editor:save': { code: string }
 

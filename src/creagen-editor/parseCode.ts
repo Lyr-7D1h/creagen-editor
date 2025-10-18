@@ -2,6 +2,7 @@ import ts from 'typescript'
 import { typescriptCompilerOptions } from '../editor/Editor'
 import { LibraryImport } from '../importer'
 import { logger } from '../logs/logger'
+import { Params, paramConfigSchema } from '../params/Params'
 
 const P5_LIFECYCLE_FUNCTIONS = [
   'preload',
@@ -26,21 +27,157 @@ const P5_LIFECYCLE_FUNCTIONS = [
 ]
 
 /**
+ * Safely converts a TypeScript AST object literal to a plain JavaScript object
+ * without using eval or Function constructor
+ */
+function astObjectToPlainObject(
+  node: ts.ObjectLiteralExpression,
+): Record<string, unknown> {
+  const result: Record<string, unknown> = {}
+
+  for (const prop of node.properties) {
+    if (ts.isPropertyAssignment(prop)) {
+      const name = prop.name
+      const value = prop.initializer
+
+      // Get property name
+      let key: string
+      if (ts.isIdentifier(name)) {
+        key = name.text
+      } else if (ts.isStringLiteral(name)) {
+        key = name.text
+      } else {
+        continue // Skip computed or other property names
+      }
+
+      // Get property value
+      result[key] = astNodeToValue(value)
+    }
+  }
+
+  return result
+}
+
+/**
+ * Converts an AST node to its JavaScript value
+ */
+function astNodeToValue(node: ts.Expression): unknown {
+  if (ts.isStringLiteral(node)) {
+    return node.text
+  } else if (ts.isNumericLiteral(node)) {
+    return Number(node.text)
+  } else if (node.kind === ts.SyntaxKind.TrueKeyword) {
+    return true
+  } else if (node.kind === ts.SyntaxKind.FalseKeyword) {
+    return false
+  } else if (node.kind === ts.SyntaxKind.NullKeyword) {
+    return null
+  } else if (node.kind === ts.SyntaxKind.UndefinedKeyword) {
+    return undefined
+  } else if (ts.isArrayLiteralExpression(node)) {
+    return node.elements.map((el) => astNodeToValue(el))
+  } else if (ts.isObjectLiteralExpression(node)) {
+    return astObjectToPlainObject(node)
+  } else if (ts.isPrefixUnaryExpression(node)) {
+    const operand = astNodeToValue(node.operand)
+    if (
+      node.operator === ts.SyntaxKind.MinusToken &&
+      typeof operand === 'number'
+    ) {
+      return -operand
+    }
+    if (
+      node.operator === ts.SyntaxKind.PlusToken &&
+      typeof operand === 'number'
+    ) {
+      return Number(operand)
+    }
+  }
+
+  // For unsupported node types, return the node text as a string
+  return node.getText()
+}
+
+/**
  * Parse code to make it compatible for the editor
- * Uses AST transformation to update imports
+ * Uses text replacement for useParam calls, then AST transformation for imports
  */
 export function parseCode(
   code: string,
   libraries: Record<string, LibraryImport>,
+  params: Params,
 ): string {
-  const sourceFile = ts.createSourceFile(
+  // Clear params but preserve their values - only params found in the current code will be re-added
+  params.clearAndPreserveValues()
+
+  // First pass: collect all useParam calls and their replacements via text-based replacement
+  const tempSourceFile = ts.createSourceFile(
     'temp.ts',
     code,
     ts.ScriptTarget.Latest,
     true,
   )
 
-  const hasP5 = !!libraries['p5']
+  // Collect all useParam replacements (position -> replacement text)
+  const replacements: Array<{
+    start: number
+    end: number
+    replacement: string
+  }> = []
+
+  function collectUseParams(node: ts.Node): void {
+    if (ts.isCallExpression(node)) {
+      const expression = node.expression
+      if (ts.isIdentifier(expression) && expression.text === 'useParam') {
+        const args = node.arguments
+        const firstArg = args[0]
+        if (
+          args.length === 1 &&
+          firstArg &&
+          ts.isObjectLiteralExpression(firstArg)
+        ) {
+          try {
+            const configObj = astObjectToPlainObject(firstArg)
+            const result = paramConfigSchema.safeParse(configObj)
+
+            if (result.success) {
+              const translatedValue = params.addParam(result.data)
+              replacements.push({
+                start: node.getStart(tempSourceFile),
+                end: node.getEnd(),
+                replacement: translatedValue,
+              })
+            }
+          } catch {
+            // Skip invalid useParam calls
+          }
+        }
+      }
+    }
+    ts.forEachChild(node, collectUseParams)
+  }
+
+  collectUseParams(tempSourceFile)
+
+  // Apply replacements in reverse order to maintain correct positions
+  replacements.sort((a, b) => b.start - a.start)
+  let modifiedCode = code
+  for (const { start, end, replacement } of replacements) {
+    modifiedCode =
+      modifiedCode.substring(0, start) +
+      replacement +
+      modifiedCode.substring(end)
+  }
+
+  // Now parse the modified code for AST transformation (imports and p5)
+  const sourceFile = ts.createSourceFile(
+    'temp.ts',
+    modifiedCode,
+    ts.ScriptTarget.Latest,
+    true,
+  )
+
+  const hasP5 = Boolean(libraries['p5'])
   const p5FunctionsFound = new Set<string>()
   const printer = ts.createPrinter()
 
@@ -57,7 +194,7 @@ export function parseCode(
             const oldModule = moduleSpecifier.text
             const newModulePath = libraries[oldModule]?.importPath.path
 
-            if (newModulePath) {
+            if (newModulePath != null) {
               // Replace module path with the one from libraries
               return ts.factory.updateImportDeclaration(
                 node,

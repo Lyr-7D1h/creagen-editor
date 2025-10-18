@@ -19,10 +19,10 @@ export const COMMANDS = {
   'editor.run': {
     description: 'Run/Render the current code',
     handler: (editor: CreagenEditor) => {
-      let a
+      let a: number | undefined
       if (CREAGEN_MODE === 'dev') a = performance.now()
-      editor.render()
-      if (CREAGEN_MODE === 'dev') {
+      editor.render().catch(logger.error)
+      if (CREAGEN_MODE === 'dev' && a !== undefined) {
         logger.debug('Render took ' + (performance.now() - a) + 'ms')
       }
     },
@@ -46,7 +46,8 @@ export const COMMANDS = {
           10000,
         )
       } else {
-        if (toggleHideAllMessageId) logger.remove(toggleHideAllMessageId)
+        if (toggleHideAllMessageId != null)
+          logger.remove(toggleHideAllMessageId)
       }
       editor.settings.set('hide_all', set)
     },
@@ -54,14 +55,14 @@ export const COMMANDS = {
   'editor.toggleMenu': {
     description: 'Toggle side menu',
     handler: () => {
-      localStorage.set('menu-view', !localStorage.get('menu-view'))
+      localStorage.set('menu-view', !(localStorage.get('menu-view') ?? false))
     },
   },
   'editor.toggleFreeze': {
     description: 'Freeze/Unfreeze sandbox',
     handler: (editor: CreagenEditor) => {
       if (editor.sandbox.isFrozen) {
-        editor.sandbox.unfreeze()
+        editor.sandbox.unfreeze().catch(logger.error)
       } else {
         editor.sandbox.freeze()
       }

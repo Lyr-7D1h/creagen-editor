@@ -20,19 +20,32 @@ export function useEditorEvent<K extends EditorEvent>(eventType: K | K[]) {
   return data
 }
 
+/**
+ * Hook that forces re-render whenever event type(s) is emitted
+ * Does not return any data, just triggers component update
+ */
+export function useForceUpdateOnEditorEvent<K extends EditorEvent>(
+  eventType: K | K[],
+) {
+  const [, forceUpdate] = useState({})
+
+  useEffect(() => {
+    return editorEvents.on(eventType, () => {
+      forceUpdate({})
+    })
+  }, [eventType])
+}
+
 export const useSettingsAll = () => {
   const editor = useCreagenEditor()
 
   const [value, setValue] = useState(() => editor.settings.values)
 
   useEffect(() => {
-    const currentValue = editor.settings.values
-    setValue(currentValue)
-
     return editorEvents.on('settings:changed', () => {
       setValue(editor.settings.values)
     })
-  }, [])
+  }, [editor.settings])
 
   return value
 }
@@ -40,17 +53,16 @@ export const useSettingsAll = () => {
 export const useSettings = <P extends ParamKey>(key: P): ParamValue<P> => {
   const editor = useCreagenEditor()
 
-  const [value, setValue] = useState(() => editor.settings.values[key])
+  const [value, setValue] = useState<ParamValue<P>>(
+    () => editor.settings.values[key] as ParamValue<P>,
+  )
 
   useEffect(() => {
-    const currentValue = editor.settings.values[key]
-    setValue(currentValue)
-
     return editorEvents.on(
       'settings:changed',
       ({ key: changedKey, value: newValue }) => {
         if (changedKey === key) {
-          setValue(newValue)
+          setValue(newValue as ParamValue<P>)
         }
       },
     )
@@ -66,13 +78,10 @@ export const useHead = () => {
   const [value, setValue] = useState(() => vcs.head)
 
   useEffect(() => {
-    const currentValue = vcs.head
-    setValue(currentValue)
-
     return editorEvents.on('vcs:checkout', ({ new: n }) => {
       setValue(n)
     })
-  }, [])
+  }, [vcs.head])
 
   return value
 }
@@ -94,7 +103,7 @@ export const useActiveBookmark = () => {
       }),
     ]
     return () => listeners.forEach((l) => l())
-  }, [])
+  }, [vcs.activeBookmark])
 
   return value
 }
@@ -139,7 +148,7 @@ export const useHistory = (size: number) => {
       editorEvents.on('vcs:bookmarkUpdate', updateHistory),
     ]
     return () => destroy.forEach((cb) => cb())
-  }, [setHistory, size])
+  }, [creagenEditor.vcs, setHistory, size])
 
   return history
 }
@@ -151,7 +160,7 @@ export const useWelcome = () => {
     return editorEvents.on('welcome', (value) => {
       setValue(value)
     })
-  }, [])
+  }, [setValue])
 
   return value
 }

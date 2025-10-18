@@ -141,7 +141,7 @@ export class Editor {
 
     // Save scroll position when the page is about to unload
     const scrollPosition = localStorage.get('editor-scroll-position')
-    if (scrollPosition) this.setScrollPosition(scrollPosition)
+    if (scrollPosition != null) this.setScrollPosition(scrollPosition)
     window.addEventListener('beforeunload', () => {
       const position = this.editor.getScrollTop()
       localStorage.set('editor-scroll-position', position)
@@ -149,11 +149,9 @@ export class Editor {
   }
 
   updateFromSettings(settings: Settings) {
-    const values = settings.values
-
-    this.setRelativeLines(values['editor.relative_lines'])
-    this.setFullscreenMode(values['editor.fullscreen'])
-    this.setVimMode(values['editor.vim'])
+    this.setRelativeLines(settings.get('editor.relative_lines'))
+    this.setFullscreenMode(settings.get('editor.fullscreen'))
+    this.setVimMode(settings.get('editor.vim'))
   }
 
   html() {
@@ -226,6 +224,7 @@ export class Editor {
 
   /** If `packageName` given will also add autoimports */
   addTypings(typings: string, uri: string, packageName?: string) {
+    console.log(typings)
     if (this.models[uri]) return
     logger.info(`Adding typings for ${uri}`)
     if (typeof packageName === 'string') {

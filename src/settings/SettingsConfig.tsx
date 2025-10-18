@@ -119,6 +119,16 @@ const defaultConfig = {
     label: 'View resource usage in the top right of the sandbox',
     value: false,
   },
+
+  params: {
+    type: 'folder',
+    title: 'Parameters',
+  },
+  'params.auto_render': {
+    type: 'param',
+    label: 'Auto render on parameter change',
+    value: true,
+  },
 }
 
 type Generic<T> = {

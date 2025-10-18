@@ -4,6 +4,7 @@ import {
   Entry,
   SettingsParam,
   ParamKey,
+  ParamValue,
 } from './SettingsConfig'
 import { editorEvents } from '../events/events'
 import { ClientStorage } from '../storage/ClientStorage'
@@ -90,8 +91,8 @@ export class Settings {
     return entry as Entry
   }
 
-  get(key: ParamKey): any {
-    return this.config[key].value
+  get<P extends ParamKey>(key: P): ParamValue<P> {
+    return (this.config[key] as SettingsParam).value as ParamValue<P>
   }
 
   // Set a value

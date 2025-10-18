@@ -17,7 +17,7 @@ type SandboxMessageDefinitions =
       type: 'log'
       msg: {
         level: 'debug' | 'info' | 'warn' | 'error'
-        data: any
+        data: unknown
       }
     }
   | {
@@ -89,8 +89,10 @@ export type ExtractTransferables<T extends SandboxMessageType> =
       : never
     : never
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isSandboxMessage(msg: any): msg is SandboxMessage {
-  return msg && typeof msg.type === 'string'
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  return Boolean(msg) && 'type' in msg && typeof msg.type === 'string'
 }
 
 export enum SandboxMessageHandlerMode {
@@ -110,13 +112,13 @@ export class SandboxMessageHandler {
     iframe?: HTMLIFrameElement,
   ) {
     switch (mode) {
-      case SandboxMessageHandlerMode.Parent:
+      case SandboxMessageHandlerMode.Parent: {
         const channel = new MessageChannel()
 
         function initListener() {
-          const window = iframe?.contentWindow!
+          const window = iframe?.contentWindow
           // Must send an object message, not a plain string
-          window.postMessage(
+          window?.postMessage(
             { type: '__init__', constants: { creagenEditorVersion: '' } },
             '*',
             [channel.port2],
@@ -134,11 +136,14 @@ export class SandboxMessageHandler {
         }
 
         return new SandboxMessageHandler(channel.port1)
+      }
       case SandboxMessageHandlerMode.Iframe:
         return new Promise((res) => {
           window.addEventListener('message', (msg) => {
             if (
+              Boolean(msg.data) &&
               'type' in msg.data &&
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
               msg.data.type === '__init__' &&
               msg.ports[0]
             ) {
@@ -153,33 +158,19 @@ export class SandboxMessageHandler {
     private readonly port: MessagePort,
     private readonly listeners: Map<
       SandboxMessageType,
-      Set<(msg: SandboxMessageDefinitions) => void>
+      Set<(msg: SandboxMessage) => void>
     > = new Map(),
   ) {
     this.port.onmessage = (msg: MessageEvent) => {
-      if (isSandboxMessage(msg.data)) {
-        const handlers = this.listeners.get(msg.data.type)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const data = msg.data
+      if (isSandboxMessage(data)) {
+        const handlers = this.listeners.get(data.type)
         if (handlers) {
-          handlers.forEach((handler) => handler(msg.data))
+          handlers.forEach((handler) => handler(data))
         }
       }
     }
-  }
-
-  /**
-   * Wait for the handler to be ready (useful in iframe mode)
-   */
-  waitForReady(): Promise<void> {
-    return new Promise((resolve) => {
-      const checkReady = () => {
-        if (this.port) {
-          resolve()
-        } else {
-          setTimeout(checkReady, 10)
-        }
-      }
-      checkReady()
-    })
   }
 
   /**
@@ -192,11 +183,6 @@ export class SandboxMessageHandler {
     msg: SandboxMessageByType<T>,
     transferables?: ExtractTransferables<T>,
   ) {
-    if (!this.port) {
-      console.warn('No port initialized')
-      return
-    }
-
     this.port.postMessage(msg, transferables)
   }
 
@@ -218,9 +204,7 @@ export class SandboxMessageHandler {
       if (!this.listeners.has(type)) {
         this.listeners.set(type, new Set())
       }
-      this.listeners
-        .get(type)!
-        .add(handler as (msg: SandboxMessageDefinitions) => void)
+      this.listeners.get(type)!.add(handler as (msg: SandboxMessage) => void)
     })
 
     // Return unsubscribe function that removes from all types
@@ -228,7 +212,7 @@ export class SandboxMessageHandler {
       types.forEach((type) => {
         const handlers = this.listeners.get(type)
         if (handlers) {
-          handlers.delete(handler as (msg: SandboxMessageDefinitions) => void)
+          handlers.delete(handler as (msg: SandboxMessage) => void)
           if (handlers.size === 0) {
             this.listeners.delete(type)
           }
@@ -254,7 +238,7 @@ export class SandboxMessageHandler {
     types.forEach((type) => {
       const handlers = this.listeners.get(type)
       if (handlers) {
-        handlers.delete(handler as (msg: SandboxMessageDefinitions) => void)
+        handlers.delete(handler as (msg: SandboxMessage) => void)
         if (handlers.size === 0) {
           this.listeners.delete(type)
         }
@@ -276,10 +260,10 @@ export class SandboxMessageHandler {
   ): () => void {
     const wrappedHandler = (msg: SandboxMessageByType<T>) => {
       handler(msg)
-      this.off(typeOrTypes as any, wrappedHandler)
+      this.off(typeOrTypes, wrappedHandler)
     }
 
-    return this.on(typeOrTypes as any, wrappedHandler)
+    this.on(typeOrTypes, wrappedHandler)
   }
 
   onAny(handler: (msg: SandboxMessage) => void) {
