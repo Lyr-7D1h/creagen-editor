@@ -36,7 +36,7 @@ export function PerformanceMonitor() {
         maxFrameTime: currentStats.maxFrameTime,
         minFrameTime: currentStats.minFrameTime,
       })
-    }, 200)
+    }, 500)
 
     return () => {
       clearInterval(id)

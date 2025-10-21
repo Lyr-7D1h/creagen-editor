@@ -3,6 +3,7 @@ import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
 import { useSettings } from '../events/useEditorEvents'
 import { Actions } from '../creagen-editor/Actions'
 import { EditorBar } from './EditorBar'
+import { Box } from '@mui/material'
 
 export interface EditorProps {
   width?: string
@@ -24,6 +25,8 @@ export function EditorView({
   const actionsEnabled = useSettings('actions.enabled')
   const vimEnabled = useSettings('editor.vim')
   const editorContentRef = useRef<HTMLDivElement>(null)
+  const vimStatusRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
     const editorContent = editorContentRef.current
     if (editorContent) {
@@ -31,13 +34,20 @@ export function EditorView({
       editorContent.appendChild(htmlElement)
       creagenEditor.editor.layout()
     }
-  }, [menu])
+  }, [creagenEditor.editor, menu])
+
+  useEffect(() => {
+    const vimStatus = vimStatusRef.current
+    if (vimEnabled && vimStatus) {
+      creagenEditor.editor.setVimStatusElement(vimStatus)
+    }
+  }, [vimEnabled, creagenEditor])
 
   return (
     <div
       style={{
-        width: width || '100%',
-        height: height || '100%',
+        width: width ?? '100%',
+        height: height ?? '100%',
         position: 'relative',
         zIndex: 1001,
         display: hideAll ? 'none' : 'flex',
@@ -50,7 +60,15 @@ export function EditorView({
       <div style={{ flex: 1, overflow: 'hidden' }} ref={editorContentRef}></div>
 
       {vimEnabled && (
-        <div id="vim-status" style={{ overflow: 'auto', height: 20 }} />
+        <div
+          ref={vimStatusRef}
+          style={{
+            textAlign: 'center',
+            fontSize: '0.875rem',
+            color: 'text.secondary',
+            fontFamily: 'monospace',
+          }}
+        />
       )}
 
       {actionsEnabled ? (

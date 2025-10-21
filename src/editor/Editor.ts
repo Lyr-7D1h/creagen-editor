@@ -15,6 +15,7 @@ import { initVimMode } from 'monaco-vim'
 import { Settings } from '../settings/Settings'
 import { editorEvents } from '../events/events'
 import { createContextLogger } from '../logs/logger'
+import { Ref } from 'react'
 
 // Use monaco without cdn: https://www.npmjs.com/package/@monaco-editor/react#loader-config
 self.MonacoEnvironment = {
@@ -88,6 +89,7 @@ export class Editor {
   private readonly editor: m.editor.IStandaloneCodeEditor
   private readonly autoimport: AutoImport
   private vimMode: m.editor.IStandaloneCodeEditor | null
+  private vimRef?: Ref<HTMLDivElement>
   private fullscreendecorators: m.editor.IEditorDecorationsCollection | null
   private readonly models: Record<string, monaco.editor.ITextModel> = {}
   private readonly _html
@@ -185,12 +187,21 @@ export class Editor {
     }
   }
 
+  setVimStatusElement(element: HTMLElement) {
+    this.vimRef = element as any
+    // If vim mode is already enabled, reinitialize it with the new element
+    if (this.vimMode !== null) {
+      this.vimMode.dispose()
+      this.vimMode = initVimMode(this.editor, element)
+    }
+  }
+
   private setVimMode(value: boolean) {
     if (value && this.vimMode === null) {
-      this.vimMode = initVimMode(
-        this.editor,
-        document.getElementById('vim-status'),
-      )
+      // Use the provided vim ref if available, otherwise fall back to getElementById
+      const vimStatusElement =
+        this.vimRef || document.getElementById('vim-status')
+      this.vimMode = initVimMode(this.editor, vimStatusElement)
     } else if (!value && this.vimMode !== null) {
       this.vimMode.dispose()
       this.vimMode = null
@@ -224,7 +235,6 @@ export class Editor {
 
   /** If `packageName` given will also add autoimports */
   addTypings(typings: string, uri: string, packageName?: string) {
-    console.log(typings)
     if (this.models[uri]) return
     logger.info(`Adding typings for ${uri}`)
     if (typeof packageName === 'string') {
