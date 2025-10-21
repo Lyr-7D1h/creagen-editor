@@ -3,7 +3,7 @@ import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
 import { useSettings } from '../events/useEditorEvents'
 import { Actions } from '../creagen-editor/Actions'
 import { EditorBar } from './EditorBar'
-import { Box } from '@mui/material'
+import { useTheme } from '@mui/material'
 
 export interface EditorProps {
   width?: string
@@ -26,6 +26,7 @@ export function EditorView({
   const vimEnabled = useSettings('editor.vim')
   const editorContentRef = useRef<HTMLDivElement>(null)
   const vimStatusRef = useRef<HTMLDivElement>(null)
+  const theme = useTheme()
 
   useEffect(() => {
     const editorContent = editorContentRef.current
@@ -65,7 +66,7 @@ export function EditorView({
           style={{
             textAlign: 'center',
             fontSize: '0.875rem',
-            color: 'text.secondary',
+            color: theme.palette.text.secondary,
             fontFamily: 'monospace',
           }}
         />
