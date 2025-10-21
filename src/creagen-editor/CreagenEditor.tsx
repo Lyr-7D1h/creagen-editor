@@ -240,7 +240,6 @@ export class CreagenEditor {
       const imports = Object.values(this.libraryImports).filter((lib) =>
         libraries.some((library: Library) => library.name === lib.name),
       )
-      console.log(code)
 
       await this.sandbox.render(code, imports)
     } catch (e) {

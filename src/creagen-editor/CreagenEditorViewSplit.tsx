@@ -37,11 +37,14 @@ export function CreagenEditorViewSplit() {
   return (
     <div style={{ height: '100vh', width: '100vw' }}>
       <Allotment>
-        {menu && (
-          <Allotment.Pane minSize={MIN_WINDOW_SIZE} preferredSize="33%">
-            <Menu />
-          </Allotment.Pane>
-        )}
+        <Allotment.Pane
+          snap
+          visible={menu}
+          minSize={MIN_WINDOW_SIZE}
+          preferredSize="33%"
+        >
+          <Menu />
+        </Allotment.Pane>
 
         <Allotment.Pane minSize={MIN_WINDOW_SIZE}>
           {fullscreen ? (
@@ -61,15 +64,24 @@ export function CreagenEditorViewSplit() {
               {resourceMonitorEnabled && <PerformanceMonitor />}
             </div>
           ) : (
-            <Allotment vertical={false}>
+            <Allotment>
               <Allotment.Pane minSize={MIN_WINDOW_SIZE} preferredSize="33%">
-                <Allotment vertical={true}>
+                <Allotment vertical>
                   <Allotment.Pane minSize={MIN_WINDOW_SIZE} preferredSize="70%">
-                    <EditorView
-                      toggleMenu={() => setMenu(!menu)}
-                      menu={menu}
-                      onMenuOpen={() => setMenu(!menu)}
-                    />
+                    <div
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        // needed to show allotment border in between editor and params
+                        marginLeft: 1,
+                      }}
+                    >
+                      <EditorView
+                        toggleMenu={() => setMenu(!menu)}
+                        menu={menu}
+                        onMenuOpen={() => setMenu(!menu)}
+                      />
+                    </div>
                   </Allotment.Pane>
                   <Allotment.Pane minSize={100}>
                     <ParamsView />
