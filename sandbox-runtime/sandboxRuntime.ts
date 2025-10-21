@@ -6,6 +6,7 @@ import {
 } from '../src/sandbox/SandboxMessageHandler'
 import { analyzeContainer } from './analyzeContainer'
 import { svgExportRequest } from './svgExport'
+import { serializeForPostMessage } from './serializeForPostMessage'
 
 declare global {
   interface Window {
@@ -146,13 +147,29 @@ async function init() {
     window.console = {
       ...window.console,
       debug: (...args) =>
-        messageHandler.send({ type: 'log', level: 'debug', data: args }),
+        messageHandler.send({
+          type: 'log',
+          level: 'debug',
+          data: serializeForPostMessage(args),
+        }),
       info: (...args) =>
-        messageHandler.send({ type: 'log', level: 'info', data: args }),
+        messageHandler.send({
+          type: 'log',
+          level: 'info',
+          data: serializeForPostMessage(args),
+        }),
       log: (...args) =>
-        messageHandler.send({ type: 'log', level: 'info', data: args }),
+        messageHandler.send({
+          type: 'log',
+          level: 'info',
+          data: serializeForPostMessage(args),
+        }),
       error: (...args) =>
-        messageHandler.send({ type: 'log', level: 'error', data: args }),
+        messageHandler.send({
+          type: 'log',
+          level: 'error',
+          data: serializeForPostMessage(args),
+        }),
     }
   } catch (error) {
     messageHandler.send({ type: 'error', error: error as Error })
