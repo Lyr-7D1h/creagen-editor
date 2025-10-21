@@ -18,6 +18,7 @@ import {
   Shuffle as ShuffleIcon,
 } from '@mui/icons-material'
 import type { ParamConfig, ParamKey } from './Params'
+import { Params } from './Params'
 import { useSettings } from '../events/useEditorEvents'
 import { generateHumanReadableName } from '../vcs/generateHumanReadableName'
 
@@ -122,16 +123,70 @@ function ParamControl({
       const step = config.step ?? 1
 
       control = (
-        <Slider
+        <TextField
+          type="number"
           value={numValue}
-          onChange={(_, newValue) => onChange(newValue)}
-          min={min}
-          max={max}
-          step={step}
-          valueLabelDisplay="auto"
+          onChange={(e) => {
+            const val = parseFloat(e.target.value)
+            if (!isNaN(val) && Params.isValidValue(config, val)) {
+              onChange(val)
+            }
+          }}
+          slotProps={{
+            htmlInput: {
+              min,
+              max,
+              step,
+            },
+          }}
           size="small"
-          sx={{ minWidth: 120 }}
+          fullWidth
         />
+      )
+      break
+    }
+
+    case 'number-slider': {
+      const numValue = typeof value === 'number' ? value : config.default
+      const min = config.min
+      const max = config.max
+      const step = config.step ?? 1
+
+      control = (
+        <Stack direction="column" spacing={0.5} sx={{ width: '100%' }}>
+          <TextField
+            type="number"
+            value={numValue}
+            onChange={(e) => {
+              const val = parseFloat(e.target.value)
+              if (!isNaN(val) && Params.isValidValue(config, val)) {
+                onChange(val)
+              }
+            }}
+            slotProps={{
+              htmlInput: {
+                min,
+                max,
+                step,
+              },
+            }}
+            size="small"
+            fullWidth
+          />
+          <Slider
+            value={numValue}
+            onChange={(_, newValue) => {
+              if (Params.isValidValue(config, newValue)) {
+                onChange(newValue)
+              }
+            }}
+            min={min}
+            max={max}
+            step={step}
+            valueLabelDisplay="auto"
+            size="small"
+          />
+        </Stack>
       )
       break
     }
@@ -143,22 +198,145 @@ function ParamControl({
     }
 
     case 'range': {
-      const rangeValue = Array.isArray(value) ? value : config.default
+      const rangeValue = (Array.isArray(value) ? value : config.default) as [
+        number,
+        number,
+      ]
       const min = config.min
       const max = config.max
       const step = config.step
 
       control = (
-        <Slider
-          value={rangeValue as [number, number]}
-          onChange={(_, newValue) => onChange(newValue as [number, number])}
-          min={min}
-          max={max}
-          step={step}
-          valueLabelDisplay="auto"
-          size="small"
-          sx={{ minWidth: 120 }}
-        />
+        <Stack direction="row" spacing={0.5}>
+          <TextField
+            type="number"
+            value={rangeValue[0]}
+            onChange={(e) => {
+              const val = parseFloat(e.target.value)
+              if (!isNaN(val)) {
+                // Ensure min doesn't go above max
+                const newMin = Math.min(val, rangeValue[1])
+                const newValue: [number, number] = [newMin, rangeValue[1]]
+                if (Params.isValidValue(config, newValue)) {
+                  onChange(newValue)
+                }
+              }
+            }}
+            slotProps={{
+              htmlInput: {
+                min,
+                max: rangeValue[1],
+                step,
+              },
+            }}
+            size="small"
+            fullWidth
+          />
+          <TextField
+            type="number"
+            value={rangeValue[1]}
+            onChange={(e) => {
+              const val = parseFloat(e.target.value)
+              if (!isNaN(val)) {
+                // Ensure max doesn't go below min
+                const newMax = Math.max(val, rangeValue[0])
+                const newValue: [number, number] = [rangeValue[0], newMax]
+                if (Params.isValidValue(config, newValue)) {
+                  onChange(newValue)
+                }
+              }
+            }}
+            slotProps={{
+              htmlInput: {
+                min: rangeValue[0],
+                max,
+                step,
+              },
+            }}
+            size="small"
+            fullWidth
+          />
+        </Stack>
+      )
+      break
+    }
+
+    case 'range-slider': {
+      const rangeValue = (Array.isArray(value) ? value : config.default) as [
+        number,
+        number,
+      ]
+      const min = config.min
+      const max = config.max
+      const step = config.step
+
+      control = (
+        <Stack direction="column" spacing={0.5} sx={{ width: '100%' }}>
+          <Stack direction="row" spacing={0.5}>
+            <TextField
+              type="number"
+              value={rangeValue[0]}
+              onChange={(e) => {
+                const val = parseFloat(e.target.value)
+                if (!isNaN(val)) {
+                  // Ensure min doesn't go above max
+                  const newMin = Math.min(val, rangeValue[1])
+                  const newValue: [number, number] = [newMin, rangeValue[1]]
+                  if (Params.isValidValue(config, newValue)) {
+                    onChange(newValue)
+                  }
+                }
+              }}
+              slotProps={{
+                htmlInput: {
+                  min,
+                  max: rangeValue[1],
+                  step,
+                },
+              }}
+              size="small"
+              fullWidth
+            />
+            <TextField
+              type="number"
+              value={rangeValue[1]}
+              onChange={(e) => {
+                const val = parseFloat(e.target.value)
+                if (!isNaN(val)) {
+                  // Ensure max doesn't go below min
+                  const newMax = Math.max(val, rangeValue[0])
+                  const newValue: [number, number] = [rangeValue[0], newMax]
+                  if (Params.isValidValue(config, newValue)) {
+                    onChange(newValue)
+                  }
+                }
+              }}
+              slotProps={{
+                htmlInput: {
+                  min: rangeValue[0],
+                  max,
+                  step,
+                },
+              }}
+              size="small"
+              fullWidth
+            />
+          </Stack>
+          <Slider
+            value={rangeValue}
+            onChange={(_, newValue) => {
+              const val = newValue as [number, number]
+              if (Params.isValidValue(config, val)) {
+                onChange(val)
+              }
+            }}
+            min={min}
+            max={max}
+            step={step}
+            valueLabelDisplay="auto"
+            size="small"
+          />
+        </Stack>
       )
       break
     }
@@ -253,27 +431,45 @@ function generateRandomValue(config: ParamConfig): unknown {
   switch (config.type) {
     case 'boolean':
       return Math.random() > 0.5
-    case 'number': {
+    case 'number':
+    case 'number-slider': {
       const min = config.min
       const max = config.max
       const step = config.step
+
       if (step !== undefined) {
+        // Generate value aligned to step
         const steps = Math.floor((max - min) / step)
-        return min + Math.floor(Math.random() * (steps + 1)) * step
+        const randomValue = min + Math.floor(Math.random() * (steps + 1)) * step
+        // Ensure value is within bounds and round to appropriate precision
+        const clampedValue = Math.min(max, Math.max(min, randomValue))
+        // Determine decimal places based on step
+        const decimalPlaces = step < 0.01 ? 4 : step < 1 ? 2 : 0
+        return Number(clampedValue.toFixed(decimalPlaces))
       }
-      return min + Math.random() * (max - min)
+
+      // No step specified, generate random value with 2 decimal places
+      const randomValue = min + Math.random() * (max - min)
+      const clampedValue = Math.min(max, Math.max(min, randomValue))
+      return Number(clampedValue.toFixed(2))
     }
     case 'text':
       // For text, just generate a random short string
       return Math.random().toString(36).substring(2, 8)
-    case 'range': {
+    case 'range':
+    case 'range-slider': {
       const min = config.min
       const max = config.max
-      const step = config.step
-      const steps = Math.floor((max - min) / step)
-      const val1 = min + Math.floor(Math.random() * (steps + 1)) * step
-      const val2 = min + Math.floor(Math.random() * (steps + 1)) * step
-      return val1 <= val2 ? [val1, val2] : [val2, val1]
+
+      // No step specified, generate random values with 2 decimal places
+      const val1 = min + Math.random() * (max - min)
+      const val2 = min + Math.random() * (max - min)
+      const clampedVal1 = Number(Math.min(max, Math.max(min, val1)).toFixed(2))
+      const clampedVal2 = Number(Math.min(max, Math.max(min, val2)).toFixed(2))
+
+      return clampedVal1 <= clampedVal2
+        ? [clampedVal1, clampedVal2]
+        : [clampedVal2, clampedVal1]
     }
     case 'seed':
       return generateHumanReadableName()
@@ -401,13 +597,16 @@ export function ParamsView() {
                 sx={{ fontWeight: 500 }}
               >
                 {key}
-                {(config.type === 'number' || config.type === 'range') && (
+                {(config.type === 'number' ||
+                  config.type === 'number-slider' ||
+                  config.type === 'range' ||
+                  config.type === 'range-slider') && (
                   <Typography
                     component="span"
                     variant="caption"
                     sx={{ ml: 1, color: 'text.secondary', fontWeight: 400 }}
                   >
-                    {config.type === 'range'
+                    {config.type === 'range' || config.type === 'range-slider'
                       ? `[${(value as [number, number])[0]}, ${(value as [number, number])[1]}]`
                       : String(value)}
                   </Typography>

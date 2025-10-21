@@ -17,14 +17,33 @@ export const paramConfigSchema = z.discriminatedUnion('type', [
   baseConfigSchema
     .extend({
       type: z.literal('number'),
-      default: z.number().optional().default(0),
+      default: z.number().optional(),
       min: z.number().optional().default(0),
       max: z.number().optional().default(10),
       step: z.number().optional(),
     })
     .refine((data) => data.min <= data.max, {
       message: 'min cannot be greater than max',
-    }),
+    })
+    .transform((data) => ({
+      ...data,
+      default: data.default ?? data.min,
+    })),
+  baseConfigSchema
+    .extend({
+      type: z.literal('number-slider'),
+      default: z.number().optional(),
+      min: z.number().optional().default(0),
+      max: z.number().optional().default(10),
+      step: z.number().optional(),
+    })
+    .refine((data) => data.min <= data.max, {
+      message: 'min cannot be greater than max',
+    })
+    .transform((data) => ({
+      ...data,
+      default: data.default ?? data.min,
+    })),
   baseConfigSchema.extend({
     type: z.literal('text'),
     default: z.string().optional().default(''),
@@ -32,14 +51,33 @@ export const paramConfigSchema = z.discriminatedUnion('type', [
   baseConfigSchema
     .extend({
       type: z.literal('range'),
-      default: z.tuple([z.number(), z.number()]).optional().default([0, 10]),
+      default: z.tuple([z.number(), z.number()]).optional(),
       min: z.number().optional().default(0),
       max: z.number().optional().default(10),
       step: z.number().optional().default(1),
     })
     .refine((data) => data.min <= data.max, {
       message: 'min cannot be greater than max',
-    }),
+    })
+    .transform((data) => ({
+      ...data,
+      default: data.default ?? [data.min, data.max],
+    })),
+  baseConfigSchema
+    .extend({
+      type: z.literal('range-slider'),
+      default: z.tuple([z.number(), z.number()]).optional(),
+      min: z.number().optional().default(0),
+      max: z.number().optional().default(10),
+      step: z.number().optional().default(1),
+    })
+    .refine((data) => data.min <= data.max, {
+      message: 'min cannot be greater than max',
+    })
+    .transform((data) => ({
+      ...data,
+      default: data.default ?? [data.min, data.max],
+    })),
   baseConfigSchema.extend({
     type: z.literal('seed'),
     default: z
@@ -77,8 +115,10 @@ export type ParamConfigType = ParamConfig['type']
 type ParamConfigValueMap = {
   boolean: boolean
   number: number
+  'number-slider': number
   text: string
   range: [number, number]
+  'range-slider': [number, number]
   seed: string
   radio: string
   /** a function as a string */
@@ -117,12 +157,26 @@ type ParamConfig = { title?: string; description?: string } & (
       max?: number
       step?: number
     }
+  | {
+      type: 'number-slider'
+      default?: number
+      min?: number
+      max?: number
+      step?: number
+    }
   | { 
       type: 'text'
       default?: string 
     }
   | {
       type: 'range'
+      default?: [number, number]
+      min?: number
+      max?: number
+      step?: number
+    }
+  | {
+      type: 'range-slider'
       default?: [number, number]
       min?: number
       max?: number
@@ -147,8 +201,10 @@ type ParamConfig = { title?: string; description?: string } & (
 // Overloaded function signatures
 declare function useParam(type: 'boolean', options?: Omit<Extract<ParamConfig, { type: 'boolean' }>, 'type'>): boolean;
 declare function useParam(type: 'number', options?: Omit<Extract<ParamConfig, { type: 'number' }>, 'type'>): number;
+declare function useParam(type: 'number-slider', options?: Omit<Extract<ParamConfig, { type: 'number-slider' }>, 'type'>): number;
 declare function useParam(type: 'text', options?: Omit<Extract<ParamConfig, { type: 'text' }>, 'type'>): string;
 declare function useParam(type: 'range', options: Omit<Extract<ParamConfig, { type: 'range' }>, 'type'>): [number, number];
+declare function useParam(type: 'range-slider', options: Omit<Extract<ParamConfig, { type: 'range-slider' }>, 'type'>): [number, number];
 declare function useParam(type: 'seed', options?: Omit<Extract<ParamConfig, { type: 'seed' }>, 'type'>): () => number;
 declare function useParam<Items extends Record<string, any>>(
   type: 'radio',
@@ -157,6 +213,53 @@ declare function useParam<Items extends Record<string, any>>(
 ` /** key: [ParamConfig, value] */
   private store: Record<ParamKey, [ParamConfig, unknown]> = {}
   private previousValues: Map<ParamKey, unknown> = new Map()
+
+  /**
+   * Validates that a value meets the constraints of its param config.
+   * Returns true if valid, false otherwise.
+   */
+  static isValidValue(config: ParamConfig, value: unknown): boolean {
+    switch (config.type) {
+      case 'boolean':
+        return typeof value === 'boolean'
+
+      case 'number':
+      case 'number-slider':
+        if (typeof value !== 'number' || isNaN(value)) {
+          return false
+        }
+        // Check min/max constraints
+        return value >= config.min && value <= config.max
+
+      case 'text':
+        return typeof value === 'string'
+
+      case 'range':
+      case 'range-slider': {
+        if (!Array.isArray(value) || value.length !== 2) {
+          return false
+        }
+        const [min, max] = value as [unknown, unknown]
+        if (
+          typeof min !== 'number' ||
+          typeof max !== 'number' ||
+          isNaN(min) ||
+          isNaN(max)
+        ) {
+          return false
+        }
+        // Check constraints: values must be within bounds and min <= max
+        return min >= config.min && max <= config.max && min <= max
+      }
+
+      case 'seed':
+        return typeof value === 'string'
+
+      case 'radio':
+        // Check if value is one of the valid item values
+        return Object.values(config.items).includes(value)
+    }
+  }
 
   getAll(): AllParams {
     return Object.entries(this.store).map(([key, [config, value]]) => [
@@ -201,21 +304,23 @@ declare function useParam<Items extends Record<string, any>>(
     }
 
     const stored = this.store[key]
+    if (stored) {
+      const [config, value] = stored
+      return this.translate(config, value)
+    }
+
     const previousValue = this.previousValues.get(key)
 
-    const value = (
-      typeof stored !== 'undefined'
-        ? stored[1]
-        : previousValue !== undefined
-          ? previousValue
-          : 'default' in config
-            ? config.default
-            : null
-    ) as unknown
+    // Use previousValue if valid, otherwise use default
+    const value: ValueFromConfig<T> = (
+      previousValue !== undefined && Params.isValidValue(config, previousValue)
+        ? previousValue
+        : config.default
+    ) as ValueFromConfig<T>
 
     this.store[key] = [config, value]
 
-    return this.translate(config, value as ValueFromConfig<T>)
+    return this.translate(config, value)
   }
 
   private translate<T extends ParamConfig>(
@@ -226,10 +331,12 @@ declare function useParam<Items extends Record<string, any>>(
       case 'boolean':
         return String(value)
       case 'number':
+      case 'number-slider':
         return String(value)
       case 'text':
         return JSON.stringify(value)
       case 'range':
+      case 'range-slider':
         return JSON.stringify(value)
       case 'seed': {
         const seed = hashStringTou32(value as string)
