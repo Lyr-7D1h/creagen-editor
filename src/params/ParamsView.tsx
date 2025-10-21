@@ -6,8 +6,6 @@ import {
   Checkbox,
   FormControlLabel,
   IconButton,
-  Radio,
-  RadioGroup,
   Slider,
   Stack,
   Switch,
@@ -15,7 +13,10 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
-import { Refresh as RefreshIcon } from '@mui/icons-material'
+import {
+  Refresh as RefreshIcon,
+  Shuffle as ShuffleIcon,
+} from '@mui/icons-material'
 import type { ParamConfig, ParamKey } from './Params'
 import { useSettings } from '../events/useEditorEvents'
 import { generateHumanReadableName } from '../vcs/generateHumanReadableName'
@@ -101,15 +102,18 @@ function ParamControl({
   value: unknown
   onChange: (newValue: unknown) => void
 }) {
+  let control: React.ReactNode
+
   switch (config.type) {
     case 'boolean':
-      return (
+      control = (
         <Switch
           checked={Boolean(value)}
           onChange={(e) => onChange(e.target.checked)}
           size="small"
         />
       )
+      break
 
     case 'number': {
       const numValue = typeof value === 'number' ? value : config.default
@@ -117,33 +121,25 @@ function ParamControl({
       const max = config.max
       const step = config.step ?? 1
 
-      return (
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Slider
-            value={numValue}
-            onChange={(_, newValue) => onChange(newValue)}
-            min={min}
-            max={max}
-            step={step}
-            valueLabelDisplay="auto"
-            size="small"
-            sx={{ flex: 1, minWidth: 80 }}
-          />
-          <TextField
-            type="number"
-            value={numValue}
-            onChange={(e) => onChange(Number(e.target.value))}
-            size="small"
-            sx={{ width: 70 }}
-            inputProps={{ min, max, step }}
-          />
-        </Stack>
+      control = (
+        <Slider
+          value={numValue}
+          onChange={(_, newValue) => onChange(newValue)}
+          min={min}
+          max={max}
+          step={step}
+          valueLabelDisplay="auto"
+          size="small"
+          sx={{ minWidth: 120 }}
+        />
       )
+      break
     }
 
-    case 'string': {
+    case 'text': {
       const strValue = typeof value === 'string' ? value : config.default
-      return <StringInput value={strValue} onChange={onChange} />
+      control = <StringInput value={strValue} onChange={onChange} />
+      break
     }
 
     case 'range': {
@@ -152,36 +148,19 @@ function ParamControl({
       const max = config.max
       const step = config.step
 
-      return (
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Slider
-            value={rangeValue as [number, number]}
-            onChange={(_, newValue) => onChange(newValue as [number, number])}
-            min={min}
-            max={max}
-            step={step}
-            valueLabelDisplay="auto"
-            size="small"
-            sx={{ flex: 1, minWidth: 80 }}
-          />
-          <TextField
-            type="number"
-            value={rangeValue[0] as number}
-            onChange={(e) => onChange([Number(e.target.value), rangeValue[1]])}
-            size="small"
-            sx={{ width: 60 }}
-            inputProps={{ min, max, step }}
-          />
-          <TextField
-            type="number"
-            value={rangeValue[1] as number}
-            onChange={(e) => onChange([rangeValue[0], Number(e.target.value)])}
-            size="small"
-            sx={{ width: 60 }}
-            inputProps={{ min, max, step }}
-          />
-        </Stack>
+      control = (
+        <Slider
+          value={rangeValue as [number, number]}
+          onChange={(_, newValue) => onChange(newValue as [number, number])}
+          min={min}
+          max={max}
+          step={step}
+          valueLabelDisplay="auto"
+          size="small"
+          sx={{ minWidth: 120 }}
+        />
       )
+      break
     }
 
     case 'seed': {
@@ -195,56 +174,113 @@ function ParamControl({
             : config.default
       }
       const seedValue = typeof value === 'string' ? value : defaultValue
-      return <SeedInput value={seedValue} onChange={onChange} />
+      control = <SeedInput value={seedValue} onChange={onChange} />
+      break
     }
 
     case 'radio': {
       const items = config.items
-      const radioValue =
-        typeof value === 'string' ? value : (config.default ?? '')
+      // Find the key that matches the current value
+      const selectedKey =
+        Object.keys(items).find((key) => items[key] === value) ??
+        Object.keys(items)[0] ??
+        ''
 
-      return (
-        <RadioGroup
-          value={radioValue}
-          onChange={(e) => {
-            const selectedKey = e.target.value
-            onChange(items[selectedKey])
+      control = (
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${config.columns ?? 2}, 1fr)`,
+            gap: 0.5,
           }}
         >
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: `repeat(${config.columns ?? 2}, 1fr)`,
-              gap: 0.5,
-            }}
-          >
-            {Object.keys(items).map((key) => (
-              <FormControlLabel
-                key={key}
-                value={key}
-                control={<Radio size="small" />}
-                label={key}
-                sx={{ mr: 0 }}
-              />
-            ))}
-          </Box>
-        </RadioGroup>
+          {Object.keys(items).map((key) => (
+            <Box
+              key={key}
+              onClick={() => onChange(items[key])}
+              sx={{
+                px: 1,
+                py: 0.5,
+                border: 1,
+                borderColor: selectedKey === key ? 'primary.main' : 'divider',
+                bgcolor: selectedKey === key ? 'primary.main' : 'transparent',
+                color:
+                  selectedKey === key ? 'primary.contrastText' : 'text.primary',
+                borderRadius: 0.5,
+                cursor: 'pointer',
+                textAlign: 'center',
+                fontSize: '0.75rem',
+                fontFamily: 'monospace',
+                userSelect: 'none',
+                transition: 'all 0.2s',
+                '&:hover': {
+                  borderColor: 'primary.main',
+                  bgcolor:
+                    selectedKey === key ? 'primary.dark' : 'action.hover',
+                },
+              }}
+            >
+              {key}
+            </Box>
+          ))}
+        </Box>
       )
+      break
     }
 
-    case 'function':
-      return (
-        <Typography variant="caption" color="text.secondary" fontStyle="italic">
-          Function (not editable)
-        </Typography>
-      )
-
     default:
-      return (
+      control = (
         <Typography variant="body2" color="text.secondary">
           Unknown parameter type
         </Typography>
       )
+  }
+
+  return (
+    <Box
+      sx={{
+        minHeight: 32,
+        display: 'flex',
+        alignItems: 'center',
+      }}
+    >
+      {control}
+    </Box>
+  )
+}
+
+function generateRandomValue(config: ParamConfig): unknown {
+  switch (config.type) {
+    case 'boolean':
+      return Math.random() > 0.5
+    case 'number': {
+      const min = config.min
+      const max = config.max
+      const step = config.step
+      if (step !== undefined) {
+        const steps = Math.floor((max - min) / step)
+        return min + Math.floor(Math.random() * (steps + 1)) * step
+      }
+      return min + Math.random() * (max - min)
+    }
+    case 'text':
+      // For text, just generate a random short string
+      return Math.random().toString(36).substring(2, 8)
+    case 'range': {
+      const min = config.min
+      const max = config.max
+      const step = config.step
+      const steps = Math.floor((max - min) / step)
+      const val1 = min + Math.floor(Math.random() * (steps + 1)) * step
+      const val2 = min + Math.floor(Math.random() * (steps + 1)) * step
+      return val1 <= val2 ? [val1, val2] : [val2, val1]
+    }
+    case 'seed':
+      return generateHumanReadableName()
+    case 'radio': {
+      const values = Object.values(config.items)
+      return values[Math.floor(Math.random() * values.length)]
+    }
   }
 }
 
@@ -257,6 +293,18 @@ export function ParamsView() {
 
   const handleValueChange = (key: ParamKey, newValue: unknown) => {
     creagenEditor.params.setValue(key, newValue)
+    forceUpdate()
+
+    if (autoRender) {
+      void creagenEditor.render()
+    }
+  }
+
+  const handleRandomizeAll = () => {
+    params.forEach(([key, config]) => {
+      const randomValue = generateRandomValue(config)
+      creagenEditor.params.setValue(key, randomValue)
+    })
     forceUpdate()
 
     if (autoRender) {
@@ -277,11 +325,28 @@ export function ParamsView() {
   }
 
   return (
-    <Box sx={{ p: 1.5 }}>
-      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+    <Box
+      sx={{
+        height: '100%',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      <Stack
+        direction="row"
+        alignItems="center"
+        spacing={1}
+        sx={{ mb: 1, flexShrink: 0, p: 1.5 }}
+      >
         <Typography variant="subtitle2">
           Parameters ({params.length})
         </Typography>
+        <Tooltip title="Randomize all parameters">
+          <IconButton onClick={handleRandomizeAll} size="small" sx={{ p: 0.5 }}>
+            <ShuffleIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
         <FormControlLabel
           control={
             <Checkbox
@@ -306,14 +371,27 @@ export function ParamsView() {
 
       <Box
         sx={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+          display: 'flex',
+          flexWrap: 'wrap',
           gap: 1,
-          rowGap: 1.5,
+          alignContent: 'flex-start',
+          overflow: 'auto',
+          flex: 1,
+          minHeight: 0,
+          p: 1,
         }}
       >
         {params.map(([key, config, value], index) => (
-          <Box key={index}>
+          <Box
+            key={index}
+            sx={{
+              py: 0.5,
+              px: 1,
+              bgcolor: 'action.hover',
+              borderRadius: 1,
+              minWidth: 'fit-content',
+            }}
+          >
             <Stack spacing={0.5}>
               {/* Header */}
               <Typography
@@ -322,7 +400,18 @@ export function ParamsView() {
                 noWrap
                 sx={{ fontWeight: 500 }}
               >
-                {config.title ?? config.type}
+                {key}
+                {(config.type === 'number' || config.type === 'range') && (
+                  <Typography
+                    component="span"
+                    variant="caption"
+                    sx={{ ml: 1, color: 'text.secondary', fontWeight: 400 }}
+                  >
+                    {config.type === 'range'
+                      ? `[${(value as [number, number])[0]}, ${(value as [number, number])[1]}]`
+                      : String(value)}
+                  </Typography>
+                )}
               </Typography>
 
               {/* Control */}

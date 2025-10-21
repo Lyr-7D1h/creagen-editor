@@ -130,17 +130,32 @@ export function parseCode(
       const expression = node.expression
       if (ts.isIdentifier(expression) && expression.text === 'useParam') {
         const args = node.arguments
-        const firstArg = args[0]
-        if (
-          args.length === 1 &&
-          firstArg &&
-          ts.isObjectLiteralExpression(firstArg)
-        ) {
-          try {
-            const configObj = astObjectToPlainObject(firstArg)
+
+        if (args.length <= 2) {
+          const typeArg = args[0]
+          const optionsArg = args[1]
+
+          if (
+            typeArg &&
+            ts.isStringLiteral(typeArg) &&
+            (optionsArg ? ts.isObjectLiteralExpression(optionsArg) : true)
+          ) {
+            const type = typeArg.text
+            const options =
+              optionsArg && ts.isObjectLiteralExpression(optionsArg)
+                ? astObjectToPlainObject(optionsArg)
+                : {}
+            const configObj = { type, ...options }
             const result = paramConfigSchema.safeParse(configObj)
 
-            if (result.success) {
+            if (!result.success) {
+              logger.error(
+                'Invalid useParam options',
+                result.error.issues
+                  .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+                  .join(', '),
+              )
+            } else {
               const translatedValue = params.addParam(result.data)
               replacements.push({
                 start: node.getStart(tempSourceFile),
@@ -148,8 +163,6 @@ export function parseCode(
                 replacement: translatedValue,
               })
             }
-          } catch {
-            // Skip invalid useParam calls
           }
         }
       }
@@ -260,5 +273,9 @@ export function parseCode(
     transformedCode = transformedCode + '\n' + assignments + '\nnew p5();'
   }
 
-  return ts.transpile(transformedCode, typescriptCompilerOptions)
+  const transpiled = ts.transpile(transformedCode, typescriptCompilerOptions)
+
+  logger.trace(transpiled)
+
+  return transpiled
 }

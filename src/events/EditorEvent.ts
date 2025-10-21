@@ -6,6 +6,8 @@ import { AnalyzeContainerResult } from '../sandbox/SandboxMessageHandler'
 type EditorEvents = {
   render: void
 
+  'params:update': void
+
   // VCS events
   'vcs:commit': { commit: Commit; code: string }
   /** Change active head */
