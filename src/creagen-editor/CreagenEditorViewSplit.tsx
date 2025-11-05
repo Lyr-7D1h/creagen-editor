@@ -4,12 +4,16 @@ import 'allotment/dist/style.css'
 import { EditorView } from '../editor/EditorView'
 import { SandboxView } from '../sandbox/SandboxView'
 import { Menu } from '../editor/Menu'
-import { useSettings } from '../events/useEditorEvents'
+import {
+  useForceUpdateOnEditorEvent,
+  useSettings,
+} from '../events/useEditorEvents'
 import { useLocalStorage } from '../storage/useLocalStorage'
 import { Actions } from './Actions'
 import { useCreagenEditor } from './CreagenEditorView'
 import { PerformanceMonitor } from '../sandbox/PerformanceMonitor'
-import { ParamsView } from '../params/ParamsView'
+import { BottomPanel } from './BottomPanel'
+import { CloseButton } from './CloseButton'
 
 const MIN_WINDOW_SIZE = 200
 
@@ -18,12 +22,19 @@ const MIN_WINDOW_SIZE = 200
  */
 export function CreagenEditorViewSplit() {
   const creagenEditor = useCreagenEditor()
+
+  // needed to check params on rerender
+  useForceUpdateOnEditorEvent('render')
   let fullscreen = useSettings('editor.fullscreen')
   const hideAll = useSettings('hide_all')
   const resourceMonitorEnabled = useSettings('sandbox.resource_monitor')
   fullscreen = hideAll ? true : fullscreen
 
   const [menu, setMenu] = useLocalStorage('menu-view', false)
+  const [bottomOpen, setBottomOpen] = useLocalStorage(
+    'bottom-panel-open',
+    false,
+  )
 
   // Layout the editor when the menu or fullscreen state changes
   useEffect(() => {
@@ -51,22 +62,78 @@ export function CreagenEditorViewSplit() {
             <div
               style={{ position: 'relative', width: '100%', height: '100%' }}
             >
+              {/* Sandbox as background */}
               <div style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
                 <SandboxView />
               </div>
+
+              {/* Overlayed allotment for Editor and BottomPanel so both sit above the sandbox
+                  and remain resizable. */}
               <div style={{ position: 'absolute', inset: 0, zIndex: 2 }}>
-                <EditorView
-                  toggleMenu={() => setMenu(!menu)}
-                  menu={menu}
-                  onMenuOpen={() => setMenu(!menu)}
-                />
+                <Allotment
+                  vertical
+                  onChange={(sizes: number[]) => {
+                    const second = sizes[1]
+                    if (typeof second === 'number') {
+                      if (second < 15 && bottomOpen) {
+                        // snapped/closed
+                        setBottomOpen(false)
+                      } else if (second >= 15 && !bottomOpen) {
+                        // opened via snap
+                        setBottomOpen(true)
+                      }
+                    }
+                  }}
+                >
+                  <Allotment.Pane minSize={MIN_WINDOW_SIZE} preferredSize="65%">
+                    <div
+                      style={{
+                        position: 'relative',
+                        width: '100%',
+                        height: '100%',
+                      }}
+                    >
+                      <EditorView
+                        toggleMenu={() => setMenu(!menu)}
+                        menu={menu}
+                        onMenuOpen={() => setMenu(!menu)}
+                      />
+                      {resourceMonitorEnabled && <PerformanceMonitor />}
+                    </div>
+                  </Allotment.Pane>
+
+                  <Allotment.Pane visible={bottomOpen} snap preferredSize="35%">
+                    <div
+                      style={{
+                        position: 'relative',
+                        width: '100%',
+                        height: '100%',
+                      }}
+                    >
+                      <BottomPanel onClose={() => setBottomOpen(!bottomOpen)} />
+                    </div>
+                  </Allotment.Pane>
+                </Allotment>
               </div>
-              {resourceMonitorEnabled && <PerformanceMonitor />}
             </div>
           ) : (
             <Allotment>
               <Allotment.Pane minSize={MIN_WINDOW_SIZE} preferredSize="33%">
-                <Allotment vertical>
+                <Allotment
+                  vertical
+                  onChange={(sizes: number[]) => {
+                    const second = sizes[1]
+                    if (typeof second === 'number') {
+                      if (second < 15 && bottomOpen) {
+                        // snapped/closed
+                        setBottomOpen(false)
+                      } else if (second >= 15 && !bottomOpen) {
+                        // opened via snap
+                        setBottomOpen(true)
+                      }
+                    }
+                  }}
+                >
                   <Allotment.Pane minSize={MIN_WINDOW_SIZE} preferredSize="70%">
                     <div
                       style={{
@@ -83,8 +150,17 @@ export function CreagenEditorViewSplit() {
                       />
                     </div>
                   </Allotment.Pane>
-                  <Allotment.Pane minSize={100}>
-                    <ParamsView />
+                  <Allotment.Pane visible={bottomOpen} snap>
+                    <div
+                      style={{
+                        position: 'absolute',
+                        right: 0,
+                        top: 0,
+                      }}
+                    >
+                      <CloseButton onClose={() => setBottomOpen(!bottomOpen)} />
+                    </div>
+                    <BottomPanel />
                   </Allotment.Pane>
                 </Allotment>
               </Allotment.Pane>

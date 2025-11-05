@@ -1,14 +1,8 @@
 import React, { RefAttributes, useEffect } from 'react'
-import {
-  Box,
-  Button,
-  ButtonGroup,
-  CircularProgress,
-  Typography,
-} from '@mui/material'
+import { Box, Button, ButtonGroup, Typography } from '@mui/material'
 import KeyboardIcon from '@mui/icons-material/Keyboard'
 import { AccountTree, Settings } from '@mui/icons-material'
-import { VCSTab } from './tabs/VCSTab'
+import { BookmarksTab } from './tabs/BookmarksTab'
 import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
 import { SettingsTab } from './tabs/SettingsTab'
 import { KeybindingsTab } from './tabs/KeybindingsTab'
@@ -17,15 +11,39 @@ import AutoStoriesIcon from '@mui/icons-material/AutoStories'
 import { DependenciesTab } from './tabs/DependenciesTab'
 import { StorageBar } from './StorageBar'
 import { MenuLinks } from '../shared/IconLinks'
+import { CommitsTab } from './tabs/CommitsTab'
+import { logger } from '../logs/logger'
+import BookmarkIcon from '@mui/icons-material/Bookmark'
+import CommitIcon from '@mui/icons-material/Commit'
+
 export type MenuProps = {
   width?: string
 }
 
-const tabs = {
+interface TabConfig {
+  icon: React.ReactElement
+  title?: string
+  content?: React.ReactElement
+  parent?: string
+  sub?: Record<string, TabConfig>
+}
+
+const tabs: Record<string, TabConfig> = {
   vcs: {
     icon: <AccountTree />,
+    title: 'VCS',
+  },
+  'vcs-bookmarks': {
     title: 'Bookmarks',
-    content: <VCSTab />,
+    content: <BookmarksTab />,
+    icon: <BookmarkIcon />,
+    parent: 'vcs',
+  },
+  'vcs-commits': {
+    title: 'Commits',
+    content: <CommitsTab />,
+    icon: <CommitIcon />,
+    parent: 'vcs',
   },
   dependencies: {
     icon: <AutoStoriesIcon />,
@@ -45,31 +63,43 @@ const tabs = {
 }
 export type TabKey = keyof typeof tabs
 
-const defaultKey = Object.keys(tabs)[0]! as TabKey
+const defaultKey = 'vcs-bookmarks'
+
+const parentTabs = Object.entries(tabs).filter(
+  ([_, c]) => typeof c.parent === 'undefined',
+)
+const childTabs = Object.entries(tabs).filter(
+  ([_, c]) => typeof c.parent !== 'undefined',
+)
 
 export function Menu<T>({ ref, width }: MenuProps & RefAttributes<T>) {
   const creagenEditor = useCreagenEditor()
-  const [currentView, setCurrentView] = useLocalStorage(
+  const [selectedTabKey, setSelectedTabKey] = useLocalStorage(
     'menu-view-tab',
     defaultKey,
   )
 
+  // reset in case of invalid key
   useEffect(() => {
-    if (currentView) creagenEditor.storage.set('menu-view-tab', currentView)
-  }, [currentView])
+    if (typeof tabs[selectedTabKey]?.content === 'undefined') {
+      setSelectedTabKey(defaultKey)
+    }
+  }, [selectedTabKey, setSelectedTabKey])
 
-  if (currentView === null)
-    return (
-      <Box display="flex" justifyContent="center" p={2}>
-        <CircularProgress />
-      </Box>
-    )
+  const setTab = (tab: string) => {
+    creagenEditor.storage
+      .set('menu-view-tab', selectedTabKey)
+      .catch(logger.error)
+    setSelectedTabKey(tab)
+  }
+
+  const selectedTab = tabs[selectedTabKey]!
 
   return (
     <Box
       ref={ref}
       sx={{
-        width: width || '100%',
+        width: width ?? '100%',
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
@@ -84,6 +114,7 @@ export function Menu<T>({ ref, width }: MenuProps & RefAttributes<T>) {
           backgroundColor: 'background.default',
           borderBottom: 1,
           borderColor: 'divider',
+          containerType: 'inline-size',
         }}
       >
         <Box
@@ -97,7 +128,7 @@ export function Menu<T>({ ref, width }: MenuProps & RefAttributes<T>) {
             <Typography sx={{ fontWeight: 'bold' }}>Creagen Editor</Typography>
             <Typography variant="caption" color="text.secondary">
               {CREAGEN_EDITOR_VERSION}{' '}
-              {CREAGEN_EDITOR_COMMIT_HASH &&
+              {CREAGEN_EDITOR_COMMIT_HASH != null &&
                 `(${CREAGEN_EDITOR_COMMIT_HASH.substring(0, 7)})`}
             </Typography>
           </Box>
@@ -110,32 +141,116 @@ export function Menu<T>({ ref, width }: MenuProps & RefAttributes<T>) {
           fullWidth
           sx={{
             marginTop: '5px',
-            '& .MuiButton-root': { flex: 1 },
+            '& .MuiButton-root': {
+              flex: 1,
+              minWidth: 0,
+              padding: '4px 8px',
+            },
           }}
         >
-          {Object.entries(tabs).map(([key, tab]) => (
-            <Button
-              variant={currentView === key ? 'contained' : 'outlined'}
-              onClick={() => setCurrentView(key as TabKey)}
-              startIcon={tab.icon}
-              sx={{
-                textTransform: 'none',
-                fontWeight: currentView === key ? 600 : 400,
-                // minWidth: width < MENU_WIDTH_SMALL ? 'auto' : undefined, // Show only icons on narrow screens
-                // px: width < MENU_WIDTH_SMALL ? 1 : undefined,
-              }}
-            >
-              {/* {width >= MENU_WIDTH_SMALL && tab.title} */}
-            </Button>
-          ))}
+          {parentTabs.map(([key, tab]) => {
+            const selected =
+              selectedTabKey === key ||
+              (selectedTab.parent != null ? selectedTab.parent === key : false)
+            return (
+              <Button
+                key={key}
+                variant={selected ? 'contained' : 'outlined'}
+                onClick={() => setTab(key)}
+                startIcon={tab.icon}
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: selected ? 600 : 400,
+                  '& .MuiButton-startIcon': {
+                    marginRight: 0.5,
+                    marginLeft: -0.5,
+                    '@container (max-width: 480px)': {
+                      marginRight: 0,
+                      marginLeft: 0,
+                    },
+                  },
+                }}
+              >
+                <Box
+                  component="span"
+                  sx={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    '@container (max-width: 480px)': {
+                      display: 'none',
+                    },
+                  }}
+                >
+                  {tab.title}
+                </Box>
+              </Button>
+            )
+          })}
         </ButtonGroup>
+        {typeof selectedTab.parent !== 'undefined' && (
+          <ButtonGroup
+            variant="outlined"
+            size="small"
+            fullWidth
+            sx={{
+              '& .MuiButton-root': {
+                flex: 1,
+                minWidth: 0,
+                padding: '4px 8px',
+              },
+            }}
+          >
+            {childTabs.map(([key, tab]) => {
+              const selected = key === selectedTabKey
+              return (
+                <Button
+                  key={key}
+                  variant={selected ? 'contained' : 'outlined'}
+                  onClick={() => setTab(key)}
+                  startIcon={tab.icon}
+                  sx={{
+                    textTransform: 'none',
+                    fontWeight: selected ? 600 : 400,
+                    '& .MuiButton-startIcon': {
+                      marginRight: 0.5,
+                      marginLeft: -0.5,
+                      '@container (max-width: 480px)': {
+                        marginRight: 0,
+                        marginLeft: 0,
+                      },
+                    },
+                  }}
+                >
+                  <Box
+                    component="span"
+                    sx={{
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      '@container (max-width: 480px)': {
+                        display: 'none',
+                      },
+                    }}
+                  >
+                    {tab.title}
+                  </Box>
+                </Button>
+              )
+            })}
+          </ButtonGroup>
+        )}
       </Box>
 
       <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
-        <Typography variant="h5" gutterBottom textAlign={'center'}>
-          {tabs[currentView].title}
-        </Typography>
-        {tabs[currentView].content}
+        {selectedTab.title != null ? (
+          <Typography variant="h5" gutterBottom textAlign={'center'}>
+            {selectedTab.title}
+          </Typography>
+        ) : (
+          ''
+        )}
+        {selectedTab.content ?? selectedTab.content}
       </Box>
     </Box>
   )

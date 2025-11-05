@@ -482,6 +482,7 @@ function generateRandomValue(config: ParamConfig): unknown {
 
 export function ParamsView() {
   const creagenEditor = useCreagenEditor()
+  const params = creagenEditor.params
   useForceUpdateOnEditorEvent('render')
 
   const [, forceUpdate] = React.useReducer((x) => x + 1, 0)
@@ -497,7 +498,7 @@ export function ParamsView() {
   }
 
   const handleRandomizeAll = () => {
-    params.forEach(([key, config]) => {
+    params.forEach(([config], key) => {
       const randomValue = generateRandomValue(config)
       creagenEditor.params.setValue(key, randomValue)
     })
@@ -506,18 +507,6 @@ export function ParamsView() {
     if (autoRender) {
       void creagenEditor.render()
     }
-  }
-
-  const params = creagenEditor.params.getAll()
-
-  if (params.length === 0) {
-    return (
-      <Box sx={{ p: 2 }}>
-        <Typography variant="body2" color="text.secondary">
-          No parameters defined
-        </Typography>
-      </Box>
-    )
   }
 
   return (
@@ -533,13 +522,16 @@ export function ParamsView() {
         direction="row"
         alignItems="center"
         spacing={1}
-        sx={{ mb: 1, flexShrink: 0, p: 1.5 }}
+        justifyContent="flex-end"
+        sx={{ mb: 1, flexShrink: 0, p: 0.5 }}
       >
-        <Typography variant="subtitle2">
-          Parameters ({params.length})
-        </Typography>
         <Tooltip title="Randomize all parameters">
-          <IconButton onClick={handleRandomizeAll} size="small" sx={{ p: 0.5 }}>
+          <IconButton
+            onClick={handleRandomizeAll}
+            size="small"
+            sx={{ p: 0.5 }}
+            disabled={params.length === 0}
+          >
             <ShuffleIcon fontSize="small" />
           </IconButton>
         </Tooltip>
@@ -561,7 +553,7 @@ export function ParamsView() {
               Auto render
             </Typography>
           }
-          sx={{ ml: 'auto', mr: 0 }}
+          sx={{ mr: 0 }}
         />
       </Stack>
 
@@ -577,51 +569,57 @@ export function ParamsView() {
           p: 1,
         }}
       >
-        {params.map(([key, config, value], index) => (
-          <Box
-            key={index}
-            sx={{
-              py: 0.5,
-              px: 1,
-              bgcolor: 'action.hover',
-              borderRadius: 1,
-              minWidth: 'fit-content',
-            }}
-          >
-            <Stack spacing={0.5}>
-              {/* Header */}
-              <Typography
-                variant="caption"
-                component="div"
-                noWrap
-                sx={{ fontWeight: 500 }}
-              >
-                {key}
-                {(config.type === 'number' ||
-                  config.type === 'number-slider' ||
-                  config.type === 'range' ||
-                  config.type === 'range-slider') && (
-                  <Typography
-                    component="span"
-                    variant="caption"
-                    sx={{ ml: 1, color: 'text.secondary', fontWeight: 400 }}
-                  >
-                    {config.type === 'range' || config.type === 'range-slider'
-                      ? `[${(value as [number, number])[0]}, ${(value as [number, number])[1]}]`
-                      : String(value)}
-                  </Typography>
-                )}
-              </Typography>
+        {params.length === 0 ? (
+          <Typography variant="body2" color="text.secondary" sx={{ p: 1 }}>
+            No parameters defined
+          </Typography>
+        ) : (
+          [...params.entries()].map(([key, [config, value]], index) => (
+            <Box
+              key={index}
+              sx={{
+                py: 0.5,
+                px: 1,
+                bgcolor: 'rgba(228, 228, 228, 1)',
+                borderRadius: 1,
+                minWidth: 'fit-content',
+              }}
+            >
+              <Stack spacing={0.5}>
+                {/* Header */}
+                <Typography
+                  variant="caption"
+                  component="div"
+                  noWrap
+                  sx={{ fontWeight: 500 }}
+                >
+                  {key}
+                  {(config.type === 'number' ||
+                    config.type === 'number-slider' ||
+                    config.type === 'range' ||
+                    config.type === 'range-slider') && (
+                    <Typography
+                      component="span"
+                      variant="caption"
+                      sx={{ ml: 1, color: 'text.secondary', fontWeight: 400 }}
+                    >
+                      {config.type === 'range' || config.type === 'range-slider'
+                        ? `[${(value as [number, number])[0]}, ${(value as [number, number])[1]}]`
+                        : String(value)}
+                    </Typography>
+                  )}
+                </Typography>
 
-              {/* Control */}
-              <ParamControl
-                config={config}
-                value={value}
-                onChange={(newValue) => handleValueChange(key, newValue)}
-              />
-            </Stack>
-          </Box>
-        ))}
+                {/* Control */}
+                <ParamControl
+                  config={config}
+                  value={value}
+                  onChange={(newValue) => handleValueChange(key, newValue)}
+                />
+              </Stack>
+            </Box>
+          ))
+        )}
       </Box>
     </Box>
   )

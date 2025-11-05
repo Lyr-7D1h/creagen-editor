@@ -263,7 +263,7 @@ export class SandboxMessageHandler {
       this.off(typeOrTypes, wrappedHandler)
     }
 
-    this.on(typeOrTypes, wrappedHandler)
+    return this.on(typeOrTypes, wrappedHandler)
   }
 
   onAny(handler: (msg: SandboxMessage) => void) {

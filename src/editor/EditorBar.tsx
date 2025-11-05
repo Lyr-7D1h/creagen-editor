@@ -7,7 +7,6 @@ import { HtmlTooltip } from './HtmlTooltip'
 import { useSettings } from '../events/useEditorEvents'
 import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
 
-export interface EditorProps {}
 export function EditorBar({
   menu,
   onMenuOpen,

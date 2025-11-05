@@ -65,7 +65,7 @@ export function useLocalStorage<K extends LocalStorageOnlyKey>(
         setStoredValue(e.value as StorageValue<K>)
       }
     })
-  }, [handleStorageChange])
+  }, [handleStorageChange, key])
 
   return [storedValue, setValue]
 }

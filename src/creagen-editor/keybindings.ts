@@ -42,6 +42,10 @@ const defaultKeybindings: Keybinding[] = [
     key: 'ctrl+e',
     command: 'editor.toggleMenu',
   },
+  {
+    key: 'ctrl+j',
+    command: 'editor.toggleBottom',
+  },
 ]
 
 const logger = createContextLogger('keybindings')

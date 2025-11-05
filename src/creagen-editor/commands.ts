@@ -68,6 +68,15 @@ export const COMMANDS = {
       }
     },
   },
+  'editor.toggleBottom': {
+    description: 'Toggle bottom panel',
+    handler: () => {
+      localStorage.set(
+        'bottom-panel-open',
+        !(localStorage.get('bottom-panel-open') ?? true),
+      )
+    },
+  },
 }
 
 export const commandSchema = z.string().transform((data, ctx) => {

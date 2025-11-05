@@ -211,8 +211,12 @@ declare function useParam<Items extends Record<string, any>>(
   options: Omit<Extract<ParamConfig, { type: 'radio' }>, 'type'> & { items: Items }
 ): Items[keyof Items];
 ` /** key: [ParamConfig, value] */
-  private store: Record<ParamKey, [ParamConfig, unknown]> = {}
+  private store: Map<ParamKey, [ParamConfig, unknown]> = new Map()
   private previousValues: Map<ParamKey, unknown> = new Map()
+
+  get length(): number {
+    return this.store.size
+  }
 
   /**
    * Validates that a value meets the constraints of its param config.
@@ -261,17 +265,18 @@ declare function useParam<Items extends Record<string, any>>(
     }
   }
 
-  getAll(): AllParams {
-    return Object.entries(this.store).map(([key, [config, value]]) => [
-      key as ParamKey,
-      config,
-      value,
-    ])
+  forEach(cb: (v: [ParamConfig, unknown], k: ParamKey) => void) {
+    this.store.forEach(cb)
+  }
+
+  entries() {
+    return this.store.entries()
   }
 
   setValue(key: ParamKey, newValue: unknown): void {
-    if (this.store[key]) {
-      this.store[key][1] = newValue
+    const v = this.store.get(key)
+    if (v) {
+      v[1] = newValue
     }
   }
 
@@ -282,13 +287,10 @@ declare function useParam<Items extends Record<string, any>>(
   clearAndPreserveValues(): void {
     // Save current values
     this.previousValues = new Map(
-      Object.entries(this.store).map(([key, [_config, value]]) => [
-        key as ParamKey,
-        value,
-      ]),
+      [...this.store.entries()].map(([key, [_config, value]]) => [key, value]),
     )
     // Clear the store
-    this.store = {}
+    this.store = new Map()
   }
 
   addParam<T extends ParamConfig>(config: T) {
@@ -303,7 +305,7 @@ declare function useParam<Items extends Record<string, any>>(
       counter++
     }
 
-    const stored = this.store[key]
+    const stored = this.store.get(key)
     if (stored) {
       const [config, value] = stored
       return this.translate(config, value)
@@ -318,7 +320,7 @@ declare function useParam<Items extends Record<string, any>>(
         : config.default
     ) as ValueFromConfig<T>
 
-    this.store[key] = [config, value]
+    this.store.set(key, [config, value])
 
     return this.translate(config, value)
   }

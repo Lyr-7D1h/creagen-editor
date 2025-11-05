@@ -1,5 +1,4 @@
 import { BlobHash, Commit, CommitHash } from '../vcs/Commit'
-import { TabKey } from '../editor/Menu'
 import { Bookmarks } from '../vcs/Bookmarks'
 import { CustomKeybinding } from '../creagen-editor/keybindings'
 
@@ -11,7 +10,10 @@ const LOCAL_STORAGE_KEYS: LocalStorageKey[] = [
   'custom-keybindings',
   'settings',
   'bookmarks',
+  'bottom-panel-tab',
+  'bottom-panel-open',
 ]
+
 export function isLocalStorageKey(key: StorageKey): key is LocalStorageKey {
   return LOCAL_STORAGE_KEYS.includes(key as LocalStorageKey)
 }
@@ -27,6 +29,8 @@ export type LocalStorageOnlyKey =
   | 'menu-view'
   | 'menu-view-tab'
   | 'menu-settings-hidden'
+  | 'bottom-panel-tab'
+  | 'bottom-panel-open'
 /** LocalStorage + Remote */
 export type LocalStorageKey =
   | 'editor-scroll-position'
@@ -49,13 +53,15 @@ export type StorageIdentifier<K extends StorageKey> =
 type StorageKeyValueMap = {
   welcome: boolean
   'menu-view': boolean
-  'menu-view-tab': TabKey | null
+  'menu-view-tab': string
   'menu-settings-hidden': string[]
   'editor-scroll-position': number
+  'bottom-panel-tab': number
+  'bottom-panel-open': boolean
   'custom-keybindings': CustomKeybinding[]
   commit: Commit
   blob: string
-  settings: any
+  settings: unknown
   bookmarks: Bookmarks
 }
 export type StorageValue<K extends StorageKey> =
