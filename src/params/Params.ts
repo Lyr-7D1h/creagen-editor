@@ -300,7 +300,7 @@ declare function useParam<Items extends Record<string, any>>(
 
     // If key already exists, append incrementing number
     let counter = 1
-    while (key in this.store) {
+    while (this.store.has(key)) {
       key = `${baseKey}_${counter}` as ParamKey
       counter++
     }

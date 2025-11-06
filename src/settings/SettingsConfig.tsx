@@ -129,6 +129,11 @@ const defaultConfig = {
     label: 'Auto render on parameter change',
     value: true,
   },
+  'params.compact_layout': {
+    type: 'param',
+    label: 'Compact layout',
+    value: false,
+  },
 }
 
 type Generic<T> = {

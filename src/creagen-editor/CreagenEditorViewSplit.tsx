@@ -14,6 +14,7 @@ import { useCreagenEditor } from './CreagenEditorView'
 import { PerformanceMonitor } from '../sandbox/PerformanceMonitor'
 import { BottomPanel } from './BottomPanel'
 import { CloseButton } from './CloseButton'
+import { ParamsView } from '../params/ParamsView'
 
 const MIN_WINDOW_SIZE = 200
 
@@ -71,7 +72,6 @@ export function CreagenEditorViewSplit() {
                   and remain resizable. */}
               <div style={{ position: 'absolute', inset: 0, zIndex: 2 }}>
                 <Allotment
-                  vertical
                   onChange={(sizes: number[]) => {
                     const second = sizes[1]
                     if (typeof second === 'number') {
@@ -186,6 +186,7 @@ export function CreagenEditorViewSplit() {
 
 export function CreagenEditorViewContentMobile() {
   const creagenEditor = useCreagenEditor()
+  useForceUpdateOnEditorEvent('render')
   const hideAll = useSettings('hide_all')
   const [menu, setMenu] = useLocalStorage('menu-view', false)
 
@@ -211,14 +212,30 @@ export function CreagenEditorViewContentMobile() {
   if (hideAll) return <SandboxView width="100svw" />
 
   return (
-    <>
-      <EditorView
-        width="100svw"
-        toggleMenu={() => setMenu(!menu)}
-        menu={menu}
-        onMenuOpen={() => setMenu(!menu)}
-      />
-      <SandboxView width="100svw" />
-    </>
+    <div style={{ height: '100svh', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: 1, position: 'relative' }}>
+        <SandboxView />
+        <Actions
+          style={{ position: 'fixed', bottom: 10, right: 10 }}
+          toggleMenu={() => setMenu(!menu)}
+        />
+      </div>
+
+      {creagenEditor.params.length > 0 && (
+        <div
+          style={{
+            background: '#ffffff',
+            borderTop: '1px solid rgba(0,0,0,0.08)',
+            padding: 12,
+            boxShadow: '0 -6px 18px rgba(0,0,0,0.06)',
+            minHeight: 110,
+            maxHeight: '50vh',
+            overflow: 'auto',
+          }}
+        >
+          <ParamsView />
+        </div>
+      )}
+    </div>
   )
 }

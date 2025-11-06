@@ -480,6 +480,101 @@ function generateRandomValue(config: ParamConfig): unknown {
   }
 }
 
+function ParamItem({
+  paramKey,
+  config,
+  value,
+  compact,
+  onChange,
+}: {
+  paramKey: string
+  config: ParamConfig
+  value: unknown
+  compact: boolean
+  onChange: (newValue: unknown) => void
+}) {
+  const label = (
+    <Box sx={{ minWidth: compact ? 'auto' : 120, flexShrink: 0 }}>
+      <Typography
+        variant="caption"
+        component="div"
+        noWrap={compact}
+        sx={{ fontWeight: 500 }}
+      >
+        {paramKey}
+        {compact &&
+          (config.type === 'number' ||
+            config.type === 'number-slider' ||
+            config.type === 'range' ||
+            config.type === 'range-slider') && (
+            <Typography
+              component="span"
+              variant="caption"
+              sx={{ ml: 1, color: 'text.secondary', fontWeight: 400 }}
+            >
+              {config.type === 'range' || config.type === 'range-slider'
+                ? `[${(value as [number, number])[0]}, ${(value as [number, number])[1]}]`
+                : String(value)}
+            </Typography>
+          )}
+      </Typography>
+      {!compact &&
+        (config.type === 'number' ||
+          config.type === 'number-slider' ||
+          config.type === 'range' ||
+          config.type === 'range-slider') && (
+          <Typography
+            variant="caption"
+            sx={{ color: 'text.secondary', fontWeight: 400 }}
+          >
+            {config.type === 'range' || config.type === 'range-slider'
+              ? `[${(value as [number, number])[0]}, ${(value as [number, number])[1]}]`
+              : String(value)}
+          </Typography>
+        )}
+    </Box>
+  )
+
+  const control = (
+    <Box
+      sx={{ flex: compact ? 'unset' : 1, maxWidth: compact ? 'unset' : 400 }}
+    >
+      <ParamControl config={config} value={value} onChange={onChange} />
+    </Box>
+  )
+
+  return (
+    <Box
+      sx={{
+        py: 0.5,
+        px: 1,
+        bgcolor: (theme) =>
+          theme.palette.mode === 'light'
+            ? theme.palette.grey[100]
+            : theme.palette.background.paper,
+        borderRadius: 1,
+        minWidth: compact ? 'fit-content' : 'unset',
+        display: 'flex',
+        alignItems: 'center',
+        gap: compact ? 0 : 2,
+        flexDirection: compact ? 'column' : 'row',
+      }}
+    >
+      {compact ? (
+        <Stack spacing={0.5} sx={{ width: '100%' }}>
+          {label}
+          {control}
+        </Stack>
+      ) : (
+        <>
+          {label}
+          {control}
+        </>
+      )}
+    </Box>
+  )
+}
+
 export function ParamsView() {
   const creagenEditor = useCreagenEditor()
   const params = creagenEditor.params
@@ -487,6 +582,7 @@ export function ParamsView() {
 
   const [, forceUpdate] = React.useReducer((x) => x + 1, 0)
   const autoRender = useSettings('params.auto_render')
+  const compactLayout = useSettings('params.compact_layout')
 
   const handleValueChange = (key: ParamKey, newValue: unknown) => {
     creagenEditor.params.setValue(key, newValue)
@@ -538,6 +634,26 @@ export function ParamsView() {
         <FormControlLabel
           control={
             <Checkbox
+              checked={Boolean(compactLayout)}
+              onChange={(e) =>
+                creagenEditor.settings.set(
+                  'params.compact_layout',
+                  e.target.checked,
+                )
+              }
+              size="small"
+            />
+          }
+          label={
+            <Typography variant="caption" color="text.secondary">
+              Compact
+            </Typography>
+          }
+          sx={{ mr: 0 }}
+        />
+        <FormControlLabel
+          control={
+            <Checkbox
               checked={autoRender}
               onChange={(e) =>
                 creagenEditor.settings.set(
@@ -560,7 +676,8 @@ export function ParamsView() {
       <Box
         sx={{
           display: 'flex',
-          flexWrap: 'wrap',
+          flexWrap: compactLayout ? 'wrap' : 'nowrap',
+          flexDirection: compactLayout ? 'row' : 'column',
           gap: 1,
           alignContent: 'flex-start',
           overflow: 'auto',
@@ -575,49 +692,14 @@ export function ParamsView() {
           </Typography>
         ) : (
           [...params.entries()].map(([key, [config, value]], index) => (
-            <Box
+            <ParamItem
               key={index}
-              sx={{
-                py: 0.5,
-                px: 1,
-                bgcolor: 'rgba(228, 228, 228, 1)',
-                borderRadius: 1,
-                minWidth: 'fit-content',
-              }}
-            >
-              <Stack spacing={0.5}>
-                {/* Header */}
-                <Typography
-                  variant="caption"
-                  component="div"
-                  noWrap
-                  sx={{ fontWeight: 500 }}
-                >
-                  {key}
-                  {(config.type === 'number' ||
-                    config.type === 'number-slider' ||
-                    config.type === 'range' ||
-                    config.type === 'range-slider') && (
-                    <Typography
-                      component="span"
-                      variant="caption"
-                      sx={{ ml: 1, color: 'text.secondary', fontWeight: 400 }}
-                    >
-                      {config.type === 'range' || config.type === 'range-slider'
-                        ? `[${(value as [number, number])[0]}, ${(value as [number, number])[1]}]`
-                        : String(value)}
-                    </Typography>
-                  )}
-                </Typography>
-
-                {/* Control */}
-                <ParamControl
-                  config={config}
-                  value={value}
-                  onChange={(newValue) => handleValueChange(key, newValue)}
-                />
-              </Stack>
-            </Box>
+              paramKey={key}
+              config={config}
+              value={value}
+              compact={Boolean(compactLayout)}
+              onChange={(newValue) => handleValueChange(key, newValue)}
+            />
           ))
         )}
       </Box>

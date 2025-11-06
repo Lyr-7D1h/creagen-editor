@@ -66,6 +66,7 @@ export function BottomPanel({ onClose }: { onClose?: () => void }) {
         position: 'relative',
         pointerEvents: 'auto',
         marginTop: '5px',
+        backgroundColor: 'white',
       }}
     >
       {/* Close button placed inside panel so parent can just pass onClose */}
