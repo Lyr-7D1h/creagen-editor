@@ -114,6 +114,9 @@ export default defineConfig(async ({ mode }) => {
         .CREAGEN_EDITOR_SANDBOX_RUNTIME_URL
         ? JSON.stringify(process.env.CREAGEN_EDITOR_SANDBOX_RUNTIME_URL)
         : JSON.stringify('/sandbox-runtime/'),
+      CREAGEN_LOG_LEVEL: process.env.CREAGEN_LOG_LEVEL
+        ? JSON.stringify(process.env.CREAGEN_LOG_LEVEL)
+        : '"0"',
     },
     build: {
       // don't include source maps to reduce upload size
