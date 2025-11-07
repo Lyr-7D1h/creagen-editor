@@ -13,7 +13,6 @@ import { Actions } from './Actions'
 import { useCreagenEditor } from './CreagenEditorView'
 import { PerformanceMonitor } from '../sandbox/PerformanceMonitor'
 import { BottomPanel } from './BottomPanel'
-import { CloseButton } from './CloseButton'
 import { ParamsView } from '../params/ParamsView'
 
 const MIN_WINDOW_SIZE = 200
@@ -78,9 +77,6 @@ export function CreagenEditorViewSplit() {
                       if (second < 15 && bottomOpen) {
                         // snapped/closed
                         setBottomOpen(false)
-                      } else if (second >= 15 && !bottomOpen) {
-                        // opened via snap
-                        setBottomOpen(true)
                       }
                     }
                   }}
@@ -125,11 +121,7 @@ export function CreagenEditorViewSplit() {
                     const second = sizes[1]
                     if (typeof second === 'number') {
                       if (second < 15 && bottomOpen) {
-                        // snapped/closed
                         setBottomOpen(false)
-                      } else if (second >= 15 && !bottomOpen) {
-                        // opened via snap
-                        setBottomOpen(true)
                       }
                     }
                   }}
@@ -151,16 +143,7 @@ export function CreagenEditorViewSplit() {
                     </div>
                   </Allotment.Pane>
                   <Allotment.Pane visible={bottomOpen} snap>
-                    <div
-                      style={{
-                        position: 'absolute',
-                        right: 0,
-                        top: 0,
-                      }}
-                    >
-                      <CloseButton onClose={() => setBottomOpen(!bottomOpen)} />
-                    </div>
-                    <BottomPanel />
+                    <BottomPanel onClose={() => setBottomOpen(!bottomOpen)} />
                   </Allotment.Pane>
                 </Allotment>
               </Allotment.Pane>
@@ -186,7 +169,7 @@ export function CreagenEditorViewSplit() {
 
 export function CreagenEditorViewContentMobile() {
   const creagenEditor = useCreagenEditor()
-  useForceUpdateOnEditorEvent('render')
+  useForceUpdateOnEditorEvent('params:update')
   const hideAll = useSettings('hide_all')
   const [menu, setMenu] = useLocalStorage('menu-view', false)
 

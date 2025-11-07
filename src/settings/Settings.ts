@@ -17,11 +17,11 @@ export function parentKey(key: string) {
 }
 
 export interface SettingsContextType {
-  /** Do not change any of these values use `set()` and `add()` */
-  values: Record<ParamKey, any>
-  /** Do not change any of these values use `set()` and `add()` */
+  /** Do not change unknown of these values use `set()` and `add()` */
+  values: Record<ParamKey, unknown>
+  /** Do not change unknown of these values use `set()` and `add()` */
   config: DefaultSettingsConfig
-  set: (key: ParamKey, value: any) => void
+  set: (key: ParamKey, value: unknown) => void
   add: (key: string, entry: Entry) => void
   /** Remove all values under this key */
   remove: (key: string) => void
@@ -42,7 +42,7 @@ export class Settings {
   static async create(storage: ClientStorage) {
     // Initialize with deep cloned default settings
     const defaultConfig = Object.entries(defaultSettingsConfig).reduce<
-      Record<string, any>
+      Record<string, unknown>
     >((acc, [key, entry]) => {
       acc[key] = {
         ...entry,
@@ -69,12 +69,12 @@ export class Settings {
     return new Settings(storage, defaultConfig as DefaultSettingsConfig)
   }
 
-  get values(): Record<ParamKey, any> {
+  get values(): Record<ParamKey, unknown> {
     return Object.fromEntries(
       Object.entries(this.config)
         .filter(([_, entry]) => (entry as Entry).type === 'param' || entry.type)
         .map(([key, entry]) => [key, (entry as SettingsParam).value]),
-    ) as Record<ParamKey, any>
+    ) as Record<ParamKey, unknown>
   }
 
   isParam(key: string): key is ParamKey {
@@ -96,11 +96,9 @@ export class Settings {
   }
 
   // Set a value
-  set(key: ParamKey, value: any): void {
+  set(key: ParamKey, value: unknown): void {
     const entry = this.config[key]
     if (typeof entry === 'undefined') throw Error(`Key ${key} does not exist`)
-    if (entry.type !== 'param')
-      throw Error(`You can't set a value for ${entry.type}`)
     if (typeof entry.validate !== 'undefined') {
       const e = entry.validate(value as never)
       if (typeof e === 'string') {
@@ -125,8 +123,9 @@ export class Settings {
       throw Error('parent is not a folder')
     }
 
-    this.config[key as keyof DefaultSettingsConfig] = entry as any
-    ;(this.config[key as keyof DefaultSettingsConfig] as Entry).generated = true
+    const config = this.config as unknown as Record<string, Entry>
+    config[key] = entry
+    config[key].generated = true
     this.saveAndNotify(key, null)
     return key as keyof DefaultSettingsConfig
   }
@@ -139,7 +138,7 @@ export class Settings {
       ] !== 'undefined'
     )
       throw Error(`You can't remove ${key} as this is a system setting`)
-    const newSettings: Record<string, any> = { ...this.config }
+    const newSettings: Record<string, unknown> = { ...this.config }
     for (const k in newSettings) {
       if (k.startsWith(key)) {
         delete newSettings[k]
@@ -150,7 +149,11 @@ export class Settings {
   }
 
   // Save settings to localStorage and notify listeners
-  private saveAndNotify(key: any, value: any | null, oldValue?: any): void {
+  private saveAndNotify(
+    key: unknown,
+    value: unknown | null,
+    oldValue?: unknown,
+  ): void {
     const values = { ...this.values }
     for (const k in values) {
       const entry = this.config[k as ParamKey] as Entry

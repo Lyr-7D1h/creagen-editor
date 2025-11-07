@@ -1,5 +1,4 @@
 import React from 'react'
-import { useForceUpdateOnEditorEvent } from '../events/useEditorEvents'
 import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
 import {
   Box,
@@ -575,10 +574,10 @@ function ParamItem({
   )
 }
 
+/** Ensure to rerender on param change */
 export function ParamsView() {
   const creagenEditor = useCreagenEditor()
   const params = creagenEditor.params
-  useForceUpdateOnEditorEvent('render')
 
   const [, forceUpdate] = React.useReducer((x) => x + 1, 0)
   const autoRender = useSettings('params.auto_render')
@@ -622,14 +621,16 @@ export function ParamsView() {
         sx={{ mb: 1, flexShrink: 0, p: 0.5 }}
       >
         <Tooltip title="Randomize all parameters">
-          <IconButton
-            onClick={handleRandomizeAll}
-            size="small"
-            sx={{ p: 0.5 }}
-            disabled={params.length === 0}
-          >
-            <ShuffleIcon fontSize="small" />
-          </IconButton>
+          <span>
+            <IconButton
+              onClick={handleRandomizeAll}
+              size="small"
+              sx={{ p: 0.5 }}
+              disabled={params.length === 0}
+            >
+              <ShuffleIcon fontSize="small" />
+            </IconButton>
+          </span>
         </Tooltip>
         <FormControlLabel
           control={

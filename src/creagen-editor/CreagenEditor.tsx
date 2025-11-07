@@ -64,16 +64,28 @@ export class CreagenEditor {
     this.vcs = vcs
     this.keybindings = new Keybindings(customKeybindings, this)
 
+    this.loadSettingsFromQueryParams()
     /// If head is set load corresponding code
-    if (this.vcs.head) this.checkout(this.vcs.head.hash).catch(logger.error)
+    if (this.vcs.head) {
+      this.checkout(this.vcs.head.hash)
+        .then(() => {
+          return this.loadLibraries()
+        })
+        .then(() => {
+          if (this.settings.get('editor.init_render')) {
+            this.render().catch(logger.error)
+          } else if (this.settings.get('params.auto_render')) {
+            const code = this.editor.getValue()
+            parseCode(code, this.libraryImports, this.params)
+          }
+        })
+        .catch(logger.error)
+    }
 
-    // Load initial code and settings from url
-    this.loadSettingsFromPath()
-    this.loadLibraries()
+    if (this.settings.get('sandbox.resource_monitor'))
+      this.resourceMonitor.listen()
 
-    this.resourceMonitor.listen()
-
-    // Update code from history
+    // Setup listener for updating code from history
     window.addEventListener('popstate', () => {
       this.vcs
         .updateFromUrl()
@@ -84,13 +96,24 @@ export class CreagenEditor {
         .catch(logger.error)
     })
 
+    // Listen to setting changes
     editorEvents.on('settings:changed', ({ key: k, value }) => {
       if (k === 'editor.code_in_url') {
         this.vcs.updateUrl(this.editor.getValue())
+        return
       }
 
       if (k === 'general.libraries') {
-        this.loadLibraries()
+        this.loadLibraries().catch(logger.error)
+        return
+      }
+
+      if (k === 'sandbox.resource_monitor') {
+        if (value as boolean) {
+          this.resourceMonitor.listen()
+        } else {
+          this.resourceMonitor.stopListening()
+        }
       }
 
       if (this.settings.isParam(k)) {
@@ -108,23 +131,10 @@ export class CreagenEditor {
           } else {
             url.searchParams.set(k, value as string)
           }
-          window.history.pushState(null, '', url)
+          window.history.replaceState(null, '', url)
         }
       }
     })
-  }
-
-  setStorage(storage: ClientStorage) {
-    this.storage = storage
-  }
-
-  getLibraryImports() {
-    return this.libraryImports
-  }
-
-  setLibraryImports(imports: Record<string, LibraryImport>) {
-    this.libraryImports = imports
-    return imports
   }
 
   async checkout(hash: CommitHash, updateHistory?: boolean): Promise<void>
@@ -148,7 +158,8 @@ export class CreagenEditor {
     this.editor.setValue(data)
   }
 
-  loadSettingsFromPath() {
+  /** Update settings from query params */
+  loadSettingsFromQueryParams() {
     const urlParams = new URLSearchParams(window.location.search)
     urlParams.forEach((value, key) => {
       if (this.settings.isParam(key)) {
@@ -160,7 +171,7 @@ export class CreagenEditor {
     })
   }
 
-  loadLibraries() {
+  async loadLibraries() {
     const libraries = this.settings.values['general.libraries'] as Library[]
     this.editor.clearTypings()
     this.editor.addTypings(Params.TYPINGS, 'creagen-editor')
@@ -205,21 +216,18 @@ export class CreagenEditor {
       })
     })
 
-    Promise.allSettled(updatedImports)
-      .then((results) => {
-        const errors = results.filter((r) => r.status === 'rejected')
-        if (errors.length > 0) errors.forEach((e) => logger.error(e.reason))
+    return Promise.allSettled(updatedImports).then((results) => {
+      const errors = results.filter((r) => r.status === 'rejected')
+      if (errors.length > 0) errors.forEach((e) => logger.error(e.reason))
 
-        const newImports = Object.fromEntries(
-          results
-            .filter((r) => r.status === 'fulfilled')
-            .map((r) => [r.value.name, r.value]),
-        )
+      const newImports = Object.fromEntries(
+        results
+          .filter((r) => r.status === 'fulfilled')
+          .map((r) => [r.value.name, r.value]),
+      )
 
-        this.setLibraryImports(newImports)
-        return newImports
-      })
-      .catch(logger.error)
+      this.libraryImports = newImports
+    })
   }
 
   async render() {

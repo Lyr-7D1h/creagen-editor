@@ -15,7 +15,7 @@ export class ResourceMonitor {
     if (this.isListening) return
     this.isListening = true
     this.lastFrameTime = null
-    this.frameSamples = new Array(this.frameSamplingRate).fill(0)
+    this.frameSamples = new Array<number>(this.frameSamplingRate).fill(0)
     this.currentIndex = 0
     this.sampleCount = 0
     this.runningSum = 0
@@ -36,7 +36,7 @@ export class ResourceMonitor {
       this.lastFrameTime = currentTime
 
       // Use circular buffer with running sum - O(1) operation
-      const oldValue = this.frameSamples[this.currentIndex] || 0
+      const oldValue = this.frameSamples[this.currentIndex] ?? 0
       this.frameSamples[this.currentIndex] = deltaTime
       this.runningSum = this.runningSum - oldValue + deltaTime
       this.currentIndex = (this.currentIndex + 1) % this.frameSamplingRate
@@ -48,7 +48,7 @@ export class ResourceMonitor {
         this.framesSinceRecalc = 0
         this.runningSum = 0
         for (let i = 0; i < this.sampleCount; i++) {
-          this.runningSum += this.frameSamples[i] || 0
+          this.runningSum += this.frameSamples[i] ?? 0
         }
       }
     }
@@ -89,11 +89,11 @@ export class ResourceMonitor {
     let maxFrameTime = 0
 
     if (this.sampleCount > 0) {
-      minFrameTime = this.frameSamples[0] || 0
-      maxFrameTime = this.frameSamples[0] || 0
+      minFrameTime = this.frameSamples[0] ?? 0
+      maxFrameTime = this.frameSamples[0] ?? 0
 
       for (let i = 1; i < this.sampleCount; i++) {
-        const sample = this.frameSamples[i] || 0
+        const sample = this.frameSamples[i] ?? 0
         if (sample < minFrameTime) minFrameTime = sample
         if (sample > maxFrameTime) maxFrameTime = sample
       }

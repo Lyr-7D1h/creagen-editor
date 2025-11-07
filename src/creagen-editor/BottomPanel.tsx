@@ -1,5 +1,5 @@
 import React from 'react'
-import { Box, Tab, Tabs, Stack } from '@mui/material'
+import { Box, Tab, Tabs } from '@mui/material'
 import { ParamsView } from '../params/ParamsView'
 import { useLocalStorage } from '../storage/useLocalStorage'
 import { useCreagenEditor } from './CreagenEditorView'
@@ -45,8 +45,8 @@ export function BottomPanel({ onClose }: { onClose?: () => void }) {
       label: 'Parameters',
       index: 0,
       metadata: paramCount > 0 ? `(${paramCount})` : '',
+      disabled: false,
     },
-    { label: 'Info', index: 1, metadata: '' },
   ]
 
   // Ensure activeTab is a valid number (0 or 1)
@@ -126,6 +126,7 @@ export function BottomPanel({ onClose }: { onClose?: () => void }) {
                 </Box>
               }
               value={tab.index}
+              disabled={tab.disabled}
               sx={{
                 minHeight: 28,
                 minWidth: 'auto',
@@ -159,18 +160,7 @@ export function BottomPanel({ onClose }: { onClose?: () => void }) {
         <TabPanel value={validActiveTab} index={0}>
           <ParamsView />
         </TabPanel>
-        <TabPanel value={validActiveTab} index={1}>
-          <Box sx={{ p: 2 }}>
-            <Stack spacing={1}>
-              <Box>
-                <strong>Info Panel</strong>
-              </Box>
-              <Box sx={{ color: 'text.secondary' }}>
-                Additional information and details can be displayed here.
-              </Box>
-            </Stack>
-          </Box>
-        </TabPanel>
+        <TabPanel value={validActiveTab} index={1}></TabPanel>
       </Box>
     </Box>
   )

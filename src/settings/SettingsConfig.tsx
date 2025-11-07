@@ -10,7 +10,7 @@ export const librarySchema = z.object({
 export type Library = z.infer<typeof librarySchema>
 
 const defaultConfig = {
-  // State parameters
+  // state settings (not stored)
   hide_all: {
     type: 'param',
     hidden: true,
@@ -19,6 +19,7 @@ const defaultConfig = {
     },
     value: false,
   },
+
   general: {
     type: 'folder',
     title: 'General',
@@ -88,6 +89,11 @@ const defaultConfig = {
     details:
       'Use code in the url instead of an id to generate shareable links without using remote storage',
     value: false,
+  },
+  'editor.init_render': {
+    type: 'param',
+    label: 'Render code on start up',
+    value: true,
   },
 
   actions: {
