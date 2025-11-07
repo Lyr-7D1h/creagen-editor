@@ -1,5 +1,5 @@
 import {
-  defaultSettingsConfig,
+  DEFAULT_SETTINGS_CONFIG,
   DefaultSettingsConfig,
   Entry,
   SettingsParam,
@@ -29,7 +29,6 @@ export interface SettingsContextType {
 
 // Core Settings class to handle the settings logic
 export class Settings {
-  readonly defaultConfig = defaultSettingsConfig
   config: DefaultSettingsConfig
 
   private readonly storage: ClientStorage
@@ -41,20 +40,21 @@ export class Settings {
 
   static async create(storage: ClientStorage) {
     // Initialize with deep cloned default settings
-    const defaultConfig = Object.entries(defaultSettingsConfig).reduce<
-      Record<string, unknown>
-    >((acc, [key, entry]) => {
-      acc[key] = {
-        ...entry,
-      }
-      return acc
-    }, {})
+    const config = Object.entries(DEFAULT_SETTINGS_CONFIG).reduce(
+      (acc, [key, entry]) => {
+        acc[key] = {
+          ...entry,
+        }
+        return acc
+      },
+      {} as Record<ParamKey, Entry>,
+    )
 
     // Load stored settings from localStorage
     const storageSettings = await storage.get('settings')
     if (storageSettings !== null) {
       for (const [key, value] of Object.entries(storageSettings)) {
-        const entry = defaultConfig[key]
+        const entry = config[key]
         // skip if current stored has changed
         if (
           typeof entry === 'undefined' ||
@@ -62,11 +62,11 @@ export class Settings {
           entry.type !== 'param'
         )
           continue
-        defaultConfig[key].value = value
+        config[key].value = value
       }
     }
 
-    return new Settings(storage, defaultConfig as DefaultSettingsConfig)
+    return new Settings(storage, config as DefaultSettingsConfig)
   }
 
   get values(): Record<ParamKey, unknown> {
@@ -106,34 +106,17 @@ export class Settings {
         return
       }
     }
-    if (entry.value === value) return
+    if (typeof value !== 'object' && entry.value === value) return
     logger.trace(`setting ${key} to ${JSON.stringify(value)}`)
     const oldValue = entry.value
     entry.value = value
     this.saveAndNotify(key, value, oldValue)
   }
 
-  // Add a new entry
-  add(key: string, entry: Entry) {
-    if (
-      entry.type === 'param' &&
-      (this.config[parentKey(key) as keyof DefaultSettingsConfig] as Entry)
-        ?.type !== 'folder'
-    ) {
-      throw Error('parent is not a folder')
-    }
-
-    const config = this.config as unknown as Record<string, Entry>
-    config[key] = entry
-    config[key].generated = true
-    this.saveAndNotify(key, null)
-    return key as keyof DefaultSettingsConfig
-  }
-
   // Remove an entry and its children
-  remove(key: string): void {
+  remove(key: ParamKey): void {
     if (
-      typeof (defaultSettingsConfig as DefaultSettingsConfig)[
+      typeof (DEFAULT_SETTINGS_CONFIG as DefaultSettingsConfig)[
         key as keyof DefaultSettingsConfig
       ] !== 'undefined'
     )
@@ -150,19 +133,11 @@ export class Settings {
 
   // Save settings to localStorage and notify listeners
   private saveAndNotify(
-    key: unknown,
-    value: unknown | null,
+    key: ParamKey,
+    value: unknown,
     oldValue?: unknown,
   ): void {
-    const values = { ...this.values }
-    for (const k in values) {
-      const entry = this.config[k as ParamKey] as Entry
-      if (entry.generated) {
-        delete values[k as ParamKey]
-      }
-    }
-    this.storage.set('settings', values)
-
+    this.storage.set('settings', this.values).catch(logger.error)
     // Emit settings changed event
     editorEvents.emit('settings:changed', { key, value, oldValue })
   }

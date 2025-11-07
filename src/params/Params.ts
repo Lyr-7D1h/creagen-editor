@@ -211,8 +211,9 @@ declare function useParam<Items extends Record<string, any>>(
   options: Omit<Extract<ParamConfig, { type: 'radio' }>, 'type'> & { items: Items }
 ): Items[keyof Items];
 ` /** key: [ParamConfig, value] */
-  private store: Map<ParamKey, [ParamConfig, unknown]> = new Map()
-  private previousValues: Map<ParamKey, unknown> = new Map()
+  private previousStore: Map<ParamKey, unknown> = new Map()
+  readonly store: Map<ParamKey, unknown> = storeFromQueryParam()
+  readonly configs: Map<ParamKey, ParamConfig> = new Map()
 
   get length(): number {
     return this.store.size
@@ -265,19 +266,18 @@ declare function useParam<Items extends Record<string, any>>(
     }
   }
 
-  forEach(cb: (v: [ParamConfig, unknown], k: ParamKey) => void) {
-    this.store.forEach(cb)
+  save() {
+    const url = new URL(window.location.href)
+    const queryParam = storeToQueryParam(this.store)
+    url.searchParams.set('param', queryParam)
+    window.history.replaceState(null, '', url)
   }
 
-  entries() {
-    return this.store.entries()
-  }
-
-  setValue(key: ParamKey, newValue: unknown): void {
-    const v = this.store.get(key)
-    if (v) {
-      v[1] = newValue
-    }
+  setValue(key: string, newValue: unknown): void {
+    const k = key as ParamKey
+    if (!this.store.has(k)) return
+    this.store.set(k, newValue)
+    this.save()
   }
 
   /**
@@ -286,11 +286,11 @@ declare function useParam<Items extends Record<string, any>>(
    */
   clearAndPreserveValues(): void {
     // Save current values
-    this.previousValues = new Map(
-      [...this.store.entries()].map(([key, [_config, value]]) => [key, value]),
-    )
-    // Clear the store
-    this.store = new Map()
+    this.previousStore = new Map(this.store)
+
+    // Clear the store adn and configs
+    this.store.clear()
+    this.configs.clear()
   }
 
   addParam<T extends ParamConfig>(config: T) {
@@ -306,12 +306,13 @@ declare function useParam<Items extends Record<string, any>>(
     }
 
     const stored = this.store.get(key)
-    if (stored) {
-      const [config, value] = stored
-      return this.translate(config, value)
+    // use stored value only if it exists and is valid for the config
+    if (stored !== undefined && Params.isValidValue(config, stored)) {
+      this.configs.set(key, config)
+      return this.translate(config, stored as ValueFromConfig<T>)
     }
 
-    const previousValue = this.previousValues.get(key)
+    const previousValue = this.previousStore.get(key)
 
     // Use previousValue if valid, otherwise use default
     const value: ValueFromConfig<T> = (
@@ -320,7 +321,8 @@ declare function useParam<Items extends Record<string, any>>(
         : config.default
     ) as ValueFromConfig<T>
 
-    this.store.set(key, [config, value])
+    this.store.set(key, value)
+    this.configs.set(key, config)
 
     return this.translate(config, value)
   }
@@ -369,5 +371,48 @@ function hashStringTou32(str: string): number {
   }
   return hash
 }
+function storeFromQueryParam(): Store {
+  const urlParams = new URLSearchParams(window.location.search)
+  const urlParam = urlParams.get('param')
+  if (urlParam == null) return new Map()
+
+  const parsed: Store = new Map()
+  let k = ''
+  let v = ''
+  let key = true
+  let quoted = false
+  for (const c of urlParam) {
+    if (!key && !quoted && c === '~') {
+      parsed.set(k as ParamKey, JSON.parse(v))
+      k = ''
+      v = ''
+      key = true
+      continue
+    } else if (!quoted && c === '.') {
+      key = false
+      continue
+    }
+
+    // ensure to not use any characters inside of quotes
+    if (c === '"') {
+      quoted = !quoted
+    }
+
+    if (key) {
+      k += c
+    } else {
+      v += c
+    }
+  }
+  if (k.length > 0) parsed.set(k as ParamKey, JSON.parse(v))
+
+  return parsed
+}
+function storeToQueryParam(store: Store) {
+  return Array.from(store.entries())
+    .map(([key, val]) => `${String(key)}.${JSON.stringify(val)}`)
+    .join('~')
+}
 
 export type ParamKey = Tagged<string, 'paramKey'>
+type Store = Map<ParamKey, unknown>

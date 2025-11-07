@@ -23,48 +23,48 @@ function isDevBuild(version: SemVer) {
 
 export function DependenciesTab() {
   const settings = useCreagenEditor().settings
-  const libraries = useSettings('general.libraries')
+  const libraries = useSettings('libraries')
   const [versions, setVersions] = useState<Record<string, string[]>>({})
   const [selectedVersion, setSelectedVersion] = useState<
     Record<string, string>
   >({})
 
   useEffect(() => {
-    Promise.allSettled(
-      supportedLibraries.map((l) => Importer.versions(l.name)),
-    ).then((vers) => {
-      const versions: Record<string, string[]> = {}
-      const latestVersions: Record<string, string> = {}
-      for (let i = 0; i < vers.length; i++) {
-        if (typeof supportedLibraries[i] === 'undefined')
-          throw Error('library not found')
-        const name = supportedLibraries[i]!.name
+    Promise.allSettled(supportedLibraries.map((l) => Importer.versions(l.name)))
+      .then((vers) => {
+        const versions: Record<string, string[]> = {}
+        const latestVersions: Record<string, string> = {}
+        for (let i = 0; i < vers.length; i++) {
+          if (typeof supportedLibraries[i] === 'undefined')
+            throw Error('library not found')
+          const name = supportedLibraries[i]!.name
 
-        const ver = vers[i]!
-        if (ver.status === 'rejected') {
-          logger.error(ver.reason)
-          continue
+          const ver = vers[i]!
+          if (ver.status === 'rejected') {
+            logger.error(ver.reason)
+            continue
+          }
+          versions[name] = ver.value
+          const latestIndex = versions[name]
+            .map((v) => new SemVer(v))
+            .findIndex((v) => !isDevBuild(v))
+
+          latestVersions[name] = versions[name][latestIndex]!
+
+          if (name === 'creagen' && CREAGEN_DEV_VERSION) {
+            const devVersion = CREAGEN_DEV_VERSION.toString()
+            versions[name].unshift(devVersion)
+            latestVersions[name] = devVersion
+          }
         }
-        versions[name] = ver.value
-        const latestIndex = versions[name]
-          .map((v) => new SemVer(v))
-          .findIndex((v) => !isDevBuild(v))
 
-        latestVersions[name] = versions[name][latestIndex]!
-
-        if (name === 'creagen' && CREAGEN_DEV_VERSION) {
-          const devVersion = CREAGEN_DEV_VERSION.toString()
-          versions[name].unshift(devVersion)
-          latestVersions[name] = devVersion
-        }
-      }
-
-      setVersions(versions)
-      setSelectedVersion((selectedVersions) => ({
-        ...latestVersions,
-        ...selectedVersions,
-      }))
-    })
+        setVersions(versions)
+        setSelectedVersion((selectedVersions) => ({
+          ...latestVersions,
+          ...selectedVersions,
+        }))
+      })
+      .catch(logger.error)
   }, [])
 
   // update selected version when libraries change
@@ -105,13 +105,13 @@ export function DependenciesTab() {
 
             if (enabled) {
               settings.set(
-                'general.libraries',
+                'libraries',
                 libraries.filter((l) => l.name !== libraryName),
               )
               return
             }
 
-            settings.set('general.libraries', [
+            settings.set('libraries', [
               ...libraries.filter((l) => l.name !== libraryName),
               { name: libraryName, version: selectedVersion[libraryName]! },
             ])
@@ -130,7 +130,7 @@ export function DependenciesTab() {
 
                 if (enabled) {
                   settings.set(
-                    'general.libraries',
+                    'libraries',
                     libraries.map((l) => {
                       if (l.name !== lib.name) return l
                       return { ...l, version: e.target.value }

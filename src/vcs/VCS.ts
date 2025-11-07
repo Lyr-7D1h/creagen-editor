@@ -211,7 +211,7 @@ export class VCS {
     }
     this.bookmarks.add({ name, commit, createdOn: new Date() })
     await this.storage.set('bookmarks', this.bookmarks)
-    editorEvents.emit('vcs:bookmarkUpdate', undefined)
+    editorEvents.emit('vcs:bookmark-update', undefined)
     return true
   }
 
@@ -221,7 +221,7 @@ export class VCS {
       this._activeBookmark = generateUncommittedBookmark()
     }
     await this.storage.set('bookmarks', this.bookmarks)
-    editorEvents.emit('vcs:bookmarkUpdate', undefined)
+    editorEvents.emit('vcs:bookmark-update', undefined)
   }
 
   async renameBookmark(oldName: string, newName: string) {
@@ -256,7 +256,7 @@ export class VCS {
       this._activeBookmark = newBookmark as ActiveBookmark
     }
     await this.storage.set('bookmarks', this.bookmarks)
-    editorEvents.emit('vcs:bookmarkUpdate', undefined)
+    editorEvents.emit('vcs:bookmark-update', undefined)
     return true
   }
 
@@ -301,7 +301,7 @@ export class VCS {
     }
 
     await this.storage.set('bookmarks', this.bookmarks)
-    editorEvents.emit('vcs:bookmarkUpdate', undefined)
+    editorEvents.emit('vcs:bookmark-update', undefined)
     return
   }
 
@@ -326,7 +326,6 @@ export class VCS {
     await this.storage.set('blob', code, commit.blob)
 
     if (updateBookmark) {
-      console.log('update')
       if ((await this.updateActiveBookmark(commit.hash)) === null) {
         return null
       }

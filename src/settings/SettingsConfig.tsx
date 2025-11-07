@@ -9,29 +9,32 @@ export const librarySchema = z.object({
 })
 export type Library = z.infer<typeof librarySchema>
 
-const defaultConfig = {
+const DEFAULT_CONFIG_VALUE = {
   // state settings (not stored)
   hide_all: {
     type: 'param',
     hidden: true,
-    queryParam: (value: string) => {
+    // Used for parsing query search string to the value and defining that it is also stored in url query param
+    fromQueryParam: (value: string) => {
       return value === 'true'
     },
     value: false,
   },
-
-  general: {
-    type: 'folder',
-    title: 'General',
+  show_control_panel: {
+    type: 'param',
     hidden: true,
+    fromQueryParam: (value: string) => {
+      return value === 'true'
+    },
+    value: false,
   },
-  'general.libraries': {
+  libraries: {
     type: 'param',
     label: 'Libraries',
     hidden: true,
-    generated: true,
     value: [] as Library[],
   },
+
   editor: {
     type: 'folder',
     title: 'Editor',
@@ -141,6 +144,10 @@ const defaultConfig = {
     value: false,
   },
 }
+export const DEFAULT_SETTINGS_CONFIG = DEFAULT_CONFIG_VALUE as Record<
+  ParamKey,
+  Entry
+>
 
 type Generic<T> = {
   [K in keyof T]: K extends 'type' ? string : T[K]
@@ -150,19 +157,22 @@ type GenericSettingsConfig = Record<
   Generic<SettingsParam> | Generic<Folder> | Generic<Button>
 >
 type SettingsConfig<T extends GenericSettingsConfig> = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [K in keyof T]: T[K] extends { value: any }
     ? SettingsParam<T[K]['value']>
-    : T[K] extends { onClick: any }
+    : // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      T[K] extends { onClick: any }
       ? Button
       : Folder
 }
-export type DefaultSettingsConfig = SettingsConfig<typeof defaultConfig>
+export type DefaultSettingsConfig = SettingsConfig<typeof DEFAULT_CONFIG_VALUE>
 
 type GenericParams<T extends SettingsConfig<T>> = {
   [K in keyof T]: T[K] extends SettingsParam ? K : never
 }[keyof T]
 export type ParamKey = GenericParams<DefaultSettingsConfig>
-export type ParamValue<P extends ParamKey> = (typeof defaultConfig)[P]['value']
+export type ParamValue<P extends ParamKey> =
+  (typeof DEFAULT_CONFIG_VALUE)[P]['value']
 
 type GenericFolders<T extends SettingsConfig<T>> = {
   [K in keyof T]: T[K] extends Folder ? K : never
@@ -173,8 +183,6 @@ type GenericButtons<T extends SettingsConfig<T>> = {
   [K in keyof T]: T[K] extends Button ? K : never
 }[keyof T]
 export type Buttons = GenericButtons<DefaultSettingsConfig>
-
-export const defaultSettingsConfig = defaultConfig as Record<ParamKey, Entry>
 
 export interface Folder {
   type: 'folder'
@@ -188,6 +196,7 @@ export interface Button {
   onClick: () => void
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface SettingsParam<T = any> {
   type: 'param'
   value: T
@@ -195,12 +204,10 @@ export interface SettingsParam<T = any> {
   /** return null in case its valid, otherwise string explaining the error */
   validate?: (value: T) => null | string
   details?: string
-  queryParam?: (value: string) => T
+  fromQueryParam?: (value: string) => T
   hidden?: boolean
   render?: (value: T, set?: (value: T) => void) => React.ReactNode
   readonly?: boolean
 }
 
-export type Entry = (Folder | Button | SettingsParam) & {
-  generated?: boolean
-}
+export type Entry = Folder | Button | SettingsParam

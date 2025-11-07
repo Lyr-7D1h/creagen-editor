@@ -5,7 +5,11 @@ import { Settings } from '../settings/Settings'
 import { CommitHash } from '../vcs/Commit'
 import { LIBRARY_CONFIGS } from './libraryConfigs'
 import { parseCode } from './parseCode'
-import { Library } from '../settings/SettingsConfig'
+import {
+  DEFAULT_SETTINGS_CONFIG,
+  Library,
+  SettingsParam,
+} from '../settings/SettingsConfig'
 import { CustomKeybinding, Keybindings } from './keybindings'
 import { Importer, LibraryImport } from '../importer'
 import { VCS } from '../vcs/VCS'
@@ -19,7 +23,7 @@ import { Params } from '../params/Params'
 
 export class CreagenEditor {
   resourceMonitor = new ResourceMonitor()
-  params = new Params()
+  params: Params
   storage: ClientStorage
   settings: Settings
   editor: Editor
@@ -63,8 +67,9 @@ export class CreagenEditor {
     this.storage = storage
     this.vcs = vcs
     this.keybindings = new Keybindings(customKeybindings, this)
+    this.params = new Params()
 
-    this.loadSettingsFromQueryParams()
+    this.loadFromQueryParams()
     /// If head is set load corresponding code
     if (this.vcs.head) {
       this.checkout(this.vcs.head.hash)
@@ -76,7 +81,7 @@ export class CreagenEditor {
             this.render().catch(logger.error)
           } else if (this.settings.get('params.auto_render')) {
             const code = this.editor.getValue()
-            parseCode(code, this.libraryImports, this.params)
+            this.parseCode(code)
           }
         })
         .catch(logger.error)
@@ -97,18 +102,18 @@ export class CreagenEditor {
     })
 
     // Listen to setting changes
-    editorEvents.on('settings:changed', ({ key: k, value }) => {
-      if (k === 'editor.code_in_url') {
+    editorEvents.on('settings:changed', ({ key, value }) => {
+      if (key === 'editor.code_in_url') {
         this.vcs.updateUrl(this.editor.getValue())
         return
       }
 
-      if (k === 'general.libraries') {
+      if (key === 'libraries') {
         this.loadLibraries().catch(logger.error)
         return
       }
 
-      if (k === 'sandbox.resource_monitor') {
+      if (key === 'sandbox.resource_monitor') {
         if (value as boolean) {
           this.resourceMonitor.listen()
         } else {
@@ -116,20 +121,18 @@ export class CreagenEditor {
         }
       }
 
-      if (this.settings.isParam(k)) {
-        if (this.settings.config[k].queryParam) {
+      if (this.settings.isParam(key)) {
+        const config = this.settings.config[key] as SettingsParam
+        if (typeof config.fromQueryParam !== 'undefined') {
           const url = new URL(window.location.href)
-          if (value === null || url.searchParams.get(k) === value) return
+          if (value === null || url.searchParams.get(key) === value) return
 
           // remove query param if it is also the default behavior
-          if (
-            this.settings.defaultConfig[k].type === 'param' &&
-            this.settings.defaultConfig[k].hidden === true &&
-            this.settings.defaultConfig[k].value === value
-          ) {
-            url.searchParams.delete(k)
+          if ((DEFAULT_SETTINGS_CONFIG[key] as SettingsParam).value === value) {
+            url.searchParams.delete(key)
           } else {
-            url.searchParams.set(k, value as string)
+            const v = JSON.stringify(value)
+            url.searchParams.set(key, v)
           }
           window.history.replaceState(null, '', url)
         }
@@ -153,18 +156,18 @@ export class CreagenEditor {
     if (editorVersion.compare(new SemVer(CREAGEN_EDITOR_VERSION)) !== 0) {
       logger.warn("Editor version doesn't match")
     }
-    this.settings.set('general.libraries', libraries)
+    this.settings.set('libraries', libraries)
 
     this.editor.setValue(data)
   }
 
   /** Update settings from query params */
-  loadSettingsFromQueryParams() {
+  loadFromQueryParams() {
     const urlParams = new URLSearchParams(window.location.search)
     urlParams.forEach((value, key) => {
       if (this.settings.isParam(key)) {
-        if (this.settings.config[key].queryParam) {
-          const paramValue = this.settings.config[key].queryParam(value)
+        if (this.settings.config[key].fromQueryParam) {
+          const paramValue = this.settings.config[key].fromQueryParam(value)
           this.settings.set(key, paramValue)
         }
       }
@@ -172,7 +175,7 @@ export class CreagenEditor {
   }
 
   async loadLibraries() {
-    const libraries = this.settings.values['general.libraries'] as Library[]
+    const libraries = this.settings.values['libraries'] as Library[]
     this.editor.clearTypings()
     this.editor.addTypings(Params.TYPINGS, 'creagen-editor')
 
@@ -230,8 +233,16 @@ export class CreagenEditor {
     })
   }
 
+  parseCode(code: string) {
+    // eslint-disable-next-line no-param-reassign
+    code = parseCode(code, this.libraryImports, this.params)
+    this.params.save()
+    editorEvents.emit('params:update', undefined)
+    return code
+  }
+
   async render() {
-    const libraries = this.settings.values['general.libraries'] as Library[]
+    const libraries = this.settings.values['libraries'] as Library[]
     const info = logger.log(Severity.Info, 'rendering code', null)
     try {
       if (this.settings.values['editor.format_on_render'] != null) {
@@ -243,7 +254,7 @@ export class CreagenEditor {
 
       // store code and change url
       this.vcs.commit(code, libraries).catch(logger.error)
-      code = parseCode(code, this.libraryImports, this.params)
+      code = this.parseCode(code)
 
       const imports = Object.values(this.libraryImports).filter((lib) =>
         libraries.some((library: Library) => library.name === lib.name),

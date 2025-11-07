@@ -3,7 +3,6 @@ import { typescriptCompilerOptions } from '../editor/Editor'
 import { LibraryImport } from '../importer'
 import { logger } from '../logs/logger'
 import { Params, paramConfigSchema } from '../params/Params'
-import { editorEvents } from '../events/events'
 
 const P5_LIFECYCLE_FUNCTIONS = [
   'preload',
@@ -172,7 +171,6 @@ export function parseCode(
   }
 
   collectUseParams(tempSourceFile)
-  editorEvents.emit('params:update', undefined)
 
   // Apply replacements in reverse order to maintain correct positions
   replacements.sort((a, b) => b.start - a.start)

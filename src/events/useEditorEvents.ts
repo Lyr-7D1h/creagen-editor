@@ -98,7 +98,7 @@ export const useActiveBookmark = () => {
       editorEvents.on('vcs:checkout', () => {
         setValue(vcs.activeBookmark)
       }),
-      editorEvents.on('vcs:bookmarkUpdate', () => {
+      editorEvents.on('vcs:bookmark-update', () => {
         setValue(vcs.activeBookmark)
       }),
     ]
@@ -118,7 +118,7 @@ export const useBookmarks = () => {
       editorEvents.on('vcs:checkout', () => {
         forceUpdate({})
       }),
-      editorEvents.on('vcs:bookmarkUpdate', () => {
+      editorEvents.on('vcs:bookmark-update', () => {
         forceUpdate({})
       }),
     ]
@@ -145,7 +145,7 @@ export const useHistory = (size: number) => {
 
     const destroy = [
       editorEvents.on('vcs:checkout', updateHistory),
-      editorEvents.on('vcs:bookmarkUpdate', updateHistory),
+      editorEvents.on('vcs:bookmark-update', updateHistory),
     ]
     return () => destroy.forEach((cb) => cb())
   }, [creagenEditor.vcs, setHistory, size])

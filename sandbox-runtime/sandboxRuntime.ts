@@ -77,6 +77,7 @@ async function init() {
 
       for (const lib of libraries) {
         if (loadedLibraries.includes(lib.path)) continue
+        loadedLibraries.push(lib.path)
         switch (lib.type) {
           case 'main': {
             const script = document.createElement('script')
@@ -96,7 +97,6 @@ async function init() {
             break
           }
         }
-        loadedLibraries.push(lib.path)
       }
 
       // Remove libraries that are no longer active

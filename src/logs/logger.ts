@@ -87,72 +87,73 @@ function notifyListeners(): void {
   LISTENERS.forEach((listener) => listener(getMessages()))
 }
 
-function trace(...msg: unknown[]): MessageId {
-  if (CREAGEN_LOG_LEVEL > 0) return ''
-  // eslint-disable-next-line no-console
-  console.debug(...msg)
-  return ''
-}
-function debug(...msg: unknown[]): MessageId {
-  if (CREAGEN_LOG_LEVEL > 1) return ''
-  // eslint-disable-next-line no-console
-  console.debug(...msg)
-  if (CREAGEN_MODE === 'dev') {
-    return log(Severity.Debug, formatMsg(msg))
-  }
-  return ''
-}
-function info(...msg: unknown[]): MessageId {
-  if (CREAGEN_LOG_LEVEL > 2) return ''
-  // eslint-disable-next-line no-console
-  console.info(...msg)
-  return log(Severity.Info, formatMsg(msg))
-}
-function warn(...msg: unknown[]): MessageId {
-  if (CREAGEN_LOG_LEVEL > 3) return ''
-  console.warn(...msg)
-  return log(Severity.Warning, formatMsg(msg))
-}
-function error(...msg: unknown[]): MessageId {
-  if (CREAGEN_LOG_LEVEL > 4) return ''
-  console.error(...msg)
-  return log(Severity.Error, formatMsg(msg))
-}
-
-export function createContextLogger(context: string) {
+function genericLogger(context?: string) {
   return {
     getMessages,
     log,
     remove,
     subscribe,
     clear,
-    info: (...msg: unknown[]) => {
-      return info(`[${context}]`, ...msg)
-    },
-    warn: (...msg: unknown[]) => {
-      return warn(`[${context}]`, ...msg)
-    },
-    error: (...msg: unknown[]) => {
-      return error(Severity.Error, formatMsg(msg))
+    trace: (...msg: unknown[]) => {
+      if (CREAGEN_LOG_LEVEL > 0) return ''
+
+      if (context != null) {
+        // eslint-disable-next-line no-console
+        console.debug(`[${context}]`, ...msg)
+      } else {
+        // eslint-disable-next-line no-console
+        console.debug(...msg)
+      }
+      return ''
     },
     debug: (...msg: unknown[]) => {
-      return debug(`[${context}]`, ...msg)
+      if (CREAGEN_LOG_LEVEL > 1) return ''
+      if (context != null) {
+        // eslint-disable-next-line no-console
+        console.debug(`[${context}]`, ...msg)
+      } else {
+        // eslint-disable-next-line no-console
+        console.debug(...msg)
+      }
+      if (CREAGEN_MODE === 'dev') {
+        return log(Severity.Debug, formatMsg(msg))
+      }
+      return ''
     },
-    trace: (...msg: unknown[]) => {
-      return trace(`[${context}]`, ...msg)
+    info: (...msg: unknown[]) => {
+      if (CREAGEN_LOG_LEVEL > 2) return ''
+      if (context != null) {
+        // eslint-disable-next-line no-console
+        console.info(`[${context}]`, ...msg)
+      } else {
+        // eslint-disable-next-line no-console
+        console.info(...msg)
+      }
+      return log(Severity.Info, formatMsg(msg))
+    },
+    warn: (...msg: unknown[]) => {
+      if (CREAGEN_LOG_LEVEL > 3) return ''
+      if (context != null) {
+        console.warn(`[${context}]`, ...msg)
+      } else {
+        console.warn(...msg)
+      }
+      return log(Severity.Warning, formatMsg(msg))
+    },
+    error: (...msg: unknown[]) => {
+      if (CREAGEN_LOG_LEVEL > 4) return ''
+      if (context != null) {
+        console.error(`[${context}]`, ...msg)
+      } else {
+        console.error(...msg)
+      }
+      return log(Severity.Error, formatMsg(msg))
     },
   }
 }
 
-export const logger = {
-  getMessages,
-  log,
-  remove,
-  subscribe,
-  clear,
-  info,
-  warn,
-  error,
-  debug,
-  trace,
+export function createContextLogger(context: string) {
+  return genericLogger(context)
 }
+
+export const logger = genericLogger()

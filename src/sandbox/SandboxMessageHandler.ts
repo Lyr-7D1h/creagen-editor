@@ -99,6 +99,7 @@ export enum SandboxMessageHandlerMode {
   Parent,
   Iframe,
 }
+/** Sandbox message handler, run in an iframe or normal browser window */
 export class SandboxMessageHandler {
   static async create(
     mode: SandboxMessageHandlerMode.Parent,

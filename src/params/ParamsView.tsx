@@ -593,7 +593,7 @@ export function ParamsView() {
   }
 
   const handleRandomizeAll = () => {
-    params.forEach(([config], key) => {
+    params.configs.forEach((config, key) => {
       const randomValue = generateRandomValue(config)
       creagenEditor.params.setValue(key, randomValue)
     })
@@ -618,7 +618,7 @@ export function ParamsView() {
         alignItems="center"
         spacing={1}
         justifyContent="flex-end"
-        sx={{ mb: 1, flexShrink: 0, p: 0.5 }}
+        sx={{ flexShrink: 0, pr: 0.5 }}
       >
         <Tooltip title="Randomize all parameters">
           <span>
@@ -692,12 +692,12 @@ export function ParamsView() {
             No parameters defined
           </Typography>
         ) : (
-          [...params.entries()].map(([key, [config, value]], index) => (
+          [...params.configs.keys()].map((key, index) => (
             <ParamItem
               key={index}
               paramKey={key}
-              config={config}
-              value={value}
+              config={params.configs.get(key)!}
+              value={params.store.get(key)}
               compact={Boolean(compactLayout)}
               onChange={(newValue) => handleValueChange(key, newValue)}
             />

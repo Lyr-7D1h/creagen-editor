@@ -6,13 +6,14 @@ import { AnalyzeContainerResult } from '../sandbox/SandboxMessageHandler'
 type EditorEvents = {
   render: void
 
+  // Parameter configs got updated
   'params:update': void
 
   // VCS events
   'vcs:commit': { commit: Commit; code: string }
   /** Change active head */
   'vcs:checkout': { old: Commit | null; new: Commit }
-  'vcs:bookmarkUpdate': void
+  'vcs:bookmark-update': void
 
   // Settings events
   'settings:changed': {
@@ -51,7 +52,7 @@ export const EDITOR_EVENTS: ReadonlyArray<EditorEvent> = [
   // VCS events
   'vcs:commit',
   'vcs:checkout',
-  'vcs:bookmarkUpdate',
+  'vcs:bookmark-update',
 
   // Settings events
   'settings:changed',
