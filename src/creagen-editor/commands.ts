@@ -68,12 +68,12 @@ export const COMMANDS = {
       }
     },
   },
-  'editor.toggleBottom': {
-    description: 'Toggle bottom panel',
+  'editor.toggleControlPanel': {
+    description: 'Toggle control panel',
     handler: () => {
       localStorage.set(
-        'bottom-panel-open',
-        !(localStorage.get('bottom-panel-open') ?? true),
+        'control-panel-open',
+        !(localStorage.get('control-panel-open') ?? true),
       )
     },
   },

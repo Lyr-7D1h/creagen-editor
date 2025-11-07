@@ -19,8 +19,8 @@ function TabPanel(props: TabPanelProps) {
     <div
       role="tabpanel"
       hidden={value !== index}
-      id={`bottom-panel-tabpanel-${index}`}
-      aria-labelledby={`bottom-panel-tab-${index}`}
+      id={`contorl-panel-tabpanel-${index}`}
+      aria-labelledby={`contorl-panel-tab-${index}`}
       style={{ height: '100%', overflow: 'hidden' }}
       {...other}
     >
@@ -29,12 +29,12 @@ function TabPanel(props: TabPanelProps) {
   )
 }
 
-export function BottomPanel({ onClose }: { onClose?: () => void }) {
+export function ControlPanel({ onClose }: { onClose?: () => void }) {
   const creagenEditor = useCreagenEditor()
   // Force update when params change
   useForceUpdateOnEditorEvent('render')
 
-  const [activeTab, setActiveTab] = useLocalStorage('bottom-panel-tab', 0)
+  const [activeTab, setActiveTab] = useLocalStorage('contorl-panel-tab', 0)
 
   // Get parameter count
   const paramCount = creagenEditor.params.length
@@ -92,7 +92,7 @@ export function BottomPanel({ onClose }: { onClose?: () => void }) {
         <Tabs
           value={validActiveTab}
           onChange={handleTabChange}
-          aria-label="bottom panel tabs"
+          aria-label="control panel tabs"
           sx={{
             flex: 1,
             minHeight: 32,

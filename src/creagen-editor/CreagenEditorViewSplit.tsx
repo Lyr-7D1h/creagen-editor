@@ -12,7 +12,7 @@ import { useLocalStorage } from '../storage/useLocalStorage'
 import { Actions } from './Actions'
 import { useCreagenEditor } from './CreagenEditorView'
 import { PerformanceMonitor } from '../sandbox/PerformanceMonitor'
-import { BottomPanel } from './BottomPanel'
+import { ControlPanel } from './ControlPanel'
 import { ParamsView } from '../params/ParamsView'
 
 const MIN_WINDOW_SIZE = 200
@@ -31,8 +31,8 @@ export function CreagenEditorViewSplit() {
   fullscreen = hideAll ? true : fullscreen
 
   const [menu, setMenu] = useLocalStorage('menu-view', false)
-  const [bottomOpen, setBottomOpen] = useLocalStorage(
-    'bottom-panel-open',
+  const [controlOpen, setControlOpen] = useLocalStorage(
+    'control-panel-open',
     false,
   )
 
@@ -74,9 +74,9 @@ export function CreagenEditorViewSplit() {
                   onChange={(sizes: number[]) => {
                     const second = sizes[1]
                     if (typeof second === 'number') {
-                      if (second < 15 && bottomOpen) {
+                      if (second < 15 && controlOpen) {
                         // snapped/closed
-                        setBottomOpen(false)
+                        setControlOpen(false)
                       }
                     }
                   }}
@@ -98,7 +98,11 @@ export function CreagenEditorViewSplit() {
                     </div>
                   </Allotment.Pane>
 
-                  <Allotment.Pane visible={bottomOpen} snap preferredSize="35%">
+                  <Allotment.Pane
+                    visible={controlOpen}
+                    snap
+                    preferredSize="35%"
+                  >
                     <div
                       style={{
                         position: 'relative',
@@ -106,7 +110,9 @@ export function CreagenEditorViewSplit() {
                         height: '100%',
                       }}
                     >
-                      <BottomPanel onClose={() => setBottomOpen(!bottomOpen)} />
+                      <ControlPanel
+                        onClose={() => setControlOpen(!controlOpen)}
+                      />
                     </div>
                   </Allotment.Pane>
                 </Allotment>
@@ -120,8 +126,8 @@ export function CreagenEditorViewSplit() {
                   onChange={(sizes: number[]) => {
                     const second = sizes[1]
                     if (typeof second === 'number') {
-                      if (second < 15 && bottomOpen) {
-                        setBottomOpen(false)
+                      if (second < 15 && controlOpen) {
+                        setControlOpen(false)
                       }
                     }
                   }}
@@ -142,8 +148,10 @@ export function CreagenEditorViewSplit() {
                       />
                     </div>
                   </Allotment.Pane>
-                  <Allotment.Pane visible={bottomOpen} snap>
-                    <BottomPanel onClose={() => setBottomOpen(!bottomOpen)} />
+                  <Allotment.Pane visible={controlOpen} snap>
+                    <ControlPanel
+                      onClose={() => setControlOpen(!controlOpen)}
+                    />
                   </Allotment.Pane>
                 </Allotment>
               </Allotment.Pane>

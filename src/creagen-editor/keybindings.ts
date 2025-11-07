@@ -44,7 +44,7 @@ const defaultKeybindings: Keybinding[] = [
   },
   {
     key: 'ctrl+j',
-    command: 'editor.toggleBottom',
+    command: 'editor.toggleControlPanel',
   },
 ]
 
