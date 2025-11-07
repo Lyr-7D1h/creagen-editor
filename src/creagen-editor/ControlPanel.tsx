@@ -65,7 +65,6 @@ export function ControlPanel({ onClose }: { onClose?: () => void }) {
         overflow: 'hidden',
         position: 'relative',
         pointerEvents: 'auto',
-        marginTop: '5px',
         backgroundColor: 'white',
       }}
     >

@@ -12,9 +12,10 @@ const logger = createContextLogger('sandbox')
 export class Sandbox {
   private parent: HTMLElement | null = null
   private nextSibling: Node | null = null
+  private messageHandler?: SandboxMessageHandler
   isFrozen = false
 
-  static async create() {
+  static create() {
     const iframe = document.createElement('iframe')
     iframe.title = ''
     iframe.style.display = 'block'
@@ -27,17 +28,10 @@ export class Sandbox {
     // Use the separate sandbox URL
     iframe.src = CREAGEN_EDITOR_SANDBOX_RUNTIME_URL
 
-    const messageHandler = await SandboxMessageHandler.create(
-      SandboxMessageHandlerMode.Parent,
-      iframe,
-    )
-    return new Sandbox(iframe, messageHandler)
+    return new Sandbox(iframe)
   }
 
-  private constructor(
-    private readonly iframe: HTMLIFrameElement,
-    private messageHandler: SandboxMessageHandler,
-  ) {
+  private constructor(private readonly iframe: HTMLIFrameElement) {
     this.setupMessageHandlers()
   }
 
@@ -46,6 +40,7 @@ export class Sandbox {
    * This is extracted to a separate method so it can be called after unfreezing
    */
   private setupMessageHandlers() {
+    if (!this.messageHandler) return
     this.messageHandler.on('analysisResult', (event) =>
       editorEvents.emit('sandbox:analysis-complete', event),
     )
@@ -67,11 +62,21 @@ export class Sandbox {
     })
   }
 
+  async connectMessageHandler() {
+    this.messageHandler = await SandboxMessageHandler.create(
+      SandboxMessageHandlerMode.Parent,
+      this.iframe,
+    )
+    this.setupMessageHandlers()
+    logger.info('Message handler reconnected')
+  }
+
   html() {
     return this.iframe
   }
 
   async render(code: string, libraryImports: LibraryImport[]) {
+    if (!this.messageHandler) return
     editorEvents.emit('sandbox:render', undefined)
     if (this.isFrozen) await this.unfreeze()
     this.messageHandler.send({
@@ -134,12 +139,7 @@ export class Sandbox {
       return
     }
 
-    this.messageHandler = await SandboxMessageHandler.create(
-      SandboxMessageHandlerMode.Parent,
-      this.iframe,
-    )
-    this.setupMessageHandlers()
-    logger.info('Message handler reconnected')
+    await this.connectMessageHandler()
 
     editorEvents.emit('sandbox:unfreeze', undefined)
   }
@@ -150,6 +150,7 @@ export class Sandbox {
     head?: CommitHash,
   ): Promise<Blob | null> {
     return new Promise((resolve, reject) => {
+      if (!this.messageHandler) return
       const timeout = setTimeout(() => {
         unsubscribe()
         reject(new Error('SVG export timeout'))

@@ -261,10 +261,10 @@ export class SandboxMessageHandler {
   ): () => void {
     const wrappedHandler = (msg: SandboxMessageByType<T>) => {
       handler(msg)
-      this.off(typeOrTypes, wrappedHandler)
+      this.off(typeOrTypes as T[], wrappedHandler)
     }
 
-    return this.on(typeOrTypes, wrappedHandler)
+    return this.on(typeOrTypes as T[], wrappedHandler)
   }
 
   onAny(handler: (msg: SandboxMessage) => void) {

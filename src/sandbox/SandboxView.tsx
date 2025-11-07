@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
+import { logger } from '../logs/logger'
 
 export function SandboxView({
   width,
@@ -16,6 +17,7 @@ export function SandboxView({
     const container = ref.current
     const htmlElement = creagenEditor.sandbox.html()
     container.appendChild(htmlElement)
+    creagenEditor.sandbox.connectMessageHandler().catch(logger.error)
   }, [ref, creagenEditor])
 
   return (

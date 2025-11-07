@@ -38,7 +38,7 @@ export class CreagenEditor {
     const storage = await ClientStorage.create()
     const settings = await Settings.create(storage)
     const editor = await Editor.create(settings)
-    const sandbox = await Sandbox.create()
+    const sandbox = Sandbox.create()
     const vcs = await VCS.create(storage, settings)
     await vcs.updateFromUrl()
     const customKeybindings = (await storage.get('custom-keybindings')) ?? []
