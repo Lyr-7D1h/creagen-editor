@@ -70,52 +70,27 @@ export function CreagenEditorViewSplit() {
               {/* Overlayed allotment for Editor and BottomPanel so both sit above the sandbox
                   and remain resizable. */}
               <div style={{ position: 'absolute', inset: 0, zIndex: 2 }}>
-                <Allotment
-                  onChange={(sizes: number[]) => {
-                    const second = sizes[1]
-                    if (typeof second === 'number') {
-                      if (second < 15 && controlOpen) {
-                        // snapped/closed
-                        setControlOpen(false)
-                      }
-                    }
+                <div
+                  style={{
+                    position: 'relative',
+                    width: '100%',
+                    height: '100%',
                   }}
                 >
-                  <Allotment.Pane minSize={MIN_WINDOW_SIZE} preferredSize="65%">
-                    <div
-                      style={{
-                        position: 'relative',
-                        width: '100%',
-                        height: '100%',
-                      }}
-                    >
-                      <EditorView
-                        toggleMenu={() => setMenu(!menu)}
-                        menu={menu}
-                        onMenuOpen={() => setMenu(!menu)}
-                      />
-                      {resourceMonitorEnabled && <PerformanceMonitor />}
-                    </div>
-                  </Allotment.Pane>
+                  <EditorView
+                    toggleMenu={() => setMenu(!menu)}
+                    menu={menu}
+                    onMenuOpen={() => setMenu(!menu)}
+                  />
+                  {resourceMonitorEnabled && <PerformanceMonitor />}
+                </div>
 
-                  <Allotment.Pane
-                    visible={controlOpen}
-                    snap
-                    preferredSize="35%"
-                  >
-                    <div
-                      style={{
-                        position: 'relative',
-                        width: '100%',
-                        height: '100%',
-                      }}
-                    >
-                      <ControlPanel
-                        onClose={() => setControlOpen(!controlOpen)}
-                      />
-                    </div>
-                  </Allotment.Pane>
-                </Allotment>
+                {controlOpen && (
+                  <ControlPanel
+                    floating={true}
+                    onClose={() => setControlOpen(!controlOpen)}
+                  />
+                )}
               </div>
             </div>
           ) : (

@@ -4,10 +4,12 @@ export function TextInput({
   onSave,
   onClose,
   initialValue,
+  style,
 }: {
   onSave: (value: string) => void
   onClose: () => void
   initialValue: string
+  style?: React.CSSProperties
 }) {
   const [value, setValue] = useState(initialValue)
 
@@ -45,6 +47,7 @@ export function TextInput({
         fontWeight: 'light',
         background: 'transparent',
         fontFamily: 'inherit',
+        ...style,
       }}
     />
   )

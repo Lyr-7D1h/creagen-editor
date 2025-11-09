@@ -134,7 +134,13 @@ function CollapsibleButton({
   )
 }
 
-export function HistoryItemChip({ item }: { item: HistoryItem }) {
+export function HistoryItemChip({
+  item,
+  color,
+}: {
+  item: HistoryItem
+  color?: string
+}) {
   const creagenEditor = useCreagenEditor()
   const activeBookmark = useActiveBookmark()
   const vcs = creagenEditor.vcs
@@ -155,7 +161,7 @@ export function HistoryItemChip({ item }: { item: HistoryItem }) {
         variant="body2"
         component="span"
         sx={{
-          color: 'inherit',
+          color: color != null && !active ? color : 'inherit',
           lineHeight: 2,
           ...(isEditing || active
             ? {}
@@ -175,6 +181,7 @@ export function HistoryItemChip({ item }: { item: HistoryItem }) {
       >
         {isEditing !== null ? (
           <TextInput
+            style={{ color: color }}
             onClose={() => setIsEditing(null)}
             onSave={(name) => {
               const data = bookmarkNameSchema.safeParse(name)

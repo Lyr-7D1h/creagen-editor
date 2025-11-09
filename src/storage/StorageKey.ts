@@ -12,6 +12,8 @@ const LOCAL_STORAGE_KEYS: LocalStorageKey[] = [
   'bookmarks',
   'contorl-panel-tab',
   'control-panel-open',
+  'control-panel-position',
+  'control-panel-size',
 ]
 
 export function isLocalStorageKey(key: StorageKey): key is LocalStorageKey {
@@ -31,6 +33,8 @@ export type LocalStorageOnlyKey =
   | 'menu-settings-hidden'
   | 'contorl-panel-tab'
   | 'control-panel-open'
+  | 'control-panel-position'
+  | 'control-panel-size'
 /** LocalStorage + Remote */
 export type LocalStorageKey =
   | 'editor-scroll-position'
@@ -58,6 +62,8 @@ type StorageKeyValueMap = {
   'editor-scroll-position': number
   'contorl-panel-tab': number
   'control-panel-open': boolean
+  'control-panel-position': { x: number; y: number }
+  'control-panel-size': { width: number; height: number }
   'custom-keybindings': CustomKeybinding[]
   commit: Commit
   blob: string

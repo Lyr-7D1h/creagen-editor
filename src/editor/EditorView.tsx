@@ -50,7 +50,6 @@ export function EditorView({
         width: width ?? '100%',
         height: height ?? '100%',
         position: 'relative',
-        zIndex: 1001,
         display: hideAll ? 'none' : 'flex',
         overflow: 'hidden',
         flexDirection: 'column',

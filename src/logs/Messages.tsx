@@ -154,7 +154,7 @@ export function Messages() {
         top: '0',
         left: '50%',
         transform: 'translateX(-50%)',
-        zIndex: 1003,
+        zIndex: 11,
         maxWidth: '100%',
         width: 'auto',
         maxHeight: '100vh',

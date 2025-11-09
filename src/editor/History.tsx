@@ -10,7 +10,9 @@ import { HistoryItemChip } from './HistoryItemChip'
 
 export function History({
   parentRef,
+  color,
 }: {
+  color?: string
   parentRef: React.RefObject<HTMLDivElement | null>
 }) {
   const historyBufferSize = useSettings('editor.history_buffer_size')
@@ -49,9 +51,9 @@ export function History({
   const renderHistoryItems = () => {
     return history.map((item, index) => (
       <React.Fragment key={index}>
-        <HistoryItemChip item={item} />
+        <HistoryItemChip color={color} item={item} />
         {index < history.length - 1 && (
-          <ArrowLeft fontSize="small" color="action" />
+          <ArrowLeft sx={{ color }} fontSize="small" color="action" />
         )}
       </React.Fragment>
     ))
@@ -97,6 +99,7 @@ export function History({
             spacing={1}
             alignItems="center"
             sx={{
+              color: 'black',
               paddingLeft: 1,
               paddingRight: isOverflowing ? 4 : 1, // Add padding for the expand button
               flexWrap: expanded ? 'wrap' : 'nowrap',

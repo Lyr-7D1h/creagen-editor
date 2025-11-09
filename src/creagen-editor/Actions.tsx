@@ -92,7 +92,7 @@ export function Actions({
       style={{
         display: 'flex',
         flexDirection: 'column',
-        zIndex: 1003,
+        zIndex: 5,
         ...style,
       }}
     >

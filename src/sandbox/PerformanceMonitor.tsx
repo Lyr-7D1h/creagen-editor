@@ -50,7 +50,7 @@ export function PerformanceMonitor() {
         position: 'absolute',
         top: 8,
         right: 8,
-        zIndex: 9999,
+        zIndex: 5,
         minWidth: 160,
         overflow: 'hidden',
         backgroundColor: 'background.paper',

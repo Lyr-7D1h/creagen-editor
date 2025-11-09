@@ -10,7 +10,6 @@ export function CloseButton({ onClose }: { onClose: () => void }) {
       sx={{
         p: 0.5,
         ml: 0.5,
-        zIndex: 99999,
       }}
       title="Close"
     >

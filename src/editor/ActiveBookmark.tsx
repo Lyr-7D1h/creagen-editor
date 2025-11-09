@@ -6,21 +6,23 @@ import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
 import { TextInput } from './TextInput'
 import { bookmarkNameSchema } from '../vcs/Bookmarks'
 
-export function ActiveBookmark() {
+export function ActiveBookmark({ color }: { color?: string }) {
   const vcs = useCreagenEditor().vcs
   const activeBookmark = useActiveBookmark()
   const [isEditing, setIsEditing] = useState(false)
 
-  const onSave = async (value: string) => {
+  function onSave(value: string) {
     const data = bookmarkNameSchema.safeParse(value)
     if (data.success === false) {
       logger.error(data.error)
       return
     }
-    if ((await vcs.renameBookmark(activeBookmark.name, value)) === null) {
-      return
-    }
-    setIsEditing(false)
+    vcs
+      .renameBookmark(activeBookmark.name, value)
+      .then((v) => {
+        if (v) setIsEditing(false)
+      })
+      .catch(logger.error)
   }
 
   const uncommitted = activeBookmark.commit === null ? '*' : ''
@@ -30,7 +32,7 @@ export function ActiveBookmark() {
         variant="body1"
         onClick={() => setIsEditing(true)}
         sx={{
-          color: '#111',
+          color: color ?? '#111',
           cursor: 'pointer',
           paddingLeft: 1,
           paddingRight: 1,

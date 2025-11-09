@@ -19,7 +19,6 @@ export function CollapseButton({
       sx={{
         p: 0.5,
         ml: 0.5,
-        zIndex: 99999,
       }}
       title={collapsed ? 'Expand' : 'Collapse'}
     >

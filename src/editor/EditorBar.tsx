@@ -17,6 +17,7 @@ export function EditorBar({
   const creagenEditor = useCreagenEditor()
   const showActiveBookmark = useSettings('editor.show_active_bookmark')
   const historyEnabled = useSettings('editor.show_history')
+  const isFullscreen = useSettings('editor.fullscreen')
 
   const ref = useRef<HTMLDivElement>(null)
 
@@ -28,6 +29,7 @@ export function EditorBar({
         flexDirection: 'row',
         padding: 2,
         position: 'relative',
+        backgroundColor: isFullscreen ? 'rgba(0, 0, 0, 0.5)' : 'transparent',
       }}
     >
       <HtmlTooltip
@@ -40,7 +42,6 @@ export function EditorBar({
       >
         <IconButton
           sx={{
-            zIndex: 1002,
             left: 0,
             top: 0,
             width: 15,
@@ -61,12 +62,14 @@ export function EditorBar({
       </HtmlTooltip>
       {showActiveBookmark ? (
         <div>
-          <ActiveBookmark />
+          <ActiveBookmark color={isFullscreen ? '#fff' : undefined} />
         </div>
       ) : (
         ''
       )}
-      {historyEnabled && <History parentRef={ref} />}
+      {historyEnabled && (
+        <History parentRef={ref} color={isFullscreen ? '#333' : undefined} />
+      )}
     </div>
   )
 }

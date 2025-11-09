@@ -121,7 +121,6 @@ export function Export({ color, size }: { color: string; size: string }) {
                 borderColor: 'divider',
                 borderRadius: 1,
                 minWidth: 120,
-                zIndex: 99999999,
                 boxShadow: 2,
               }}
             >
