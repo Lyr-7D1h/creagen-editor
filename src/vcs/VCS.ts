@@ -283,6 +283,13 @@ export class VCS {
     return history
   }
 
+  /**
+   * Get all commits from storage
+   */
+  async getAllCommits(): Promise<Commit[]> {
+    return await this.storage.getAllCommits()
+  }
+
   /** update current active bookmark to this commit, or commit the bookmark */
   private async updateActiveBookmark(commit: CommitHash) {
     if (this.activeBookmark.commit === null) {
@@ -359,6 +366,7 @@ export class VCS {
     let bookmark
     if (isBookmark(id)) {
       bookmark = id
+      // eslint-disable-next-line no-param-reassign
       id = id.commit
     }
 

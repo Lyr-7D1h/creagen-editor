@@ -164,4 +164,32 @@ export class ClientStorage {
 
     return null
   }
+
+  async getAllCommits(): Promise<Commit[]> {
+    const trans = this.db.transaction(COMMITS_STORE, 'readonly')
+    return await new Promise((resolve, reject) => {
+      trans.onerror = (_e) => {
+        reject(
+          new Error(`failed to get all commits: ${trans.error?.message ?? ''}`),
+        )
+      }
+      const store = trans.objectStore(COMMITS_STORE)
+      const req = store.getAll()
+      req.onsuccess = async () => {
+        try {
+          const commits = await Promise.all(
+            req.result.map((c) => commitSchema.parseAsync(c)),
+          )
+          resolve(commits)
+        } catch (e) {
+          reject(e as Error)
+        }
+      }
+      req.onerror = (_e) => {
+        reject(
+          new Error(`failed to get all commits: ${req.error?.message ?? ''}`),
+        )
+      }
+    })
+  }
 }
