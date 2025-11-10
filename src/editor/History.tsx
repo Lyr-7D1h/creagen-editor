@@ -11,9 +11,11 @@ import { HistoryItemChip } from './HistoryItemChip'
 export function History({
   parentRef,
   color,
+  onExpandedChange,
 }: {
   color?: string
   parentRef: React.RefObject<HTMLDivElement | null>
+  onExpandedChange?: (expanded: boolean) => void
 }) {
   const historyBufferSize = useSettings('editor.history_buffer_size')
   const history = useHistory(historyBufferSize)
@@ -42,10 +44,12 @@ export function History({
       resizeObserver.disconnect()
       mutationObserver.disconnect()
     }
-  }, [])
+  }, [parentRef])
 
   const toggleExpand = () => {
-    setExpanded(!expanded)
+    const newExpanded = !expanded
+    setExpanded(newExpanded)
+    onExpandedChange?.(newExpanded)
   }
 
   const renderHistoryItems = () => {

@@ -29,10 +29,11 @@ export function ActiveBookmark({ color }: { color?: string }) {
   return (
     <>
       <Typography
-        variant="body1"
+        variant="body2"
         onClick={() => setIsEditing(true)}
         sx={{
           color: color ?? '#111',
+          fontSize: '0.95rem',
           cursor: 'pointer',
           paddingLeft: 1,
           paddingRight: 1,
