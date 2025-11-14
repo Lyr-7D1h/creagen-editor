@@ -1,4 +1,4 @@
-import { ChevronRight } from '@mui/icons-material'
+import { Add, ChevronRight } from '@mui/icons-material'
 import { IconButton } from '@mui/material'
 import { History } from './History'
 import React, { useRef, useState } from 'react'
@@ -6,6 +6,7 @@ import { ActiveBookmark } from './ActiveBookmark'
 import { HtmlTooltip } from './HtmlTooltip'
 import { useSettings } from '../events/useEditorEvents'
 import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
+import { logger } from '../logs/logger'
 
 const BAR_HEIGHT = 18
 export function EditorBar({
@@ -61,6 +62,25 @@ export function EditorBar({
               transition: 'transform 0.3s',
             }}
           />
+        </IconButton>
+      </HtmlTooltip>
+      <HtmlTooltip
+        title={`New project (${creagenEditor.getKeybindKeyString('editor.toggleMenu')})`}
+        placement="right"
+      >
+        <IconButton
+          sx={{
+            width: BAR_HEIGHT,
+            height: BAR_HEIGHT,
+            padding: 0,
+            margin: 0,
+          }}
+          onClick={() => {
+            creagenEditor.new().catch(logger.error)
+          }}
+          size="small"
+        >
+          <Add />
         </IconButton>
       </HtmlTooltip>
       {showActiveBookmark ? (

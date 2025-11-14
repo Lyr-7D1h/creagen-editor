@@ -4,7 +4,7 @@ import {
   Select,
   MenuItem,
 } from '@mui/material'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { SemVer } from 'semver'
 import { useCreagenEditor } from '../../creagen-editor/CreagenEditorView'
 import { useSettings } from '../../events/useEditorEvents'
@@ -67,16 +67,16 @@ export function DependenciesTab() {
       .catch(logger.error)
   }, [])
 
-  // update selected version when libraries change
-  useEffect(() => {
-    setSelectedVersion((versions) => {
-      const newVersions = { ...versions }
-      for (const lib of libraries) {
-        newVersions[lib.name] = lib.version.toString()
-      }
-      return newVersions
-    })
-  }, [libraries])
+  // Merge library versions into selectedVersion
+  const mergedSelectedVersion = useMemo(() => {
+    const merged = { ...selectedVersion }
+    for (const lib of libraries) {
+      merged[lib.name] = lib.version.toString()
+    }
+    return merged
+  }, [selectedVersion, libraries])
+
+  console.log(libraries)
 
   return (
     <ToggleButtonGroup orientation="vertical" fullWidth={true}>
@@ -89,8 +89,7 @@ export function DependenciesTab() {
           disabled={
             typeof versions[lib.name] === 'undefined' ||
             versions[lib.name]?.length === 0 ||
-            lib.disabled ||
-            false
+            (lib.disabled ?? false)
           }
           sx={{
             display: 'flex',
@@ -98,7 +97,7 @@ export function DependenciesTab() {
             width: '100%',
           }}
           selected={libraries.map((l) => l.name).includes(lib.name)}
-          onChange={(_, libraryName) => {
+          onChange={(_, libraryName: string) => {
             const enabled =
               typeof libraries.find((l) => l.name === libraryName) !==
               'undefined'
@@ -113,14 +112,17 @@ export function DependenciesTab() {
 
             settings.set('libraries', [
               ...libraries.filter((l) => l.name !== libraryName),
-              { name: libraryName, version: selectedVersion[libraryName]! },
+              {
+                name: libraryName,
+                version: mergedSelectedVersion[libraryName]!,
+              },
             ])
           }}
         >
           <span>{lib.name}</span>
           {versions[lib.name] === undefined ? null : (
             <Select
-              value={selectedVersion[lib.name] ?? versions[lib.name]![0]}
+              value={mergedSelectedVersion[lib.name] ?? versions[lib.name]![0]}
               size="small"
               onClick={(e) => e.stopPropagation()}
               onChange={(e) => {

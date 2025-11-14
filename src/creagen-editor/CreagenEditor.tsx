@@ -140,10 +140,16 @@ export class CreagenEditor {
     })
   }
 
-  async checkout(hash: CommitHash, updateHistory?: boolean): Promise<void>
-  async checkout(bookmark: Bookmark, updateHistory?: boolean): Promise<void>
-  async checkout(id: CommitHash | Bookmark, updateHistory?: boolean) {
-    const checkout = await this.vcs.checkout(id, updateHistory)
+  /** Create new sketch */
+  async new(hash?: CommitHash) {
+    await this.vcs.new(hash)
+    this.editor.setValue('')
+  }
+
+  async checkout(hash: CommitHash, updateUrlHistory?: boolean): Promise<void>
+  async checkout(bookmark: Bookmark, updateUrlHistory?: boolean): Promise<void>
+  async checkout(id: CommitHash | Bookmark, updateUrlHistory?: boolean) {
+    const checkout = await this.vcs.checkout(id, updateUrlHistory)
     if (checkout === null) {
       logger.warn(`'${isBookmark(id) ? id.name : id.toSub()}' not found in vcs`)
       return
@@ -175,6 +181,7 @@ export class CreagenEditor {
   }
 
   async loadLibraries() {
+    logger.debug('Loading libraries')
     const libraries = this.settings.values['libraries'] as Library[]
     this.editor.clearTypings()
     this.editor.addTypings(Params.TYPINGS, 'creagen-editor')
@@ -195,6 +202,7 @@ export class CreagenEditor {
 
         Importer.getLibrary(name, version)
           .then((library) => {
+            logger.trace('loading ', library)
             if (library === null) {
               reject(new Error(`Library ${name} not found`))
               return

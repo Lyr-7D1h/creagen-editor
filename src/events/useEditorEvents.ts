@@ -27,13 +27,15 @@ export function useEditorEvent<K extends EditorEvent>(eventType: K | K[]) {
 export function useForceUpdateOnEditorEvent<K extends EditorEvent>(
   eventType: K | K[],
 ) {
-  const [, forceUpdate] = useState({})
+  const [hook, forceUpdate] = useState({})
 
   useEffect(() => {
     return editorEvents.on(eventType, () => {
       forceUpdate({})
     })
   }, [eventType])
+
+  return hook
 }
 
 export const useSettingsAll = () => {
@@ -144,6 +146,7 @@ export const useHistory = (size: number) => {
     updateHistory()
 
     const destroy = [
+      editorEvents.on('vcs:commit', updateHistory),
       editorEvents.on('vcs:checkout', updateHistory),
       editorEvents.on('vcs:bookmark-update', updateHistory),
     ]

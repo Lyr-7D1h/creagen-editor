@@ -16,7 +16,7 @@ import { HistoryItem } from '../vcs/VCS'
 import { TextInput } from './TextInput'
 import { HtmlTooltip } from './HtmlTooltip'
 import React from 'react'
-import { dateString, timeAgoString } from '../util'
+import { CommitTooltip } from './CommitTooltip'
 
 interface BookmarkMenuProps {
   bookmarks: Bookmark[]
@@ -151,12 +151,13 @@ export function HistoryItemChip({
   const [isEditing, setIsEditing] = useState<string | null>(null)
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null)
 
-  let { bookmarks, commit } = item
+  const { commit } = item
+  let { bookmarks } = item
   bookmarks = bookmarks.filter((b) => b.name !== activeBookmark.name)
   const active = commit.hash.toHex() === activeBookmark.commit?.toHex()
 
   const label = (
-    <VcsTooltip historyItem={item}>
+    <CommitTooltip historyItem={item}>
       <Typography
         variant="body2"
         component="span"
@@ -204,7 +205,7 @@ export function HistoryItemChip({
           commit.toSub()
         )}
       </Typography>
-    </VcsTooltip>
+    </CommitTooltip>
   )
 
   const actions =
@@ -314,32 +315,4 @@ export function HistoryItemChip({
       )}
     </>
   )
-}
-
-export function VcsTooltip({
-  historyItem,
-  children,
-}: {
-  historyItem: HistoryItem
-  children: React.ReactElement
-}) {
-  const { commit, bookmarks } = historyItem
-
-  const tooltip = (
-    <div style={{ lineHeight: 1.5, position: 'relative' }}>
-      <Typography textAlign="right" variant="body2" color="grey">
-        {timeAgoString(commit.createdOn)} ({dateString(commit.createdOn)})
-      </Typography>
-      {bookmarks.map((bm) => (
-        <Typography variant="body1" key={bm.name}>
-          {bm.name}
-        </Typography>
-      ))}
-      <Typography variant="body2">
-        <em>{commit.toHex()}</em>
-      </Typography>
-    </div>
-  )
-
-  return <HtmlTooltip title={tooltip}>{children}</HtmlTooltip>
 }

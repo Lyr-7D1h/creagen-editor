@@ -16,6 +16,12 @@ export const COMMANDS = {
       editorEvents.emit('welcome', true)
     },
   },
+  new: {
+    description: 'New sketch',
+    handler: (editor: CreagenEditor) => {
+      editor.new().catch(logger.error)
+    },
+  },
   'editor.run': {
     description: 'Run/Render the current code',
     handler: (editor: CreagenEditor) => {
@@ -45,6 +51,9 @@ export const COMMANDS = {
           `Toggled hide all press ${editor.getKeybindKeyString('editor.toggleHideAll')} to unhide`,
           10000,
         )
+
+        // ensure control panel is not shown
+        localStorage.set('control-panel-open', false)
       } else {
         if (toggleHideAllMessageId != null)
           logger.remove(toggleHideAllMessageId)

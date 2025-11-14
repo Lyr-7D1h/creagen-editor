@@ -40,7 +40,7 @@ const tabs: Record<string, TabConfig> = {
     parent: 'vcs',
   },
   'vcs-commits': {
-    title: 'Commits (WIP)',
+    title: 'Commits',
     content: <CommitsTab />,
     icon: <CommitIcon />,
     parent: 'vcs',

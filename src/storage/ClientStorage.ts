@@ -22,23 +22,24 @@ export class ClientStorage {
   static async create(): Promise<ClientStorage> {
     return await new Promise((resolve, reject) => {
       // Make storage persistent https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria#does_browser-stored_data_persist
-      if (navigator.storage && navigator.storage.persist) {
-        navigator.storage
-          .persisted()
-          .then((persisted) => {
-            // if not already persisted set it (asks for permission in firefox)
-            if (!persisted) {
-              navigator.storage.persist().then((persistent) => {
+      navigator.storage
+        .persisted()
+        .then((persisted) => {
+          // if not already persisted set it (asks for permission in firefox)
+          if (!persisted) {
+            navigator.storage
+              .persist()
+              .then((persistent) => {
                 if (persistent) {
                   logger.info('Commits will be persisted in local storage')
                 } else {
                   logger.warn('Commits might be cleared from local storage')
                 }
               })
-            }
-          })
-          .catch(logger.error)
-      }
+              .catch(logger.error)
+          }
+        })
+        .catch(logger.error)
 
       const req = indexedDB.open('creagen', 1)
       req.onerror = (_e) => {
@@ -70,7 +71,7 @@ export class ClientStorage {
     })
   }
 
-  private async innerSet(storeName: string, id: string, value: any) {
+  private async _set(storeName: string, id: string, value: unknown) {
     logger.trace(`Storing ${id} ${JSON.stringify(value)}`)
     const trans = this.db.transaction(storeName, 'readwrite')
     await new Promise<void>((resolve, reject) => {
@@ -104,24 +105,32 @@ export class ClientStorage {
     if (!isIndexDbKey(key)) return
 
     // don't set if already exists
-    if ((await this.get(key, ...(args as any))) !== null) return
+    // call get with concrete key variants to satisfy TypeScript's overloads
+    if (key === 'commit') {
+      const identifier = args[0] as unknown as StorageIdentifier<'commit'>
+      if ((await this.get('commit', identifier)) !== null) return
+    } else {
+      const identifier = args[0] as unknown as StorageIdentifier<'blob'>
+      if ((await this.get('blob', identifier)) !== null) return
+    }
 
     if (key === 'commit') {
       const identifier = args[0]!
       const commit = item as Commit
-      await this.innerSet(COMMITS_STORE, identifier.toHex(), commit.toJson())
+      await this._set(COMMITS_STORE, identifier.toHex(), commit.toJson())
     }
     if (key === 'blob') {
       const identifier = args[0]!
-      await this.innerSet(
+      const blob = item as string
+      await this._set(
         BLOB_STORE,
         identifier.toHex(),
-        lzString.compressToUTF16(item),
+        lzString.compressToUTF16(blob),
       )
     }
   }
 
-  private async innerGet(storeName: string, identifier: string) {
+  private async _get(storeName: string, identifier: string) {
     const trans = this.db.transaction(storeName)
     return await new Promise((resolve, reject) => {
       trans.onerror = (_e) => {
@@ -149,13 +158,13 @@ export class ClientStorage {
 
     if (key === 'commit') {
       const identifier = args[0]!
-      const commit = await this.innerGet(COMMITS_STORE, identifier.toHex())
+      const commit = await this._get(COMMITS_STORE, identifier.toHex())
       if (commit === null) return null
       return (await commitSchema.parseAsync(commit)) as StorageValue<K>
     }
     if (key === 'blob') {
       const identifier = args[0]!
-      const blob = await this.innerGet(BLOB_STORE, identifier.toHex())
+      const blob = await this._get(BLOB_STORE, identifier.toHex())
       if (blob === null) return null
       return lzString.decompressFromUTF16(
         z.string().parse(blob),

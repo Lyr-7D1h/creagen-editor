@@ -267,6 +267,7 @@ declare function useParam<Items extends Record<string, any>>(
   }
 
   save() {
+    if (this.length === 0) return
     const url = new URL(window.location.href)
     const queryParam = storeToQueryParam(this.store)
     url.searchParams.set('param', queryParam)

@@ -46,11 +46,15 @@ const defaultKeybindings: Keybinding[] = [
     key: 'ctrl+j',
     command: 'editor.toggleControlPanel',
   },
+  {
+    key: 'ctrl+n',
+    command: 'new',
+  },
 ]
 
 const logger = createContextLogger('keybindings')
 
-type Handler = (...args: any[]) => void
+type Handler = (...args: unknown[]) => void
 export class Keybindings {
   /** list of all the keybindings, allows for multiple keybindings to a single command */
   private keybindings: ActiveKeybinding[] = []
@@ -101,14 +105,14 @@ export class Keybindings {
   private addKeybind(
     editor: Editor,
     keybind: Keybinding,
-    handler: (...args: any[]) => void,
+    handler: (...args: unknown[]) => void,
     preventDefault: boolean = true,
   ) {
     logger.trace(`Setting ${JSON.stringify(keybind)}`)
     const monacoKeybinding = getMonacoKeybinding(keybind.key)
     editor.addKeybind(monacoKeybinding, handler)
     // only in editor
-    if (keybind.when?.includes('editor')) {
+    if (keybind.when?.includes('editor') === true) {
       return
     }
 
@@ -169,7 +173,7 @@ export class Keybindings {
       this.customKeybindings.push({ key, command, remove: true })
     }
     // remove custom keybind
-    delete this.customKeybindings[index]
+    this.customKeybindings.splice(index, 1)
     this.customKeybindings = this.customKeybindings.filter(
       (kb) => typeof kb !== 'undefined',
     )
@@ -244,7 +248,9 @@ export function getMonacoKeybinding(key: KeyInfo): MonacoKeyInfo {
             keyCode |= KeyCode[`Key${part.toUpperCase()}` as MonacoKeyCode]
           } else {
             // Try to look up by the key part directly
-            const keyCodeValue = KeyCode[part.toUpperCase() as MonacoKeyCode]
+            const keyCodeValue = KeyCode[
+              part.toUpperCase() as MonacoKeyCode
+            ] as KeyCode | undefined
             if (keyCodeValue !== undefined) {
               keyCode |= keyCodeValue
             } else {
@@ -254,12 +260,16 @@ export function getMonacoKeybinding(key: KeyInfo): MonacoKeyInfo {
         } else {
           // For longer named keys like "enter", "space", "f1", etc.
           const upperPart = part[0]!.toUpperCase() + part.slice(1)
-          const keyCodeValue = KeyCode[upperPart as keyof typeof KeyCode]
+          const keyCodeValue = KeyCode[upperPart as keyof typeof KeyCode] as
+            | KeyCode
+            | undefined
           if (keyCodeValue !== undefined) {
             keyCode |= keyCodeValue
           } else if (upperPart.startsWith('F') && upperPart.length > 1) {
             // Handle function keys (F1-F24)
-            const fnKey = KeyCode[upperPart as keyof typeof KeyCode]
+            const fnKey = KeyCode[upperPart as keyof typeof KeyCode] as
+              | KeyCode
+              | undefined
             if (fnKey !== undefined) {
               keyCode |= fnKey
             }

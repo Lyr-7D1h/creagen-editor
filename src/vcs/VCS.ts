@@ -109,8 +109,7 @@ export class VCS {
     if (data !== null)
       commit = await this.updateFromUrlData(commitHash.data, data)
 
-    if (commit === null)
-      commit = await this.storage.get('commit', commitHash.data)
+    commit ??= await this.storage.get('commit', commitHash.data)
 
     if (commit === null) {
       logger.error(`${commitHash.data.toSub()} not found`)
@@ -167,8 +166,8 @@ export class VCS {
     }
   }
 
-  private toUrlPath(data: string) {
-    if (!this._head) return null
+  private toUrlPath(data?: string) {
+    if (!this._head) return ''
 
     if (this.settings.get('editor.code_in_url')) {
       const ext = `${data}~${this._activeBookmark.name}~${this._head.toInnerString()}`
@@ -182,11 +181,10 @@ export class VCS {
     }
   }
 
-  updateUrl(data: string) {
+  updateUrl(data?: string) {
     const path = this.toUrlPath(data)
-    if (path === null) return
 
-    const url = new URL(window.location as any)
+    const url = new URL(window.location.href)
     // only push to history if path changed to prevent duplicates
     if (path === url.pathname) {
       return
@@ -202,6 +200,15 @@ export class VCS {
 
   get activeBookmark() {
     return this._activeBookmark
+  }
+
+  async new(hash?: CommitHash) {
+    const old = this._head
+    this._head = hash ? await this.getCommit(hash) : null
+    this._activeBookmark = generateUncommittedBookmark()
+    this.updateUrl()
+
+    editorEvents.emit('vcs:checkout', { old, new: this._head ?? null })
   }
 
   async addBookmark(name: string, commit: CommitHash) {
@@ -242,7 +249,7 @@ export class VCS {
     }
 
     // if not yet commited change active bookmark name
-    if (oldName === this._activeBookmark.name && bookmark === null) {
+    if (oldName === this._activeBookmark.name) {
       this.activeBookmark.name = newName
       return true
     }
@@ -261,7 +268,6 @@ export class VCS {
   }
 
   get bookmarks() {
-    if (this._bookmarks === null) throw Error('VCS not yet loaded')
     return this._bookmarks
   }
 
@@ -269,8 +275,8 @@ export class VCS {
    * Get history
    * @param n - How far to go back
    */
-  async history(n: number): Promise<HistoryItem[]> {
-    let next = this._head
+  async history(n: number, start?: Commit): Promise<HistoryItem[]> {
+    let next = start ?? this._head
     const history: HistoryItem[] = []
     for (let i = 0; i < n; i++) {
       if (next === null) break
@@ -283,6 +289,10 @@ export class VCS {
     return history
   }
 
+  async getCommit(hash: CommitHash) {
+    return this.storage.get('commit', hash)
+  }
+
   /**
    * Get all commits from storage
    */
@@ -290,7 +300,11 @@ export class VCS {
     return await this.storage.getAllCommits()
   }
 
-  /** update current active bookmark to this commit, or commit the bookmark */
+  /**
+   * update current active bookmark to this commit, or commit the bookmark
+   *
+   * @returns null when failed to update bookmarks
+   */
   private async updateActiveBookmark(commit: CommitHash) {
     if (this.activeBookmark.commit === null) {
       // commit uncomitted bookmark
@@ -361,7 +375,7 @@ export class VCS {
   ): Promise<Checkout | null>
   async checkout(
     id: CommitHash | Bookmark,
-    updateHistory = true,
+    updateUrlHistory = true,
   ): Promise<Checkout | null> {
     let bookmark
     if (isBookmark(id)) {
@@ -390,7 +404,7 @@ export class VCS {
     const old = this._head
     this._head = commit
 
-    if (updateHistory) this.updateUrl(data)
+    if (updateUrlHistory) this.updateUrl(data)
 
     // Emit global events
     editorEvents.emit('vcs:checkout', { old, new: commit })

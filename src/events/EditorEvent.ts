@@ -12,7 +12,7 @@ type EditorEvents = {
   // VCS events
   'vcs:commit': { commit: Commit; code: string }
   /** Change active head */
-  'vcs:checkout': { old: Commit | null; new: Commit }
+  'vcs:checkout': { old: Commit | null; new: Commit | null }
   'vcs:bookmark-update': void
 
   // Settings events
