@@ -58,9 +58,18 @@ export class Bookmarks {
       logger.error(`Failed to update ${name}. Bookmark not found`)
       return null
     }
+
+    // update lookup
     this.lookupDelete(bookmark.name, bookmark.commit)
+    const currentBMs = this.lookup.get(commit.toBase64())
+    this.lookup.set(
+      commit.toBase64(),
+      currentBMs ? [...currentBMs, bookmark] : [bookmark],
+    )
+
     const newBookmark = { ...bookmark, commit }
     this.bookmarks.set(name, newBookmark)
+
     return newBookmark
   }
 
@@ -82,7 +91,7 @@ export class Bookmarks {
     const key = commit.toBase64()
     const b = this.lookup.get(key)
     if (typeof b === 'undefined') return
-    const bms = b.filter((x) => x.name === name)
+    const bms = b.filter((x) => x.name !== name)
     if (bms.length === 0) {
       this.lookup.delete(key)
       return
