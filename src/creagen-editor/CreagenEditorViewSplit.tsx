@@ -42,7 +42,17 @@ export function CreagenEditorViewSplit() {
   }, [menu, fullscreen, creagenEditor])
 
   if (hideAll) {
-    return <SandboxView />
+    return (
+      <>
+        <SandboxView />
+        {controlOpen && (
+          <ControlPanel
+            floating={true}
+            onClose={() => setControlOpen(!controlOpen)}
+          />
+        )}
+      </>
+    )
   }
 
   return (
