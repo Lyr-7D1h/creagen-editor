@@ -201,4 +201,112 @@ export class ClientStorage {
       }
     })
   }
+
+  /** import indexdb data */
+  async import(data: {
+    commits: Array<{ key: string; value: unknown }>
+    blobs: Array<{ key: string; value: unknown }>
+  }) {
+    // Validate all commits asynchronously first
+    const validatedCommits: Array<{ key: string; value: unknown }> = []
+    for (const { key, value } of data.commits) {
+      try {
+        // Validate the commit structure asynchronously
+        await commitSchema.parseAsync(value)
+        validatedCommits.push({ key, value })
+      } catch (e) {
+        const error = e instanceof Error ? e.message : String(e)
+        logger.warn(`Skipping invalid commit during import: ${error}`)
+      }
+    }
+
+    const trans = this.db.transaction([COMMITS_STORE, BLOB_STORE], 'readwrite')
+
+    return await new Promise<void>((resolve, reject) => {
+      trans.oncomplete = () => {
+        logger.info(
+          `Imported ${validatedCommits.length} commits and ${data.blobs.length} blobs`,
+        )
+        resolve()
+      }
+      trans.onerror = (_e) => {
+        reject(
+          new Error(`Import transaction failed: ${trans.error?.message ?? ''}`),
+        )
+      }
+
+      const commitsStore = trans.objectStore(COMMITS_STORE)
+      const blobsStore = trans.objectStore(BLOB_STORE)
+
+      // Import validated commits
+      for (const { key, value } of validatedCommits) {
+        commitsStore.put(value, key)
+      }
+
+      // Import blobs
+      for (const { key, value } of data.blobs) {
+        if (typeof value !== 'string') {
+          logger.warn('Skipping invalid blob during import')
+          continue
+        }
+        blobsStore.put(value, key)
+      }
+    })
+  }
+
+  /** export indexdb data */
+  async export() {
+    const storeNames = [COMMITS_STORE, BLOB_STORE]
+
+    const [commits, blobs] = await Promise.all(
+      storeNames.map((storeName) => {
+        const t = this.db.transaction(storeName, 'readonly')
+        return new Promise<Array<{ key: string; value: unknown }>>(
+          (resolve, reject) => {
+            t.onerror = (_e) => {
+              reject(
+                new Error(
+                  `Export transaction failed: ${t.error?.message ?? ''}`,
+                ),
+              )
+            }
+            const store = t.objectStore(storeName)
+            const req = store.openCursor()
+            const results: Array<{ key: string; value: unknown }> = []
+
+            req.onsuccess = () => {
+              const cursor = req.result
+              if (cursor) {
+                // Convert key to string
+                let keyStr: string
+                const key = cursor.key
+                if (typeof key === 'string') {
+                  keyStr = key
+                } else if (typeof key === 'number') {
+                  keyStr = key.toString()
+                } else {
+                  keyStr = JSON.stringify(key)
+                }
+
+                results.push({
+                  key: keyStr,
+                  value: cursor.value,
+                })
+                cursor.continue()
+              } else {
+                // No more entries
+                resolve(results)
+              }
+            }
+
+            req.onerror = (_e) => {
+              reject(new Error(`Export failed ${req.error?.message ?? ''}`))
+            }
+          },
+        )
+      }),
+    )
+
+    return { commits, blobs }
+  }
 }

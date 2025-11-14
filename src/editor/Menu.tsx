@@ -1,3 +1,4 @@
+import PublishIcon from '@mui/icons-material/Publish'
 import React, { RefAttributes, useEffect } from 'react'
 import { Box, Button, ButtonGroup, Typography } from '@mui/material'
 import KeyboardIcon from '@mui/icons-material/Keyboard'
@@ -15,6 +16,7 @@ import { CommitsTab } from './tabs/CommitsTab'
 import { logger } from '../logs/logger'
 import BookmarkIcon from '@mui/icons-material/Bookmark'
 import CommitIcon from '@mui/icons-material/Commit'
+import { ImportTab } from './tabs/ImportTab'
 
 export type MenuProps = {
   width?: string
@@ -43,6 +45,12 @@ const tabs: Record<string, TabConfig> = {
     title: 'Commits',
     content: <CommitsTab />,
     icon: <CommitIcon />,
+    parent: 'vcs',
+  },
+  'vcs-actions': {
+    title: 'Import/Export',
+    content: <ImportTab />,
+    icon: <PublishIcon />,
     parent: 'vcs',
   },
   dependencies: {
