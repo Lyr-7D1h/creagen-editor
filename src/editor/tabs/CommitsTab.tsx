@@ -174,6 +174,24 @@ export function CommitsTab() {
 
     const g = svg.append('g')
 
+    // Helper function to calculate depth from root
+    const calculateDepth = (d: CommitNode): number => {
+      if (d.id === '__root__') return 0
+      let depth = 1
+      let current = d
+      const visited = new Set<string>()
+
+      while (current.id !== '__root__' && !visited.has(current.id)) {
+        visited.add(current.id)
+        const parentLink = links.find((l) => l.target.id === current.id)
+        if (!parentLink) break
+        current = parentLink.source
+        depth++
+      }
+
+      return depth
+    }
+
     // Use radial force to push nodes outward from root
     const simulation = d3
       .forceSimulation(nodes)
@@ -182,58 +200,54 @@ export function CommitsTab() {
         d3
           .forceLink<CommitNode, CommitLink>(links)
           .id((d) => d.id)
-          .distance(60)
-          .strength(1),
+          .distance(10)
+          .strength(1.8)
+          .iterations(3), // Multiple constraint iterations for better satisfaction
       )
-      .force('charge', d3.forceManyBody().strength(-500))
+      .force(
+        'charge',
+        d3
+          .forceManyBody()
+          .strength(-200) // Reduced repulsion to let links dominate
+          .distanceMax(100), // Limit range of repulsion
+      )
+      .force('x', d3.forceX(width / 2).strength(0.05)) // Gentle centering
+      .force('y', d3.forceY(height / 2).strength(0.05)) // Gentle centering
       .force(
         'radial',
         d3
           .forceRadial<CommitNode>(
-            (d) => {
-              // Calculate depth from root
-              if (d.id === '__root__') return 0
-              let depth = 1
-              let current = d
-              const visited = new Set<string>()
-
-              // Traverse back to root to find depth
-              while (current.id !== '__root__' && !visited.has(current.id)) {
-                visited.add(current.id)
-                const parentLink = links.find((l) => l.target.id === current.id)
-                if (!parentLink) break
-                current = parentLink.source
-                depth++
-              }
-
-              return depth * 80 // 80 pixels per level
-            },
+            (d) => calculateDepth(d) * 80, // 80 pixels per level
             width / 2,
             height / 2,
           )
-          .strength(0.8),
+          .strength(1), // Weak radial force to allow links to dominate
       )
       .force(
         'collision',
-        d3.forceCollide().radius((d) => {
-          const node = d as CommitNode
-          if (node.commit === null) return 15
-          if (node.bookmarks.length > 0) return 18
-          return 18
-        }),
+        d3
+          .forceCollide()
+          .radius((d) => {
+            const node = d as CommitNode
+            if (node.commit === null) return 15
+            if (node.bookmarks.length > 0) return 20
+            return 20
+          })
+          .strength(0.8),
       )
       .alpha(1)
-      .alphaDecay(0.01)
-      .velocityDecay(0.3)
+      // .alphaDecay(0.003)
+      .velocityDecay(0.5) // High damping to reduce oscillations
       .stop()
 
     // Run the simulation to completion without animation
-    for (let i = 0; i < 400; ++i) simulation.tick()
+    // More iterations for better convergence and equal spacing
+    for (let i = 0; i < 100; ++i) simulation.tick()
 
     // Add zoom behavior
     const zoom = d3
       .zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.1, 4])
+      .scaleExtent([0.1, 8])
       .on('zoom', (event: d3.D3ZoomEvent<SVGSVGElement, unknown>) => {
         g.attr('transform', event.transform.toString())
       })
