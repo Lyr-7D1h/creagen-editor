@@ -33,7 +33,7 @@ interface TabConfig {
 const tabs: Record<string, TabConfig> = {
   vcs: {
     icon: <AccountTree />,
-    title: 'VCS',
+    title: 'Version Control',
   },
   'vcs-bookmarks': {
     title: 'Bookmarks',

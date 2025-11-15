@@ -77,7 +77,9 @@ export function Export({ color, size }: { color: string; size: string }) {
               color: 'inherit',
             },
           }}
-          onClick={() => download()}
+          onClick={() => {
+            download().catch(logger.error)
+          }}
           size="small"
         >
           {downloading ? (

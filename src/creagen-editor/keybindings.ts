@@ -485,7 +485,7 @@ export function monacoKeyToBrowserKey(
   const keyCode = keybinding & 0xff
   const key = KEY_CODE_MAP[keyCode]
 
-  if (!key) {
+  if (key == null) {
     console.warn('Unsupported Monaco keybinding:', keybinding)
     return null
   }
