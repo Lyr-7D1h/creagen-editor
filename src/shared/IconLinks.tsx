@@ -4,7 +4,7 @@ import React from 'react'
 import BugReportIcon from '@mui/icons-material/BugReport'
 import { HtmlTooltip } from '../editor/HtmlTooltip'
 import { DiscordIcon } from '../editor/DiscordIcon'
-import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
+import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
 
 export function MenuLinks() {

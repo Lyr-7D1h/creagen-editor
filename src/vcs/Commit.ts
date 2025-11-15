@@ -44,7 +44,7 @@ export const commitSchema = z
       } catch (e) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `Failed to transform commit: ${e}`,
+          message: `Failed to transform commit: ${e as Error}`,
         })
         return z.NEVER
       }
@@ -146,13 +146,14 @@ export class Commit {
     try {
       blob = Sha256Hash.fromHex(parts[0]!) as BlobHash
     } catch (e) {
-      return `Failed to parse blob: ${e}`
+      return `Failed to parse blob: ${e as Error}`
     }
 
     let editorVersion
     try {
       editorVersion = new SemVer(parts[1]!)
-    } catch (e) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_) {
       return `Failed to parse version: ${parts[1]}`
     }
 
@@ -160,7 +161,7 @@ export class Commit {
       .array()
       .safeParse(JSON.parse(`[${parts[2]!}]`))
     if (libs.success === false) {
-      return `Failed to parse libraries: ${libs.error}`
+      return `Failed to parse libraries: ${libs.error.message}`
     }
 
     let parent
@@ -168,7 +169,7 @@ export class Commit {
       if (parts[3]!.length > 0)
         parent = Sha256Hash.fromHex(parts[3]!) as CommitHash
     } catch (e) {
-      return `Failed to parse blob: ${e}`
+      return `Failed to parse blob: ${e as Error}`
     }
 
     let author
@@ -234,14 +235,17 @@ export class Commit {
    */
   compareData(commit: Commit): boolean {
     // don't commit with same content
-    return (
-      this.blob.compare(commit.blob) &&
-      this.libraries.every(
-        (l) =>
-          commit.libraries.findIndex(
-            (hl) => l.name === hl.name && l.version.compare(hl.version) === 0,
-          ) !== -1,
-      )
+    if (!this.blob.compare(commit.blob)) return false
+
+    // Check if libraries are the same
+    if (this.libraries.length !== commit.libraries.length) return false
+
+    return this.libraries.every((thisLib) =>
+      commit.libraries.some(
+        (otherLib) =>
+          thisLib.name === otherLib.name &&
+          thisLib.version.compare(otherLib.version) === 0,
+      ),
     )
   }
 }
@@ -254,5 +258,5 @@ function toInnerString(
   parent?: Sha256Hash,
   author?: string,
 ) {
-  return `${blob.toHex()}:${editorVersion}:${libraries.map((l) => `"${l.name}@${l.version.toString()}"`).join(',')}:${parent ? parent.toHex() : ''}:${author ?? ''}:${createdOn.getTime()}`
+  return `${blob.toHex()}:${editorVersion.toString()}:${libraries.map((l) => `"${l.name}@${l.version.toString()}"`).join(',')}:${parent ? parent.toHex() : ''}:${author ?? ''}:${createdOn.getTime()}`
 }

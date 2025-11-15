@@ -17,7 +17,7 @@ import {
 } from '@mui/material'
 import { ExpandMore, InfoOutline } from '@mui/icons-material'
 import { useSettingsAll } from '../../events/useEditorEvents'
-import { useCreagenEditor } from '../../creagen-editor/CreagenEditorView'
+import { useCreagenEditor } from '../../creagen-editor/CreagenContext'
 import { useLocalStorage } from '../../storage/useLocalStorage'
 import { HtmlTooltip } from '../HtmlTooltip'
 import { logger } from '../../logs/logger'

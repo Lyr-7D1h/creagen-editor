@@ -1,5 +1,5 @@
 import React from 'react'
-import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
+import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import {
   Box,
   Checkbox,

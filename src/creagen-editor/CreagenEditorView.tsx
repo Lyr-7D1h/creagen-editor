@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   CreagenEditorViewSplit,
   CreagenEditorViewContentMobile,
@@ -9,24 +9,8 @@ import { Messages } from '../logs/Messages'
 import { Box, CircularProgress } from '@mui/material'
 import { WelcomeScreen } from './WelcomeScreen'
 import { ErrorBoundary } from './ErrorBoundary'
-
-const CreagenEditorContext = createContext<CreagenEditor>(null!)
-
-export function isMobile() {
-  return window.innerWidth < 800
-}
-
-// const theme = createTheme({})
-
-export const useCreagenEditor = (): CreagenEditor => {
-  const context = useContext(CreagenEditorContext)
-  if (context === null) {
-    throw new Error(
-      'useCreagenEditor must be used within a CreagenEditorProvider and after editor initialization',
-    )
-  }
-  return context
-}
+import { isMobile } from './isMobile'
+import { CreagenEditorContext } from './CreagenContext'
 
 export function CreagenEditorView() {
   const [creagenEditor, setCreagenEditor] = useState<CreagenEditor | null>(null)

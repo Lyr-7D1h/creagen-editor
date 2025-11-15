@@ -2,7 +2,7 @@ import { Box, Button, Typography, Alert, Stack } from '@mui/material'
 import DownloadIcon from '@mui/icons-material/Download'
 import UploadIcon from '@mui/icons-material/Upload'
 import React, { useState, useRef } from 'react'
-import { useCreagenEditor } from '../../creagen-editor/CreagenEditorView'
+import { useCreagenEditor } from '../../creagen-editor/CreagenContext'
 import { logger } from '../../logs/logger'
 
 export function ImportTab() {

@@ -6,8 +6,8 @@ import {
 } from '@mui/material'
 import React, { useState, useEffect, useMemo } from 'react'
 import { SemVer } from 'semver'
-import { useCreagenEditor } from '../../creagen-editor/CreagenEditorView'
-import { useSettings } from '../../events/useEditorEvents'
+import { useCreagenEditor } from '../../creagen-editor/CreagenContext'
+import { useLibraries } from '../../events/useEditorEvents'
 import { Importer } from '../../importer'
 import { logger } from '../../logs/logger'
 
@@ -22,8 +22,8 @@ function isDevBuild(version: SemVer) {
 }
 
 export function DependenciesTab() {
-  const settings = useCreagenEditor().settings
-  const libraries = useSettings('libraries')
+  const editor = useCreagenEditor()
+  const libraries = useLibraries()
   const [versions, setVersions] = useState<Record<string, string[]>>({})
   const [selectedVersion, setSelectedVersion] = useState<
     Record<string, string>
@@ -70,14 +70,13 @@ export function DependenciesTab() {
   // Merge library versions into selectedVersion
   const mergedSelectedVersion = useMemo(() => {
     const merged = { ...selectedVersion }
-    for (const lib of libraries) {
+    for (const lib of libraries.values()) {
       merged[lib.name] = lib.version.toString()
     }
     return merged
   }, [selectedVersion, libraries])
 
-  console.log(libraries)
-
+  const libraryNames = Array.from(libraries.values(), (l) => l.name)
   return (
     <ToggleButtonGroup orientation="vertical" fullWidth={true}>
       {supportedLibraries.map((lib) => (
@@ -96,27 +95,20 @@ export function DependenciesTab() {
             justifyContent: 'space-between',
             width: '100%',
           }}
-          selected={libraries.map((l) => l.name).includes(lib.name)}
-          onChange={(_, libraryName: string) => {
-            const enabled =
-              typeof libraries.find((l) => l.name === libraryName) !==
-              'undefined'
-
-            if (enabled) {
-              settings.set(
-                'libraries',
-                libraries.filter((l) => l.name !== libraryName),
-              )
-              return
+          selected={libraryNames.includes(lib.name)}
+          onChange={(_, libName: string) => {
+            if (libraries.has(libName)) {
+              editor.removeLibrary(libName)
+              editor.commit().catch(logger.error)
+            } else {
+              editor
+                .addLibrary({
+                  name: libName,
+                  version: new SemVer(mergedSelectedVersion[libName]!),
+                })
+                .then(() => editor.commit())
+                .catch(logger.error)
             }
-
-            settings.set('libraries', [
-              ...libraries.filter((l) => l.name !== libraryName),
-              {
-                name: libraryName,
-                version: mergedSelectedVersion[libraryName]!,
-              },
-            ])
           }}
         >
           <span>{lib.name}</span>
@@ -126,19 +118,15 @@ export function DependenciesTab() {
               size="small"
               onClick={(e) => e.stopPropagation()}
               onChange={(e) => {
-                const enabled =
-                  typeof libraries.find((l) => l.name === lib.name) !==
-                  'undefined'
-
-                if (enabled) {
-                  settings.set(
-                    'libraries',
-                    libraries.map((l) => {
-                      if (l.name !== lib.name) return l
-                      return { ...l, version: e.target.value }
-                    }),
-                  )
-                  return
+                if (libraries.has(lib.name)) {
+                  // change version of active library
+                  const version = new SemVer(e.target.value)
+                  editor
+                    .addLibrary({
+                      name: lib.name,
+                      version,
+                    })
+                    .catch(logger.error)
                 }
 
                 setSelectedVersion({

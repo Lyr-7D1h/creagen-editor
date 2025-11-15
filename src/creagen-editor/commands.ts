@@ -27,7 +27,7 @@ export const COMMANDS = {
     handler: (editor: CreagenEditor) => {
       let a: number | undefined
       if (CREAGEN_MODE === 'dev') a = performance.now()
-      editor.render().catch(logger.error)
+      Promise.all([editor.commit(), editor.render()]).catch(logger.error)
       if (CREAGEN_MODE === 'dev' && a !== undefined) {
         logger.debug('Render took ' + (performance.now() - a) + 'ms')
       }

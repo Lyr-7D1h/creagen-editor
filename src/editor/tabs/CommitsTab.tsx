@@ -9,7 +9,7 @@ import {
   MenuItem,
 } from '@mui/material'
 import React, { useState, useEffect, useRef } from 'react'
-import { useCreagenEditor } from '../../creagen-editor/CreagenEditorView'
+import { useCreagenEditor } from '../../creagen-editor/CreagenContext'
 import { Commit } from '../../vcs/Commit'
 import * as d3 from 'd3'
 import { logger } from '../../logs/logger'

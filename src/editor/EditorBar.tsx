@@ -5,7 +5,7 @@ import React, { useRef, useState } from 'react'
 import { ActiveBookmark } from './ActiveBookmark'
 import { HtmlTooltip } from './HtmlTooltip'
 import { useSettings } from '../events/useEditorEvents'
-import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
+import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import { logger } from '../logs/logger'
 
 const BAR_HEIGHT = 18
@@ -36,6 +36,7 @@ export function EditorBar({
         height: historyExpanded ? 'auto' : BAR_HEIGHT,
         minHeight: BAR_HEIGHT,
         backgroundColor: isFullscreen ? 'rgba(0, 0, 0, 0.5)' : 'transparent',
+        color: isFullscreen ? '#fff' : 'inherit',
       }}
     >
       <HtmlTooltip
@@ -52,6 +53,7 @@ export function EditorBar({
             height: BAR_HEIGHT,
             padding: 0,
             margin: 0,
+            color: 'inherit',
           }}
           onClick={() => onMenuOpen()}
           size="small"
@@ -74,6 +76,7 @@ export function EditorBar({
             height: BAR_HEIGHT,
             padding: 0,
             margin: 0,
+            color: 'inherit',
           }}
           onClick={() => {
             creagenEditor.new().catch(logger.error)
@@ -91,11 +94,7 @@ export function EditorBar({
         ''
       )}
       {historyEnabled && (
-        <History
-          parentRef={ref}
-          color={isFullscreen ? '#333' : undefined}
-          onExpandedChange={setHistoryExpanded}
-        />
+        <History parentRef={ref} onExpandedChange={setHistoryExpanded} />
       )}
     </div>
   )

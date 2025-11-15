@@ -3,7 +3,7 @@ import { Box, Tab, Tabs } from '@mui/material'
 import { Rnd } from 'react-rnd'
 import { ParamsView } from '../params/ParamsView'
 import { useLocalStorage } from '../storage/useLocalStorage'
-import { useCreagenEditor } from './CreagenEditorView'
+import { useCreagenEditor } from './CreagenContext'
 import { CloseButton } from './CloseButton'
 import { useForceUpdateOnEditorEvent } from '../events/useEditorEvents'
 

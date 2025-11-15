@@ -1,7 +1,7 @@
 import React from 'react'
 import { z } from 'zod'
 import { semverSchema } from '../creagen-editor/schemaUtils'
-import { isMobile } from '../creagen-editor/CreagenEditorView'
+import { isMobile } from '../creagen-editor/isMobile'
 
 export const librarySchema = z.object({
   name: z.string(),
@@ -27,12 +27,6 @@ const DEFAULT_CONFIG_VALUE = {
       return value === 'true'
     },
     value: false,
-  },
-  libraries: {
-    type: 'param',
-    label: 'Libraries',
-    hidden: true,
-    value: [] as Library[],
   },
 
   editor: {

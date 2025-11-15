@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Export } from './Export'
-import { isMobile, useCreagenEditor } from './CreagenEditorView'
+import { useCreagenEditor } from './CreagenContext'
 import StopCircleIcon from '@mui/icons-material/StopCircle'
 import { MenuBook, PlayCircleFilled } from '@mui/icons-material'
 import { IconButton, useTheme } from '@mui/material'
 import { useSettings } from '../events/useEditorEvents'
 import { HtmlTooltip } from '../editor/HtmlTooltip'
 import { editorEvents } from '../events/events'
+import { isMobile } from './isMobile'
 
 export function Actions({
   toggleMenu,
@@ -34,58 +35,69 @@ export function Actions({
   }, [])
 
   const size = isMobile() ? '60px' : '50px'
-  const buttons = []
-  if (exportEnabled)
+  const buttons = useMemo(() => {
+    const buttons = []
+    if (exportEnabled)
+      buttons.push(
+        <Export key="export" color={theme.palette.primary.main} size={size} />,
+      )
+    if (isMobile())
+      buttons.push(
+        <HtmlTooltip key="menu" title="Toggle menu">
+          <IconButton
+            size="small"
+            color="primary"
+            onClick={toggleMenu}
+            style={{
+              cursor: 'pointer',
+            }}
+          >
+            <MenuBook style={{ fontSize: size }} />
+          </IconButton>
+        </HtmlTooltip>,
+      )
+    if (hasRun && !frozen) {
+      buttons.push(
+        <HtmlTooltip key="freeze" title="Freeze Sandbox">
+          <IconButton
+            size="small"
+            color="primary"
+            onClick={() => {
+              creagenEditor.executeCommand('editor.toggleFreeze')
+            }}
+            style={{
+              cursor: 'pointer',
+            }}
+          >
+            <StopCircleIcon style={{ fontSize: size }} />
+          </IconButton>
+        </HtmlTooltip>,
+      )
+    }
     buttons.push(
-      <Export key="export" color={theme.palette.primary.main} size={size} />,
-    )
-  if (isMobile())
-    buttons.push(
-      <HtmlTooltip key="menu" title="Toggle menu">
+      <HtmlTooltip key="run" title="Run Code">
         <IconButton
           size="small"
           color="primary"
-          onClick={toggleMenu}
+          onClick={() => creagenEditor.executeCommand('editor.run')}
           style={{
             cursor: 'pointer',
           }}
         >
-          <MenuBook style={{ fontSize: size }} />
+          <PlayCircleFilled style={{ fontSize: size }} />
         </IconButton>
       </HtmlTooltip>,
     )
-  if (hasRun && !frozen) {
-    buttons.push(
-      <HtmlTooltip key="freeze" title="Freeze Sandbox">
-        <IconButton
-          size="small"
-          color="primary"
-          onClick={() => {
-            creagenEditor.executeCommand('editor.toggleFreeze')
-          }}
-          style={{
-            cursor: 'pointer',
-          }}
-        >
-          <StopCircleIcon style={{ fontSize: size }} />
-        </IconButton>
-      </HtmlTooltip>,
-    )
-  }
-  buttons.push(
-    <HtmlTooltip key="run" title="Run Code">
-      <IconButton
-        size="small"
-        color="primary"
-        onClick={() => creagenEditor.executeCommand('editor.run')}
-        style={{
-          cursor: 'pointer',
-        }}
-      >
-        <PlayCircleFilled style={{ fontSize: size }} />
-      </IconButton>
-    </HtmlTooltip>,
-  )
+    return buttons
+  }, [
+    creagenEditor,
+    exportEnabled,
+    frozen,
+    hasRun,
+    size,
+    theme.palette.primary.main,
+    toggleMenu,
+  ])
 
   return (
     <div

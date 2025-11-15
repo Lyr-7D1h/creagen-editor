@@ -8,8 +8,8 @@ import {
   Divider,
 } from '@mui/material'
 import { useState, useRef } from 'react'
-import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
-import { useActiveBookmark } from '../events/useEditorEvents'
+import { useCreagenEditor } from '../creagen-editor/CreagenContext'
+import { useActiveBookmark, useSettings } from '../events/useEditorEvents'
 import { logger } from '../logs/logger'
 import { bookmarkNameSchema, Bookmark } from '../vcs/Bookmarks'
 import { HistoryItem } from '../vcs/VCS'
@@ -134,13 +134,8 @@ function CollapsibleButton({
   )
 }
 
-export function HistoryItemChip({
-  item,
-  color,
-}: {
-  item: HistoryItem
-  color?: string
-}) {
+export function HistoryItemChip({ item }: { item: HistoryItem }) {
+  const fullscreen = useSettings('editor.fullscreen')
   const creagenEditor = useCreagenEditor()
   const activeBookmark = useActiveBookmark()
   const vcs = creagenEditor.vcs
@@ -162,9 +157,10 @@ export function HistoryItemChip({
         variant="body2"
         component="span"
         sx={{
-          color: color != null && !active ? color : 'inherit',
+          color: 'inherit',
+          // color: color != null && !active ? color : 'inherit',
           lineHeight: 2,
-          ...(isEditing || active
+          ...(isEditing != null || active
             ? {}
             : {
                 cursor: 'pointer',
@@ -176,13 +172,12 @@ export function HistoryItemChip({
         }}
         onClick={() => {
           if (isEditing === null) {
-            creagenEditor.checkout(commit.hash)
+            creagenEditor.checkout(commit.hash).catch(logger.error)
           }
         }}
       >
         {isEditing !== null ? (
           <TextInput
-            style={{ color: color }}
             onClose={() => setIsEditing(null)}
             onSave={(name) => {
               const data = bookmarkNameSchema.safeParse(name)
@@ -194,7 +189,7 @@ export function HistoryItemChip({
                 logger.error('Bookmark already exists')
                 return
               }
-              vcs.addBookmark(name, commit.hash)
+              vcs.addBookmark(name, commit.hash).catch(logger.error)
               setIsEditing(null)
             }}
             initialValue={isEditing}
@@ -231,7 +226,7 @@ export function HistoryItemChip({
   const handleBookmarkSelect = (bookmarkName: string) => {
     const bookmark = vcs.bookmarks.getBookmark(bookmarkName)
     if (bookmark) {
-      creagenEditor.checkout(bookmark)
+      creagenEditor.checkout(bookmark).catch(logger.error)
     }
     handleMenuClose()
   }
@@ -292,7 +287,7 @@ export function HistoryItemChip({
       <div
         ref={chipRef}
         style={{
-          color: 'grey',
+          color: fullscreen ? '#ddd' : 'grey',
           display: 'flex',
           alignItems: 'center',
           height: '22px',

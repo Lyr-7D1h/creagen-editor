@@ -7,13 +7,28 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { useHistory, useSettings } from '../events/useEditorEvents'
 import { HistoryItemChip } from './HistoryItemChip'
+import { HistoryItem } from '../vcs/VCS'
+
+function HistoryLink({ item, last }: { item: HistoryItem; last: boolean }) {
+  const fullscreen = useSettings('editor.fullscreen')
+  return (
+    <>
+      <HistoryItemChip item={item} />
+      {!last && (
+        <ArrowLeft
+          sx={{ color: fullscreen ? '#bbb' : undefined }}
+          fontSize="small"
+          color="action"
+        />
+      )}
+    </>
+  )
+}
 
 export function History({
   parentRef,
-  color,
   onExpandedChange,
 }: {
-  color?: string
   parentRef: React.RefObject<HTMLDivElement | null>
   onExpandedChange?: (expanded: boolean) => void
 }) {
@@ -55,10 +70,7 @@ export function History({
   const renderHistoryItems = () => {
     return history.map((item, index) => (
       <React.Fragment key={index}>
-        <HistoryItemChip color={color} item={item} />
-        {index < history.length - 1 && (
-          <ArrowLeft sx={{ color }} fontSize="small" color="action" />
-        )}
+        <HistoryLink item={item} last={index >= history.length - 1} />
       </React.Fragment>
     ))
   }

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
+import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import { logger } from '../logs/logger'
 
 export function SandboxView({

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useCreagenEditor } from '../../creagen-editor/CreagenEditorView'
+import { useCreagenEditor } from '../../creagen-editor/CreagenContext'
 import ReplayIcon from '@mui/icons-material/Replay'
 import { COMMANDS, Command } from '../../creagen-editor/commands'
 import { ActiveKeybinding, KeyInfo } from '../../creagen-editor/keybindings'

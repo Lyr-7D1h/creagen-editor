@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Typography } from '@mui/material'
 import { logger } from '../logs/logger'
 import { useActiveBookmark } from '../events/useEditorEvents'
-import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
+import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import { TextInput } from './TextInput'
 import { bookmarkNameSchema } from '../vcs/Bookmarks'
 

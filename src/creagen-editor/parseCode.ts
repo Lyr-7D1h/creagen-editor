@@ -104,7 +104,7 @@ function astNodeToValue(node: ts.Expression): unknown {
  */
 export function parseCode(
   code: string,
-  libraries: Record<string, LibraryImport>,
+  libraries: Map<string, LibraryImport>,
   params: Params,
 ): string {
   // Clear params but preserve their values - only params found in the current code will be re-added
@@ -190,7 +190,7 @@ export function parseCode(
     true,
   )
 
-  const hasP5 = Boolean(libraries['p5'])
+  const hasP5 = Boolean(libraries.get('p5'))
   const p5FunctionsFound = new Set<string>()
   const printer = ts.createPrinter()
 
@@ -205,7 +205,7 @@ export function parseCode(
 
           if (ts.isStringLiteral(moduleSpecifier)) {
             const oldModule = moduleSpecifier.text
-            const newModulePath = libraries[oldModule]?.importPath.path
+            const newModulePath = libraries.get(oldModule)?.importPath.path
 
             if (newModulePath != null) {
               // Replace module path with the one from libraries

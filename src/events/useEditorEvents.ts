@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { editorEvents } from './events'
 import { EditorEvent, EditorEventData } from './EditorEvent'
-import { useCreagenEditor } from '../creagen-editor/CreagenEditorView'
+import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import { ParamKey, ParamValue } from '../settings/SettingsConfig'
 import { ActiveBookmark, HistoryItem } from '../vcs/VCS'
 import { logger } from '../logs/logger'
@@ -166,4 +166,17 @@ export const useWelcome = () => {
   }, [setValue])
 
   return value
+}
+
+export function useLibraries() {
+  const editor = useCreagenEditor()
+  const [libs, setLibs] = useState(editor.libraryImports)
+
+  useEffect(() => {
+    editorEvents.on(['deps:add', 'deps:remove'], () => {
+      setLibs(new Map(editor.libraryImports))
+    })
+  })
+
+  return libs
 }

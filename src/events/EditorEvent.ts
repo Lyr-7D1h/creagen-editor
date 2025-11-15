@@ -6,6 +6,9 @@ import { AnalyzeContainerResult } from '../sandbox/SandboxMessageHandler'
 type EditorEvents = {
   render: void
 
+  'deps:remove': string
+  'deps:add': string
+
   // Parameter configs got updated
   'params:update': void
 

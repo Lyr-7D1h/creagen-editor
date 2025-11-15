@@ -91,7 +91,7 @@ export class Editor {
   private vimMode: m.editor.IStandaloneCodeEditor | null
   private vimRef?: Ref<HTMLDivElement>
   private fullscreendecorators: m.editor.IEditorDecorationsCollection | null
-  private readonly models: Record<string, monaco.editor.ITextModel> = {}
+  private readonly typings = new Map<string, monaco.IDisposable>()
   private readonly _html
 
   static async create(settings: Settings) {
@@ -230,12 +230,23 @@ export class Editor {
 
   clearTypings() {
     logger.info('clearing typings')
+    // Dispose all individual typings
+    for (const disposable of this.typings.values()) {
+      disposable.dispose()
+    }
+    // Clear the typings map
+    this.typings.clear()
+    // Also clear all extra libs as a fallback
     monaco.languages.typescript.typescriptDefaults.setExtraLibs([])
+  }
+
+  typingsExist(uri: string) {
+    return this.typings.has(uri)
   }
 
   /** If `packageName` given will also add autoimports */
   addTypings(typings: string, uri: string, packageName?: string) {
-    if (this.models[uri]) return
+    if (this.typingsExist(uri)) return
     logger.info(`Adding typings for ${uri}`)
     if (typeof packageName === 'string') {
       this.autoimport.imports.saveFile({
@@ -244,7 +255,18 @@ export class Editor {
         imports: regexTokeniser(typings),
       })
     }
-    monaco.languages.typescript.typescriptDefaults.addExtraLib(typings, uri)
+    const disposable =
+      monaco.languages.typescript.typescriptDefaults.addExtraLib(typings, uri)
+    this.typings.set(uri, disposable)
+  }
+
+  removeTypings(uri: string) {
+    const disposable = this.typings.get(uri)
+    if (disposable) {
+      logger.info(`Removing typings for ${uri}`)
+      disposable.dispose()
+      this.typings.delete(uri)
+    }
   }
 
   getValue() {

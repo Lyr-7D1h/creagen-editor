@@ -10,7 +10,7 @@ import {
 } from '../events/useEditorEvents'
 import { useLocalStorage } from '../storage/useLocalStorage'
 import { Actions } from './Actions'
-import { useCreagenEditor } from './CreagenEditorView'
+import { useCreagenEditor } from './CreagenContext'
 import { PerformanceMonitor } from '../sandbox/PerformanceMonitor'
 import { ControlPanel } from './ControlPanel'
 import { ParamsView } from '../params/ParamsView'
