@@ -402,7 +402,7 @@ function storeFromQueryParam(): Store {
       v = ''
       key = true
       continue
-    } else if (!quoted && c === '.') {
+    } else if (!quoted && key && c === '.') {
       key = false
       continue
     }
