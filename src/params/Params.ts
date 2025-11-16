@@ -18,13 +18,20 @@ export const paramConfigSchema = z.discriminatedUnion('type', [
     .extend({
       type: z.literal('number'),
       default: z.number().optional(),
-      min: z.number().optional().default(0),
-      max: z.number().optional().default(10),
+      min: z.number().optional(),
+      max: z.number().optional(),
       step: z.number().optional(),
     })
-    .refine((data) => data.min <= data.max, {
-      message: 'min cannot be greater than max',
-    })
+    .refine(
+      (data) =>
+        // TODO: fix don't do min max
+        typeof data.min !== 'undefined' && typeof data.max !== 'undefined'
+          ? data.min <= data.max
+          : true,
+      {
+        message: 'min cannot be greater than max',
+      },
+    )
     .transform((data) => ({
       ...data,
       default: data.default ?? data.min,
@@ -233,9 +240,15 @@ declare function useParam<Items extends Record<string, any>>(
         if (typeof value !== 'number' || isNaN(value)) {
           return false
         }
-        // Check min/max constraints
-        return value >= config.min && value <= config.max
-
+        if (
+          typeof config.min !== 'undefined' &&
+          typeof config.max !== 'undefined'
+        )
+          // Check min/max constraints
+          return value >= config.min && value <= config.max
+        if (typeof config.min !== 'undefined') return value >= config.min
+        if (typeof config.max !== 'undefined') return value >= config.max
+        return true
       case 'text':
         return typeof value === 'string'
 

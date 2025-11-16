@@ -15,6 +15,7 @@ import {
 import {
   Refresh as RefreshIcon,
   Shuffle as ShuffleIcon,
+  RestartAlt as RestartAltIcon,
 } from '@mui/icons-material'
 import type { ParamConfig, ParamKey } from './Params'
 import { Params } from './Params'
@@ -93,6 +94,336 @@ function SeedInput({
   )
 }
 
+function NumberInput({
+  config,
+  value,
+  onChange,
+}: {
+  config: ParamConfig & { type: 'number' }
+  value: number
+  onChange: (value: number) => void
+}) {
+  const [localValue, setLocalValue] = React.useState(String(value))
+  const [isValid, setIsValid] = React.useState(true)
+
+  React.useEffect(() => {
+    setLocalValue(String(value))
+    setIsValid(true)
+  }, [value])
+
+  const min = config.min
+  const max = config.max
+  const step = config.step ?? 1
+
+  const handleChange = (inputValue: string) => {
+    setLocalValue(inputValue)
+    const val = parseFloat(inputValue)
+    const valid = !isNaN(val) && Params.isValidValue(config, val)
+    setIsValid(valid)
+    if (valid) {
+      onChange(val)
+    }
+  }
+
+  return (
+    <TextField
+      type="number"
+      value={localValue}
+      onChange={(e) => handleChange(e.target.value)}
+      slotProps={{
+        htmlInput: {
+          min,
+          max,
+          step,
+        },
+      }}
+      size="small"
+      fullWidth
+      error={!isValid}
+      helperText={
+        !isValid
+          ? `Must be between ${min ?? '-∞'} and ${max ?? '∞'}`
+          : undefined
+      }
+    />
+  )
+}
+
+function NumberSliderInput({
+  config,
+  value,
+  onChange,
+}: {
+  config: ParamConfig & { type: 'number-slider' }
+  value: number
+  onChange: (value: number) => void
+}) {
+  const [localValue, setLocalValue] = React.useState(String(value))
+  const [isValid, setIsValid] = React.useState(true)
+
+  React.useEffect(() => {
+    setLocalValue(String(value))
+    setIsValid(true)
+  }, [value])
+
+  const min = config.min
+  const max = config.max
+  const step = config.step ?? 1
+
+  const handleChange = (inputValue: string) => {
+    setLocalValue(inputValue)
+    const val = parseFloat(inputValue)
+    const valid = !isNaN(val) && Params.isValidValue(config, val)
+    setIsValid(valid)
+    if (valid) {
+      onChange(val)
+    }
+  }
+
+  return (
+    <Stack direction="column" spacing={0.5} sx={{ width: '100%' }}>
+      <TextField
+        type="number"
+        value={localValue}
+        onChange={(e) => handleChange(e.target.value)}
+        slotProps={{
+          htmlInput: {
+            min,
+            max,
+            step,
+          },
+        }}
+        size="small"
+        fullWidth
+        error={!isValid}
+        helperText={!isValid ? `Must be between ${min} and ${max}` : undefined}
+      />
+      <Slider
+        value={value}
+        onChange={(_, newValue) => {
+          if (
+            typeof newValue === 'number' &&
+            Params.isValidValue(config, newValue)
+          ) {
+            onChange(newValue)
+          }
+        }}
+        min={min}
+        max={max}
+        step={step}
+        valueLabelDisplay="auto"
+        size="small"
+      />
+    </Stack>
+  )
+}
+
+function RangeInput({
+  config,
+  value,
+  onChange,
+}: {
+  config: ParamConfig & { type: 'range' }
+  value: [number, number]
+  onChange: (value: [number, number]) => void
+}) {
+  const [localMinValue, setLocalMinValue] = React.useState(String(value[0]))
+  const [localMaxValue, setLocalMaxValue] = React.useState(String(value[1]))
+  const [isMinValid, setIsMinValid] = React.useState(true)
+  const [isMaxValid, setIsMaxValid] = React.useState(true)
+
+  React.useEffect(() => {
+    setLocalMinValue(String(value[0]))
+    setLocalMaxValue(String(value[1]))
+    setIsMinValid(true)
+    setIsMaxValid(true)
+  }, [value])
+
+  const min = config.min
+  const max = config.max
+  const step = config.step
+
+  const handleMinChange = (inputValue: string) => {
+    setLocalMinValue(inputValue)
+    const val = parseFloat(inputValue)
+    if (!isNaN(val)) {
+      const newMin = Math.min(val, value[1])
+      const newValue: [number, number] = [newMin, value[1]]
+      const valid = Params.isValidValue(config, newValue)
+      setIsMinValid(valid)
+      if (valid) {
+        onChange(newValue)
+      }
+    } else {
+      setIsMinValid(false)
+    }
+  }
+
+  const handleMaxChange = (inputValue: string) => {
+    setLocalMaxValue(inputValue)
+    const val = parseFloat(inputValue)
+    if (!isNaN(val)) {
+      const newMax = Math.max(val, value[0])
+      const newValue: [number, number] = [value[0], newMax]
+      const valid = Params.isValidValue(config, newValue)
+      setIsMaxValid(valid)
+      if (valid) {
+        onChange(newValue)
+      }
+    } else {
+      setIsMaxValid(false)
+    }
+  }
+
+  return (
+    <Stack direction="row" spacing={0.5}>
+      <TextField
+        type="number"
+        value={localMinValue}
+        onChange={(e) => handleMinChange(e.target.value)}
+        slotProps={{
+          htmlInput: {
+            min,
+            max: value[1],
+            step,
+          },
+        }}
+        size="small"
+        fullWidth
+        error={!isMinValid}
+        helperText={!isMinValid ? `Invalid` : undefined}
+      />
+      <TextField
+        type="number"
+        value={localMaxValue}
+        onChange={(e) => handleMaxChange(e.target.value)}
+        slotProps={{
+          htmlInput: {
+            min: value[0],
+            max,
+            step,
+          },
+        }}
+        size="small"
+        fullWidth
+        error={!isMaxValid}
+        helperText={!isMaxValid ? `Invalid` : undefined}
+      />
+    </Stack>
+  )
+}
+
+function RangeSliderInput({
+  config,
+  value,
+  onChange,
+}: {
+  config: ParamConfig & { type: 'range-slider' }
+  value: [number, number]
+  onChange: (value: [number, number]) => void
+}) {
+  const [localMinValue, setLocalMinValue] = React.useState(String(value[0]))
+  const [localMaxValue, setLocalMaxValue] = React.useState(String(value[1]))
+  const [isMinValid, setIsMinValid] = React.useState(true)
+  const [isMaxValid, setIsMaxValid] = React.useState(true)
+
+  React.useEffect(() => {
+    setLocalMinValue(String(value[0]))
+    setLocalMaxValue(String(value[1]))
+    setIsMinValid(true)
+    setIsMaxValid(true)
+  }, [value])
+
+  const min = config.min
+  const max = config.max
+  const step = config.step
+
+  const handleMinChange = (inputValue: string) => {
+    setLocalMinValue(inputValue)
+    const val = parseFloat(inputValue)
+    if (!isNaN(val)) {
+      const newMin = Math.min(val, value[1])
+      const newValue: [number, number] = [newMin, value[1]]
+      const valid = Params.isValidValue(config, newValue)
+      setIsMinValid(valid)
+      if (valid) {
+        onChange(newValue)
+      }
+    } else {
+      setIsMinValid(false)
+    }
+  }
+
+  const handleMaxChange = (inputValue: string) => {
+    setLocalMaxValue(inputValue)
+    const val = parseFloat(inputValue)
+    if (!isNaN(val)) {
+      const newMax = Math.max(val, value[0])
+      const newValue: [number, number] = [value[0], newMax]
+      const valid = Params.isValidValue(config, newValue)
+      setIsMaxValid(valid)
+      if (valid) {
+        onChange(newValue)
+      }
+    } else {
+      setIsMaxValid(false)
+    }
+  }
+
+  return (
+    <Stack direction="column" spacing={0.5} sx={{ width: '100%' }}>
+      <Stack direction="row" spacing={0.5}>
+        <TextField
+          type="number"
+          value={localMinValue}
+          onChange={(e) => handleMinChange(e.target.value)}
+          slotProps={{
+            htmlInput: {
+              min,
+              max: value[1],
+              step,
+            },
+          }}
+          size="small"
+          fullWidth
+          error={!isMinValid}
+          helperText={!isMinValid ? `Invalid` : undefined}
+        />
+        <TextField
+          type="number"
+          value={localMaxValue}
+          onChange={(e) => handleMaxChange(e.target.value)}
+          slotProps={{
+            htmlInput: {
+              min: value[0],
+              max,
+              step,
+            },
+          }}
+          size="small"
+          fullWidth
+          error={!isMaxValid}
+          helperText={!isMaxValid ? `Invalid` : undefined}
+        />
+      </Stack>
+      <Slider
+        value={value}
+        onChange={(_, newValue) => {
+          const val = newValue as [number, number]
+          if (Params.isValidValue(config, val)) {
+            onChange(val)
+          }
+        }}
+        min={min}
+        max={max}
+        step={step}
+        valueLabelDisplay="auto"
+        size="small"
+      />
+    </Stack>
+  )
+}
+
 function ParamControl({
   config,
   value,
@@ -116,30 +447,14 @@ function ParamControl({
       break
 
     case 'number': {
-      const numValue = typeof value === 'number' ? value : config.default
-      const min = config.min
-      const max = config.max
-      const step = config.step ?? 1
-
+      const numValue = (
+        typeof value === 'number' ? value : config.default
+      ) as number
       control = (
-        <TextField
-          type="number"
+        <NumberInput
+          config={config}
           value={numValue}
-          onChange={(e) => {
-            const val = parseFloat(e.target.value)
-            if (!isNaN(val) && Params.isValidValue(config, val)) {
-              onChange(val)
-            }
-          }}
-          slotProps={{
-            htmlInput: {
-              min,
-              max,
-              step,
-            },
-          }}
-          size="small"
-          fullWidth
+          onChange={onChange as (value: number) => void}
         />
       )
       break
@@ -147,45 +462,12 @@ function ParamControl({
 
     case 'number-slider': {
       const numValue = typeof value === 'number' ? value : config.default
-      const min = config.min
-      const max = config.max
-      const step = config.step ?? 1
-
       control = (
-        <Stack direction="column" spacing={0.5} sx={{ width: '100%' }}>
-          <TextField
-            type="number"
-            value={numValue}
-            onChange={(e) => {
-              const val = parseFloat(e.target.value)
-              if (!isNaN(val) && Params.isValidValue(config, val)) {
-                onChange(val)
-              }
-            }}
-            slotProps={{
-              htmlInput: {
-                min,
-                max,
-                step,
-              },
-            }}
-            size="small"
-            fullWidth
-          />
-          <Slider
-            value={numValue}
-            onChange={(_, newValue) => {
-              if (Params.isValidValue(config, newValue)) {
-                onChange(newValue)
-              }
-            }}
-            min={min}
-            max={max}
-            step={step}
-            valueLabelDisplay="auto"
-            size="small"
-          />
-        </Stack>
+        <NumberSliderInput
+          config={config}
+          value={numValue}
+          onChange={onChange as (value: number) => void}
+        />
       )
       break
     }
@@ -201,61 +483,12 @@ function ParamControl({
         number,
         number,
       ]
-      const min = config.min
-      const max = config.max
-      const step = config.step
-
       control = (
-        <Stack direction="row" spacing={0.5}>
-          <TextField
-            type="number"
-            value={rangeValue[0]}
-            onChange={(e) => {
-              const val = parseFloat(e.target.value)
-              if (!isNaN(val)) {
-                // Ensure min doesn't go above max
-                const newMin = Math.min(val, rangeValue[1])
-                const newValue: [number, number] = [newMin, rangeValue[1]]
-                if (Params.isValidValue(config, newValue)) {
-                  onChange(newValue)
-                }
-              }
-            }}
-            slotProps={{
-              htmlInput: {
-                min,
-                max: rangeValue[1],
-                step,
-              },
-            }}
-            size="small"
-            fullWidth
-          />
-          <TextField
-            type="number"
-            value={rangeValue[1]}
-            onChange={(e) => {
-              const val = parseFloat(e.target.value)
-              if (!isNaN(val)) {
-                // Ensure max doesn't go below min
-                const newMax = Math.max(val, rangeValue[0])
-                const newValue: [number, number] = [rangeValue[0], newMax]
-                if (Params.isValidValue(config, newValue)) {
-                  onChange(newValue)
-                }
-              }
-            }}
-            slotProps={{
-              htmlInput: {
-                min: rangeValue[0],
-                max,
-                step,
-              },
-            }}
-            size="small"
-            fullWidth
-          />
-        </Stack>
+        <RangeInput
+          config={config}
+          value={rangeValue}
+          onChange={onChange as (value: [number, number]) => void}
+        />
       )
       break
     }
@@ -265,77 +498,12 @@ function ParamControl({
         number,
         number,
       ]
-      const min = config.min
-      const max = config.max
-      const step = config.step
-
       control = (
-        <Stack direction="column" spacing={0.5} sx={{ width: '100%' }}>
-          <Stack direction="row" spacing={0.5}>
-            <TextField
-              type="number"
-              value={rangeValue[0]}
-              onChange={(e) => {
-                const val = parseFloat(e.target.value)
-                if (!isNaN(val)) {
-                  // Ensure min doesn't go above max
-                  const newMin = Math.min(val, rangeValue[1])
-                  const newValue: [number, number] = [newMin, rangeValue[1]]
-                  if (Params.isValidValue(config, newValue)) {
-                    onChange(newValue)
-                  }
-                }
-              }}
-              slotProps={{
-                htmlInput: {
-                  min,
-                  max: rangeValue[1],
-                  step,
-                },
-              }}
-              size="small"
-              fullWidth
-            />
-            <TextField
-              type="number"
-              value={rangeValue[1]}
-              onChange={(e) => {
-                const val = parseFloat(e.target.value)
-                if (!isNaN(val)) {
-                  // Ensure max doesn't go below min
-                  const newMax = Math.max(val, rangeValue[0])
-                  const newValue: [number, number] = [rangeValue[0], newMax]
-                  if (Params.isValidValue(config, newValue)) {
-                    onChange(newValue)
-                  }
-                }
-              }}
-              slotProps={{
-                htmlInput: {
-                  min: rangeValue[0],
-                  max,
-                  step,
-                },
-              }}
-              size="small"
-              fullWidth
-            />
-          </Stack>
-          <Slider
-            value={rangeValue}
-            onChange={(_, newValue) => {
-              const val = newValue as [number, number]
-              if (Params.isValidValue(config, val)) {
-                onChange(val)
-              }
-            }}
-            min={min}
-            max={max}
-            step={step}
-            valueLabelDisplay="auto"
-            size="small"
-          />
-        </Stack>
+        <RangeSliderInput
+          config={config}
+          value={rangeValue}
+          onChange={onChange as (value: [number, number]) => void}
+        />
       )
       break
     }
@@ -432,8 +600,8 @@ function generateRandomValue(config: ParamConfig): unknown {
       return Math.random() > 0.5
     case 'number':
     case 'number-slider': {
-      const min = config.min
-      const max = config.max
+      const min = config.min ?? 0
+      const max = config.max ?? 10000000
       const step = config.step
 
       if (step !== undefined) {
@@ -604,6 +772,21 @@ export function ParamsView() {
     }
   }
 
+  const handleResetToDefaults = () => {
+    params.configs.forEach((config, key) => {
+      let defaultValue: unknown = config.default
+      if (typeof config.default === 'function') {
+        defaultValue = (config.default as () => unknown)()
+      }
+      creagenEditor.params.setValue(key, defaultValue)
+    })
+    forceUpdate()
+
+    if (autoRender) {
+      void creagenEditor.render()
+    }
+  }
+
   return (
     <Box
       sx={{
@@ -620,6 +803,18 @@ export function ParamsView() {
         justifyContent="flex-end"
         sx={{ flexShrink: 0, pr: 0.5 }}
       >
+        <Tooltip title="Reset all to defaults">
+          <span>
+            <IconButton
+              onClick={handleResetToDefaults}
+              size="small"
+              sx={{ p: 0.5 }}
+              disabled={params.length === 0}
+            >
+              <RestartAltIcon fontSize="small" />
+            </IconButton>
+          </span>
+        </Tooltip>
         <Tooltip title="Randomize all parameters">
           <span>
             <IconButton

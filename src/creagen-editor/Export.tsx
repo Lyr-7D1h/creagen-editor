@@ -92,7 +92,7 @@ export function Export({ color, size }: { color: string; size: string }) {
 
       {hasMultipleSvgs && (
         <>
-          <HtmlTooltip title="Select SVG">
+          <HtmlTooltip title="Select SVG" style={{ zIndex: 5 }}>
             <IconButton
               sx={{
                 color: theme.palette.grey[400],

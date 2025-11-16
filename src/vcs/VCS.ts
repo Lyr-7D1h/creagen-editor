@@ -202,15 +202,6 @@ export class VCS {
     return this._activeBookmark
   }
 
-  async new(hash?: CommitHash) {
-    const old = this._head
-    this._head = hash ? await this.getCommit(hash) : null
-    this._activeBookmark = generateUncommittedBookmark()
-    this.updateUrl()
-
-    editorEvents.emit('vcs:checkout', { old, new: this._head ?? null })
-  }
-
   async addBookmark(name: string, commit: CommitHash) {
     if (this.bookmarks.getBookmark(name) !== null) {
       logger.warn(`Bookmark '${name}' already exists`)
@@ -289,10 +280,6 @@ export class VCS {
     return history
   }
 
-  async getCommit(hash: CommitHash) {
-    return this.storage.get('commit', hash)
-  }
-
   /**
    * Get all commits from storage
    */
@@ -366,7 +353,33 @@ export class VCS {
     return commit
   }
 
-  /** Checkout a Ref or ID */
+  /**
+   * Create a new bookmark on a optional commit
+   *
+   * @returns
+   * */
+  async new(hash?: CommitHash): Promise<Checkout | null> {
+    const old = this._head
+    this._head = hash ? await this.storage.get('commit', hash) : null
+    this._activeBookmark = generateUncommittedBookmark()
+    this.updateUrl()
+    editorEvents.emit('vcs:checkout', { old, new: this._head ?? null })
+
+    let data = null
+    if (this._head) {
+      data = await this.storage.get('blob', this._head.blob)
+      if (data === null)
+        throw Error(`Could not find blob: ${this._head.blob.toHex()}`)
+    }
+    return this._head && data != null
+      ? {
+          data,
+          commit: this._head,
+        }
+      : null
+  }
+
+  /** Checkout a bookmark or ID */
   checkout(id: CommitHash, updateHistory?: boolean): Promise<Checkout | null>
   checkout(ref: Bookmark, updateHistory?: boolean): Promise<Checkout | null>
   checkout(

@@ -137,8 +137,26 @@ export class CreagenEditor {
 
   /** Create new sketch */
   async new(hash?: CommitHash) {
-    await this.vcs.new(hash)
-    this.editor.setValue('')
+    const checkout = await this.vcs.new(hash)
+
+    // no checkout so empty commit
+    if (checkout === null) {
+      this.editor.setValue('')
+      return
+    }
+
+    const {
+      commit: { editorVersion, libraries },
+      data,
+    } = checkout
+    if (editorVersion.compare(new SemVer(CREAGEN_EDITOR_VERSION)) !== 0) {
+      logger.warn("Editor version doesn't match")
+    }
+
+    // update libraries from commit
+    await this.loadLibraries(libraries)
+
+    this.editor.setValue(data)
   }
 
   async checkout(hash: CommitHash, updateUrlHistory?: boolean): Promise<void>

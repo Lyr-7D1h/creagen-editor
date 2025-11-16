@@ -7,6 +7,8 @@ import {
   Button,
   Menu,
   MenuItem,
+  FormControlLabel,
+  Checkbox,
 } from '@mui/material'
 import React, { useState, useEffect, useRef } from 'react'
 import { useCreagenEditor } from '../../creagen-editor/CreagenContext'
@@ -49,6 +51,7 @@ export function CommitsTab() {
   )
   const [checkoutMenuAnchor, setCheckoutMenuAnchor] =
     useState<null | HTMLElement>(null)
+  const [minifyGraph, setMinifyGraph] = useState(true)
 
   useEffect(() => {
     vcs.getAllCommits().then(setCommits).catch(logger.error)
@@ -76,6 +79,56 @@ export function CommitsTab() {
       return matchesSearch && matchesAuthor
     })
 
+    // Apply minify logic if enabled
+    let displayCommits = filteredCommits
+    if (minifyGraph) {
+      // Build parent-child relationships
+      const childrenMap = new Map<string, Commit[]>()
+      filteredCommits.forEach((commit) => {
+        if (commit.parent) {
+          const parentKey = commit.parent.toHex()
+          if (!childrenMap.has(parentKey)) {
+            childrenMap.set(parentKey, [])
+          }
+          childrenMap.get(parentKey)!.push(commit)
+        }
+      })
+
+      // Identify commits to keep:
+      // 1. Commits with bookmarks (always keep)
+      // 2. Leaf nodes (no children)
+      // 3. Branch points (multiple children)
+      // 4. Root commits (no parent)
+      const commitsToKeep = new Set<string>()
+
+      filteredCommits.forEach((commit) => {
+        const commitKey = commit.hash.toHex()
+        const children = childrenMap.get(commitKey) ?? []
+        const bookmarks = vcs.bookmarks.bookmarkLookup(commit.hash)
+
+        // Keep if it has bookmarks
+        if (bookmarks && bookmarks.length > 0) {
+          commitsToKeep.add(commitKey)
+        }
+        // Keep if it's a leaf node (no children)
+        else if (children.length === 0) {
+          commitsToKeep.add(commitKey)
+        }
+        // Keep if it's a branch point (multiple children)
+        else if (children.length > 1) {
+          commitsToKeep.add(commitKey)
+        }
+        // Keep if it's a root commit (no parent)
+        else if (!commit.parent) {
+          commitsToKeep.add(commitKey)
+        }
+      })
+
+      displayCommits = filteredCommits.filter((commit) =>
+        commitsToKeep.has(commit.hash.toHex()),
+      )
+    }
+
     const width = svgRef.current.clientWidth
     const height = svgRef.current.clientHeight
 
@@ -94,8 +147,8 @@ export function CommitsTab() {
     }
     commitMap.set(rootNode.id, rootNode)
 
-    // Add all filtered commits (not just endpoints)
-    filteredCommits.forEach((commit) => {
+    // Add all display commits
+    displayCommits.forEach((commit) => {
       const bookmarks = vcs.bookmarks.bookmarkLookup(commit.hash)
       commitMap.set(commit.hash.toHex(), {
         id: commit.hash.toHex(),
@@ -110,11 +163,42 @@ export function CommitsTab() {
     const links: CommitLink[] = []
     const childrenByParent = new Map<string, CommitNode[]>()
 
-    filteredCommits.forEach((commit) => {
+    // Helper function to find the nearest visible ancestor
+    const findNearestVisibleAncestor = (
+      commit: Commit,
+    ): { node: CommitNode; intermediateCount: number } | null => {
+      let current = commit.parent
+      let count = 0
+
+      while (current) {
+        const ancestorNode = commitMap.get(current.toHex())
+        if (ancestorNode) {
+          return { node: ancestorNode, intermediateCount: count }
+        }
+
+        // Find the parent of this intermediate commit
+        const intermediateCommit = filteredCommits.find(
+          (c) => c.hash.toHex() === current!.toHex(),
+        )
+        if (!intermediateCommit?.parent) {
+          break
+        }
+
+        current = intermediateCommit.parent
+        count++
+      }
+
+      return null
+    }
+
+    displayCommits.forEach((commit) => {
+      const childNode = commitMap.get(commit.hash.toHex())
+      if (!childNode) return
+
       if (commit.parent) {
         const parentNode = commitMap.get(commit.parent.toHex())
-        const childNode = commitMap.get(commit.hash.toHex())
-        if (parentNode && childNode) {
+        if (parentNode) {
+          // Direct parent is visible
           links.push({
             source: parentNode,
             target: childNode,
@@ -127,23 +211,48 @@ export function CommitsTab() {
             childrenByParent.set(parentId, [])
           }
           childrenByParent.get(parentId)!.push(childNode)
+        } else {
+          // Parent is not visible, find the nearest visible ancestor
+          const ancestorResult = findNearestVisibleAncestor(commit)
+          if (ancestorResult) {
+            links.push({
+              source: ancestorResult.node,
+              target: childNode,
+              intermediateCount: ancestorResult.intermediateCount,
+            })
+
+            // Track children for radial positioning
+            if (!childrenByParent.has(ancestorResult.node.id)) {
+              childrenByParent.set(ancestorResult.node.id, [])
+            }
+            childrenByParent.get(ancestorResult.node.id)!.push(childNode)
+          } else {
+            // No visible ancestor, connect to root
+            links.push({
+              source: rootNode,
+              target: childNode,
+              intermediateCount: 0,
+            })
+
+            if (!childrenByParent.has(rootNode.id)) {
+              childrenByParent.set(rootNode.id, [])
+            }
+            childrenByParent.get(rootNode.id)!.push(childNode)
+          }
         }
       } else {
         // Connect commits without parents to the virtual root
-        const childNode = commitMap.get(commit.hash.toHex())
-        if (childNode) {
-          links.push({
-            source: rootNode,
-            target: childNode,
-            intermediateCount: 0,
-          })
+        links.push({
+          source: rootNode,
+          target: childNode,
+          intermediateCount: 0,
+        })
 
-          // Track root children
-          if (!childrenByParent.has(rootNode.id)) {
-            childrenByParent.set(rootNode.id, [])
-          }
-          childrenByParent.get(rootNode.id)!.push(childNode)
+        // Track root children
+        if (!childrenByParent.has(rootNode.id)) {
+          childrenByParent.set(rootNode.id, [])
         }
+        childrenByParent.get(rootNode.id)!.push(childNode)
       }
     })
 
@@ -200,7 +309,7 @@ export function CommitsTab() {
         d3
           .forceLink<CommitNode, CommitLink>(links)
           .id((d) => d.id)
-          .distance(10)
+          .distance(minifyGraph ? 80 : 10)
           .strength(1.8)
           .iterations(3), // Multiple constraint iterations for better satisfaction
       )
@@ -208,20 +317,39 @@ export function CommitsTab() {
         'charge',
         d3
           .forceManyBody()
-          .strength(-200) // Reduced repulsion to let links dominate
-          .distanceMax(100), // Limit range of repulsion
+          .strength(-300) // Increased repulsion to spread nodes more
+          .distanceMax(200), // Increased range of repulsion
       )
-      .force('x', d3.forceX(width / 2).strength(0.05)) // Gentle centering
-      .force('y', d3.forceY(height / 2).strength(0.05)) // Gentle centering
+      .force('x', d3.forceX(width / 2).strength(0.02)) // Weaker centering
+      .force('y', d3.forceY(height / 2).strength(0.02)) // Weaker centering
       .force(
         'radial',
         d3
           .forceRadial<CommitNode>(
-            (d) => calculateDepth(d) * 80, // 80 pixels per level
+            (d) => calculateDepth(d) * 120, // Increased from 80 to 120 pixels per level
             width / 2,
             height / 2,
           )
-          .strength(1), // Weak radial force to allow links to dominate
+          .strength(1.2), // Stronger radial force to push nodes outward
+      )
+      .force(
+        'charge',
+        d3
+          .forceManyBody()
+          .strength(-300) // Increased repulsion to spread nodes more
+          .distanceMax(200), // Increased range of repulsion
+      )
+      .force('x', d3.forceX(width / 2).strength(0.02)) // Weaker centering
+      .force('y', d3.forceY(height / 2).strength(0.02)) // Weaker centering
+      .force(
+        'radial',
+        d3
+          .forceRadial<CommitNode>(
+            (d) => calculateDepth(d) * 120, // Increased from 80 to 120 pixels per level
+            width / 2,
+            height / 2,
+          )
+          .strength(1.2), // Stronger radial force to push nodes outward
       )
       .force(
         'collision',
@@ -336,6 +464,19 @@ export function CommitsTab() {
       .style('pointer-events', 'none')
       .style('user-select', 'none')
 
+    // Add link labels for intermediate counts
+    const linkLabel = g
+      .append('g')
+      .selectAll('text')
+      .data(links.filter((d) => d.intermediateCount > 0))
+      .join('text')
+      .text((d) => `+${d.intermediateCount}`)
+      .attr('font-size', 9)
+      .attr('fill', '#666')
+      .attr('text-anchor', 'middle')
+      .style('pointer-events', 'none')
+      .style('user-select', 'none')
+
     // Set initial positions after simulation completes
     link
       .attr('x1', (d) => d.source.x)
@@ -346,11 +487,16 @@ export function CommitsTab() {
     node.attr('cx', (d) => d.x).attr('cy', (d) => d.y)
 
     label.attr('x', (d) => d.x).attr('y', (d) => d.y)
+
+    linkLabel
+      .attr('x', (d) => (d.source.x + d.target.x) / 2)
+      .attr('y', (d) => (d.source.y + d.target.y) / 2)
   }, [
     commits,
     searchText,
     authorFilter,
     focusedCommitHash,
+    minifyGraph,
     hook,
     vcs.bookmarks,
     vcs.head?.hash,
@@ -421,6 +567,17 @@ export function CommitsTab() {
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             fullWidth
+          />
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={minifyGraph}
+                onChange={(e) => setMinifyGraph(e.target.checked)}
+                size="small"
+              />
+            }
+            label="Minify"
+            sx={{ whiteSpace: 'nowrap' }}
           />
         </Box>
         <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
