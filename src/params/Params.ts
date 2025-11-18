@@ -24,7 +24,15 @@ export const paramConfigSchema = z.discriminatedUnion('type', [
     })
     .refine(
       (data) =>
-        // TODO: fix don't do min max
+        typeof data.min !== 'undefined' && typeof data.max !== 'undefined'
+          ? data.min <= data.max
+          : true,
+      {
+        message: 'min cannot be greater than max',
+      },
+    )
+    .refine(
+      (data) =>
         typeof data.min !== 'undefined' && typeof data.max !== 'undefined'
           ? data.min <= data.max
           : true,
@@ -34,7 +42,7 @@ export const paramConfigSchema = z.discriminatedUnion('type', [
     )
     .transform((data) => ({
       ...data,
-      default: data.default ?? data.min,
+      default: data.default ?? data.min ?? 0,
     })),
   baseConfigSchema
     .extend({
@@ -45,7 +53,7 @@ export const paramConfigSchema = z.discriminatedUnion('type', [
       step: z.number().optional(),
     })
     .refine((data) => data.min <= data.max, {
-      message: 'min cannot be greater than max',
+      message: `min cannot be greater than max`,
     })
     .transform((data) => ({
       ...data,
