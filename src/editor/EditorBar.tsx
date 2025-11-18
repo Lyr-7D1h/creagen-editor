@@ -67,7 +67,7 @@ export function EditorBar({
         </IconButton>
       </HtmlTooltip>
       <HtmlTooltip
-        title={`New project (${creagenEditor.getKeybindKeyString('editor.toggleMenu')})`}
+        title={`New project (${creagenEditor.getKeybindKeyString('new')})`}
         placement="right"
       >
         <IconButton
