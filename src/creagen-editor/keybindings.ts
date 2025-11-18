@@ -30,27 +30,41 @@ const defaultKeybindings: Keybinding[] = [
     command: 'editor.run',
   },
   {
-    key: 'ctrl+shift+f',
+    key: 'ctrl+alt+enter',
+    command: 'editor.run',
+  },
+  {
+    key: 'ctrl+alt+f',
     command: 'editor.toggleFullscreen',
   },
   {
     // TODO: enable also in sandbox
-    key: 'ctrl+f11',
+    key: 'ctrl+alt+h',
     command: 'editor.toggleHideAll',
   },
   {
-    key: 'ctrl+e',
+    key: 'ctrl+alt+e',
     command: 'editor.toggleMenu',
   },
   {
-    key: 'ctrl+j',
+    key: 'ctrl+alt+j',
     command: 'editor.toggleControlPanel',
   },
   {
-    key: 'ctrl+n',
+    key: 'ctrl+alt+n',
     command: 'new',
   },
 ]
+
+/**
+ * Helper to get the default key strings for a given command.
+ * Used by the UI to detect when bindings differ from defaults.
+ */
+export function getDefaultKeybindingsForCommand(command: Command): string[] {
+  return defaultKeybindings
+    .filter((kb) => kb.command === command)
+    .map((kb) => kb.key)
+}
 
 const logger = createContextLogger('keybindings')
 
@@ -171,6 +185,8 @@ export class Keybindings {
     // in case its a default keybind add explicit remove
     if (index === -1) {
       this.customKeybindings.push({ key, command, remove: true })
+      await this.save()
+      return
     }
     // remove custom keybind
     this.customKeybindings.splice(index, 1)

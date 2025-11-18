@@ -1,11 +1,17 @@
 import React, { useState } from 'react'
 import { useCreagenEditor } from '../../creagen-editor/CreagenContext'
 import ReplayIcon from '@mui/icons-material/Replay'
+import DeleteIcon from '@mui/icons-material/Delete'
 import { COMMANDS, Command } from '../../creagen-editor/commands'
-import { ActiveKeybinding, KeyInfo } from '../../creagen-editor/keybindings'
+import {
+  ActiveKeybinding,
+  KeyInfo,
+  getDefaultKeybindingsForCommand,
+} from '../../creagen-editor/keybindings'
 import { KeyCaptureInput } from './KeyCaptureInput'
 import { Chip, IconButton } from '@mui/material'
 import { ColumnDef, Table } from '../../shared/Table'
+import { logger } from '../../logs/logger'
 
 const formatKey = (key: string): string => {
   return key
@@ -30,13 +36,17 @@ const formatKey = (key: string): string => {
 
 interface KeybindingRow {
   command: Command
-  keybinding?: ActiveKeybinding
+  keybindings: ActiveKeybinding[]
 }
 
 export function KeybindingsTab() {
   const creagen = useCreagenEditor()
   const [, setTick] = useState(0)
-  const [editingCommand, setEditingCommand] = useState<Command | null>(null)
+  // Editing a specific binding: { command, oldKey } where oldKey undefined means "adding new"
+  const [editingCommand, setEditingCommand] = useState<{
+    command: Command
+    oldKey?: string
+  } | null>(null)
   const forceUpdate = () => setTick((t) => t + 1)
 
   const handleUpdateKeybinding = async (
@@ -44,7 +54,8 @@ export function KeybindingsTab() {
     key: KeyInfo,
     oldKey?: KeyInfo,
   ) => {
-    if (oldKey) await creagen.keybindings.removeKeybinding(oldKey, command)
+    if (oldKey != null)
+      await creagen.keybindings.removeKeybinding(oldKey, command)
     if (key.length > 0) {
       await creagen.keybindings.addKeybinding(key, command)
     }
@@ -57,12 +68,17 @@ export function KeybindingsTab() {
     forceUpdate()
   }
 
+  const handleRemoveSingle = async (key: string, command: Command) => {
+    await creagen.keybindings.removeKeybinding(key, command)
+    forceUpdate()
+  }
+
   const keybindingData: KeybindingRow[] = Object.keys(COMMANDS).map(
     (command) => ({
       command: command as Command,
-      keybinding: creagen.keybindings.getKeybindingsToCommand(
+      keybindings: creagen.keybindings.getKeybindingsToCommand(
         command as Command,
-      )[0],
+      ),
     }),
   )
 
@@ -74,45 +90,102 @@ export function KeybindingsTab() {
     {
       header: 'Keybinding',
       width: 200,
-      cell: ({ command, keybinding }) => {
-        if (editingCommand === command) {
+      cell: ({ command, keybindings }) => {
+        // If editing this command (either adding new or editing existing), show capture input
+        if (editingCommand?.command === command) {
+          const oldKey = editingCommand.oldKey
           return (
             <KeyCaptureInput
-              value={keybinding?.key ?? ''}
-              onCapture={(key) =>
-                handleUpdateKeybinding(command, key, keybinding?.key)
-              }
+              value={oldKey ?? ''}
+              onCapture={(key) => {
+                handleUpdateKeybinding(command, key, oldKey).catch(logger.error)
+              }}
               onCancel={() => setEditingCommand(null)}
             />
           )
         }
+
+        // Determine whether current bindings differ from the defaults
+        const defaultKeys = getDefaultKeybindingsForCommand(command)
+        const currentKeys = keybindings.map((kb) => kb.key)
+        const sortAndString = (arr: string[]) => arr.slice().sort().join('|')
+        const hasChanged =
+          sortAndString(defaultKeys) !== sortAndString(currentKeys)
+
         return (
           <div
-            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-            onClick={() => setEditingCommand(command)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              flexWrap: 'wrap',
+            }}
+            // clicking the container starts adding a new binding
+            onClick={() => setEditingCommand({ command })}
           >
-            {keybinding ? (
-              <code
-                style={{
-                  backgroundColor: '#f1f3f4',
-                  padding: '4px 8px',
-                  borderRadius: '4px',
-                  border: '1px solid #dadce0',
-                  cursor: 'pointer',
-                }}
-              >
-                {formatKey(keybinding.key)}
-              </code>
+            {keybindings.length > 0 ? (
+              keybindings.map((kb) => (
+                <div
+                  key={kb.key}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setEditingCommand({ command, oldKey: kb.key })
+                  }}
+                >
+                  <code
+                    style={{
+                      backgroundColor: '#f1f3f4',
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      border: '1px solid #dadce0',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {formatKey(kb.key)}
+                  </code>
+                  <IconButton
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleRemoveSingle(kb.key, command).catch(logger.error)
+                    }}
+                    size="small"
+                    title="Remove binding"
+                  >
+                    <DeleteIcon sx={{ fontSize: 16 }} />
+                  </IconButton>
+                </div>
+              ))
             ) : (
               <b style={{ cursor: 'pointer' }}>Unbound</b>
             )}
-            {keybinding?.custom && (
+
+            {/* Add new binding button */}
+            <code
+              onClick={(e) => {
+                e.stopPropagation()
+                setEditingCommand({ command })
+              }}
+              style={{
+                backgroundColor: '#fff',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                border: '1px dashed #cfd8dc',
+                cursor: 'pointer',
+              }}
+            >
+              +
+            </code>
+
+            {/* Reset all bindings for this command to defaults when changed */}
+            {hasChanged && (
               <IconButton
                 onClick={(e) => {
                   e.stopPropagation()
-                  handleResetKeybinding(command)
+                  handleResetKeybinding(command).catch(logger.error)
                 }}
                 size="small"
+                title="Reset to default bindings"
               >
                 <ReplayIcon sx={{ fontSize: 16 }} />
               </IconButton>
@@ -124,13 +197,18 @@ export function KeybindingsTab() {
     {
       header: 'When',
       width: 120,
-      cell: ({ keybinding }) => (
-        <Chip
-          color={typeof keybinding?.when === 'undefined' ? 'default' : 'info'}
-          size="small"
-          label={keybinding?.when ? keybinding.when.join(', ') : 'Global'}
-        />
-      ),
+      cell: ({ keybindings }) => {
+        const whens = keybindings.flatMap((kb) => kb.when ?? [])
+        const uniq = Array.from(new Set(whens))
+        const label = uniq.length > 0 ? uniq.join(', ') : 'Global'
+        return (
+          <Chip
+            color={uniq.length === 0 ? 'default' : 'info'}
+            size="small"
+            label={label}
+          />
+        )
+      },
     },
   ]
 
@@ -139,8 +217,10 @@ export function KeybindingsTab() {
       columns={columns}
       data={keybindingData}
       getRowKey={({ command }) => command}
-      getRowSx={({ keybinding }) => ({
-        backgroundColor: keybinding?.custom ? '#f8f9fa' : 'transparent',
+      getRowSx={({ keybindings }) => ({
+        backgroundColor: keybindings.some((kb) => kb.custom)
+          ? '#f8f9fa'
+          : 'transparent',
       })}
     />
   )

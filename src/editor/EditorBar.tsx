@@ -36,7 +36,7 @@ export function EditorBar({
         height: historyExpanded ? 'auto' : BAR_HEIGHT,
         minHeight: BAR_HEIGHT,
         backgroundColor: isFullscreen ? 'rgba(0, 0, 0, 0.5)' : 'transparent',
-        color: isFullscreen ? '#fff' : 'inherit',
+        color: isFullscreen ? '#fff' : 'grey',
       }}
     >
       <HtmlTooltip
