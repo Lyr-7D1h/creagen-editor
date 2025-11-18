@@ -25,6 +25,7 @@ npm start
 
 ## Roadmap
 
+- Define how to randomize each param and what distribution the randomization should be. Add randomize interval.
 - Use hash/active bookmark in title
 - Keep commit history buffer when changing commits
 - Version Control Software
