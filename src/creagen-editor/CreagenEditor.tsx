@@ -1,5 +1,5 @@
 import { Editor } from '../editor/Editor'
-import { logger, Severity } from '../logs/logger'
+import { log, logger, Severity } from '../logs/logger'
 import { Sandbox } from '../sandbox/Sandbox'
 import { Settings } from '../settings/Settings'
 import { CommitHash } from '../vcs/Commit'
@@ -341,7 +341,7 @@ export class CreagenEditor {
 
   /** Render current code with given libraries */
   async render() {
-    const info = logger.log(Severity.Info, 'rendering code', null)
+    const info = log(Severity.Info, 'rendering code', null)
     try {
       if (this.settings.values['editor.format_on_render'] != null) {
         await this.editor.format()

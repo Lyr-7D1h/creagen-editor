@@ -115,9 +115,6 @@ function genericLogger(context?: string) {
         // eslint-disable-next-line no-console
         console.debug(...msg)
       }
-      if (CREAGEN_MODE === 'dev') {
-        return log(Severity.Debug, formatMsg(msg))
-      }
       return ''
     },
     info: (...msg: unknown[]) => {
@@ -129,7 +126,7 @@ function genericLogger(context?: string) {
         // eslint-disable-next-line no-console
         console.info(...msg)
       }
-      return log(Severity.Info, formatMsg(msg))
+      return ''
     },
     warn: (...msg: unknown[]) => {
       if (CREAGEN_LOG_LEVEL > 3) return ''
