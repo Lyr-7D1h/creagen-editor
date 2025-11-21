@@ -25,7 +25,24 @@ npm start
 
 ## Roadmap
 
-- Define how to randomize each param and what distribution the randomization should be. Add randomize interval.
+- Define how to randomize each param and what distribution the randomization should be. 
+    - Add randomize interval.
+- Add sketch params
+  - Randomize params in interval
+  - Define distribution randomization distribution per param
+  - Add groups 
+    - ```
+    const asdf = useGroup("asdf")
+    const title = asdf.useParam("string")
+    ```
+  - Input mathematical functions
+  - Input colors
+  - Input images
+  - Set values through a QR
+  - Use /#/params in path for defining params
+- Actions
+    - For shareable link
+    - Running in interval
 - Use hash/active bookmark in title
 - Keep commit history buffer when changing commits
 - Version Control Software
@@ -34,16 +51,9 @@ npm start
   - Show graph of all commits and bookmarks ever made
   - Change id to keep a unique id even though commits might change content
   - Show diffs between commits
-- Moveable and rescalable windows
+- Moveable windows
 - Shareable links
     - Url minifier for code urls
-- Actions
-    - For shareable link
-- Autorun sketches
-    - prevent iframe from hogging all resources
-- Add sketch params
-  - Add dynamically
-  - Input mathematical functions
 - Live coding, no delay in updates
 - Export to html with js inlined
 - Add Hydra support https://github.com/hydra-synth/hydra-synth?tab=readme-ov-file
