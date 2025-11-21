@@ -12,7 +12,7 @@ import { useLocalStorage } from '../storage/useLocalStorage'
 import { Actions } from './Actions'
 import { useCreagenEditor } from './CreagenContext'
 import { PerformanceMonitor } from '../sandbox/PerformanceMonitor'
-import { ControlPanel } from './ControlPanel'
+import { ControlPanel } from '../control-panel/ControlPanel'
 import { ParamsView } from '../params/ParamsView'
 
 const MIN_WINDOW_SIZE = 200
@@ -33,6 +33,10 @@ export function CreagenEditorViewSplit() {
   const [menu, setMenu] = useLocalStorage('menu-view', false)
   const [controlOpen, setControlOpen] = useLocalStorage(
     'control-panel-open',
+    false,
+  )
+  const [controlPanelMaximized, setControlPanelMaximized] = useLocalStorage(
+    'control-panel-maximized',
     false,
   )
 
@@ -117,25 +121,34 @@ export function CreagenEditorViewSplit() {
                     }
                   }}
                 >
-                  <Allotment.Pane minSize={MIN_WINDOW_SIZE} preferredSize="70%">
-                    <div
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        // needed to show allotment border in between editor and params
-                        marginLeft: 1,
-                      }}
+                  {(!controlPanelMaximized || !controlOpen) && (
+                    <Allotment.Pane
+                      minSize={MIN_WINDOW_SIZE}
+                      preferredSize="70%"
                     >
-                      <EditorView
-                        toggleMenu={() => setMenu(!menu)}
-                        menu={menu}
-                        onMenuOpen={() => setMenu(!menu)}
-                      />
-                    </div>
-                  </Allotment.Pane>
+                      <div
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          // needed to show allotment border in between editor and params
+                          marginLeft: 1,
+                        }}
+                      >
+                        <EditorView
+                          toggleMenu={() => setMenu(!menu)}
+                          menu={menu}
+                          onMenuOpen={() => setMenu(!menu)}
+                        />
+                      </div>
+                    </Allotment.Pane>
+                  )}
                   <Allotment.Pane visible={controlOpen} snap>
                     <ControlPanel
                       onClose={() => setControlOpen(!controlOpen)}
+                      isMaximized={controlPanelMaximized}
+                      onMaximizeToggle={() =>
+                        setControlPanelMaximized(!controlPanelMaximized)
+                      }
                     />
                   </Allotment.Pane>
                 </Allotment>

@@ -13,7 +13,7 @@ declare global {
 
 function isCustomEvent(
   event: Event,
-): event is CustomEvent<{ value: any; key: string }> {
+): event is CustomEvent<{ value: unknown; key: string }> {
   if ('detail' in event && event instanceof CustomEvent) {
     if ('value' in event.detail && 'key' in event.detail) {
       return true
@@ -50,10 +50,12 @@ export function useLocalStorage<K extends LocalStorageOnlyKey>(
     (event: Event) => {
       if (event instanceof StorageEvent && event.key === key) {
         setStoredValue(
-          event.newValue ? JSON.parse(event.newValue) : initialValue,
+          event.newValue != null
+            ? (JSON.parse(event.newValue) as StorageValue<K>)
+            : initialValue,
         )
       } else if (isCustomEvent(event) && event.detail.key === key) {
-        setStoredValue(event.detail.value)
+        setStoredValue(event.detail.value as StorageValue<K>)
       }
     },
     [key, initialValue],

@@ -11,6 +11,8 @@ import {
   TextField,
   Tooltip,
   Typography,
+  Select,
+  MenuItem,
 } from '@mui/material'
 import {
   Refresh as RefreshIcon,
@@ -21,6 +23,7 @@ import type { ParamConfig, ParamKey } from './Params'
 import { Params } from './Params'
 import { useSettings } from '../events/useEditorEvents'
 import { generateHumanReadableName } from '../vcs/generateHumanReadableName'
+import type { SelectChangeEvent } from '@mui/material'
 
 function StringInput({
   value,
@@ -447,9 +450,7 @@ function ParamControl({
       break
 
     case 'number': {
-      const numValue = (
-        typeof value === 'number' ? value : config.default
-      ) as number
+      const numValue = typeof value === 'number' ? value : config.default
       control = (
         <NumberInput
           config={config}
@@ -760,7 +761,7 @@ export function ParamsView() {
     }
   }
 
-  const handleRandomizeAll = () => {
+  const handleRandomizeAll = React.useCallback(() => {
     params.configs.forEach((config, key) => {
       const randomValue = generateRandomValue(config)
       creagenEditor.params.setValue(key, randomValue)
@@ -770,7 +771,7 @@ export function ParamsView() {
     if (autoRender) {
       void creagenEditor.render()
     }
-  }
+  }, [creagenEditor, params.configs, autoRender, forceUpdate])
 
   const handleResetToDefaults = () => {
     params.configs.forEach((config, key) => {
@@ -786,6 +787,24 @@ export function ParamsView() {
       void creagenEditor.render()
     }
   }
+
+  // Interval (ms) for automatic regeneration; 0 = off
+  const [regenIntervalMs, setRegenIntervalMs] = React.useState<number>(0)
+
+  // Manage automatic regeneration interval. Placed after handlers so it can call them.
+  React.useEffect(() => {
+    let id: number | undefined
+    if (regenIntervalMs > 0) {
+      // run an immediate randomization, then schedule recurring
+      handleRandomizeAll()
+      id = window.setInterval(() => {
+        handleRandomizeAll()
+      }, regenIntervalMs) as unknown as number
+    }
+    return () => {
+      if (id != null) window.clearInterval(id as unknown as number)
+    }
+  }, [regenIntervalMs, handleRandomizeAll])
 
   return (
     <Box
@@ -822,11 +841,29 @@ export function ParamsView() {
               size="small"
               sx={{ p: 0.5 }}
               disabled={params.length === 0}
+              color={regenIntervalMs > 0 ? 'primary' : 'default'}
             >
               <ShuffleIcon fontSize="small" />
             </IconButton>
           </span>
         </Tooltip>
+        <Select
+          size="small"
+          value={String(regenIntervalMs)}
+          onChange={(e: SelectChangeEvent<string>) =>
+            setRegenIntervalMs(Number(e.target.value))
+          }
+          disabled={params.length === 0}
+          sx={{ ml: 0.5, width: 88 }}
+        >
+          <MenuItem value={'0'}>Off</MenuItem>
+          <MenuItem value={'1000'}>1s</MenuItem>
+          <MenuItem value={'2000'}>2s</MenuItem>
+          <MenuItem value={'3000'}>3s</MenuItem>
+          <MenuItem value={'5000'}>5s</MenuItem>
+          <MenuItem value={'8000'}>8s</MenuItem>
+          <MenuItem value={'13000'}>13s</MenuItem>
+        </Select>
         <FormControlLabel
           control={
             <Checkbox

@@ -33,6 +33,7 @@ export type LocalStorageOnlyKey =
   | 'menu-settings-hidden'
   | 'contorl-panel-tab'
   | 'control-panel-open'
+  | 'control-panel-maximized'
   | 'control-panel-position'
   | 'control-panel-size'
 /** LocalStorage + Remote */
@@ -62,6 +63,7 @@ type StorageKeyValueMap = {
   'editor-scroll-position': number
   'contorl-panel-tab': number
   'control-panel-open': boolean
+  'control-panel-maximized': boolean
   'control-panel-position': { x: number; y: number }
   'control-panel-size': { width: number; height: number }
   'custom-keybindings': CustomKeybinding[]

@@ -1,11 +1,11 @@
 import React from 'react'
-import { Box, Tab, Tabs } from '@mui/material'
+import { Box } from '@mui/material'
 import { Rnd } from 'react-rnd'
 import { ParamsView } from '../params/ParamsView'
 import { useLocalStorage } from '../storage/useLocalStorage'
-import { useCreagenEditor } from './CreagenContext'
-import { CloseButton } from './CloseButton'
+import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import { useForceUpdateOnEditorEvent } from '../events/useEditorEvents'
+import { TopBar } from './TopBar'
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -30,113 +30,6 @@ function TabPanel(props: TabPanelProps) {
   )
 }
 
-interface TopBarProps {
-  tabs: Array<{
-    label: string
-    index: number
-    metadata: string
-    disabled: boolean
-  }>
-  validActiveTab: number
-  onTabChange: (_event: React.SyntheticEvent, newValue: number) => void
-  onClose?: () => void
-  draggable?: boolean
-}
-
-function TopBar({
-  tabs,
-  validActiveTab,
-  onTabChange,
-  onClose,
-  draggable,
-}: TopBarProps) {
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        minHeight: 32,
-        flexShrink: 0,
-        position: 'relative',
-        pointerEvents: 'auto',
-        gap: 0.5,
-        ...(draggable === true && {
-          cursor: 'grab',
-          '&:active': {
-            cursor: 'grabbing',
-          },
-        }),
-      }}
-    >
-      <Tabs
-        value={validActiveTab}
-        onChange={onTabChange}
-        aria-label="control panel tabs"
-        sx={{
-          flex: 1,
-          minHeight: 32,
-          pointerEvents: 'auto',
-          '& .MuiTabs-indicator': {
-            display: 'none',
-          },
-          '& .MuiTabs-flexContainer': {
-            gap: 0,
-          },
-        }}
-      >
-        {tabs.map((tab) => (
-          <Tab
-            key={tab.index}
-            label={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <span>{tab.label}</span>
-                {tab.metadata && (
-                  <Box
-                    component="span"
-                    sx={{
-                      fontSize: '0.65rem',
-                      opacity: 0.7,
-                      fontWeight: 400,
-                    }}
-                  >
-                    {tab.metadata}
-                  </Box>
-                )}
-              </Box>
-            }
-            value={tab.index}
-            disabled={tab.disabled}
-            sx={{
-              minHeight: 28,
-              minWidth: 'auto',
-              px: 1.5,
-              py: 0.5,
-              fontSize: '0.75rem',
-              textTransform: 'none',
-              color: 'text.secondary',
-              backgroundColor:
-                validActiveTab === tab.index ? 'primary.main' : 'transparent',
-              '&:hover': {
-                backgroundColor:
-                  validActiveTab === tab.index
-                    ? 'primary.dark'
-                    : 'action.hover',
-              },
-              '&.Mui-selected': {
-                color:
-                  validActiveTab === tab.index
-                    ? 'primary.contrastText'
-                    : 'text.primary',
-              },
-            }}
-          />
-        ))}
-      </Tabs>
-      {onClose && <CloseButton onClose={onClose} />}
-    </Box>
-  )
-}
-
 function TabContent({ validActiveTab }: { validActiveTab: number }) {
   return (
     <Box sx={{ flex: 1, overflow: 'hidden' }}>
@@ -150,9 +43,14 @@ function TabContent({ validActiveTab }: { validActiveTab: number }) {
 
 export function ControlPanel({
   onClose,
+  onMaximizeToggle,
+  isMaximized,
   floating = false,
 }: {
   onClose?: () => void
+  /** Disabled if floating=true */
+  onMaximizeToggle?: () => void
+  isMaximized?: boolean
   floating?: boolean
 }) {
   const creagenEditor = useCreagenEditor()
@@ -209,6 +107,8 @@ export function ControlPanel({
           validActiveTab={validActiveTab}
           onTabChange={handleTabChange}
           onClose={onClose}
+          onMaximizeToggle={onMaximizeToggle}
+          isMaximized={isMaximized}
         />
         <TabContent validActiveTab={validActiveTab} />
       </Box>
