@@ -109,3 +109,23 @@ export function getDocumentHeight() {
     document.documentElement.clientHeight,
   )
 }
+
+function isPlainObject(x: unknown): x is Record<string, unknown> {
+  return Boolean(x) && typeof x === 'object' && !Array.isArray(x)
+}
+
+export function deepEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true
+  if (a == null || b == null) return false
+  if (Array.isArray(a) && Array.isArray(b)) {
+    if (a.length !== b.length) return false
+    return a.every((v, i) => deepEqual(v, b[i]))
+  }
+  if (isPlainObject(a) && isPlainObject(b)) {
+    const ka = Object.keys(a as object)
+    const kb = Object.keys(b as object)
+    if (ka.length !== kb.length) return false
+    return ka.every((k) => deepEqual(a[k], b[k]))
+  }
+  return false
+}

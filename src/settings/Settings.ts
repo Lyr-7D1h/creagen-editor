@@ -42,7 +42,7 @@ export class Settings {
     // Initialize with deep cloned default settings
     const config = Object.entries(DEFAULT_SETTINGS_CONFIG).reduce(
       (acc, [key, entry]) => {
-        acc[key as ParamKey] = {
+        acc[key] = {
           ...entry,
         }
         return acc

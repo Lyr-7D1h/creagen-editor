@@ -20,6 +20,7 @@ import { Command, COMMANDS } from './commands'
 import { SemVer } from 'semver'
 import { ResourceMonitor } from '../resource-monitor/ResourceMonitor'
 import { Params } from '../params/Params'
+import { Controller } from '../controller/Controller'
 
 export class CreagenEditor {
   resourceMonitor = new ResourceMonitor()
@@ -30,6 +31,7 @@ export class CreagenEditor {
   sandbox: Sandbox
   vcs: VCS
   keybindings: Keybindings
+  controller: Controller | null
 
   // private commands: Map<string, (editor: CreagenEditor) => void> = new Map()
   libraryImports: Map<string, LibraryImport> = new Map()
@@ -67,7 +69,11 @@ export class CreagenEditor {
     this.storage = storage
     this.vcs = vcs
     this.keybindings = new Keybindings(customKeybindings, this)
-    this.params = new Params()
+    this.controller =
+      CREAGEN_EDITOR_CONTROLLER_URL != null
+        ? new Controller(CREAGEN_EDITOR_CONTROLLER_URL)
+        : null
+    this.params = new Params(this.controller ?? undefined)
 
     // add creagen types
     this.editor.addTypings(Params.TYPINGS, 'creagen-editor')
@@ -89,6 +95,8 @@ export class CreagenEditor {
 
     if (this.settings.get('sandbox.resource_monitor'))
       this.resourceMonitor.listen()
+    if (this.controller && this.settings.get('controller.enabled'))
+      this.setupController().catch(logger.error)
 
     // Setup listener for updating code from history
     window.addEventListener('popstate', () => {
@@ -103,6 +111,14 @@ export class CreagenEditor {
 
     // Listen to setting changes
     editorEvents.on('settings:changed', ({ key, value }) => {
+      if (this.controller && key === 'controller.enabled') {
+        if (value as boolean) {
+          this.setupController().catch(logger.error)
+        } else {
+          this.controller.disconnect()
+        }
+      }
+
       if (key === 'editor.code_in_url') {
         this.vcs.updateUrl(this.editor.getValue())
         return
@@ -131,6 +147,49 @@ export class CreagenEditor {
           }
           window.history.replaceState(null, '', url)
         }
+      }
+    })
+  }
+
+  private async setupController() {
+    if (!this.controller) return
+    if (this.controller.open()) return
+
+    const id = await this.controller.new()
+    await this.controller.connect(id)
+    editorEvents.emit('controller:connected', undefined)
+    this.controller.onMessage((msg) => {
+      switch (msg.type) {
+        case 'editor:param-delete':
+        case 'editor:param-add':
+        case 'editor:param-value':
+        case 'editor:param-regen-interval':
+        case 'editor:state': {
+          return
+        }
+
+        case 'client:param-value': {
+          this.params.setValue(msg.key, msg.value)
+          editorEvents.emit('params:value', undefined)
+          return
+        }
+        case 'client:statereq':
+          this.controller!.send({
+            type: 'editor:state',
+            values: [...this.params.store.entries()],
+            configs: [...this.params.configs.entries()],
+            regenInterval: this.params.regenInterval,
+          })
+          return
+        case 'client:param-regen-interval':
+          this.params.setRegenInterval(msg.interval)
+          editorEvents.emit('params:value', undefined)
+          return
+        case 'connection':
+        case 'disconnection':
+          return
+        case 'error':
+          logger.error(msg.error)
       }
     })
   }
@@ -316,7 +375,7 @@ export class CreagenEditor {
     // eslint-disable-next-line no-param-reassign
     code = parseCode(code, this.libraryImports, this.params)
     this.params.save()
-    editorEvents.emit('params:update', undefined)
+    editorEvents.emit('params:config', undefined)
     return code
   }
 

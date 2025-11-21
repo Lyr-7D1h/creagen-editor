@@ -14,6 +14,7 @@ import { useCreagenEditor } from './CreagenContext'
 import { PerformanceMonitor } from '../sandbox/PerformanceMonitor'
 import { ControlPanel } from '../control-panel/ControlPanel'
 import { ParamsView } from '../params/ParamsView'
+import { QR } from './QR'
 
 const MIN_WINDOW_SIZE = 200
 
@@ -27,6 +28,7 @@ export function CreagenEditorViewSplit() {
   useForceUpdateOnEditorEvent('render')
   let fullscreen = useSettings('editor.fullscreen')
   const hideAll = useSettings('hide_all')
+  const showQR = useSettings('show_qr')
   const resourceMonitorEnabled = useSettings('sandbox.resource_monitor')
   fullscreen = hideAll ? true : fullscreen
 
@@ -97,6 +99,7 @@ export function CreagenEditorViewSplit() {
                     onMenuOpen={() => setMenu(!menu)}
                   />
                   {resourceMonitorEnabled && <PerformanceMonitor />}
+                  {showQR && <QR />}
                 </div>
 
                 {controlOpen && (
@@ -163,6 +166,7 @@ export function CreagenEditorViewSplit() {
                 >
                   <SandboxView />
                   {resourceMonitorEnabled && <PerformanceMonitor />}
+                  {showQR && <QR />}
                 </div>
               </Allotment.Pane>
             </Allotment>
@@ -175,7 +179,7 @@ export function CreagenEditorViewSplit() {
 
 export function CreagenEditorViewContentMobile() {
   const creagenEditor = useCreagenEditor()
-  useForceUpdateOnEditorEvent('params:update')
+  useForceUpdateOnEditorEvent('params:config')
   const hideAll = useSettings('hide_all')
   const [menu, setMenu] = useLocalStorage('menu-view', false)
 

@@ -1,6 +1,7 @@
 import { z } from 'zod'
-import { Tagged } from '../util'
 import { generateHumanReadableName } from '../vcs/generateHumanReadableName'
+import { Controller, ControllerMessage } from '../controller/Controller'
+import { deepEqual } from '../util'
 
 // https://muffinman.io/ctrls/#/animate:true/opacity-seed:knew-except-fence/hue:220/speed:2/shape:6/size:0,1
 
@@ -156,7 +157,7 @@ export type ValueFromConfig<T extends ParamConfig> = T extends {
       : never
     : never
 
-export type AllParams = Array<[ParamKey, ParamConfig, unknown]>
+export type AllParams = Array<[string, ParamConfig, unknown]>
 
 export class Params {
   static TYPINGS = `
@@ -225,10 +226,20 @@ declare function useParam<Items extends Record<string, any>>(
   type: 'radio',
   options: Omit<Extract<ParamConfig, { type: 'radio' }>, 'type'> & { items: Items }
 ): Items[keyof Items];
-` /** key: [ParamConfig, value] */
-  private previousStore: Map<ParamKey, unknown> = new Map()
-  readonly store: Map<ParamKey, unknown> = storeFromQueryParam()
-  readonly configs: Map<ParamKey, ParamConfig> = new Map()
+`
+  private previousStore: Store = new Map()
+  private previousConfigs: Map<string, ParamConfig> = new Map()
+  readonly store: Map<string, unknown> = storeFromQueryParam()
+  readonly configs: Map<string, ParamConfig> = new Map()
+  regenInterval = 0
+
+  constructor(readonly controller?: Controller) {}
+
+  sendToController(msg: ControllerMessage) {
+    if (!this.controller) return
+    if (!this.controller.open()) return
+    this.controller.send(msg)
+  }
 
   get length(): number {
     return this.store.size
@@ -295,35 +306,65 @@ declare function useParam<Items extends Record<string, any>>(
     window.history.replaceState(null, '', url)
   }
 
-  setValue(key: string, newValue: unknown): void {
-    const k = key as ParamKey
+  setValue(key: string, value: unknown): void {
+    const k = key
     if (!this.store.has(k)) return
-    this.store.set(k, newValue)
+    this.store.set(k, value)
     this.save()
+    this.sendToController({ type: 'editor:param-value', key, value })
   }
 
-  /**
-   * Clear all parameters from the store while preserving their values
-   * This should be called before parsing code to remove unused params
-   */
-  clearAndPreserveValues(): void {
+  setRegenInterval(interval: number) {
+    this.regenInterval = interval
+    this.sendToController({
+      type: 'editor:param-regen-interval',
+      value: interval,
+    })
+  }
+
+  /** Preserver values before updating param configs */
+  preserve() {
     // Save current values
     this.previousStore = new Map(this.store)
-
-    // Clear the store adn and configs
+    this.previousConfigs = new Map(this.configs)
     this.store.clear()
     this.configs.clear()
+  }
+
+  /** Done updating configs send updates to controllers and clear preserve */
+  done() {
+    // update controllers
+    const entries = [...this.previousConfigs.entries()]
+    for (const [key, previousConfig] of entries) {
+      const config = this.configs.get(key)
+      if (!config) {
+        this.sendToController({ type: 'editor:param-delete', key })
+        continue
+      }
+      if (!deepEqual(config, previousConfig)) {
+        this.sendToController({ type: 'editor:param-delete', key })
+        this.sendToController({ type: 'editor:param-add', key, config })
+      }
+    }
+
+    this.configs.forEach((config, key) => {
+      if (this.previousConfigs.has(key)) return
+      this.sendToController({ type: 'editor:param-add', key, config })
+    })
+
+    this.previousConfigs.clear()
+    this.previousStore.clear()
   }
 
   addParam<T extends ParamConfig>(config: T) {
     // Generate a human-readable key based on title or type
     const baseKey = config.title ?? config.type
-    let key = baseKey as ParamKey
+    let key = baseKey
 
     // If key already exists, append incrementing number
     let counter = 1
     while (this.store.has(key)) {
-      key = `${baseKey}_${counter}` as ParamKey
+      key = `${baseKey}_${counter}`
       counter++
     }
 
@@ -405,7 +446,7 @@ function storeFromQueryParam(): Store {
   let quoted = false
   for (const c of urlParam) {
     if (!key && !quoted && c === '~') {
-      parsed.set(k as ParamKey, JSON.parse(v))
+      parsed.set(k, JSON.parse(v))
       k = ''
       v = ''
       key = true
@@ -426,15 +467,14 @@ function storeFromQueryParam(): Store {
       v += c
     }
   }
-  if (k.length > 0) parsed.set(k as ParamKey, JSON.parse(v))
+  if (k.length > 0) parsed.set(k, JSON.parse(v))
 
   return parsed
 }
-function storeToQueryParam(store: Store) {
+export function storeToQueryParam(store: Store) {
   return Array.from(store.entries())
     .map(([key, val]) => `${String(key)}.${JSON.stringify(val)}`)
     .join('~')
 }
 
-export type ParamKey = Tagged<string, 'paramKey'>
-type Store = Map<ParamKey, unknown>
+type Store = Map<string, unknown>

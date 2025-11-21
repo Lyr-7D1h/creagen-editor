@@ -1,5 +1,5 @@
 import React from 'react'
-import { Entry, ParamKey } from '../../settings/SettingsConfig'
+import { Entry } from '../../settings/SettingsConfig'
 import {
   Accordion,
   AccordionDetails,
@@ -71,7 +71,7 @@ export function SettingsTab() {
                   <TableBody>
                     {entries.map(([paramKey, e]) => {
                       const entry = e as Entry
-                      const value = values[paramKey as ParamKey]
+                      const value = values[paramKey]
 
                       if (entry.type === 'button')
                         return (

@@ -1,10 +1,14 @@
+import QrCodeIcon from '@mui/icons-material/QrCode'
 import React, { useEffect, useMemo, useState } from 'react'
 import { Export } from './Export'
 import { useCreagenEditor } from './CreagenContext'
 import StopCircleIcon from '@mui/icons-material/StopCircle'
 import { MenuBook, PlayCircleFilled } from '@mui/icons-material'
 import { IconButton, useTheme } from '@mui/material'
-import { useSettings } from '../events/useEditorEvents'
+import {
+  useForceUpdateOnEditorEvent,
+  useSettings,
+} from '../events/useEditorEvents'
 import { HtmlTooltip } from '../editor/HtmlTooltip'
 import { editorEvents } from '../events/events'
 import { isMobile } from './isMobile'
@@ -18,7 +22,9 @@ export function Actions({
 }) {
   const theme = useTheme()
   const creagenEditor = useCreagenEditor()
+  useForceUpdateOnEditorEvent('params:config')
   const exportEnabled = useSettings('actions.export_enabled')
+  const showQR = useSettings('show_qr')
 
   const [frozen, setFrozen] = useState(false)
   useEffect(() => {
@@ -37,6 +43,28 @@ export function Actions({
   const size = isMobile() ? '60px' : '50px'
   const buttons = useMemo(() => {
     const buttons = []
+    if (
+      CREAGEN_EDITOR_CONTROLLER_URL != null &&
+      creagenEditor.params.length > 0
+    ) {
+      buttons.push(
+        <HtmlTooltip
+          key="qr"
+          title={showQR ? 'Enable controller QR' : 'Disable controller QR'}
+        >
+          <IconButton
+            size="small"
+            color={showQR ? 'primary' : 'default'}
+            onClick={() => creagenEditor.executeCommand('sandbox.toggleQR')}
+            style={{
+              cursor: 'pointer',
+            }}
+          >
+            <QrCodeIcon style={{ fontSize: size }} />
+          </IconButton>
+        </HtmlTooltip>,
+      )
+    }
     if (exportEnabled)
       buttons.push(
         <Export key="export" color={theme.palette.primary.main} size={size} />,
@@ -94,6 +122,7 @@ export function Actions({
     exportEnabled,
     frozen,
     hasRun,
+    showQR,
     size,
     theme.palette.primary.main,
     toggleMenu,

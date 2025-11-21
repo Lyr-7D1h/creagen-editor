@@ -6,11 +6,15 @@ import { AnalyzeContainerResult } from '../sandbox/SandboxMessageHandler'
 type EditorEvents = {
   render: void
 
+  'controller:connected': void
+
   'deps:remove': string
   'deps:add': string
 
-  // Parameter configs got updated
-  'params:update': void
+  /** Params config update */
+  'params:config': void
+  /** Params value update */
+  'params:value': void
 
   // VCS events
   'vcs:commit': { commit: Commit; code: string }

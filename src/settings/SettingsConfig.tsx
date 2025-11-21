@@ -28,6 +28,14 @@ const DEFAULT_CONFIG_VALUE = {
     },
     value: false,
   },
+  show_qr: {
+    type: 'param',
+    hidden: true,
+    fromQueryParam: (value: string) => {
+      return value === 'true'
+    },
+    value: false,
+  },
 
   editor: {
     type: 'folder',
@@ -91,6 +99,16 @@ const DEFAULT_CONFIG_VALUE = {
     type: 'param',
     label: 'Render code on start up',
     value: true,
+  },
+
+  controller: {
+    type: 'folder',
+    title: 'Controller',
+  },
+  'controller.enabled': {
+    type: 'param',
+    label: 'Enable controller',
+    value: false,
   },
 
   actions: {

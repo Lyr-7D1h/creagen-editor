@@ -108,7 +108,7 @@ export function parseCode(
   params: Params,
 ): string {
   // Clear params but preserve their values - only params found in the current code will be re-added
-  params.clearAndPreserveValues()
+  params.preserve()
 
   // First pass: collect all useParam calls and their replacements via text-based replacement
   const tempSourceFile = ts.createSourceFile(
@@ -171,6 +171,7 @@ export function parseCode(
   }
 
   collectUseParams(tempSourceFile)
+  params.done()
 
   // Apply replacements in reverse order to maintain correct positions
   replacements.sort((a, b) => b.start - a.start)

@@ -86,6 +86,12 @@ export const COMMANDS = {
       )
     },
   },
+  'sandbox.toggleQR': {
+    description: 'Toggle controller qr in the sandbox',
+    handler: (editor: CreagenEditor) => {
+      editor.settings.set('show_qr', !editor.settings.get('show_qr'))
+    },
+  },
 }
 
 export const commandSchema = z.string().transform((data, ctx) => {

@@ -1,5 +1,5 @@
 import fg from 'fast-glob'
-import { defineConfig, loadEnv } from 'vite'
+import { defineConfig } from 'vite'
 import path from 'path'
 import fs from 'fs'
 import react from '@vitejs/plugin-react'
@@ -58,6 +58,21 @@ function watchExternal() {
   }
 }
 
+function redirectController() {
+  return {
+    name: 'redirect-controller',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        // Match /controller/* but not the actual index.html file
+        if (req.url.startsWith('/controller/') && !req.url.includes('.')) {
+          req.url = '/controller/index.html'
+        }
+        next()
+      })
+    },
+  }
+}
+
 function injectAnalytics(mode) {
   const analyticsScript =
     mode === 'production'
@@ -69,20 +84,25 @@ function injectAnalytics(mode) {
     transformIndexHtml: {
       order: 'pre',
       handler(html, ctx) {
-        // Only process main index.html, not sandbox
-        if (ctx.filename.includes('sandbox-runtime')) {
+        if (ctx.filename.includes('sandbox-runtime.html')) {
           return html
         }
+        // Only process main index.html
         return html.replace('<%- analyticsScript %>', analyticsScript)
       },
     },
   }
 }
 
+const commitHeadFile = './.git/FETCH_HEAD'
 function commitHash() {
   if (process.env.CREAGEN_EDITOR_COMMIT_HASH)
     return process.env.CREAGEN_EDITOR_COMMIT_HASH
-  const head = fs.readFileSync('./.git/FETCH_HEAD', 'utf-8')
+  if (!fs.existsSync(commitHeadFile)) {
+    console.warn(`No commit hash found: ${commitHeadFile} doesnt exist`)
+    return null
+  }
+  const head = fs.readFileSync(commitHeadFile, 'utf-8')
   for (const line of head.split('\n')) {
     const [commit, _, __, branch] = line.split(/ |\t+/)
     if (branch && branch.replaceAll("'", '') === 'master') {
@@ -110,6 +130,9 @@ export default defineConfig(async ({ mode }) => {
         : null,
       CREAGEN_EDITOR_VERSION: JSON.stringify(process.env.npm_package_version),
       CREAGEN_EDITOR_COMMIT_HASH: JSON.stringify(commitHash()),
+      CREAGEN_EDITOR_CONTROLLER_URL: process.env.CREAGEN_EDITOR_CONTROLLER_URL
+        ? JSON.stringify(process.env.CREAGEN_EDITOR_CONTROLLER_URL)
+        : '"https://controller.creagen.dev"',
       CREAGEN_EDITOR_SANDBOX_RUNTIME_URL: process.env
         .CREAGEN_EDITOR_SANDBOX_RUNTIME_URL
         ? JSON.stringify(process.env.CREAGEN_EDITOR_SANDBOX_RUNTIME_URL)
@@ -130,14 +153,20 @@ export default defineConfig(async ({ mode }) => {
       },
       rollupOptions: {
         input: {
-          ...(process.env.VITE_ENTRYPOINT !== 'sandbox'
+          ...(process.env.VITE_ENTRYPOINT !== 'sandbox' &&
+          process.env.VITE_ENTRYPOINT !== 'controller'
             ? {
                 main: path.resolve(__dirname, 'index.html'),
               }
             : {}),
-          ...(process.env.VITE_ENTRYPOINT !== 'editor'
+          ...(process.env.VITE_ENTRYPOINT === 'sandbox'
             ? {
                 sandbox: path.resolve(__dirname, 'sandbox-runtime/index.html'),
+              }
+            : {}),
+          ...(process.env.VITE_ENTRYPOINT === 'controller'
+            ? {
+                params: path.resolve(__dirname, 'controller/index.html'),
               }
             : {}),
         },
@@ -151,6 +180,7 @@ export default defineConfig(async ({ mode }) => {
     plugins: [
       ...(creagenDevPath ? [localLibraryOnHttp(mode), watchExternal()] : []),
       // sandboxJs(mode),
+      redirectController(),
       injectAnalytics(mode),
       react(),
     ],

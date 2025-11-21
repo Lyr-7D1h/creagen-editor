@@ -8,6 +8,7 @@
     "build": "vite build -m production",
     "build:editor": "VITE_ENTRYPOINT=editor vite build -m production",
     "build:sandbox": "VITE_ENTRYPOINT=sandbox vite build -m production && mv dist/sandbox-runtime/index.html dist/index.html && rm -r dist/sandbox-runtime",
+    "build:controller": "VITE_ENTRYPOINT=controller vite build -m production && mv dist/controller/index.html dist/index.html && rm -r dist/controller",
     "format": "prettier -w src/",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
     "lint:fix": "eslint . --ext .ts,.tsx --fix"
@@ -53,6 +54,7 @@
     "monaco-vim": "^0.4.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-qr-code": "^2.0.18",
     "react-rnd": "^10.5.2",
     "semver": "^7.7.1",
     "tslib": "^2.8.1",
