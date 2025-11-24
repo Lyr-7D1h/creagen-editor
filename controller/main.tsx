@@ -46,17 +46,29 @@ export function ControllerApp() {
           switch (msg.type) {
             case 'editor:param-delete': {
               if (!initialized) return
-              configs.delete(msg.key)
+              setConfigs((prev) => {
+                const next = new Map(prev)
+                next.delete(msg.key)
+                return next
+              })
               return
             }
             case 'editor:param-add': {
               if (!initialized) return
-              configs.set(msg.key, msg.config)
+              setConfigs((prev) => {
+                const next = new Map(prev)
+                next.set(msg.key, msg.config)
+                return next
+              })
               return
             }
             case 'editor:param-value': {
               if (!initialized) return
-              values.set(msg.key, msg.value)
+              setValues((prev) => {
+                const next = new Map(prev)
+                next.set(msg.key, msg.value)
+                return next
+              })
               return
             }
             case 'editor:param-regen-interval': {
@@ -87,7 +99,6 @@ export function ControllerApp() {
         controller.send({ type: 'client:statereq' })
       })
       .catch(logger.error)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
