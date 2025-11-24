@@ -120,8 +120,16 @@ function NumberInput({
     const val = parseFloat(inputValue)
     const valid = !isNaN(val) && Params.isValidValue(config, val)
     setIsValid(valid)
+  }
+
+  const commit = () => {
+    const val = parseFloat(localValue)
+    const valid = !isNaN(val) && Params.isValidValue(config, val)
+    setIsValid(valid)
     if (valid) {
       onChange(val)
+    } else {
+      setLocalValue(String(value))
     }
   }
 
@@ -130,6 +138,12 @@ function NumberInput({
       type="number"
       value={localValue}
       onChange={(e) => handleChange(e.target.value)}
+      onBlur={() => commit()}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          commit()
+        }
+      }}
       slotProps={{
         htmlInput: {
           min,
@@ -175,8 +189,17 @@ function NumberSliderInput({
     const val = parseFloat(inputValue)
     const valid = !isNaN(val) && Params.isValidValue(config, val)
     setIsValid(valid)
+    // don't call onChange here; commit on blur or Enter
+  }
+
+  const commit = () => {
+    const val = parseFloat(localValue)
+    const valid = !isNaN(val) && Params.isValidValue(config, val)
+    setIsValid(valid)
     if (valid) {
       onChange(val)
+    } else {
+      setLocalValue(String(value))
     }
   }
 
@@ -186,6 +209,10 @@ function NumberSliderInput({
         type="number"
         value={localValue}
         onChange={(e) => handleChange(e.target.value)}
+        onBlur={() => commit()}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') commit()
+        }}
         slotProps={{
           htmlInput: {
             min,
