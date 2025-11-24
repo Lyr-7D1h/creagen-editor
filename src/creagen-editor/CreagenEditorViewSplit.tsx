@@ -28,14 +28,13 @@ export function CreagenEditorViewSplit() {
   useForceUpdateOnEditorEvent('render')
   let fullscreen = useSettings('editor.fullscreen')
   const hideAll = useSettings('hide_all')
-  const showQR = useSettings('show_qr')
   const resourceMonitorEnabled = useSettings('sandbox.resource_monitor')
   fullscreen = hideAll ? true : fullscreen
 
   const [menu, setMenu] = useLocalStorage('menu-view', false)
   const [controlOpen, setControlOpen] = useLocalStorage(
     'control-panel-open',
-    false,
+    true,
   )
   const [controlPanelMaximized, setControlPanelMaximized] = useLocalStorage(
     'control-panel-maximized',
@@ -99,7 +98,7 @@ export function CreagenEditorViewSplit() {
                     onMenuOpen={() => setMenu(!menu)}
                   />
                   {resourceMonitorEnabled && <PerformanceMonitor />}
-                  {showQR && <QR />}
+                  <QR />
                 </div>
 
                 {controlOpen && (
@@ -166,7 +165,7 @@ export function CreagenEditorViewSplit() {
                 >
                   <SandboxView />
                   {resourceMonitorEnabled && <PerformanceMonitor />}
-                  {showQR && <QR />}
+                  <QR />
                 </div>
               </Allotment.Pane>
             </Allotment>

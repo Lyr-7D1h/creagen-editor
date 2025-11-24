@@ -25,6 +25,7 @@ export function Actions({
   useForceUpdateOnEditorEvent('params:config')
   const exportEnabled = useSettings('actions.export_enabled')
   const showQR = useSettings('show_qr')
+  const controllerEnabled = useSettings('controller.enabled')
 
   const [frozen, setFrozen] = useState(false)
   useEffect(() => {
@@ -44,6 +45,7 @@ export function Actions({
   const buttons = useMemo(() => {
     const buttons = []
     if (
+      controllerEnabled &&
       CREAGEN_EDITOR_CONTROLLER_URL != null &&
       creagenEditor.params.length > 0
     ) {
@@ -118,6 +120,7 @@ export function Actions({
     )
     return buttons
   }, [
+    controllerEnabled,
     creagenEditor,
     exportEnabled,
     frozen,
