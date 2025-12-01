@@ -11,7 +11,9 @@
     "build:controller": "VITE_ENTRYPOINT=controller vite build -m production && mv dist/controller/index.html dist/index.html && rm -r dist/controller",
     "format": "prettier -w src/",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
-    "lint:fix": "eslint . --ext .ts,.tsx --fix"
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "test": "vitest",
+    "test:watch": "vitest --watch"
   },
   "keywords": [],
   "author": "Lyr",
@@ -22,6 +24,7 @@
     "@rollup/plugin-node-resolve": "^16.0.0",
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^12.1.2",
+    "@types/pako": "^2.0.4",
     "@types/react": "^19.0.5",
     "@types/react-dom": "^19.0.3",
     "@types/semver": "^7.5.8",
@@ -31,11 +34,13 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.0",
     "eslint-plugin-react-refresh": "^0.4.24",
+    "jsdom": "^27.2.0",
     "prettier": "3.5.3",
     "rollup": "^4.34.8",
     "typescript": "^5.5.4",
     "vite": "^6.3.5",
-    "vite-plugin-html": "^3.2.2"
+    "vite-plugin-html": "^3.2.2",
+    "vitest": "^2.1.8"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -49,9 +54,12 @@
     "@vitejs/plugin-react": "^4.3.4",
     "allotment": "^1.20.4",
     "d3": "^7.9.0",
+    "fast-diff": "^1.3.0",
+    "lru-cache": "^11.2.2",
     "lz-string": "^1.5.0",
     "monaco-editor": "^0.52.2",
     "monaco-vim": "^0.4.1",
+    "pako": "^2.1.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-qr-code": "^2.0.18",

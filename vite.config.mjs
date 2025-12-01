@@ -118,28 +118,33 @@ if (!fs.existsSync(creagenDevPath)) {
   creagenDevPath = null
 }
 export default defineConfig(async ({ mode }) => {
+  const defines = {
+    CREAGEN_MODE: JSON.stringify(mode),
+    // if dev, get version from local creagen package.json
+    CREAGEN_DEV_VERSION: creagenDevPath
+      ? JSON.stringify(
+          JSON.parse(fs.readFileSync(`${creagenDevPath}/package.json`)).version,
+        )
+      : null,
+    CREAGEN_EDITOR_VERSION: JSON.stringify(process.env.npm_package_version),
+    CREAGEN_EDITOR_COMMIT_HASH: JSON.stringify(commitHash()),
+    CREAGEN_EDITOR_CONTROLLER_URL: process.env.CREAGEN_EDITOR_CONTROLLER_URL
+      ? JSON.stringify(process.env.CREAGEN_EDITOR_CONTROLLER_URL)
+      : '"https://controller.creagen.dev"',
+    CREAGEN_EDITOR_SANDBOX_RUNTIME_URL: process.env
+      .CREAGEN_EDITOR_SANDBOX_RUNTIME_URL
+      ? JSON.stringify(process.env.CREAGEN_EDITOR_SANDBOX_RUNTIME_URL)
+      : JSON.stringify('/sandbox-runtime/'),
+    CREAGEN_LOG_LEVEL: process.env.CREAGEN_LOG_LEVEL
+      ? JSON.stringify(process.env.CREAGEN_LOG_LEVEL)
+      : '"0"',
+  }
   return {
-    define: {
-      CREAGEN_MODE: JSON.stringify(mode),
-      // if dev, get version from local creagen package.json
-      CREAGEN_DEV_VERSION: creagenDevPath
-        ? JSON.stringify(
-            JSON.parse(fs.readFileSync(`${creagenDevPath}/package.json`))
-              .version,
-          )
-        : null,
-      CREAGEN_EDITOR_VERSION: JSON.stringify(process.env.npm_package_version),
-      CREAGEN_EDITOR_COMMIT_HASH: JSON.stringify(commitHash()),
-      CREAGEN_EDITOR_CONTROLLER_URL: process.env.CREAGEN_EDITOR_CONTROLLER_URL
-        ? JSON.stringify(process.env.CREAGEN_EDITOR_CONTROLLER_URL)
-        : '"https://controller.creagen.dev"',
-      CREAGEN_EDITOR_SANDBOX_RUNTIME_URL: process.env
-        .CREAGEN_EDITOR_SANDBOX_RUNTIME_URL
-        ? JSON.stringify(process.env.CREAGEN_EDITOR_SANDBOX_RUNTIME_URL)
-        : JSON.stringify('/sandbox-runtime/'),
-      CREAGEN_LOG_LEVEL: process.env.CREAGEN_LOG_LEVEL
-        ? JSON.stringify(process.env.CREAGEN_LOG_LEVEL)
-        : '"0"',
+    define: defines,
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      define: defines,
     },
     build: {
       // don't include source maps to reduce upload size

@@ -331,7 +331,7 @@ export class VCS {
     if (this._head && commit.compareData(this._head)) return null
 
     await this.storage.set('commit', commit, commit.hash)
-    await this.storage.set('blob', code, commit.blob)
+    await this.storage.set('blob', code, commit.blob, this._head?.blob)
 
     if (updateBookmark) {
       if ((await this.updateActiveBookmark(commit.hash)) === null) {

@@ -13,7 +13,9 @@ export const sha256HashSchema = z.string().transform((data, ctx) => {
 })
 
 export class Sha256Hash {
-  private readonly hash: ArrayBuffer
+  static fromBuffer(hash: ArrayBuffer) {
+    return new Sha256Hash(hash)
+  }
 
   static async create(data: string) {
     const encoded = new TextEncoder().encode(data)
@@ -41,9 +43,7 @@ export class Sha256Hash {
     return new Sha256Hash(bytes.buffer)
   }
 
-  private constructor(hash: ArrayBuffer) {
-    this.hash = hash
-  }
+  private constructor(public readonly hash: ArrayBuffer) {}
 
   /** convert hash buffer to hexidecimal string */
   toHex() {

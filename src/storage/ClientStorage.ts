@@ -1,4 +1,3 @@
-import lzString from 'lz-string'
 import {
   IndexDbKey,
   isIndexDbKey,
@@ -9,15 +8,21 @@ import {
 } from './StorageKey'
 import { createContextLogger } from '../logs/logger'
 import { localStorage } from './LocalStorage'
-import { Commit, commitSchema } from '../vcs/Commit'
-import z from 'zod'
+import { BlobHash, Commit, commitSchema } from '../vcs/Commit'
+import { BlobStorage } from './BlobStorage'
 
 const logger = createContextLogger('indexdb')
 
-const COMMITS_STORE = 'commits'
-const BLOB_STORE = 'blobs'
+export const COMMITS_STORE = 'commits'
+export const BLOB_STORE = 'blobs'
+export const DELTA_STORE = 'delta'
+
+/** Entry point for fetching all data */
 export class ClientStorage {
-  private constructor(private readonly db: IDBDatabase) {}
+  private readonly blobStorage: BlobStorage
+  private constructor(private readonly db: IDBDatabase) {
+    this.blobStorage = new BlobStorage(db)
+  }
 
   static async create(): Promise<ClientStorage> {
     return await new Promise((resolve, reject) => {
@@ -41,7 +46,7 @@ export class ClientStorage {
         })
         .catch(logger.error)
 
-      const req = indexedDB.open('creagen', 1)
+      const req = indexedDB.open('creagen', 2)
       req.onerror = (_e) => {
         reject(
           new Error(`failed to open index db: ${req.error?.message ?? ''}`),
@@ -59,14 +64,20 @@ export class ClientStorage {
           reject(new Error('failed to upgrade index db'))
         }
 
-        const os = db.createObjectStore(COMMITS_STORE)
-        os.createIndex('blob', 'blob')
-        os.createIndex('editorVersion', 'editorVersion')
-        os.createIndex('libraries', 'libraries')
-        os.createIndex('parent', 'parent')
-        os.createIndex('author', 'author')
+        const oldVersion = event.oldVersion
+        if (oldVersion < 1) {
+          const os = db.createObjectStore(COMMITS_STORE)
+          os.createIndex('blob', 'blob')
+          os.createIndex('editorVersion', 'editorVersion')
+          os.createIndex('libraries', 'libraries')
+          os.createIndex('parent', 'parent')
+          os.createIndex('author', 'author')
+          db.createObjectStore(BLOB_STORE)
+        }
 
-        db.createObjectStore(BLOB_STORE)
+        if (oldVersion < 2) {
+          db.createObjectStore(DELTA_STORE)
+        }
       }
     })
   }
@@ -93,10 +104,25 @@ export class ClientStorage {
     })
   }
 
+  async set(
+    key: 'blob',
+    item: string,
+    hash: BlobHash,
+    base?: BlobHash,
+  ): Promise<void>
   async set<K extends StorageKey>(
     key: K,
     item: StorageValue<K>,
-    ...args: K extends IndexDbKey ? [identifier: StorageIdentifier<K>] : []
+    ...args: K extends IndexDbKey
+      ? [hash: StorageIdentifier<K>, base?: BlobHash]
+      : []
+  ): Promise<void>
+  async set<K extends StorageKey>(
+    key: K,
+    item: StorageValue<K>,
+    ...args: K extends IndexDbKey
+      ? [hash: StorageIdentifier<K>, base?: BlobHash]
+      : []
   ) {
     if (isLocalStorageKey(key)) {
       return localStorage.set(key, item)
@@ -120,13 +146,10 @@ export class ClientStorage {
       await this._set(COMMITS_STORE, identifier.toHex(), commit.toJson())
     }
     if (key === 'blob') {
-      const identifier = args[0]!
+      const identifier = args[0]! as BlobHash
+      const base = args[1]
       const blob = item as string
-      await this._set(
-        BLOB_STORE,
-        identifier.toHex(),
-        lzString.compressToUTF16(blob),
-      )
+      await this.blobStorage.set(identifier, blob, base)
     }
   }
 
@@ -163,12 +186,9 @@ export class ClientStorage {
       return (await commitSchema.parseAsync(commit)) as StorageValue<K>
     }
     if (key === 'blob') {
-      const identifier = args[0]!
-      const blob = await this._get(BLOB_STORE, identifier.toHex())
+      const blob = await this.blobStorage.get(args[0]! as BlobHash)
       if (blob === null) return null
-      return lzString.decompressFromUTF16(
-        z.string().parse(blob),
-      ) as StorageValue<K>
+      return blob as StorageValue<K>
     }
 
     return null
