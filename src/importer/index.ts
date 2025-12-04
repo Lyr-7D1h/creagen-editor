@@ -4,9 +4,14 @@ import { z } from 'zod'
 import { getTypings } from './typings'
 import { semverSchema } from '../creagen-editor/schemaUtils'
 import { Library } from '../settings/SettingsConfig'
+import { ExportsField, buildImportPaths } from './exportMapResolver'
 
-export interface ImportPath {
-  /** if `module` it is an es6 module otherwise main */
+export type ImportPath = {
+  /**
+   * if `module` it is an es6 module otherwise main
+   *
+   * main modules we want to load in a seperate script
+   * */
   type: 'main' | 'module'
   /** Url, Absolute or relative path to library */
   path: string
@@ -14,7 +19,14 @@ export interface ImportPath {
 
 export interface LibraryImport extends Library {
   typings: () => Promise<string | null>
-  importPath: ImportPath
+  /** Which libraries to preload before using them */
+  preload?: ImportPath[]
+  /**
+   * Map for each import statement to the path it should be pointing to
+   *
+   * akin to https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/script/type/importmap
+   * */
+  importMap: [string, string][]
 }
 
 const versionResponseSchema = z.object({
@@ -29,8 +41,11 @@ const packageJsonSchema = z.object({
   module: z.string().optional(),
   main: z.string().optional(),
   browser: z.string().optional(),
+  exports: z.unknown().optional(), // Will be typed as ExportsField after parsing
 })
-export type PackageJson = z.infer<typeof packageJsonSchema>
+export type PackageJson = z.infer<typeof packageJsonSchema> & {
+  exports?: ExportsField
+}
 
 /** Takes care of handling proper typings and importing libraries */
 export class Importer {
@@ -86,10 +101,7 @@ async function getLibraryFromSource(
     return {
       name: packageName,
       version: new SemVer(CREAGEN_DEV_VERSION),
-      importPath: {
-        type: 'module',
-        path: `http://${window.location.host}/creagen.mjs`,
-      },
+      importMap: [['creagen', `http://${window.location.host}/creagen.mjs`]],
       typings: async () => {
         const res = await fetch('./creagen.d.ts', { timeout: 2000 })
         const typings = await res.text()
@@ -107,24 +119,18 @@ async function getLibraryFromSource(
   if (!res.ok) {
     throw new Error(`Failed to fetch ${url} ${res.status} - ${res.statusText}`)
   }
-  const pkg = await packageJsonSchema.parseAsync(await res.json())
+  const pkg = (await packageJsonSchema.parseAsync(
+    await res.json(),
+  )) as PackageJson
 
   const typings = async () => getTypings(url, pkg)
 
-  const importPath: ImportPath = {
-    type: 'main',
-    path: `${packageSourceUrl}/${packageName}${version ? `@${version.toString()}` : ''}/${pkg.main ?? pkg.browser}`,
-  }
-
-  if (pkg.module != null) {
-    importPath.type = 'module'
-    importPath.path = `${packageSourceUrl}/${packageName}${version ? `@${version.toString()}` : ''}/${pkg.module}`
-  }
+  const maps = buildImportPaths(packageName, url, pkg)
 
   return {
     name: packageName,
     version: pkg.version,
-    importPath,
+    ...maps,
     typings,
   }
 }

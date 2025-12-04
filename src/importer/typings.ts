@@ -1,7 +1,8 @@
-import { TYPESCRIPT_IMPORT_REGEX } from '../constants'
+import { JS_EXTENSION, TYPESCRIPT_IMPORT_REGEX } from '../constants'
 import { LIBRARY_CONFIGS } from '../creagen-editor/libraryConfigs'
 import { Importer, PackageJson } from '../importer'
 import { Path } from './path'
+import { resolveExports } from './exportMapResolver'
 
 export async function getTypings(rootUrl: string, pkg: PackageJson) {
   const typingsFilePath =
@@ -30,6 +31,7 @@ export async function getTypings(rootUrl: string, pkg: PackageJson) {
     rootUrl,
     new Path('/' + typingsFilePath),
     new Set(),
+    pkg,
   )
   if (typings === null) return null
   const module = isTypePackage ? pkg.name.replace('@types/', '') : pkg.name
@@ -39,12 +41,14 @@ export async function getTypings(rootUrl: string, pkg: PackageJson) {
 /**
  * Parse and resolve imports into a single string
  * @param rootUrl root path of the file without trailing slash
- * @param typeFile path to the file to resolve imports
+ * @param path path to the file to resolve imports
+ * @param pkg optional package.json for resolving exports field
  */
 async function resolveImports(
   rootUrl: string,
   path: Path,
   visisted: Set<string>,
+  pkg?: PackageJson,
 ) {
   const id = path.toString()
   if (visisted.has(id)) return null
@@ -76,9 +80,30 @@ async function resolveImports(
         return lib.typings()
       }
 
-      const newPath = path.join(module.replace('.js', '') + '.d.ts')
+      // Try to resolve using exports field if available
+      let resolvedPath: string | null = null
+      if (typeof pkg?.exports !== 'undefined') {
+        resolvedPath = resolveExports(pkg.exports, module, [
+          'types',
+          'import',
+          'default',
+        ])
+        if (resolvedPath !== null) {
+          // Convert to .d.ts path
+          resolvedPath = resolvedPath.replace(JS_EXTENSION, '.d.ts')
+        }
+      }
 
-      return resolveImports(rootUrl, newPath, visisted)
+      // Fall back to relative path resolution
+      if (resolvedPath === null) {
+        resolvedPath = path
+          .join(module.replace(JS_EXTENSION, '') + '.d.ts')
+          .toString()
+      } else {
+        resolvedPath = new Path('/' + resolvedPath).toString()
+      }
+
+      return resolveImports(rootUrl, new Path(resolvedPath), visisted, pkg)
     }),
   )
 

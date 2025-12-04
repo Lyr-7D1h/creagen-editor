@@ -372,7 +372,6 @@ export class CreagenEditor {
   }
 
   parseCode(code: string) {
-    // eslint-disable-next-line no-param-reassign
     code = parseCode(code, this.libraryImports, this.params)
     this.params.save()
     editorEvents.emit('params:config', undefined)

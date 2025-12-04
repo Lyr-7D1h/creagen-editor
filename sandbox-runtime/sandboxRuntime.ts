@@ -191,7 +191,7 @@ async function init() {
   }
 
   let loadedLibraries: string[] = []
-  messageHandler.on('render', ({ code, libraries }) => {
+  messageHandler.on('render', ({ code, preloadedLibraries }) => {
     ;(async () => {
       // Reset window event handlers
       resetWindowEventHandlers()
@@ -202,44 +202,45 @@ async function init() {
       // Clear previous content
       document.body.innerHTML = ''
 
-      for (const lib of libraries) {
-        if (loadedLibraries.includes(lib.path)) continue
-        loadedLibraries.push(lib.path)
-        switch (lib.type) {
-          case 'main': {
-            const script = document.createElement('script')
-            script.src = lib.path
-            await new Promise((resolve, reject) => {
-              script.onload = resolve
-              script.onerror = reject
-              document.head.appendChild(script)
-            })
-            break
-          }
-          case 'module': {
-            const link = document.createElement('link')
-            link.rel = 'modulepreload'
-            link.href = lib.path
-            document.head.appendChild(link)
-            break
+      for (const [name, lib] of preloadedLibraries) {
+        if (loadedLibraries.includes(name)) continue
+        loadedLibraries.push(name)
+
+        for (const path of lib) {
+          switch (path.type) {
+            case 'main': {
+              const script = document.createElement('script')
+              script.dataset['libname'] = name
+              script.src = path.path
+              await new Promise((resolve, reject) => {
+                script.onload = resolve
+                script.onerror = reject
+                document.head.appendChild(script)
+              })
+              break
+            }
+            case 'module': {
+              const link = document.createElement('link')
+              link.dataset['libname'] = name
+              link.rel = 'modulepreload'
+              link.href = path.path
+              document.head.appendChild(link)
+              break
+            }
           }
         }
       }
 
       // Remove libraries that are no longer active
-      loadedLibraries = loadedLibraries.filter((path) => {
-        for (const lib of libraries) {
-          if (lib.path === path) {
+      loadedLibraries = loadedLibraries.filter((name) => {
+        for (const [lname] of preloadedLibraries) {
+          if (name === lname) {
             return true
           }
         }
-        // Remove script tags with this src
-        const scripts = document.querySelectorAll(`script[src="${path}"]`)
-        scripts.forEach((script) => script.remove())
-
-        // Remove link tags with this href
-        const links = document.querySelectorAll(`link[href="${path}"]`)
-        links.forEach((link) => link.remove())
+        // Remove any elements with this libname
+        const elements = document.querySelectorAll(`[data-libname="${name}"]`)
+        elements.forEach((element) => element.remove())
 
         return false
       })

@@ -61,7 +61,8 @@ type SandboxMessageDefinitions =
       type: 'render'
       msg: {
         code: string
-        libraries: ImportPath[]
+        /** [identifier, import] */
+        preloadedLibraries: [string, ImportPath[]][]
       }
     }
 

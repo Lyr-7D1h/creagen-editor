@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { localStorage } from '../storage/LocalStorage'
 import AutoImport, { regexTokeniser } from '@kareemkermad/monaco-auto-import'
 import { Monaco } from '@monaco-editor/react'
@@ -15,7 +17,8 @@ import { initVimMode } from 'monaco-vim'
 import { Settings } from '../settings/Settings'
 import { editorEvents } from '../events/events'
 import { createContextLogger } from '../logs/logger'
-import { Ref } from 'react'
+
+const logger = createContextLogger('editor')
 
 // Use monaco without cdn: https://www.npmjs.com/package/@monaco-editor/react#loader-config
 self.MonacoEnvironment = {
@@ -37,7 +40,7 @@ self.MonacoEnvironment = {
 }
 
 loader.config({ monaco })
-loader.init()
+loader.init().catch(logger.error)
 
 // https://github.com/brijeshb42/monaco-themes/tree/master
 const creagenLightTheme: monaco.editor.IStandaloneThemeData = {
@@ -84,12 +87,11 @@ function handleBeforeMount(monaco: Monaco) {
   monaco.editor.defineTheme('creagen-fullscreen', creagenFullscreenTheme)
 }
 
-const logger = createContextLogger('editor')
 export class Editor {
   private readonly editor: m.editor.IStandaloneCodeEditor
   private readonly autoimport: AutoImport
   private vimMode: m.editor.IStandaloneCodeEditor | null
-  private vimRef?: Ref<HTMLDivElement>
+  private vimRef?: HTMLElement
   private fullscreendecorators: m.editor.IEditorDecorationsCollection | null
   private readonly typings = new Map<string, monaco.IDisposable>()
   private readonly _html
@@ -174,7 +176,7 @@ export class Editor {
    * @param handler Function to call when the keybinding is triggered
    * @param preventDefault Whether to prevent default browser behavior (default: true)
    */
-  addKeybind(keybinding: number, handler: (...args: any[]) => void) {
+  addKeybind(keybinding: number, handler: (...args: unknown[]) => void) {
     // Register with Monaco editor
     this.editor.addCommand(keybinding, handler)
   }
@@ -188,10 +190,11 @@ export class Editor {
   }
 
   setVimStatusElement(element: HTMLElement) {
-    this.vimRef = element as any
+    this.vimRef = element
     // If vim mode is already enabled, reinitialize it with the new element
     if (this.vimMode !== null) {
       this.vimMode.dispose()
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       this.vimMode = initVimMode(this.editor, element)
     }
   }
@@ -200,7 +203,8 @@ export class Editor {
     if (value && this.vimMode === null) {
       // Use the provided vim ref if available, otherwise fall back to getElementById
       const vimStatusElement =
-        this.vimRef || document.getElementById('vim-status')
+        this.vimRef ?? document.getElementById('vim-status')
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       this.vimMode = initVimMode(this.editor, vimStatusElement)
     } else if (!value && this.vimMode !== null) {
       this.vimMode.dispose()

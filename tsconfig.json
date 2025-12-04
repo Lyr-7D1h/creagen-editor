@@ -11,7 +11,7 @@
     "module": "esnext",
     "target": "ESNext",
 
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
 
     "lib": ["es2020", "DOM"],
 

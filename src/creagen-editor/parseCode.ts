@@ -205,24 +205,49 @@ export function parseCode(
           const moduleSpecifier = node.moduleSpecifier
 
           if (ts.isStringLiteral(moduleSpecifier)) {
-            const oldModule = moduleSpecifier.text
-            const newModulePath = libraries.get(oldModule)?.importPath.path
+            const moduleImportPath = moduleSpecifier.text
 
-            if (newModulePath != null) {
-              // Replace module path with the one from libraries
-              return ts.factory.updateImportDeclaration(
-                node,
-                node.modifiers,
-                node.importClause,
-                ts.factory.createStringLiteral(newModulePath),
-                node.assertClause,
-              )
-            } else if (
-              !oldModule.startsWith('.') &&
-              !oldModule.startsWith('/')
-            ) {
-              logger.error(`Library ${oldModule} not found`)
+            // ignore full http imports
+            if (moduleImportPath.match(/https?:\/\/.*/)) return node
+            // ignore local
+            if (
+              moduleImportPath.startsWith('.') ||
+              moduleImportPath.startsWith('/')
+            )
+              return node
+
+            let libraryImport = libraries.get(moduleImportPath)
+            if (!libraryImport)
+              for (const [libName, lib] of libraries) {
+                if (moduleImportPath.startsWith(libName + '/')) {
+                  libraryImport = lib
+                  break
+                }
+              }
+
+            if (!libraryImport) {
+              logger.error(`Library not found '${moduleImportPath}'`)
+              return node
             }
+
+            // get the longest matching prefix
+            const map = libraryImport.importMap
+              .filter(([match]) => moduleImportPath.startsWith(match))
+              .sort((a, b) => b[0].length - a[0].length)[0]
+
+            if (!map) {
+              return node
+            }
+
+            return ts.factory.updateImportDeclaration(
+              node,
+              node.modifiers,
+              node.importClause,
+              ts.factory.createStringLiteral(
+                moduleImportPath.replace(map[0], map[1]),
+              ),
+              node.assertClause,
+            )
           }
         }
 

@@ -2,7 +2,6 @@ export interface LibraryConfig {
   /** overwrite types of package with a specific type package */
   typingsOverwrite?: string
   typingsPathOverwrite?: string
-  forceReload?: boolean
   template?: string
 }
 
@@ -22,6 +21,7 @@ function draw() {
   line(0, 0, 50, 50)
 }`,
   },
+
   creagen: {
     template: `import { Canvas, vec, load, color } from "creagen";
 
@@ -32,3 +32,12 @@ canvas.line(vec(0, 0), vec(50, 50))
 load(canvas)`,
   },
 }
+
+export const SUPPORTED_LIBRARIES = [
+  /** 'browser' with import map and typings file */
+  { name: 'creagen' },
+  /** 'browser' with import map and typings file */
+  { name: 'p5' },
+  /** 'module' with imports map and @types package */
+  { name: 'three' },
+] as { name: string; disabled?: boolean }[]

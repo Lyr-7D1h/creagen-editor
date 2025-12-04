@@ -82,7 +82,12 @@ export class Sandbox {
     this.messageHandler.send({
       type: 'render',
       code,
-      libraries: libraryImports.map((lib) => lib.importPath),
+      preloadedLibraries: libraryImports.map(
+        ({ typings: _typings, ...lib }) => [
+          lib.name + lib.version.toString(),
+          lib.preload ?? [],
+        ],
+      ),
     })
 
     logger.trace(

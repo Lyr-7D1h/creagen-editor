@@ -51,6 +51,7 @@
     "@mui/icons-material": "^7.1.0",
     "@mui/material": "^7.1.0",
     "@types/d3": "^7.4.3",
+    "@types/three": "^0.181.0",
     "@vitejs/plugin-react": "^4.3.4",
     "allotment": "^1.20.4",
     "d3": "^7.9.0",
