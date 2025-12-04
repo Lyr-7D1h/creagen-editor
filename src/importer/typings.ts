@@ -1,10 +1,11 @@
 import { TYPESCRIPT_IMPORT_REGEX } from '../constants'
 import { LIBRARY_CONFIGS } from '../creagen-editor/libraryConfigs'
 import { Importer, PackageJson } from '../importer'
+import { Path } from './path'
 
 export async function getTypings(rootUrl: string, pkg: PackageJson) {
   const typingsFilePath =
-    LIBRARY_CONFIGS[pkg.name]?.typingsPathOverwrite || pkg.typings || pkg.types
+    LIBRARY_CONFIGS[pkg.name]?.typingsPathOverwrite ?? pkg.typings ?? pkg.types
 
   const typingsOverwrite = LIBRARY_CONFIGS[pkg.name]?.typingsOverwrite
   if (
@@ -24,26 +25,40 @@ export async function getTypings(rootUrl: string, pkg: PackageJson) {
     return null
   }
 
-  const typings = await resolveImports(rootUrl, typingsFilePath)
+  const typings = await resolveImports(
+    rootUrl,
+    new Path('/' + typingsFilePath),
+    new Set(),
+  )
   if (typings === null) return null
   return `declare module '${pkg.name}' {${typings}}`
 }
 
 /**
  * Parse and resolve imports into a single string
- * @param root root path of the file without trailing slash
+ * @param rootUrl root path of the file without trailing slash
  * @param typeFile path to the file to resolve imports
  */
-async function resolveImports(root: string, typeFile: string) {
-  const response = await fetch(new URL(typeFile, root + '/').toString())
+async function resolveImports(
+  rootUrl: string,
+  path: Path,
+  visisted: Set<string>,
+) {
+  const id = path.toString()
+  if (visisted.has(id)) return null
+  visisted.add(id)
+
+  const response = await fetch(
+    new URL(rootUrl + '/' + path.toString()).toString(),
+  )
   if (response.status !== 200) {
     return null
   }
   let typings = await response.text()
 
   const matches = [...typings.matchAll(TYPESCRIPT_IMPORT_REGEX)]
-  if (matches === null) return typings
 
+  if (path.filename()?.endsWith('.d.ts') ?? false) path = path.pop()
   const modules = await Promise.all(
     matches.map(async (match) => {
       const module = match.groups!['module']
@@ -59,12 +74,9 @@ async function resolveImports(root: string, typeFile: string) {
         return lib.typings()
       }
 
-      const parts = module.split('/')
-      let parent = parts.splice(0, parts.length - 1).join('/')
-      if (parent === '.') parent = ''
-      if (parent.length > 0) parent = '/' + parent
+      const newPath = path.join(module.replace('.js', '') + '.d.ts')
 
-      return resolveImports(`${root}${parent}`, module + '.d.ts')
+      return resolveImports(rootUrl, newPath, visisted)
     }),
   )
 

@@ -106,13 +106,13 @@ module.exports = [
       ],
 
       // General JavaScript/TypeScript
+      'no-param-reassign': 'off',
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       'no-debugger': 'error',
       'no-alert': 'warn',
       'no-var': 'error',
       'prefer-const': 'error',
       'prefer-arrow-callback': 'warn',
-      'no-param-reassign': ['error', { props: false }],
       'no-undef': 'off',
       eqeqeq: ['error', 'always', { null: 'ignore' }],
       'no-implicit-coercion': 'warn',

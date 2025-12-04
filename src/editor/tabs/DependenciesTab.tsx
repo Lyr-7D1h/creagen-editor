@@ -14,8 +14,8 @@ import { logger } from '../../logs/logger'
 const supportedLibraries = [
   { name: 'creagen' },
   { name: 'p5' },
-  { name: 'three', disabled: true },
-]
+  { name: 'three' },
+] as { name: string; disabled?: boolean }[]
 
 function isDevBuild(version: SemVer) {
   return version.prerelease.length > 0
