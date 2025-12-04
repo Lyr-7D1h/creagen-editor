@@ -7,10 +7,11 @@ export async function getTypings(rootUrl: string, pkg: PackageJson) {
   const typingsFilePath =
     LIBRARY_CONFIGS[pkg.name]?.typingsPathOverwrite ?? pkg.typings ?? pkg.types
 
+  const isTypePackage = pkg.name.startsWith('@types/')
+
   const typingsOverwrite = LIBRARY_CONFIGS[pkg.name]?.typingsOverwrite
   if (
-    (typeof typingsFilePath === 'undefined' &&
-      !pkg.name.startsWith('@types/')) ||
+    (typeof typingsFilePath === 'undefined' && !isTypePackage) ||
     typeof typingsOverwrite !== 'undefined'
   ) {
     const typePackage = await Importer.getLibrary(
@@ -31,7 +32,8 @@ export async function getTypings(rootUrl: string, pkg: PackageJson) {
     new Set(),
   )
   if (typings === null) return null
-  return `declare module '${pkg.name}' {${typings}}`
+  const module = isTypePackage ? pkg.name.replace('@types/', '') : pkg.name
+  return `declare module '${module}' {${typings}}`
 }
 
 /**
