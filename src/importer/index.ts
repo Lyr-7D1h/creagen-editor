@@ -19,14 +19,16 @@ export type ImportPath = {
 
 export interface LibraryImport extends Library {
   typings: () => Promise<string | null>
-  /** Which libraries to preload before using them */
+  /** Preload libraries with a single script to optimize loading speed */
   preload?: ImportPath[]
   /**
-   * Map for each import statement to the path it should be pointing to
+   * Map for each import statement to the path or url it should be pointing to
    *
    * akin to https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/script/type/importmap
+   *
+   * [matching statement, map to path]
    * */
-  importMap: [string, string][]
+  importMap: [string, string | ((relativePath: string) => string)][]
 }
 
 const versionResponseSchema = z.object({
@@ -47,6 +49,17 @@ export type PackageJson = z.infer<typeof packageJsonSchema> & {
   exports?: ExportsField
 }
 
+const SUPPORTED_CDN = {
+  /**
+   * JSDeliver
+   * NOTE: supports +esm after an import to resolve all relative imports in file making it a standalone script
+   * PERF: add a way to resolve inner import and exports when importing things from cdn to prevent duplication
+   * */
+  jsdelivr: 'https://cdn.jsdelivr.net/npm',
+  unpkg: 'https://unpkg.com',
+}
+type SupportedCDN = keyof typeof SUPPORTED_CDN
+
 /** Takes care of handling proper typings and importing libraries */
 export class Importer {
   /** Get a library, latest if version is not given */
@@ -55,20 +68,12 @@ export class Importer {
     version?: SemVer,
   ): Promise<LibraryImport | null> {
     try {
-      const res = await getLibraryFromSource(
-        'https://unpkg.com',
-        packageName,
-        version,
-      )
+      const res = await getLibraryFromSource('jsdelivr', packageName, version)
       return res
     } catch (e) {
       const error = e as Error
       if (error.name === 'TimeoutError')
-        return getLibraryFromSource(
-          'https://cdn.jsdelivr.net/npm',
-          packageName,
-          version,
-        )
+        return getLibraryFromSource('unpkg', packageName, version)
       throw e
     }
   }
@@ -92,7 +97,7 @@ export class Importer {
 
 /** Get a library, latest if version is not given */
 async function getLibraryFromSource(
-  packageSourceUrl: string,
+  source: SupportedCDN,
   packageName: string,
   version?: SemVer,
 ): Promise<LibraryImport | null> {
@@ -110,7 +115,7 @@ async function getLibraryFromSource(
     }
   }
 
-  const url = `${packageSourceUrl}/${packageName}${version ? `@${version.toString()}` : ''}`
+  const url = `${SUPPORTED_CDN[source]}/${packageName}${version ? `@${version.toString()}` : ''}`
   // HACK: unpkg does not send cors headers for error reponses
   const res = await fetch(`${url}/package.json`, {
     validate: false,
@@ -127,10 +132,20 @@ async function getLibraryFromSource(
 
   const maps = buildImportPaths(packageName, url, pkg)
 
-  return {
+  const libraryImport: LibraryImport = {
     name: packageName,
     version: pkg.version,
     ...maps,
     typings,
   }
+
+  if (source === 'jsdelivr') {
+    libraryImport.importMap = maps.importMap.map(([m, path]) => [
+      m,
+      (relPath: string) => path + relPath + '/+esm',
+    ])
+    if (libraryImport.preload)
+      libraryImport.preload.forEach((m) => (m.path += '/+esm'))
+  }
+  return libraryImport
 }

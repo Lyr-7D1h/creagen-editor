@@ -239,13 +239,16 @@ export function parseCode(
               return node
             }
 
+            const translatedImport =
+              typeof map[1] === 'string'
+                ? moduleImportPath.replace(map[0], map[1])
+                : map[1](moduleImportPath.slice(map[0].length))
+
             return ts.factory.updateImportDeclaration(
               node,
               node.modifiers,
               node.importClause,
-              ts.factory.createStringLiteral(
-                moduleImportPath.replace(map[0], map[1]),
-              ),
+              ts.factory.createStringLiteral(translatedImport),
               node.assertClause,
             )
           }

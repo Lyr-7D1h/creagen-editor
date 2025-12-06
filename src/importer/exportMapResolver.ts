@@ -1,5 +1,5 @@
 import { LIBRARY_CONFIGS } from '../creagen-editor/libraryConfigs'
-import { LibraryImport, PackageJson } from './index'
+import { ImportPath, PackageJson } from './index'
 
 export interface ExportCondition {
   import?: string
@@ -223,14 +223,14 @@ export type PackageJsonImportField = 'module' | 'browser' | 'main' | 'exports'
  * @param packageName The package name
  * @param baseUrl The CDN base URL for the package
  * @param pkg The package.json
- * @returns Import map entries
+ * @returns which library paths to preload and a map entries
  */
 export function buildImportPaths(
   packageName: string,
   baseUrl: string,
   pkg: PackageJsonWithExports,
   conditions: string[] = ['import', 'default'],
-): Pick<LibraryImport, 'preload' | 'importMap'> {
+): { preload?: ImportPath[]; importMap: [string, string][] } {
   let overwriteKey
   if (
     LIBRARY_CONFIGS[packageName]?.importKeyOverwrite &&
