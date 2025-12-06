@@ -52,7 +52,7 @@ export function Actions({
       buttons.push(
         <HtmlTooltip
           key="qr"
-          title={showQR ? 'Enable controller QR' : 'Disable controller QR'}
+          title={showQR ? 'Disable controller QR' : 'Enable controller QR'}
         >
           <IconButton
             size="small"

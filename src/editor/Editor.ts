@@ -105,6 +105,10 @@ export class Editor {
     html.style.width = '100%'
     html.style.height = '100%'
     const editor = monaco.editor.create(html, {
+      folding: true,
+      showFoldingControls: 'always',
+      foldingHighlight: true,
+      foldingMaximumRegions: 5000,
       minimap: { enabled: false },
       tabSize: 2,
       autoIndent: 'full',
