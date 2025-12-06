@@ -1,3 +1,4 @@
+import { LIBRARY_CONFIGS } from '../creagen-editor/libraryConfigs'
 import { LibraryImport, PackageJson } from './index'
 
 export interface ExportCondition {
@@ -215,6 +216,8 @@ function buildImportPathsFromExports(
   return importMap
 }
 
+export type PackageJsonImportField = 'module' | 'browser' | 'main' | 'exports'
+
 /**
  * Build an import map for Monaco editor to resolve subpath imports
  * @param packageName The package name
@@ -228,7 +231,18 @@ export function buildImportPaths(
   pkg: PackageJsonWithExports,
   conditions: string[] = ['import', 'default'],
 ): Pick<LibraryImport, 'preload' | 'importMap'> {
-  if (typeof pkg.exports !== 'undefined')
+  let overwriteKey
+  if (
+    LIBRARY_CONFIGS[packageName]?.importKeyOverwrite &&
+    LIBRARY_CONFIGS[packageName].importKeyOverwrite in pkg
+  ) {
+    overwriteKey = LIBRARY_CONFIGS[packageName].importKeyOverwrite
+  }
+
+  if (
+    !(overwriteKey && overwriteKey !== 'exports') &&
+    typeof pkg.exports !== 'undefined'
+  )
     return {
       importMap: buildImportPathsFromExports(
         packageName,
@@ -238,7 +252,7 @@ export function buildImportPaths(
       ),
     }
 
-  if (pkg.module != null) {
+  if (!(overwriteKey && overwriteKey !== 'module') && pkg.module != null) {
     const path = `${baseUrl}/${pkg.module}`
     return {
       preload: [
@@ -251,7 +265,7 @@ export function buildImportPaths(
     }
   }
 
-  const path = `${baseUrl}/${pkg.browser ?? pkg.main}`
+  const path = `${baseUrl}/${(overwriteKey ? (pkg[overwriteKey] as string) : undefined) ?? pkg.browser ?? pkg.main}`
   return {
     preload: [
       {

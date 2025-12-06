@@ -314,6 +314,7 @@ export class CreagenEditor {
     return new Promise<LibraryImport>((resolve, reject) => {
       Importer.getLibrary(name, version)
         .then((library) => {
+          logger.trace('Library import', library)
           if (library === null) {
             reject(new Error(`Library ${name} not found`))
             return

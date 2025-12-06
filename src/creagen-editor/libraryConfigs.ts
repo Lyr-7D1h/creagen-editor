@@ -1,4 +1,8 @@
+import { PackageJsonImportField } from '../importer/exportMapResolver'
+
 export interface LibraryConfig {
+  /** Overwrite which package.json key to use to import library */
+  importKeyOverwrite?: PackageJsonImportField
   /** overwrite types of package with a specific type package */
   typingsOverwrite?: string
   typingsPathOverwrite?: string
@@ -10,6 +14,7 @@ export const LIBRARY_CONFIGS: Record<string, LibraryConfig> = {
     typingsPathOverwrite: 'global.d.ts',
   },
   p5: {
+    importKeyOverwrite: 'browser',
     // Using p5 with global types
     typingsOverwrite: '@types/p5',
     template: `function setup() {
