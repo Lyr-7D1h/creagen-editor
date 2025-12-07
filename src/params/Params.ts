@@ -17,7 +17,36 @@ export const paramConfigSchema = z.discriminatedUnion('type', [
   }),
   baseConfigSchema
     .extend({
-      type: z.literal('number'),
+      type: z.literal('integer'),
+      default: z.number().int().optional(),
+      min: z.number().int().optional(),
+      max: z.number().int().optional(),
+    })
+    .refine(
+      (data) =>
+        typeof data.min !== 'undefined' && typeof data.max !== 'undefined'
+          ? data.min <= data.max
+          : true,
+      {
+        message: 'min cannot be greater than max',
+      },
+    )
+    .refine(
+      (data) =>
+        typeof data.default !== 'undefined'
+          ? Number.isInteger(data.default)
+          : true,
+      {
+        message: 'default must be an integer',
+      },
+    )
+    .transform((data) => ({
+      ...data,
+      default: data.default ?? data.min ?? 0,
+    })),
+  baseConfigSchema
+    .extend({
+      type: z.literal('float'),
       default: z.number().optional(),
       min: z.number().optional(),
       max: z.number().optional(),
@@ -33,33 +62,34 @@ export const paramConfigSchema = z.discriminatedUnion('type', [
       },
     )
     .refine(
-      (data) =>
-        typeof data.min !== 'undefined' && typeof data.max !== 'undefined'
-          ? data.min <= data.max
-          : true,
+      (data) => (typeof data.step !== 'undefined' ? data.step > 0 : true),
       {
-        message: 'min cannot be greater than max',
+        message: 'step must be positive',
       },
     )
-    .transform((data) => ({
-      ...data,
-      default: data.default ?? data.min ?? 0,
-    })),
-  baseConfigSchema
-    .extend({
-      type: z.literal('number-slider'),
-      default: z.number().optional(),
-      min: z.number().optional().default(0),
-      max: z.number().optional().default(10),
-      step: z.number().optional(),
-    })
-    .refine((data) => data.min <= data.max, {
-      message: `min cannot be greater than max`,
-    })
-    .transform((data) => ({
-      ...data,
-      default: data.default ?? data.min,
-    })),
+    .transform((data) => {
+      // Calculate a sane default step if not defined
+      let step = data.step
+      if (typeof step === 'undefined') {
+        if (
+          typeof data.min !== 'undefined' &&
+          typeof data.max !== 'undefined'
+        ) {
+          // Use 1/100th of the range as step
+          const range = data.max - data.min
+          step = range / 10
+        } else {
+          // Default to 0.1 if no min/max
+          step = 0.1
+        }
+      }
+
+      return {
+        ...data,
+        default: data.default ?? data.min ?? 0,
+        step,
+      }
+    }),
   baseConfigSchema.extend({
     type: z.literal('text'),
     default: z.string().optional().default(''),
@@ -130,8 +160,8 @@ export type ParamConfigType = ParamConfig['type']
 
 type ParamConfigValueMap = {
   boolean: boolean
-  number: number
-  'number-slider': number
+  integer: number
+  float: number
   text: string
   range: [number, number]
   'range-slider': [number, number]
@@ -167,14 +197,13 @@ type ParamConfig = { title?: string; description?: string } & (
       default?: boolean
     }
   | {
-      type: 'number'
+      type: 'integer'
       default?: number
       min?: number
       max?: number
-      step?: number
     }
   | {
-      type: 'number-slider'
+      type: 'float'
       default?: number
       min?: number
       max?: number
@@ -216,8 +245,8 @@ type ParamConfig = { title?: string; description?: string } & (
 
 // Overloaded function signatures
 declare function useParam(type: 'boolean', options?: Omit<Extract<ParamConfig, { type: 'boolean' }>, 'type'>): boolean;
-declare function useParam(type: 'number', options?: Omit<Extract<ParamConfig, { type: 'number' }>, 'type'>): number;
-declare function useParam(type: 'number-slider', options?: Omit<Extract<ParamConfig, { type: 'number-slider' }>, 'type'>): number;
+declare function useParam(type: 'integer', options?: Omit<Extract<ParamConfig, { type: 'integer' }>, 'type'>): number;
+declare function useParam(type: 'float', options?: Omit<Extract<ParamConfig, { type: 'float' }>, 'type'>): number;
 declare function useParam(type: 'text', options?: Omit<Extract<ParamConfig, { type: 'text' }>, 'type'>): string;
 declare function useParam(type: 'range', options: Omit<Extract<ParamConfig, { type: 'range' }>, 'type'>): [number, number];
 declare function useParam(type: 'range-slider', options: Omit<Extract<ParamConfig, { type: 'range-slider' }>, 'type'>): [number, number];
@@ -254,20 +283,34 @@ declare function useParam<Items extends Record<string, any>>(
       case 'boolean':
         return typeof value === 'boolean'
 
-      case 'number':
-      case 'number-slider':
+      case 'integer':
+        if (
+          typeof value !== 'number' ||
+          isNaN(value) ||
+          !Number.isInteger(value)
+        ) {
+          return false
+        }
+        if (typeof config.min !== 'undefined' && value < config.min) {
+          return false
+        }
+        if (typeof config.max !== 'undefined' && value > config.max) {
+          return false
+        }
+        return true
+
+      case 'float':
         if (typeof value !== 'number' || isNaN(value)) {
           return false
         }
-        if (
-          typeof config.min !== 'undefined' &&
-          typeof config.max !== 'undefined'
-        )
-          // Check min/max constraints
-          return value >= config.min && value <= config.max
-        if (typeof config.min !== 'undefined') return value >= config.min
-        if (typeof config.max !== 'undefined') return value >= config.max
+        if (typeof config.min !== 'undefined' && value < config.min) {
+          return false
+        }
+        if (typeof config.max !== 'undefined' && value > config.max) {
+          return false
+        }
         return true
+
       case 'text':
         return typeof value === 'string'
 
@@ -397,8 +440,8 @@ declare function useParam<Items extends Record<string, any>>(
     switch (config.type) {
       case 'boolean':
         return String(value)
-      case 'number':
-      case 'number-slider':
+      case 'integer':
+      case 'float':
         return String(value)
       case 'text':
         return JSON.stringify(value)

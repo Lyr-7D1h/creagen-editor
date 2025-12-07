@@ -94,12 +94,12 @@ function SeedInput({
   )
 }
 
-function NumberInput({
+function IntegerInput({
   config,
   value,
   onChange,
 }: {
-  config: ParamConfig & { type: 'number' }
+  config: ParamConfig & { type: 'integer' }
   value: number
   onChange: (value: number) => void
 }) {
@@ -113,7 +113,109 @@ function NumberInput({
 
   const min = config.min
   const max = config.max
-  const step = config.step ?? 1
+
+  // Show slider if min and max are defined
+  const showSlider =
+    typeof config.min !== 'undefined' && typeof config.max !== 'undefined'
+
+  const handleChange = (inputValue: string) => {
+    setLocalValue(inputValue)
+    const val = parseInt(inputValue, 10)
+    const valid = !isNaN(val) && Params.isValidValue(config, val)
+    setIsValid(valid)
+  }
+
+  const commit = () => {
+    const val = parseInt(localValue, 10)
+    const valid = !isNaN(val) && Params.isValidValue(config, val)
+    setIsValid(valid)
+    if (valid) {
+      onChange(val)
+    } else {
+      setLocalValue(String(value))
+    }
+  }
+
+  const textField = (
+    <TextField
+      type="number"
+      value={localValue}
+      onChange={(e) => handleChange(e.target.value)}
+      onBlur={() => commit()}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          commit()
+        }
+      }}
+      slotProps={{
+        htmlInput: {
+          min,
+          max,
+          step: 1,
+        },
+      }}
+      size="small"
+      fullWidth
+      error={!isValid}
+      helperText={
+        !isValid
+          ? `Must be an integer between ${min ?? '-∞'} and ${max ?? '∞'}`
+          : undefined
+      }
+    />
+  )
+
+  if (!showSlider) {
+    return textField
+  }
+
+  return (
+    <Stack direction="column" spacing={0.5} sx={{ width: '100%' }}>
+      {textField}
+      <Slider
+        value={value}
+        onChange={(_, newValue) => {
+          if (
+            typeof newValue === 'number' &&
+            Params.isValidValue(config, newValue)
+          ) {
+            onChange(newValue)
+          }
+        }}
+        min={min}
+        max={max}
+        step={1}
+        valueLabelDisplay="auto"
+        size="small"
+      />
+    </Stack>
+  )
+}
+
+function FloatInput({
+  config,
+  value,
+  onChange,
+}: {
+  config: ParamConfig & { type: 'float' }
+  value: number
+  onChange: (value: number) => void
+}) {
+  const [localValue, setLocalValue] = React.useState(String(value))
+  const [isValid, setIsValid] = React.useState(true)
+
+  React.useEffect(() => {
+    setLocalValue(String(value))
+    setIsValid(true)
+  }, [value])
+
+  const min = config.min
+  const max = config.max
+  const step = config.step
+
+  // Show slider if min and max are defined (step is always defined after transform)
+  const showSlider =
+    typeof config.min !== 'undefined' && typeof config.max !== 'undefined'
 
   const handleChange = (inputValue: string) => {
     setLocalValue(inputValue)
@@ -133,7 +235,7 @@ function NumberInput({
     }
   }
 
-  return (
+  const textField = (
     <TextField
       type="number"
       value={localValue}
@@ -156,75 +258,19 @@ function NumberInput({
       error={!isValid}
       helperText={
         !isValid
-          ? `Must be between ${min ?? '-∞'} and ${max ?? '∞'}`
+          ? `Must be a number between ${min ?? '-∞'} and ${max ?? '∞'}`
           : undefined
       }
     />
   )
-}
 
-function NumberSliderInput({
-  config,
-  value,
-  onChange,
-}: {
-  config: ParamConfig & { type: 'number-slider' }
-  value: number
-  onChange: (value: number) => void
-}) {
-  const [localValue, setLocalValue] = React.useState(String(value))
-  const [isValid, setIsValid] = React.useState(true)
-
-  React.useEffect(() => {
-    setLocalValue(String(value))
-    setIsValid(true)
-  }, [value])
-
-  const min = config.min
-  const max = config.max
-  const step = config.step ?? 1
-
-  const handleChange = (inputValue: string) => {
-    setLocalValue(inputValue)
-    const val = parseFloat(inputValue)
-    const valid = !isNaN(val) && Params.isValidValue(config, val)
-    setIsValid(valid)
-    // don't call onChange here; commit on blur or Enter
-  }
-
-  const commit = () => {
-    const val = parseFloat(localValue)
-    const valid = !isNaN(val) && Params.isValidValue(config, val)
-    setIsValid(valid)
-    if (valid) {
-      onChange(val)
-    } else {
-      setLocalValue(String(value))
-    }
+  if (!showSlider) {
+    return textField
   }
 
   return (
     <Stack direction="column" spacing={0.5} sx={{ width: '100%' }}>
-      <TextField
-        type="number"
-        value={localValue}
-        onChange={(e) => handleChange(e.target.value)}
-        onBlur={() => commit()}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') commit()
-        }}
-        slotProps={{
-          htmlInput: {
-            min,
-            max,
-            step,
-          },
-        }}
-        size="small"
-        fullWidth
-        error={!isValid}
-        helperText={!isValid ? `Must be between ${min} and ${max}` : undefined}
-      />
+      {textField}
       <Slider
         value={value}
         onChange={(_, newValue) => {
@@ -473,10 +519,10 @@ function ParamControl({
       )
       break
 
-    case 'number': {
+    case 'integer': {
       const numValue = typeof value === 'number' ? value : config.default
       control = (
-        <NumberInput
+        <IntegerInput
           config={config}
           value={numValue}
           onChange={onChange as (value: number) => void}
@@ -485,10 +531,10 @@ function ParamControl({
       break
     }
 
-    case 'number-slider': {
+    case 'float': {
       const numValue = typeof value === 'number' ? value : config.default
       control = (
-        <NumberSliderInput
+        <FloatInput
           config={config}
           value={numValue}
           onChange={onChange as (value: number) => void}
@@ -642,8 +688,8 @@ function ParamItem({
       >
         {paramKey}
         {compact &&
-          (config.type === 'number' ||
-            config.type === 'number-slider' ||
+          (config.type === 'integer' ||
+            config.type === 'float' ||
             config.type === 'range' ||
             config.type === 'range-slider') && (
             <Typography
@@ -658,8 +704,8 @@ function ParamItem({
           )}
       </Typography>
       {!compact &&
-        (config.type === 'number' ||
-          config.type === 'number-slider' ||
+        (config.type === 'integer' ||
+          config.type === 'float' ||
           config.type === 'range' ||
           config.type === 'range-slider') && (
           <Typography

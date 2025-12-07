@@ -5,31 +5,32 @@ export function generateRandomValue(config: ParamConfig): unknown {
   switch (config.type) {
     case 'boolean':
       return Math.random() > 0.5
-    case 'number':
-    case 'number-slider': {
+
+    case 'integer': {
+      const min = config.min ?? 0
+      const max = config.max ?? 10000000
+      return Math.floor(Math.random() * (max - min + 1)) + min
+    }
+
+    case 'float': {
       const min = config.min ?? 0
       const max = config.max ?? 10000000
       const step = config.step
 
-      if (step !== undefined) {
-        // Generate value aligned to step
-        const steps = Math.floor((max - min) / step)
-        const randomValue = min + Math.floor(Math.random() * (steps + 1)) * step
-        // Ensure value is within bounds and round to appropriate precision
-        const clampedValue = Math.min(max, Math.max(min, randomValue))
-        // Determine decimal places based on step
-        const decimalPlaces = step < 0.01 ? 4 : step < 1 ? 2 : 0
-        return Number(clampedValue.toFixed(decimalPlaces))
-      }
-
-      // No step specified, generate random value with 2 decimal places
-      const randomValue = min + Math.random() * (max - min)
+      // Generate value aligned to step
+      const steps = Math.floor((max - min) / step)
+      const randomValue = min + Math.floor(Math.random() * (steps + 1)) * step
+      // Ensure value is within bounds and round to appropriate precision
       const clampedValue = Math.min(max, Math.max(min, randomValue))
-      return Number(clampedValue.toFixed(2))
+      // Determine decimal places based on step
+      const decimalPlaces = step < 0.01 ? 4 : step < 1 ? 2 : 0
+      return Number(clampedValue.toFixed(decimalPlaces))
     }
+
     case 'text':
       // For text, just generate a random short string
       return Math.random().toString(36).substring(2, 8)
+
     case 'range':
     case 'range-slider': {
       const min = config.min
@@ -45,8 +46,10 @@ export function generateRandomValue(config: ParamConfig): unknown {
         ? [clampedVal1, clampedVal2]
         : [clampedVal2, clampedVal1]
     }
+
     case 'seed':
       return generateHumanReadableName()
+
     case 'radio': {
       const values = Object.values(config.items)
       return values[Math.floor(Math.random() * values.length)]
