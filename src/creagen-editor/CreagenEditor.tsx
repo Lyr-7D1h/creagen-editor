@@ -171,6 +171,9 @@ export class CreagenEditor {
         case 'client:param-value': {
           this.params.setValue(msg.key, msg.value)
           editorEvents.emit('params:value', undefined)
+          if (this.settings.get('params.auto_render')) {
+            this.render().catch(logger.error)
+          }
           return
         }
         case 'client:statereq':
