@@ -105,7 +105,7 @@ export class Editor {
     html.style.width = '100%'
     html.style.height = '100%'
     const editor = monaco.editor.create(html, {
-      folding: true,
+      folding: settings.get('editor.folding'),
       showFoldingControls: 'always',
       foldingHighlight: true,
       foldingMaximumRegions: 5000,
@@ -160,6 +160,7 @@ export class Editor {
     this.setRelativeLines(settings.get('editor.relative_lines'))
     this.setFullscreenMode(settings.get('editor.fullscreen'))
     this.setVimMode(settings.get('editor.vim'))
+    this.setFolding(settings.get('editor.folding'))
   }
 
   html() {
@@ -191,6 +192,10 @@ export class Editor {
     } else {
       this.editor.updateOptions({ lineNumbers: 'on' })
     }
+  }
+
+  private setFolding(value: boolean) {
+    this.editor.updateOptions({ folding: value })
   }
 
   setVimStatusElement(element: HTMLElement) {

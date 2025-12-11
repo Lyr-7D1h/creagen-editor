@@ -68,6 +68,11 @@ const DEFAULT_CONFIG_VALUE = {
     label: 'Relative Lines',
     value: false,
   },
+  'editor.folding': {
+    type: 'param',
+    label: 'Code Folding',
+    value: true,
+  },
   'editor.show_history': {
     type: 'param',
     label: 'Show file history',
