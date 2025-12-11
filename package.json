@@ -5,7 +5,7 @@
   "scripts": {
     "start": "vite -m dev",
     "start:prod": "vite -m production",
-    "build": "vite build -m production",
+    "build": "vite build -m production && VITE_ENTRYPOINT=controller vite build -m production",
     "build:editor": "VITE_ENTRYPOINT=editor vite build -m production",
     "build:sandbox": "VITE_ENTRYPOINT=sandbox vite build -m production && mv dist/sandbox-runtime/index.html dist/index.html && rm -r dist/sandbox-runtime",
     "build:controller": "VITE_ENTRYPOINT=controller vite build -m production && mv dist/controller/index.html dist/index.html && rm -r dist/controller",

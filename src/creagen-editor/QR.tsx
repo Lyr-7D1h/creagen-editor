@@ -14,12 +14,11 @@ export function QR() {
 
   const controllerEnabled = useSettings('controller.enabled')
   const showQR = useSettings('show_qr')
+  const size = useSettings('controller.qr_size')
 
   const activeId = creagenEditor.controller?.activeId
   const url =
-    activeId != null ? `${CREAGEN_EDITOR_CONTROLLER_URL}/${activeId}` : null
-
-  const size = 100
+    activeId != null ? `${window.location.origin}/controller/${activeId}` : null
 
   if (
     !controllerEnabled ||
@@ -32,7 +31,7 @@ export function QR() {
   return (
     <div
       style={{
-        padding: '10px',
+        padding: '8px',
         position: 'absolute',
         right: 0,
         bottom: 0,
@@ -41,7 +40,26 @@ export function QR() {
     >
       {url != null ? (
         <a href={url}>
-          <QRCode value={url} size={size} enableBackground={'#ffffff66'} />
+          <div
+            style={{
+              padding: '10px',
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              borderRadius: '12px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+              backdropFilter: 'blur(8px)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.05)'
+              e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)'
+              e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)'
+            }}
+          >
+            <QRCode value={url} size={size} />
+          </div>
         </a>
       ) : (
         <div

@@ -25,6 +25,9 @@ npm start
 
 ## Roadmap
 
+- Resize code to editor size
+- Make folding optional
+- Generate controller id from unique browser id
 - Define how to randomize each param and what distribution the randomization should be. 
     - Add randomize interval.
 - Add sketch params

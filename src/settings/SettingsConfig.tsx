@@ -108,7 +108,12 @@ const DEFAULT_CONFIG_VALUE = {
   'controller.enabled': {
     type: 'param',
     label: 'Enable controller',
-    value: false,
+    value: true,
+  },
+  'controller.qr_size': {
+    type: 'param',
+    label: 'QR Size',
+    value: 100,
   },
 
   actions: {

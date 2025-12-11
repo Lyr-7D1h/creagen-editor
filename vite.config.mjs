@@ -158,22 +158,12 @@ export default defineConfig(async ({ mode }) => {
       },
       rollupOptions: {
         input: {
-          ...(process.env.VITE_ENTRYPOINT !== 'sandbox' &&
-          process.env.VITE_ENTRYPOINT !== 'controller'
-            ? {
-                main: path.resolve(__dirname, 'index.html'),
-              }
-            : {}),
           ...(process.env.VITE_ENTRYPOINT === 'sandbox'
-            ? {
-                sandbox: path.resolve(__dirname, 'sandbox-runtime/index.html'),
-              }
-            : {}),
-          ...(process.env.VITE_ENTRYPOINT === 'controller'
-            ? {
-                params: path.resolve(__dirname, 'controller/index.html'),
-              }
-            : {}),
+            ? { sandbox: path.resolve(__dirname, 'sandbox-runtime/index.html') }
+            : {
+                main: path.resolve(__dirname, 'index.html'),
+                controller: path.resolve(__dirname, 'controller/index.html'),
+              }),
         },
       },
     },
