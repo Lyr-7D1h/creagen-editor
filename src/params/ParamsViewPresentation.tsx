@@ -174,7 +174,7 @@ function IntegerInput({
       {textField}
       <Slider
         value={value}
-        onChange={(_, newValue) => {
+        onChangeCommitted={(_, newValue) => {
           if (
             typeof newValue === 'number' &&
             Params.isValidValue(config, newValue)
@@ -273,7 +273,7 @@ function FloatInput({
       {textField}
       <Slider
         value={value}
-        onChange={(_, newValue) => {
+        onChangeCommitted={(_, newValue) => {
           if (
             typeof newValue === 'number' &&
             Params.isValidValue(config, newValue)
@@ -481,7 +481,7 @@ function RangeSliderInput({
       </Stack>
       <Slider
         value={value}
-        onChange={(_, newValue) => {
+        onChangeCommitted={(_, newValue) => {
           const val = newValue as [number, number]
           if (Params.isValidValue(config, val)) {
             onChange(val)
