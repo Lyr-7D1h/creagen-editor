@@ -9,7 +9,7 @@ function localLibraryOnHttp(mode) {
   // don't load if not dev
   if (mode !== 'dev') return {}
 
-  const allowedPaths = ['/creagen.mjs', '/creagen.d.ts', '/creagen.mjs.map']
+  const allowedPaths = ['/creagen.js', '/creagen.d.ts', '/creagen.js.map']
   return {
     apply: 'serve',
     configureServer(server) {

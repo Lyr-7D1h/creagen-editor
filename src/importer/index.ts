@@ -106,7 +106,7 @@ async function getLibraryFromSource(
     return {
       name: packageName,
       version: new SemVer(CREAGEN_DEV_VERSION),
-      importMap: [['creagen', `http://${window.location.host}/creagen.mjs`]],
+      importMap: [['creagen', `http://${window.location.host}/creagen.js`]],
       typings: async () => {
         const res = await fetch('./creagen.d.ts', { timeout: 2000 })
         const typings = await res.text()
