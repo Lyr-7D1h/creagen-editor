@@ -94,6 +94,73 @@ function SeedInput({
   )
 }
 
+function ColorInput({
+  value,
+  onChange,
+}: {
+  value: string
+  onChange: (value: string) => void
+}) {
+  const [localValue, setLocalValue] = React.useState(value)
+
+  React.useEffect(() => {
+    setLocalValue(value)
+  }, [value])
+
+  const handleChange = (newValue: string) => {
+    setLocalValue(newValue)
+    // Validate hex color format
+    if (/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/.test(newValue)) {
+      onChange(newValue)
+    }
+  }
+
+  return (
+    <Stack direction="row" spacing={1} alignItems="center">
+      <Box
+        component="input"
+        type="color"
+        value={localValue.length === 7 || localValue.length === 9 ? localValue.substring(0, 7) : localValue}
+        onChange={(e) => handleChange((e.target as HTMLInputElement).value)}
+        sx={{
+          width: 50,
+          height: 32,
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 0.5,
+          cursor: 'pointer',
+          '&::-webkit-color-swatch-wrapper': {
+            padding: 0,
+          },
+          '&::-webkit-color-swatch': {
+            border: 'none',
+            borderRadius: 0.5,
+          },
+        }}
+      />
+      <TextField
+        fullWidth
+        value={localValue}
+        onChange={(e) => {
+          const val = e.target.value
+          setLocalValue(val)
+        }}
+        onBlur={(e) => handleChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            handleChange((e.target as HTMLInputElement).value)
+          }
+        }}
+        size="small"
+        placeholder="#000000"
+        inputProps={{
+          style: { fontFamily: 'monospace' },
+        }}
+      />
+    </Stack>
+  )
+}
+
 function IntegerInput({
   config,
   value,
@@ -641,6 +708,12 @@ function ParamControl({
           ))}
         </Box>
       )
+      break
+    }
+
+    case 'color': {
+      const colorValue = typeof value === 'string' ? value : config.default
+      control = <ColorInput value={colorValue} onChange={onChange} />
       break
     }
 

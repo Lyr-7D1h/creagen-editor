@@ -152,6 +152,26 @@ export const paramConfigSchema = z.discriminatedUnion('type', [
         message: 'default must be one of the item values',
       },
     ),
+  baseConfigSchema
+    .extend({
+      type: z.literal('color'),
+      default: z.string().optional(),
+      format: z.enum(['hex', 'number']).optional().default('hex'),
+    })
+    .refine(
+      (data) => {
+        if (data.default === undefined) return true
+        // Validate hex color format (#RGB, #RRGGBB, #RRGGBBAA)
+        return /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/.test(data.default)
+      },
+      {
+        message: 'default must be a valid hex color (#RGB, #RRGGBB, or #RRGGBBAA)',
+      },
+    )
+    .transform((data) => ({
+      ...data,
+      default: data.default ?? '#000000',
+    })),
 ])
 
 export type ParamConfig = z.infer<typeof paramConfigSchema>
@@ -167,6 +187,7 @@ type ParamConfigValueMap = {
   'range-slider': [number, number]
   seed: string
   radio: string
+  color: string
   /** a function as a string */
   function: string
 }
@@ -241,6 +262,13 @@ type ParamConfig = { title?: string; description?: string } & (
       /** Must be a positive non-zero number */
       columns?: number
     }
+  | {
+      type: 'color'
+      /** Must be a valid hex color (#RGB, #RRGGBB, or #RRGGBBAA) */
+      default?: string
+      /** Output format: 'hex' (default, returns "#RRGGBB") or 'number' (returns 0xRRGGBB) */
+      format?: 'hex' | 'number'
+    }
 )
 
 // Overloaded function signatures
@@ -255,6 +283,8 @@ declare function useParam<Items extends Record<string, any>>(
   type: 'radio',
   options: Omit<Extract<ParamConfig, { type: 'radio' }>, 'type'> & { items: Items }
 ): Items[keyof Items];
+declare function useParam(type: 'color', options?: Omit<Extract<ParamConfig, { type: 'color' }>, 'type'> & { format?: 'hex' }): string;
+declare function useParam(type: 'color', options: Omit<Extract<ParamConfig, { type: 'color' }>, 'type'> & { format: 'number' }): number;
 `
   private previousStore: Store = new Map()
   private previousConfigs: Map<string, ParamConfig> = new Map()
@@ -338,6 +368,11 @@ declare function useParam<Items extends Record<string, any>>(
       case 'radio':
         // Check if value is one of the valid item values
         return Object.values(config.items).includes(value)
+
+      case 'color':
+        // Validate hex color format (#RGB, #RRGGBB, #RRGGBBAA)
+        return typeof value === 'string' && 
+          /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/.test(value)
     }
   }
 
@@ -463,6 +498,24 @@ declare function useParam<Items extends Record<string, any>>(
       }
       case 'radio': {
         return JSON.stringify(value)
+      }
+      case 'color': {
+        const colorStr = value as string
+        
+        if (config.format === 'number') {
+          // Convert hex color to 0x... number format
+          // Remove the # and convert to number
+          const hex = colorStr.replace('#', '')
+          // Pad to 6 characters if it's shorthand (#RGB -> #RRGGBB)
+          const paddedHex = hex.length === 3 
+            ? hex.split('').map(c => c + c).join('')
+            : hex
+          // Return as hex number literal
+          return `0x${paddedHex.substring(0, 6)}`
+        }
+        
+        // Default: return as hex string
+        return JSON.stringify(colorStr)
       }
     }
   }
