@@ -76,7 +76,7 @@ function redirectController() {
 function injectAnalytics(mode) {
   const analyticsScript =
     mode === 'production'
-      ? '<script defer src="https://analytics.lyrx.dev/script.js" data-website-id="e9b1d776-a9fc-4d52-a9e1-18b80355b1ab"></script>'
+      ? '<script defer src="https://analytics.lyrx.dev/script.js" data-website-id="bf023640-a165-44e4-9697-774707d89e90"></script>'
       : ''
 
   return {
