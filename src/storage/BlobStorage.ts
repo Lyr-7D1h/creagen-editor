@@ -13,6 +13,7 @@ type StoreName = typeof DELTA_STORE | typeof BLOB_STORE
 
 const MAX_DELTA_CHAIN_COUNT = 50
 
+// TODO: Run in web worker, diffing algorithm can be expensive
 /**
  * Blob storage, storing changes mostly in deltas but also as complete blob
  */
@@ -128,9 +129,19 @@ export class BlobStorage {
       }
       const count = await this.getDeltaCount(base)
       if (count <= MAX_DELTA_CHAIN_COUNT) {
-        const deltaValue = deltize(base, baseValue, value)
-        await this._set('delta', hash, deltaValue.buffer as ArrayBuffer)
-        return
+        // Quick estimate of how different the strings are
+        const changeEstimate = estimateChangeSize(baseValue, value)
+
+        // If estimated change is too large (>80% different), skip deltize
+        if (changeEstimate > 0.8) {
+          logger.debug(
+            `Skipping deltize, estimated ${(changeEstimate * 100).toFixed(1)}% change`,
+          )
+        } else {
+          const deltaValue = deltize(base, baseValue, value)
+          await this._set('delta', hash, deltaValue.buffer as ArrayBuffer)
+          return
+        }
       }
     }
 
@@ -160,6 +171,51 @@ export class BlobStorage {
       }
     })
   }
+}
+
+/**
+ * Quickly estimate how much two strings differ (0 = identical, 1 = completely different)
+ * Uses fast heuristics: length difference, common prefix/suffix, and sampling
+ */
+function estimateChangeSize(base: string, value: string): number {
+  if (base === value) return 0
+  if (base.length === 0 || value.length === 0) return 1
+
+  const maxLen = Math.max(base.length, value.length)
+  const minLen = Math.min(base.length, value.length)
+
+  // 1. Length difference gives lower bound on change
+  const lengthDiff = Math.abs(base.length - value.length)
+  const lengthScore = lengthDiff / maxLen
+
+  // 2. Find common prefix length
+  let prefixLen = 0
+  const checkLen = Math.min(minLen, 1000) // Only check first 1000 chars for speed
+  for (let i = 0; i < checkLen; i++) {
+    if (base[i] === value[i]) {
+      prefixLen++
+    } else {
+      break
+    }
+  }
+
+  // 3. Find common suffix length (check last 1000 chars)
+  let suffixLen = 0
+  const suffixCheckLen = Math.min(minLen - prefixLen, 1000)
+  for (let i = 1; i <= suffixCheckLen; i++) {
+    if (base[base.length - i] === value[value.length - i]) {
+      suffixLen++
+    } else {
+      break
+    }
+  }
+
+  // Common content (as fraction of total)
+  const commonLen = prefixLen + suffixLen
+  const commonScore = 1 - commonLen / maxLen
+
+  // Return the maximum of the two scores (most pessimistic estimate)
+  return Math.max(lengthScore, commonScore)
 }
 
 /**
