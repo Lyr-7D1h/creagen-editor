@@ -118,6 +118,7 @@ export class Editor {
       language: 'typescript',
       theme: 'creagen',
       scrollBeyondLastLine: false,
+      fixedOverflowWidgets: true,
     })
 
     return new Editor(html, settings, monaco, editor)
