@@ -15,6 +15,7 @@ import { Settings } from '../settings/Settings'
 import { Sha256Hash } from '../Sha256Hash'
 import { compressToBase64, decompressFromBase64 } from 'lz-string'
 import { SemVer } from 'semver'
+import { UrlMutator } from '../UrlMutator'
 
 export type HistoryItem = {
   commit: Commit
@@ -166,32 +167,29 @@ export class VCS {
     }
   }
 
-  private toUrlPath(data?: string) {
-    if (!this._head) return ''
+  updateUrl(data?: string) {
+    const currentUrl = new URL(window.location.href)
+    const url = new UrlMutator()
 
-    if (this.settings.get('editor.code_in_url')) {
+    if (!this._head) {
+      url.setPath('')
+    } else if (this.settings.get('editor.code_in_url')) {
       const ext = `${data}~${this._activeBookmark.name}~${this._head.toInnerString()}`
       const compressed = compressToBase64(ext)
         .replace(/\+/g, '-')
         .replace(/\//g, '_')
         .replace(/=/g, '')
-      return `${this._head.toHex()}:${compressed}`
+      url.setCommit(this._head.toHex()).setData(compressed)
     } else {
-      return `${this._head.toHex()}`
+      url.setCommit(this._head.toHex())
     }
-  }
 
-  updateUrl(data?: string) {
-    const path = this.toUrlPath(data)
-
-    const url = new URL(window.location.href)
     // only push to history if path changed to prevent duplicates
-    if (path === url.pathname) {
+    if (currentUrl.pathname === url.toURL().pathname) {
       return
     }
 
-    url.pathname = path
-    window.history.pushState('Creagen', '', url)
+    url.pushState('Creagen', '')
   }
 
   get head() {
@@ -393,7 +391,7 @@ export class VCS {
     let bookmark
     if (isBookmark(id)) {
       bookmark = id
-      // eslint-disable-next-line no-param-reassign
+
       id = id.commit
     }
 

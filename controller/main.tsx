@@ -10,10 +10,11 @@ import {
 import { logger } from '../src/logs/logger'
 import { Messages } from '../src/logs/Messages'
 import { ParamsViewPresentation } from '../src/params/ParamsViewPresentation'
-import { ParamConfig, storeToQueryParam } from '../src/params/Params'
+import { ParamConfig } from '../src/params/Params'
 import { ErrorBoundary } from '../src/creagen-editor/ErrorBoundary'
 import { Controller } from '../src/controller/Controller'
 import { generateRandomValue } from '../src/params/params-util'
+import { UrlMutator } from '../src/UrlMutator'
 
 const darkTheme = createTheme({
   palette: {
@@ -103,10 +104,7 @@ export function ControllerApp() {
 
   useEffect(() => {
     if (values.size === 0) return
-    const url = new URL(window.location.href)
-    const queryParam = storeToQueryParam(values)
-    url.searchParams.set('param', queryParam)
-    window.history.replaceState(null, '', url)
+    new UrlMutator().setParams(values).replaceState()
   }, [values, configs])
 
   if (controller === null) {

@@ -2,8 +2,7 @@ import { z } from 'zod'
 import { generateHumanReadableName } from '../vcs/generateHumanReadableName'
 import { Controller, ControllerMessage } from '../controller/Controller'
 import { deepEqual } from '../util'
-
-// https://muffinman.io/ctrls/#/animate:true/opacity-seed:knew-except-fence/hue:220/speed:2/shape:6/size:0,1
+import { UrlMutator } from '../UrlMutator'
 
 const baseConfigSchema = z.object({
   title: z.string().optional(),
@@ -162,10 +161,13 @@ export const paramConfigSchema = z.discriminatedUnion('type', [
       (data) => {
         if (data.default === undefined) return true
         // Validate hex color format (#RGB, #RRGGBB, #RRGGBBAA)
-        return /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/.test(data.default)
+        return /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/.test(
+          data.default,
+        )
       },
       {
-        message: 'default must be a valid hex color (#RGB, #RRGGBB, or #RRGGBBAA)',
+        message:
+          'default must be a valid hex color (#RGB, #RRGGBB, or #RRGGBBAA)',
       },
     )
     .transform((data) => ({
@@ -288,7 +290,7 @@ declare function useParam(type: 'color', options: Omit<Extract<ParamConfig, { ty
 `
   private previousStore: Store = new Map()
   private previousConfigs: Map<string, ParamConfig> = new Map()
-  readonly store: Map<string, unknown> = storeFromQueryParam()
+  readonly store: Map<string, unknown> = UrlMutator.params()
   readonly configs: Map<string, ParamConfig> = new Map()
   regenInterval = 0
 
@@ -371,17 +373,16 @@ declare function useParam(type: 'color', options: Omit<Extract<ParamConfig, { ty
 
       case 'color':
         // Validate hex color format (#RGB, #RRGGBB, #RRGGBBAA)
-        return typeof value === 'string' && 
+        return (
+          typeof value === 'string' &&
           /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/.test(value)
+        )
     }
   }
 
   save() {
     if (this.length === 0) return
-    const url = new URL(window.location.href)
-    const queryParam = storeToQueryParam(this.store)
-    url.searchParams.set('param', queryParam)
-    window.history.replaceState(null, '', url)
+    new UrlMutator().setParams(this.store).replaceState()
   }
 
   setValue(key: string, value: unknown): void {
@@ -501,19 +502,23 @@ declare function useParam(type: 'color', options: Omit<Extract<ParamConfig, { ty
       }
       case 'color': {
         const colorStr = value as string
-        
+
         if (config.format === 'number') {
           // Convert hex color to 0x... number format
           // Remove the # and convert to number
           const hex = colorStr.replace('#', '')
           // Pad to 6 characters if it's shorthand (#RGB -> #RRGGBB)
-          const paddedHex = hex.length === 3 
-            ? hex.split('').map(c => c + c).join('')
-            : hex
+          const paddedHex =
+            hex.length === 3
+              ? hex
+                  .split('')
+                  .map((c) => c + c)
+                  .join('')
+              : hex
           // Return as hex number literal
           return `0x${paddedHex.substring(0, 6)}`
         }
-        
+
         // Default: return as hex string
         return JSON.stringify(colorStr)
       }
@@ -529,48 +534,6 @@ function hashStringTou32(str: string): number {
     hash = hash >>> 0 // Convert to unsigned 32-bit integer
   }
   return hash
-}
-function storeFromQueryParam(): Store {
-  const urlParams = new URLSearchParams(window.location.search)
-  const urlParam = urlParams.get('param')
-  if (urlParam == null) return new Map()
-
-  const parsed: Store = new Map()
-  let k = ''
-  let v = ''
-  let key = true
-  let quoted = false
-  for (const c of urlParam) {
-    if (!key && !quoted && c === '~') {
-      parsed.set(k, JSON.parse(v))
-      k = ''
-      v = ''
-      key = true
-      continue
-    } else if (!quoted && key && c === '.') {
-      key = false
-      continue
-    }
-
-    // ensure to not use any characters inside of quotes
-    if (c === '"') {
-      quoted = !quoted
-    }
-
-    if (key) {
-      k += c
-    } else {
-      v += c
-    }
-  }
-  if (k.length > 0) parsed.set(k, JSON.parse(v))
-
-  return parsed
-}
-export function storeToQueryParam(store: Store) {
-  return Array.from(store.entries())
-    .map(([key, val]) => `${String(key)}.${JSON.stringify(val)}`)
-    .join('~')
 }
 
 type Store = Map<string, unknown>

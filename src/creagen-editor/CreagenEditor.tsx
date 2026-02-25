@@ -21,6 +21,7 @@ import { SemVer } from 'semver'
 import { ResourceMonitor } from '../resource-monitor/ResourceMonitor'
 import { Params } from '../params/Params'
 import { Controller } from '../controller/Controller'
+import { UrlMutator } from '../UrlMutator'
 
 export class CreagenEditor {
   resourceMonitor = new ResourceMonitor()
@@ -135,17 +136,16 @@ export class CreagenEditor {
       if (this.settings.isParam(key)) {
         const config = this.settings.config[key] as SettingsParam
         if (typeof config.fromQueryParam !== 'undefined') {
-          const url = new URL(window.location.href)
-          if (value === null || url.searchParams.get(key) === value) return
+          const url = new UrlMutator()
+          if (value === null || url.getSetting(key) === value) return
 
           // remove query param if it is also the default behavior
           if ((DEFAULT_SETTINGS_CONFIG[key] as SettingsParam).value === value) {
-            url.searchParams.delete(key)
+            url.removeSetting(key)
           } else {
-            const v = JSON.stringify(value)
-            url.searchParams.set(key, v)
+            url.setSetting(key, value)
           }
-          window.history.replaceState(null, '', url)
+          url.replaceState()
         }
       }
     })

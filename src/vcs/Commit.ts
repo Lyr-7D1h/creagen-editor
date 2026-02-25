@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { dateNumberSchema, semverSchema } from '../creagen-editor/schemaUtils'
 import { Sha256Hash, sha256HashSchema } from '../Sha256Hash'
 import { Tagged } from '../util'
-import { $ZodSuperRefineIssue } from 'zod/v4/core/api.cjs'
+import { $ZodSuperRefineIssue } from 'zod/v4/core'
 
 export const commitHashSchema = sha256HashSchema as z.ZodPipe<
   z.ZodString,
