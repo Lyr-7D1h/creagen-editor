@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import { useSettings } from '../events/useEditorEvents'
-import { Actions } from '../creagen-editor/Actions'
 import { EditorBar } from './EditorBar'
 import { useTheme } from '@mui/material'
 
@@ -9,20 +8,12 @@ export interface EditorProps {
   width?: string
   height?: string
   menu: boolean
-  onMenuOpen: () => void
   toggleMenu: () => void
 }
 
-export function EditorView({
-  width,
-  height,
-  menu,
-  onMenuOpen,
-  toggleMenu,
-}: EditorProps) {
+export function EditorView({ width, height, menu, toggleMenu }: EditorProps) {
   const creagenEditor = useCreagenEditor()
   const hideAll = useSettings('hide_all')
-  const actionsEnabled = useSettings('actions.enabled')
   const vimEnabled = useSettings('editor.vim')
   const editorContentRef = useRef<HTMLDivElement>(null)
   const vimStatusRef = useRef<HTMLDivElement>(null)
@@ -55,7 +46,7 @@ export function EditorView({
         flexDirection: 'column',
       }}
     >
-      <EditorBar menu={menu} onMenuOpen={onMenuOpen} />
+      <EditorBar menu={menu} toggleMenu={toggleMenu} />
 
       <div style={{ flex: 1, overflow: 'hidden' }} ref={editorContentRef}></div>
 
@@ -69,15 +60,6 @@ export function EditorView({
             fontFamily: 'monospace',
           }}
         />
-      )}
-
-      {actionsEnabled ? (
-        <Actions
-          toggleMenu={toggleMenu}
-          style={{ position: 'absolute', bottom: 6, right: 14 }}
-        />
-      ) : (
-        ''
       )}
     </div>
   )

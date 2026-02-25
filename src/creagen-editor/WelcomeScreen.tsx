@@ -34,7 +34,7 @@ export function WelcomeScreen() {
       <DialogTitle>Welcome to Creagen Editor!</DialogTitle>
       <DialogContent>
         <DialogContentText>
-          A creative coding web editor with focus on being minimal,
+          This is a creative coding web editor with a focus on being minimal,
           customizable, fast and powerful. Its goal is to provide easy
           accessibility to make creative coding projects.
         </DialogContentText>
@@ -45,12 +45,13 @@ export function WelcomeScreen() {
           <ol>
             <li>Write Code</li>
             <li>
-              Press <b>Control+Shift+Enter</b> to render code
+              Press <b>Control+Shift+Enter</b> to render code or{' '}
+              <b>the top right button</b>
             </li>
             <li>
               In the <b>Menu</b>{' '}
               <span style={{ color: 'grey', fontSize: '0.9rem' }}>
-                (Press the sideways arrow in the top left corner)
+                (Sideways arrow in the top left corner)
               </span>
               : Add dependencies, Look at saved changes, Change keybindings,
               change settings and more

@@ -1,100 +1,172 @@
 import { Add, ChevronRight } from '@mui/icons-material'
 import { IconButton } from '@mui/material'
 import { History } from './History'
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { ActiveBookmark } from './ActiveBookmark'
 import { HtmlTooltip } from './HtmlTooltip'
 import { useSettings } from '../events/useEditorEvents'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import { logger } from '../logs/logger'
+import { Actions } from '../creagen-editor/Actions'
 
 const BAR_HEIGHT = 18
 export function EditorBar({
   menu,
-  onMenuOpen,
+  toggleMenu,
 }: {
   menu: boolean
-  onMenuOpen: () => void
+  toggleMenu: () => void
 }) {
   const creagenEditor = useCreagenEditor()
   const showActiveBookmark = useSettings('editor.show_active_bookmark')
   const historyEnabled = useSettings('editor.show_history')
   const isFullscreen = useSettings('editor.fullscreen')
   const [historyExpanded, setHistoryExpanded] = useState(false)
+  const [inlineHistoryInTopBar, setInlineHistoryInTopBar] = useState(false)
+  const hasSecondHistoryRow = historyEnabled && !inlineHistoryInTopBar
+  const compactSingleRow =
+    isFullscreen && !hasSecondHistoryRow && !historyExpanded
 
-  const ref = useRef<HTMLDivElement>(null)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const topRowRef = useRef<HTMLDivElement>(null)
+  const historyRowRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const root = rootRef.current
+    if (!root) return
+
+    const updateLayout = () => {
+      const hasEnoughSpace = root.clientWidth >= 960
+      setInlineHistoryInTopBar(isFullscreen && historyEnabled && hasEnoughSpace)
+    }
+
+    updateLayout()
+    const observer = new ResizeObserver(updateLayout)
+    observer.observe(root)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [historyEnabled, isFullscreen])
 
   return (
     <div
-      ref={ref}
+      ref={rootRef}
       style={{
         display: 'flex',
-        flexDirection: 'row',
-        alignItems: historyExpanded ? 'flex-start' : 'center',
+        flexDirection: 'column',
+        alignItems: 'stretch',
         padding: 2,
         position: 'relative',
-        height: historyExpanded ? 'auto' : BAR_HEIGHT,
+        height: compactSingleRow ? BAR_HEIGHT : 'auto',
         minHeight: BAR_HEIGHT,
-        backgroundColor: isFullscreen ? 'rgba(0, 0, 0, 0.5)' : 'transparent',
+        gap: hasSecondHistoryRow ? 2 : 0,
+        backgroundColor: isFullscreen ? 'rgba(0, 0, 0, 0.8)' : 'transparent',
         color: isFullscreen ? '#fff' : 'grey',
       }}
     >
-      <HtmlTooltip
-        title={
-          menu
-            ? 'Hide editor menu'
-            : `Show editor menu (${creagenEditor.getKeybindKeyString('editor.toggleMenu')})`
-        }
-        placement="right"
+      <div
+        ref={topRowRef}
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems:
+            inlineHistoryInTopBar && historyExpanded ? 'flex-start' : 'center',
+          minHeight: BAR_HEIGHT,
+          width: '100%',
+        }}
       >
-        <IconButton
-          sx={{
-            width: BAR_HEIGHT,
-            height: BAR_HEIGHT,
-            padding: 0,
-            margin: 0,
-            color: 'inherit',
-          }}
-          onClick={() => onMenuOpen()}
-          size="small"
+        <HtmlTooltip
+          title={
+            menu
+              ? 'Hide editor menu'
+              : `Show editor menu (${creagenEditor.getKeybindKeyString('editor.toggleMenu')})`
+          }
+          placement="right"
         >
-          <ChevronRight
+          <IconButton
             sx={{
-              transform: menu ? 'rotate(180deg)' : 'none',
-              transition: 'transform 0.3s',
+              width: BAR_HEIGHT,
+              height: BAR_HEIGHT,
+              padding: 0,
+              margin: 0,
+              color: 'inherit',
             }}
-          />
-        </IconButton>
-      </HtmlTooltip>
-      <HtmlTooltip
-        title={`New project (${creagenEditor.getKeybindKeyString('new')})`}
-        placement="right"
-      >
-        <IconButton
-          sx={{
-            width: BAR_HEIGHT,
-            height: BAR_HEIGHT,
-            padding: 0,
-            margin: 0,
-            color: 'inherit',
-          }}
-          onClick={() => {
-            creagenEditor.new().catch(logger.error)
-          }}
-          size="small"
+            onClick={() => toggleMenu()}
+            size="small"
+          >
+            <ChevronRight
+              sx={{
+                transform: menu ? 'rotate(180deg)' : 'none',
+                transition: 'transform 0.3s',
+              }}
+            />
+          </IconButton>
+        </HtmlTooltip>
+        <HtmlTooltip
+          title={`New project (${creagenEditor.getKeybindKeyString('new')})`}
+          placement="right"
         >
-          <Add />
-        </IconButton>
-      </HtmlTooltip>
-      {showActiveBookmark ? (
-        <div>
-          <ActiveBookmark color={isFullscreen ? '#fff' : undefined} />
+          <IconButton
+            sx={{
+              width: BAR_HEIGHT,
+              height: BAR_HEIGHT,
+              padding: 0,
+              margin: 0,
+              color: 'inherit',
+            }}
+            onClick={() => {
+              creagenEditor.new().catch(logger.error)
+            }}
+            size="small"
+          >
+            <Add />
+          </IconButton>
+        </HtmlTooltip>
+        {showActiveBookmark ? (
+          <div>
+            <ActiveBookmark color={isFullscreen ? '#fff' : undefined} />
+          </div>
+        ) : (
+          ''
+        )}
+
+        {historyEnabled && inlineHistoryInTopBar && (
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <History
+              parentRef={topRowRef}
+              onExpandedChange={setHistoryExpanded}
+            />
+          </div>
+        )}
+
+        <div style={{ flex: 1 }} />
+        <Actions
+          toggleMenu={toggleMenu}
+          sizeVariant="compact"
+          orientation="row"
+          includeMenuToggle={false}
+        />
+      </div>
+
+      {historyEnabled && !inlineHistoryInTopBar && (
+        <div
+          ref={historyRowRef}
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: historyExpanded ? 'flex-start' : 'center',
+            minHeight: BAR_HEIGHT,
+            width: '100%',
+          }}
+        >
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <History
+              parentRef={historyRowRef}
+              onExpandedChange={setHistoryExpanded}
+            />
+          </div>
         </div>
-      ) : (
-        ''
-      )}
-      {historyEnabled && (
-        <History parentRef={ref} onExpandedChange={setHistoryExpanded} />
       )}
     </div>
   )

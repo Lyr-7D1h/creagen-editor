@@ -75,7 +75,7 @@ const DEFAULT_CONFIG_VALUE = {
   },
   'editor.show_history': {
     type: 'param',
-    label: 'Show file history',
+    label: 'Show file history in toolbar',
     value: true,
   },
   'editor.show_active_bookmark': {
@@ -124,11 +124,6 @@ const DEFAULT_CONFIG_VALUE = {
   actions: {
     type: 'folder',
     title: 'Actions',
-  },
-  'actions.enabled': {
-    type: 'param',
-    label: 'Enable action buttons',
-    value: true,
   },
   'actions.export_enabled': {
     type: 'param',

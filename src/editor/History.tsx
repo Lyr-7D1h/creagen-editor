@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import React from 'react'
 import Box from '@mui/material/Box'
 import { IconButton, Collapse, Stack } from '@mui/material'
@@ -32,34 +32,41 @@ export function History({
   parentRef: React.RefObject<HTMLDivElement | null>
   onExpandedChange?: (expanded: boolean) => void
 }) {
+  const fullscreen = useSettings('editor.fullscreen')
   const historyBufferSize = useSettings('editor.history_buffer_size')
   const history = useHistory(historyBufferSize)
   const [expanded, setExpanded] = useState(false)
   const [isOverflowing, setIsOverflowing] = useState(false)
 
   const historyRef = useRef<HTMLDivElement>(null)
-  const setupCheckOverflow = useCallback(() => {
+  const contentRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
     const parent = parentRef.current
-    const history = historyRef.current
-    if (!history || !parent) return
+    const container = historyRef.current
+    const content = contentRef.current
+    if (!container || !content || !parent) return
 
     const checkOverflow = () => {
-      const isContentOverflowing = history.clientWidth > parent.clientWidth
+      const availableWidth = Math.min(container.clientWidth, parent.clientWidth)
+      const isContentOverflowing = content.scrollWidth > availableWidth
       setIsOverflowing(isContentOverflowing)
     }
 
     checkOverflow()
     const resizeObserver = new ResizeObserver(checkOverflow)
-    resizeObserver.observe(history)
+    resizeObserver.observe(container)
+    resizeObserver.observe(parent)
+    resizeObserver.observe(content)
 
     const mutationObserver = new MutationObserver(checkOverflow)
-    mutationObserver.observe(history, { childList: true, subtree: true })
+    mutationObserver.observe(content, { childList: true, subtree: true })
 
     return () => {
       resizeObserver.disconnect()
       mutationObserver.disconnect()
     }
-  }, [parentRef])
+  }, [parentRef, history, expanded])
 
   const toggleExpand = () => {
     const newExpanded = !expanded
@@ -76,12 +83,7 @@ export function History({
   }
 
   return (
-    <Box
-      ref={(node: HTMLDivElement | null) => {
-        historyRef.current = node
-        setupCheckOverflow()
-      }}
-    >
+    <Box ref={historyRef} sx={{ position: 'relative' }}>
       {(isOverflowing || expanded) && (
         <IconButton
           size="small"
@@ -92,8 +94,15 @@ export function History({
             top: '50%',
             transform: 'translateY(-50%)',
             zIndex: 1,
-            backgroundColor: 'background.paper',
-            '&:hover': { backgroundColor: 'action.hover' },
+            width: 18,
+            height: 18,
+            padding: 0,
+            margin: 0,
+            color: fullscreen ? 'inherit' : undefined,
+            backgroundColor: fullscreen ? 'transparent' : 'background.paper',
+            '&:hover': {
+              backgroundColor: fullscreen ? 'transparent' : 'action.hover',
+            },
           }}
         >
           {expanded ? (
@@ -106,6 +115,7 @@ export function History({
 
       <Collapse in={expanded || !isOverflowing} collapsedSize={24}>
         <div
+          ref={contentRef}
           style={{
             overflow: expanded ? 'visible' : 'hidden',
           }}

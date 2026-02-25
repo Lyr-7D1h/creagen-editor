@@ -92,11 +92,7 @@ export function CreagenEditorViewSplit() {
                     height: '100%',
                   }}
                 >
-                  <EditorView
-                    toggleMenu={() => setMenu(!menu)}
-                    menu={menu}
-                    onMenuOpen={() => setMenu(!menu)}
-                  />
+                  <EditorView menu={menu} toggleMenu={() => setMenu(!menu)} />
                   {resourceMonitorEnabled && <PerformanceMonitor />}
                   <QR />
                 </div>
@@ -137,9 +133,8 @@ export function CreagenEditorViewSplit() {
                         }}
                       >
                         <EditorView
-                          toggleMenu={() => setMenu(!menu)}
                           menu={menu}
-                          onMenuOpen={() => setMenu(!menu)}
+                          toggleMenu={() => setMenu(!menu)}
                         />
                       </div>
                     </Allotment.Pane>
