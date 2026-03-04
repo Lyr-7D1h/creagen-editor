@@ -5,7 +5,7 @@ import { IconButton, Collapse, Stack } from '@mui/material'
 import ArrowLeft from '@mui/icons-material/ArrowLeft'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import { useHistory, useSettings } from '../events/useEditorEvents'
+import { useSettings } from '../events/useEditorEvents'
 import { HistoryItemChip } from './HistoryItemChip'
 import { HistoryItem } from '../vcs/VCS'
 
@@ -26,15 +26,15 @@ function HistoryLink({ item, last }: { item: HistoryItem; last: boolean }) {
 }
 
 export function History({
+  items,
   parentRef,
   onExpandedChange,
 }: {
+  items: HistoryItem[]
   parentRef: React.RefObject<HTMLDivElement | null>
   onExpandedChange?: (expanded: boolean) => void
 }) {
   const fullscreen = useSettings('editor.fullscreen')
-  const historyBufferSize = useSettings('editor.history_buffer_size')
-  const history = useHistory(historyBufferSize)
   const [expanded, setExpanded] = useState(false)
   const [isOverflowing, setIsOverflowing] = useState(false)
 
@@ -66,7 +66,7 @@ export function History({
       resizeObserver.disconnect()
       mutationObserver.disconnect()
     }
-  }, [parentRef, history, expanded])
+  }, [items, parentRef, expanded])
 
   const toggleExpand = () => {
     const newExpanded = !expanded
@@ -75,9 +75,9 @@ export function History({
   }
 
   const renderHistoryItems = () => {
-    return history.map((item, index) => (
+    return items.map((item, index) => (
       <React.Fragment key={index}>
-        <HistoryLink item={item} last={index >= history.length - 1} />
+        <HistoryLink item={item} last={index >= items.length - 1} />
       </React.Fragment>
     ))
   }

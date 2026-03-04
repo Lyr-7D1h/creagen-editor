@@ -4,7 +4,7 @@ import { History } from './History'
 import React, { useEffect, useRef, useState } from 'react'
 import { ActiveBookmark } from './ActiveBookmark'
 import { HtmlTooltip } from './HtmlTooltip'
-import { useSettings } from '../events/useEditorEvents'
+import { useHistory, useSettings } from '../events/useEditorEvents'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import { logger } from '../logs/logger'
 import { Actions } from '../creagen-editor/Actions'
@@ -20,10 +20,14 @@ export function EditorBar({
   const creagenEditor = useCreagenEditor()
   const showActiveBookmark = useSettings('editor.show_active_bookmark')
   const historyEnabled = useSettings('editor.show_history')
+  const historyBufferSize = useSettings('editor.history_buffer_size')
+  const history = useHistory(historyBufferSize)
+  const hasHistory = history.length > 0
+  const historyVisible = historyEnabled && hasHistory
   const isFullscreen = useSettings('editor.fullscreen')
   const [historyExpanded, setHistoryExpanded] = useState(false)
   const [inlineHistoryInTopBar, setInlineHistoryInTopBar] = useState(false)
-  const hasSecondHistoryRow = historyEnabled && !inlineHistoryInTopBar
+  const hasSecondHistoryRow = historyVisible && !inlineHistoryInTopBar
   const compactSingleRow =
     isFullscreen && !hasSecondHistoryRow && !historyExpanded
 
@@ -37,7 +41,7 @@ export function EditorBar({
 
     const updateLayout = () => {
       const hasEnoughSpace = root.clientWidth >= 960
-      setInlineHistoryInTopBar(isFullscreen && historyEnabled && hasEnoughSpace)
+      setInlineHistoryInTopBar(isFullscreen && historyVisible && hasEnoughSpace)
     }
 
     updateLayout()
@@ -47,7 +51,7 @@ export function EditorBar({
     return () => {
       observer.disconnect()
     }
-  }, [historyEnabled, isFullscreen])
+  }, [historyVisible, isFullscreen])
 
   return (
     <div
@@ -131,9 +135,10 @@ export function EditorBar({
           ''
         )}
 
-        {historyEnabled && inlineHistoryInTopBar && (
+        {historyVisible && inlineHistoryInTopBar && (
           <div style={{ flex: 1, minWidth: 0 }}>
             <History
+              items={history}
               parentRef={topRowRef}
               onExpandedChange={setHistoryExpanded}
             />
@@ -149,7 +154,7 @@ export function EditorBar({
         />
       </div>
 
-      {historyEnabled && !inlineHistoryInTopBar && (
+      {historyVisible && !inlineHistoryInTopBar && (
         <div
           ref={historyRowRef}
           style={{
@@ -162,6 +167,7 @@ export function EditorBar({
         >
           <div style={{ flex: 1, minWidth: 0 }}>
             <History
+              items={history}
               parentRef={historyRowRef}
               onExpandedChange={setHistoryExpanded}
             />
