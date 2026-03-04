@@ -100,6 +100,44 @@ export enum SandboxMessageHandlerMode {
   Parent,
   Iframe,
 }
+
+const HANDSHAKE_TIMEOUT_MS = 5000
+
+function getMessageType(data: unknown): unknown {
+  if (data === null || typeof data !== 'object' || !('type' in data)) {
+    return undefined
+  }
+  return (data as { type: unknown }).type
+}
+
+function waitForMessage(
+  shouldResolve: (event: MessageEvent) => boolean,
+  timeoutMessage: string,
+): Promise<MessageEvent> {
+  return new Promise((resolve, reject) => {
+    let settled = false
+
+    const finish = (cb: () => void) => {
+      if (settled) return
+      settled = true
+      window.clearTimeout(timeoutId)
+      window.removeEventListener('message', listener)
+      cb()
+    }
+
+    const listener = (event: MessageEvent) => {
+      if (!shouldResolve(event)) return
+      finish(() => resolve(event))
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      finish(() => reject(new Error(timeoutMessage)))
+    }, HANDSHAKE_TIMEOUT_MS)
+
+    window.addEventListener('message', listener)
+  })
+}
+
 /** Sandbox message handler, run in an iframe or normal browser window */
 export class SandboxMessageHandler {
   static async create(
@@ -116,43 +154,53 @@ export class SandboxMessageHandler {
     switch (mode) {
       case SandboxMessageHandlerMode.Parent: {
         const channel = new MessageChannel()
+        await waitForMessage(
+          (event) =>
+            event.source === iframe?.contentWindow &&
+            getMessageType(event.data) === '__runtime_ready__',
+          'Sandbox parent handshake timeout',
+        )
 
-        function initListener() {
-          const window = iframe?.contentWindow
-          // Must send an object message, not a plain string
-          window?.postMessage(
-            { type: '__init__', constants: { creagenEditorVersion: '' } },
-            '*',
-            [channel.port2],
+        const targetWindow = iframe?.contentWindow
+        if (!targetWindow) {
+          throw new Error(
+            'Sandbox parent handshake failed: iframe contentWindow unavailable',
           )
-          iframe?.removeEventListener('load', initListener)
         }
 
-        if (
-          iframe!.contentWindow &&
-          iframe!.contentDocument?.readyState === 'complete'
-        ) {
-          initListener()
-        } else {
-          iframe?.addEventListener('load', initListener)
-        }
+        targetWindow.postMessage(
+          { type: '__init__', constants: { creagenEditorVersion: '' } },
+          '*',
+          [channel.port2],
+        )
 
         return new SandboxMessageHandler(channel.port1)
       }
-      case SandboxMessageHandlerMode.Iframe:
-        return new Promise((res) => {
-          window.addEventListener('message', (msg) => {
-            if (
-              Boolean(msg.data) &&
-              'type' in msg.data &&
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-              msg.data.type === '__init__' &&
-              msg.ports[0]
-            ) {
-              res(new SandboxMessageHandler(msg.ports[0]))
-            }
-          })
-        })
+      case SandboxMessageHandlerMode.Iframe: {
+        if (window.parent === window) {
+          throw new Error(
+            'Sandbox iframe handshake failed: no parent window available',
+          )
+        }
+
+        window.parent.postMessage({ type: '__runtime_ready__' }, '*')
+
+        const initMessage = await waitForMessage(
+          (event) =>
+            getMessageType(event.data) === '__init__' &&
+            Boolean(event.ports[0]),
+          'Sandbox iframe handshake timeout',
+        )
+
+        const port = initMessage.ports[0]
+        if (!port) {
+          throw new Error(
+            'Sandbox iframe handshake failed: missing message port',
+          )
+        }
+
+        return new SandboxMessageHandler(port)
+      }
     }
   }
 
