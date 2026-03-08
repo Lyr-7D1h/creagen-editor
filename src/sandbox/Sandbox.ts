@@ -8,6 +8,7 @@ import {
 } from './SandboxMessageHandler'
 
 const logger = createContextLogger('sandbox')
+const loggerRuntime = createContextLogger('sandbox-runtime')
 
 export class Sandbox {
   private parent: HTMLElement | null = null
@@ -52,10 +53,10 @@ export class Sandbox {
         ? event.data
         : [event.data]
       if (event.level === 'error') {
-        logger.error(...args)
+        loggerRuntime.error(...args)
         return
       }
-      logger[event.level](...args)
+      loggerRuntime[event.level](...args)
     })
     this.messageHandler.on('renderComplete', () => {
       editorEvents.emit('sandbox:render-complete', undefined)

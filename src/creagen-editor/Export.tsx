@@ -22,7 +22,15 @@ import {
 } from '../events/useEditorEvents'
 import { HtmlTooltip } from '../editor/HtmlTooltip'
 
-export function Export({ color, size }: { color: string; size: string }) {
+export function Export({
+  color,
+  size,
+  isFullscreen = false,
+}: {
+  color: string
+  size: string
+  isFullscreen?: boolean
+}) {
   const theme = useTheme()
   const optimizeExport = useSettings('actions.export_optimize')
   const analysisResult = useEditorEvent('sandbox:analysis-complete')
@@ -74,7 +82,7 @@ export function Export({ color, size }: { color: string; size: string }) {
             color,
             paddingRight: 0,
             '&:hover': {
-              color: 'inherit',
+              color: isFullscreen ? theme.palette.primary.main : 'inherit',
             },
           }}
           onClick={() => {
@@ -95,14 +103,16 @@ export function Export({ color, size }: { color: string; size: string }) {
           <HtmlTooltip title="Select SVG" style={{ zIndex: 5 }}>
             <IconButton
               sx={{
-                color: theme.palette.grey[400],
+                color: isFullscreen
+                  ? theme.palette.common.white
+                  : theme.palette.grey[400],
                 padding: 0,
                 marginTop: '5px',
                 ml: 0.5,
                 transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
                 transition: 'transform 0.2s',
                 '&:hover': {
-                  color: 'inherit',
+                  color: isFullscreen ? theme.palette.primary.main : 'inherit',
                 },
               }}
               onClick={() => setExpanded(!expanded)}

@@ -93,13 +93,6 @@ const DEFAULT_CONFIG_VALUE = {
     },
     value: 10,
   },
-  'editor.code_in_url': {
-    type: 'param',
-    label: 'Use code in the url',
-    details:
-      'Use code in the url instead of an id to generate shareable links without using remote storage',
-    value: false,
-  },
   'editor.init_render': {
     type: 'param',
     label: 'Render code on start up',

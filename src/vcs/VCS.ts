@@ -1,21 +1,12 @@
-import {
-  Commit,
-  CommitHash,
-  Checkout as Checkout,
-  BlobHash,
-  commitHashSchema,
-} from './Commit'
+import { Commit, CommitHash, Checkout as Checkout, BlobHash } from './Commit'
 import { createContextLogger } from '../logs/logger'
 import { Library } from '../settings/SettingsConfig'
 import { isBookmark, Bookmark, Bookmarks } from './Bookmarks'
 import { editorEvents } from '../events/events'
 import { generateHumanReadableName } from './generateHumanReadableName'
 import { ClientStorage } from '../storage/ClientStorage'
-import { Settings } from '../settings/Settings'
 import { Sha256Hash } from '../Sha256Hash'
-import { compressToBase64, decompressFromBase64 } from 'lz-string'
 import { SemVer } from 'semver'
-import { UrlMutator } from '../UrlMutator'
 
 export type HistoryItem = {
   commit: Commit
@@ -40,157 +31,18 @@ function generateUncommittedBookmark() {
 
 /** Version Control Software for creagen-editor */
 export class VCS {
-  static async create(storage: ClientStorage, settings: Settings) {
+  static async create(storage: ClientStorage) {
     const bms = (await storage.get('bookmarks')) ?? new Bookmarks([])
 
-    return new VCS(storage, settings, bms, generateUncommittedBookmark())
+    return new VCS(storage, bms, generateUncommittedBookmark())
   }
 
   private _head: Commit | null = null
   private constructor(
     private readonly storage: ClientStorage,
-    private readonly settings: Settings,
     private readonly _bookmarks: Bookmarks,
     private _activeBookmark: ActiveBookmark,
   ) {}
-
-  /** Create data if it does not exist yet */
-  private async updateFromUrlData(
-    commitHash: CommitHash,
-    {
-      code,
-      bookmarkName,
-      commit,
-    }: {
-      code: string
-      bookmarkName: string
-      commit: Commit
-    },
-  ) {
-    if (commitHash.compare(commit.hash) === false) {
-      logger.error('Commit from data is not matching commit from base')
-      return null
-    }
-
-    // if commit already exists ignore
-    if ((await this.storage.get('commit', commit.hash)) !== null) {
-      return null
-    }
-
-    logger.info('Creating commit from data', {
-      bookmark: bookmarkName,
-      dataLength: DataTransfer.length,
-      libraries: JSON.stringify(commit.libraries),
-    })
-    // if bookmark doesn't exist use the name as temporary placeholder
-    if (this.bookmarks.getBookmark(bookmarkName) === null) {
-      this._activeBookmark = {
-        name: bookmarkName,
-        createdOn: new Date(),
-        commit: null,
-      }
-    }
-    return await this.commit(code, commit.libraries, false)
-  }
-
-  /** update current state from url */
-  async updateFromUrl() {
-    const path = window.location.pathname.replace('/', '')
-
-    if (path.length === 0) return null
-
-    const { commitHash, data } = await this.fromUrlPath()
-
-    if (commitHash.success === false) {
-      logger.error('Invalid commit hash given: ', commitHash.error)
-      return null
-    }
-
-    let commit: Commit | null = null
-    if (data !== null)
-      commit = await this.updateFromUrlData(commitHash.data, data)
-
-    commit ??= await this.storage.get('commit', commitHash.data)
-
-    if (commit === null) {
-      logger.error(`${commitHash.data.toSub()} not found`)
-      return null
-    }
-
-    const ref = this.bookmarks.bookmarkLookup(commit.hash)
-    if (ref !== null) {
-      // TODO: select bookmark most recently used
-      this._activeBookmark = ref[0]! as ActiveBookmark
-    }
-
-    // set head to commit
-    this._head = commit
-    return
-  }
-
-  private async fromUrlPath() {
-    const path = window.location.pathname.replace('/', '')
-    let parts = path.split(':')
-    const commitHash = commitHashSchema.safeParse(parts[0])
-
-    if (typeof parts[1] === 'undefined' || parts[1].length === 0)
-      return { commitHash, data: null }
-
-    let decompressed = parts[1].replace(/-/g, '+').replace(/_/g, '/')
-    decompressed =
-      decompressed + '==='.slice(0, (4 - (decompressed.length % 4)) % 4)
-    decompressed = decompressFromBase64(decompressed)
-    parts = decompressed.split('~')
-
-    if (parts.length < 3) {
-      logger.error(
-        'Failed to parse data from url: expecting 3 parts in url with data',
-      )
-      return { commitHash, data: null }
-    }
-    const code = parts[0]!
-    const bookmarkName = parts[1]!
-    const commit = await Commit.fromInnerString(parts[2]!)
-    if (typeof commit === 'string') {
-      logger.error(
-        `Failed to parse data from url: failed to parse commit '${commit}'`,
-      )
-      return { commitHash, data: null }
-    }
-    return {
-      commitHash,
-      data: {
-        code,
-        bookmarkName,
-        commit,
-      },
-    }
-  }
-
-  updateUrl(data?: string) {
-    const currentUrl = new URL(window.location.href)
-    const url = new UrlMutator()
-
-    if (!this._head) {
-      url.setPath('')
-    } else if (this.settings.get('editor.code_in_url')) {
-      const ext = `${data}~${this._activeBookmark.name}~${this._head.toInnerString()}`
-      const compressed = compressToBase64(ext)
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=/g, '')
-      url.setCommit(this._head.toHex()).setData(compressed)
-    } else {
-      url.setCommit(this._head.toHex())
-    }
-
-    // only push to history if path changed to prevent duplicates
-    if (currentUrl.pathname === url.toURL().pathname) {
-      return
-    }
-
-    url.pushState('Creagen', '')
-  }
 
   get head() {
     return this._head
@@ -200,15 +52,28 @@ export class VCS {
     return this._activeBookmark
   }
 
-  async addBookmark(name: string, commit: CommitHash) {
+  /**
+   * Add a bookmark
+   *
+   * returns null if already exists
+   * */
+  async addBookmark(
+    name: string,
+    commit: CommitHash,
+  ): Promise<Bookmark | null> {
     if (this.bookmarks.getBookmark(name) !== null) {
       logger.warn(`Bookmark '${name}' already exists`)
       return null
     }
-    this.bookmarks.add({ name, commit, createdOn: new Date() })
+    const bookmark: Bookmark = { name, commit, createdOn: new Date() }
+    this.bookmarks.add(bookmark)
     await this.storage.set('bookmarks', this.bookmarks)
     editorEvents.emit('vcs:bookmark-update', undefined)
-    return true
+    return bookmark
+  }
+
+  bookmarkLookup(commit: CommitHash) {
+    return this.bookmarks.bookmarkLookup(commit)
   }
 
   async removeBookmark(name: string) {
@@ -286,7 +151,7 @@ export class VCS {
   }
 
   /**
-   * update current active bookmark to this commit, or commit the bookmark
+   * Update current active bookmark to this commit, or commit the bookmark
    *
    * @returns null when failed to update bookmarks
    */
@@ -311,18 +176,29 @@ export class VCS {
     return
   }
 
+  /** Create a new commit and update the head to this commit */
   async commit(
     code: string,
     libraries: Library[],
+    /** Will update the current bookmark to point to this commit */
     updateBookmark: boolean = true,
+    metadata?: {
+      editorVersion?: SemVer
+      createdOn?: Date
+      author?: string
+      parent?: CommitHash | null
+    },
   ): Promise<null | Commit> {
     const blob = (await Sha256Hash.create(code)) as BlobHash
     const commit = await Commit.create(
       blob,
       new SemVer(CREAGEN_EDITOR_VERSION),
       libraries,
-      new Date(),
-      this._head?.hash,
+      metadata?.createdOn ?? new Date(),
+      typeof metadata?.parent !== 'undefined'
+        ? (metadata.parent ?? undefined)
+        : this._head?.hash,
+      metadata?.author,
     )
 
     // don't commit if nothing changed
@@ -340,8 +216,6 @@ export class VCS {
     const old = this._head
     this._head = commit
 
-    this.updateUrl(code)
-
     // Emit global events
     editorEvents.emit('vcs:commit', {
       commit,
@@ -352,7 +226,7 @@ export class VCS {
   }
 
   /**
-   * Create a new bookmark on a optional commit
+   * Create a new bookmark on a optional commit and checkout
    *
    * @returns
    * */
@@ -360,7 +234,6 @@ export class VCS {
     const old = this._head
     this._head = hash ? await this.storage.get('commit', hash) : null
     this._activeBookmark = generateUncommittedBookmark()
-    this.updateUrl()
     editorEvents.emit('vcs:checkout', { old, new: this._head ?? null })
 
     let data = null
@@ -377,17 +250,15 @@ export class VCS {
       : null
   }
 
-  /** Checkout a bookmark or ID */
-  checkout(id: CommitHash, updateHistory?: boolean): Promise<Checkout | null>
-  checkout(ref: Bookmark, updateHistory?: boolean): Promise<Checkout | null>
-  checkout(
-    id: CommitHash | Bookmark,
-    updateHistory?: boolean,
-  ): Promise<Checkout | null>
-  async checkout(
-    id: CommitHash | Bookmark,
-    updateUrlHistory = true,
-  ): Promise<Checkout | null> {
+  /**
+   * Checkout a `Bookmark` or `Commit`
+   *
+   * Checking out a `Commit` will set the active `Bookmark` to that commit
+   * */
+  checkout(id: CommitHash): Promise<Checkout | null>
+  checkout(ref: Bookmark): Promise<Checkout | null>
+  checkout(id: CommitHash | Bookmark): Promise<Checkout | null>
+  async checkout(id: CommitHash | Bookmark): Promise<Checkout | null> {
     let bookmark
     if (isBookmark(id)) {
       bookmark = id
@@ -414,8 +285,6 @@ export class VCS {
 
     const old = this._head
     this._head = commit
-
-    if (updateUrlHistory) this.updateUrl(data)
 
     // Emit global events
     editorEvents.emit('vcs:checkout', { old, new: commit })

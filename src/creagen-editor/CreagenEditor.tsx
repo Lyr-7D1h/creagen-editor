@@ -17,11 +17,12 @@ import { ClientStorage } from '../storage/ClientStorage'
 import { editorEvents } from '../events/events'
 import { Bookmark, isBookmark } from '../vcs/Bookmarks'
 import { Command, COMMANDS } from './commands'
-import { SemVer } from 'semver'
 import { ResourceMonitor } from '../resource-monitor/ResourceMonitor'
 import { Params } from '../params/Params'
 import { Controller } from '../controller/Controller'
 import { UrlMutator } from '../UrlMutator'
+import { updateFromUrl } from './updateFromUrl'
+import { creagenEditorVersionMismatch } from './creagenEditorVersionMatches'
 
 export class CreagenEditor {
   resourceMonitor = new ResourceMonitor()
@@ -42,8 +43,7 @@ export class CreagenEditor {
     const settings = await Settings.create(storage)
     const editor = await Editor.create(settings)
     const sandbox = Sandbox.create()
-    const vcs = await VCS.create(storage, settings)
-    await vcs.updateFromUrl()
+    const vcs = await VCS.create(storage)
     const customKeybindings = (await storage.get('custom-keybindings')) ?? []
 
     return new CreagenEditor(
@@ -79,20 +79,16 @@ export class CreagenEditor {
     // add creagen types
     this.editor.addTypings(Params.TYPINGS, 'creagen-editor')
 
-    this.loadFromQueryParams()
-    /// If head is set load corresponding code
-    if (this.vcs.head) {
-      this.checkout(this.vcs.head.hash)
-        .then(() => {
-          if (this.settings.get('editor.init_render')) {
-            this.render().catch(logger.error)
-          } else if (this.settings.get('params.auto_render')) {
-            const code = this.editor.getValue()
-            this.parseCode(code)
-          }
-        })
-        .catch(logger.error)
-    }
+    this.updateFromUrl()
+      .then(() => {
+        if (this.settings.get('editor.init_render')) {
+          this.render().catch(logger.error)
+        } else if (this.settings.get('params.auto_render')) {
+          const code = this.editor.getValue()
+          this.parseCode(code)
+        }
+      })
+      .catch(logger.error)
 
     if (this.settings.get('sandbox.resource_monitor'))
       this.resourceMonitor.listen()
@@ -101,13 +97,7 @@ export class CreagenEditor {
 
     // Setup listener for updating code from history
     window.addEventListener('popstate', () => {
-      this.vcs
-        .updateFromUrl()
-        .then(() => {
-          if (this.vcs.head)
-            this.checkout(this.vcs.head.hash, false).catch(logger.error)
-        })
-        .catch(logger.error)
+      this.updateFromUrl().catch(logger.error)
     })
 
     // Listen to setting changes
@@ -118,11 +108,6 @@ export class CreagenEditor {
         } else {
           this.controller.disconnect()
         }
-      }
-
-      if (key === 'editor.code_in_url') {
-        this.vcs.updateUrl(this.editor.getValue())
-        return
       }
 
       if (key === 'sandbox.resource_monitor') {
@@ -149,6 +134,11 @@ export class CreagenEditor {
         }
       }
     })
+  }
+
+  /** Update creagen from url data */
+  private async updateFromUrl() {
+    await updateFromUrl(this)
   }
 
   private async setupController() {
@@ -211,9 +201,7 @@ export class CreagenEditor {
       commit: { editorVersion, libraries },
       data,
     } = checkout
-    if (editorVersion.compare(new SemVer(CREAGEN_EDITOR_VERSION)) !== 0) {
-      logger.warn("Editor version doesn't match")
-    }
+    creagenEditorVersionMismatch(editorVersion)
 
     // update libraries from commit
     await this.loadLibraries(libraries)
@@ -221,10 +209,16 @@ export class CreagenEditor {
     this.editor.setValue(data)
   }
 
-  async checkout(hash: CommitHash, updateUrlHistory?: boolean): Promise<void>
-  async checkout(bookmark: Bookmark, updateUrlHistory?: boolean): Promise<void>
-  async checkout(id: CommitHash | Bookmark, updateUrlHistory?: boolean) {
-    const checkout = await this.vcs.checkout(id, updateUrlHistory)
+  /**
+   * Checkout a sketch by commit or bookmark
+   *
+   *
+   * Checking out by commit will create a new bookmark name
+   */
+  async checkout(hash: CommitHash): Promise<void>
+  async checkout(bookmark: Bookmark): Promise<void>
+  async checkout(id: CommitHash | Bookmark) {
+    const checkout = await this.vcs.checkout(id)
     if (checkout === null) {
       logger.warn(`'${isBookmark(id) ? id.name : id.toSub()}' not found in vcs`)
       return
@@ -234,27 +228,16 @@ export class CreagenEditor {
       commit: { editorVersion, libraries },
       data,
     } = checkout
-    if (editorVersion.compare(new SemVer(CREAGEN_EDITOR_VERSION)) !== 0) {
-      logger.warn("Editor version doesn't match")
-    }
+    creagenEditorVersionMismatch(editorVersion)
+
+    const mutator = new UrlMutator()
+    if (this.vcs.head) mutator.setCommit(this.vcs.head.hash.toHex())
+    mutator.pushState(null, this.vcs.activeBookmark.name)
 
     // update libraries from commit
     await this.loadLibraries(libraries)
 
     this.editor.setValue(data)
-  }
-
-  /** Update settings from query params */
-  loadFromQueryParams() {
-    const urlParams = new URLSearchParams(window.location.search)
-    urlParams.forEach((value, key) => {
-      if (this.settings.isParam(key)) {
-        if (this.settings.config[key].fromQueryParam) {
-          const paramValue = this.settings.config[key].fromQueryParam(value)
-          this.settings.set(key, paramValue)
-        }
-      }
-    })
   }
 
   /** Reset all editor typings */

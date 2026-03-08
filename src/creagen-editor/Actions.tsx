@@ -4,6 +4,7 @@ import { Export } from './Export'
 import { useCreagenEditor } from './CreagenContext'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import StopIcon from '@mui/icons-material/Stop'
+import ShareIcon from '@mui/icons-material/Share'
 import { MenuBook } from '@mui/icons-material'
 import { IconButton, useTheme } from '@mui/material'
 import {
@@ -13,6 +14,10 @@ import {
 import { HtmlTooltip } from '../editor/HtmlTooltip'
 import { editorEvents } from '../events/events'
 import { isMobile } from './isMobile'
+import { createContextLogger, log, Severity } from '../logs/logger'
+import { UrlMutator } from '../UrlMutator'
+
+const logger = createContextLogger('actions')
 
 export function Actions({
   toggleMenu,
@@ -51,6 +56,20 @@ export function Actions({
 
   const size = sizeVariant === 'compact' ? '16px' : isMobile() ? '60px' : '50px'
   const isMobileDevice = isMobile()
+
+  const fullscreenActionButtonSx = useMemo(
+    () =>
+      isFullscreen
+        ? {
+            color: theme.palette.common.white,
+            '&:hover': {
+              color: theme.palette.primary.main,
+            },
+          }
+        : undefined,
+    [isFullscreen, theme.palette.common.white, theme.palette.primary.main],
+  )
+
   const buttons = useMemo(() => {
     const buttons = []
     if (
@@ -67,6 +86,7 @@ export function Actions({
           <IconButton
             size="small"
             color={showQR ? 'primary' : isFullscreen ? 'inherit' : 'default'}
+            sx={showQR ? undefined : fullscreenActionButtonSx}
             onClick={() => creagenEditor.executeCommand('sandbox.toggleQR')}
             style={{
               cursor: 'pointer',
@@ -79,14 +99,64 @@ export function Actions({
     }
     if (exportEnabled)
       buttons.push(
-        <Export key="export" color={theme.palette.primary.main} size={size} />,
+        <Export
+          key="export"
+          color={isFullscreen ? theme.palette.common.white : theme.palette.primary.main}
+          size={size}
+          isFullscreen={isFullscreen}
+        />,
       )
+    if (!isMobileDevice) {
+      buttons.push(
+        <HtmlTooltip key="share" title="Copy shareable link">
+          <IconButton
+            size="small"
+            color={isFullscreen ? 'inherit' : 'primary'}
+            sx={fullscreenActionButtonSx}
+            onClick={() => {
+              creagenEditor
+                .commit()
+                .then(async () => {
+                  const code = creagenEditor.editor.getValue()
+                  const head = creagenEditor.vcs.head
+                  const bookmarkName = creagenEditor.vcs.activeBookmark.name
+                  if (code.length === 0 || head === null) {
+                    logger.warn('Cannot create shareable link for empty code')
+                    return
+                  }
+
+                  const url = UrlMutator.createShareableLink({
+                    code,
+                    bookmarkName,
+                    editorVersion: head.editorVersion,
+                    libraries: head.libraries,
+                    createdOn: head.createdOn,
+                    author: head.author,
+                  })
+
+                  await navigator.clipboard.writeText(url.toString())
+                  log(Severity.Success, 'Copied shareable link')
+                })
+                .catch((error) => {
+                  logger.error('Failed to create shareable link', error)
+                })
+            }}
+            style={{
+              cursor: 'pointer',
+            }}
+          >
+            <ShareIcon style={{ fontSize: size }} />
+          </IconButton>
+        </HtmlTooltip>,
+      )
+    }
     if (isMobileDevice && includeMenuToggle)
       buttons.push(
         <HtmlTooltip key="menu" title="Toggle menu">
           <IconButton
             size="small"
-            color="primary"
+            color={isFullscreen ? 'inherit' : 'primary'}
+            sx={fullscreenActionButtonSx}
             onClick={toggleMenu}
             style={{
               cursor: 'pointer',
@@ -101,7 +171,8 @@ export function Actions({
         <HtmlTooltip key="freeze" title="Freeze Sandbox">
           <IconButton
             size="small"
-            color="primary"
+            color={isFullscreen ? 'inherit' : 'primary'}
+            sx={fullscreenActionButtonSx}
             onClick={() => {
               creagenEditor.executeCommand('editor.toggleFreeze')
             }}
@@ -118,7 +189,8 @@ export function Actions({
       <HtmlTooltip key="run" title="Run Code">
         <IconButton
           size="small"
-          color="primary"
+          color={isFullscreen ? 'inherit' : 'primary'}
+          sx={fullscreenActionButtonSx}
           onClick={() => creagenEditor.executeCommand('editor.run')}
           style={{
             cursor: 'pointer',
@@ -140,8 +212,10 @@ export function Actions({
     isFullscreen,
     showQR,
     size,
+    theme.palette.common.white,
     theme.palette.primary.main,
     toggleMenu,
+    fullscreenActionButtonSx,
   ])
 
   return (
