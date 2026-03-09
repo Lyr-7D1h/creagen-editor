@@ -16,6 +16,42 @@ export function parentKey(key: string) {
   return key.split('.').slice(0, -1).join('.')
 }
 
+async function getStoredSettings(
+  storage: ClientStorage,
+): Promise<Record<ParamKey, Entry>> {
+  // Initialize with deep cloned default settings
+  const config = (
+    Object.entries(DEFAULT_SETTINGS_CONFIG) as Array<[ParamKey, Entry]>
+  ).reduce(
+    (acc, [key, entry]) => {
+      acc[key] = {
+        ...entry,
+      }
+      return acc
+    },
+    {} as Record<ParamKey, Entry>,
+  )
+
+  // Load stored settings from localStorage
+  const storedSettings = await storage.get('settings')
+
+  if (typeof storedSettings !== 'object' || storedSettings === null)
+    return config
+
+  for (const [key, value] of Object.entries(storedSettings)) {
+    if (!(key in config)) continue
+
+    const entry = config[key as ParamKey]
+    if (entry.type !== 'param' || typeof entry.value !== typeof value) continue
+
+    if (typeof value === 'boolean' || typeof value === 'number') {
+      entry.value = value
+    }
+  }
+
+  return config
+}
+
 export interface SettingsContextType {
   /** Do not change unknown of these values use `set()` and `add()` */
   values: Record<ParamKey, unknown>
@@ -39,41 +75,17 @@ export class Settings {
   }
 
   static async create(storage: ClientStorage) {
-    // Initialize with deep cloned default settings
-    const config = Object.entries(DEFAULT_SETTINGS_CONFIG).reduce(
-      (acc, [key, entry]) => {
-        acc[key] = {
-          ...entry,
-        }
-        return acc
-      },
-      {} as Record<ParamKey, Entry>,
-    )
-
-    // Load stored settings from localStorage
-    const storageSettings = await storage.get('settings')
-    if (storageSettings !== null) {
-      for (const [key, value] of Object.entries(storageSettings)) {
-        const entry = config[key]
-        // skip if current stored has changed
-        if (
-          typeof entry === 'undefined' ||
-          typeof entry.value !== typeof value ||
-          entry.type !== 'param'
-        )
-          continue
-        config[key].value = value
-      }
-    }
+    const config = await getStoredSettings(storage)
 
     return new Settings(storage, config as DefaultSettingsConfig)
   }
 
   get values(): Record<ParamKey, unknown> {
     return Object.fromEntries(
-      Object.entries(this.config)
-        .filter(([_, entry]) => (entry as Entry).type === 'param' || entry.type)
-        .map(([key, entry]) => [key, (entry as SettingsParam).value]),
+      (Object.entries(this.config) as Array<[ParamKey, Entry]>).flatMap(
+        ([key, entry]) =>
+          entry.type === 'param' ? [[key, entry.value] as const] : [],
+      ),
     ) as Record<ParamKey, unknown>
   }
 
@@ -85,7 +97,7 @@ export class Settings {
     return false
   }
 
-  getEntry(key: string): Entry | null {
+  getEntry(key: string): Readonly<Entry> | null {
     const entry = this.config[key as keyof DefaultSettingsConfig]
     if (typeof entry === 'undefined') return null
     return entry as Entry
@@ -109,7 +121,7 @@ export class Settings {
     if (typeof value !== 'object' && entry.value === value) return
     logger.trace(`setting ${key} to ${JSON.stringify(value)}`)
     const oldValue = entry.value
-    entry.value = value
+    entry.value = value as typeof entry.value
     this.saveAndNotify(key, value, oldValue)
   }
 

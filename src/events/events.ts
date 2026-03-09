@@ -3,6 +3,13 @@ import { EDITOR_EVENTS, EditorEvent, EditorEventData } from './EditorEvent'
 
 const logger = createContextLogger('events')
 
+type EditorEventUnion = {
+  [K in EditorEvent]: {
+    type: K
+    data: EditorEventData<K>
+  }
+}[EditorEvent]
+
 class _EditorEventBus {
   private readonly target = new EventTarget()
 
@@ -16,7 +23,7 @@ class _EditorEventBus {
     callback: (data: EditorEventData<K>) => void,
   ): () => void {
     const handler = (e: Event) => {
-      callback((e as CustomEvent).detail)
+      callback((e as CustomEvent<EditorEventData<K>>).detail)
     }
 
     if (Array.isArray(type)) {
@@ -36,9 +43,12 @@ class _EditorEventBus {
     }
   }
 
-  onAny(callback: (type: EditorEvent, data: any) => void): () => void {
+  onAny(callback: (type: EditorEventUnion['type'], data: EditorEventUnion['data']) => void): () => void {
     const handler = (e: Event) => {
-      callback(e.type as EditorEvent, (e as CustomEvent).detail)
+      callback(
+        e.type as EditorEventUnion['type'],
+        (e as CustomEvent<EditorEventUnion['data']>).detail,
+      )
     }
 
     EDITOR_EVENTS.forEach((eventType) => {
@@ -54,7 +64,7 @@ class _EditorEventBus {
 
   onPattern(
     pattern: string,
-    callback: (type: EditorEvent, data: any) => void,
+    callback: (type: EditorEventUnion['type'], data: EditorEventUnion['data']) => void,
   ): () => void {
     return this.onAny((type, data) => {
       if (type.startsWith(pattern)) {
