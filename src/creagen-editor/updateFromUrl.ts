@@ -1,6 +1,7 @@
 import { logger } from '../logs/logger'
 import { UrlMutator } from '../UrlMutator'
 import { generateHumanReadableName } from '../vcs/generateHumanReadableName'
+import { BookmarkAlreadyExistsError, BookmarkNotFoundError } from '../vcs/VCS'
 import { CreagenEditor } from './CreagenEditor'
 import { creagenEditorVersionMismatch } from './creagenEditorVersionMatches'
 
@@ -31,28 +32,45 @@ async function updateFromSharableLinkData(
   creagenEditorVersionMismatch(editorVersion)
 
   // create a commit
-  const commit = await editor.vcs.commit(code, libraries, false, {
+  const commitResult = await editor.vcs.commit(code, libraries, false, {
     createdOn,
     author,
     parent: null,
     editorVersion,
   })
-  if (commit === null) {
+  if (!commitResult.ok) {
+    commitResult
+      .match()
+      .when(BookmarkNotFoundError, (error) => {
+        logger.error(error)
+      })
+      .run()
     return null
   }
+  const commit = commitResult.value
+  if (commit === null) return null
 
   let bookmarkName = sharableDataLink.bookmarkName
-  let bookmark
+  let bookmark: Awaited<ReturnType<typeof editor.vcs.addBookmark>>
   // try and add bookmark, with different names if failed
+  // We only retry on collisions; all other errors should stop processing.
   while (
-    (bookmark = await editor.vcs.addBookmark(bookmarkName, commit.hash)) ===
-    null
+    !(bookmark = await editor.vcs.addBookmark(bookmarkName, commit.hash)).ok
   ) {
+    const retryWithNewName = bookmark
+      .match()
+      .when(BookmarkAlreadyExistsError, () => true)
+      .run()
+    if (!retryWithNewName) {
+      return null
+    }
     bookmarkName = generateHumanReadableName()
-    logger.warn(`Failed to update bookmark from data, trying ${bookmarkName}`)
+    logger.warn(
+      `Failed to update bookmark from data: ${bookmark.error.message}`,
+    )
   }
 
-  await editor.checkout(bookmark)
+  await editor.checkout(bookmark.value)
   return true
 }
 

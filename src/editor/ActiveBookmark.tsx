@@ -20,7 +20,11 @@ export function ActiveBookmark({ color }: { color?: string }) {
     vcs
       .renameBookmark(activeBookmark.name, value)
       .then((v) => {
-        if (v) setIsEditing(false)
+        if (v.ok) {
+          setIsEditing(false)
+          return
+        }
+        logger.error(v.error)
       })
       .catch(logger.error)
   }

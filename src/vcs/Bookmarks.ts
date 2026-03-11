@@ -1,6 +1,5 @@
 import { z } from 'zod'
 import { Commit, CommitHash, commitHashSchema } from './Commit'
-import { logger } from '../logs/logger'
 
 export const bookmarkNameSchema = z.string().regex(/^[^~:\r\n]{1,32}$/)
 export const bookmarkSchema = z.object({
@@ -36,12 +35,10 @@ export class Bookmarks {
     // old doesn't exist
     const old = this.bookmarks.get(oldName)
     if (typeof old === 'undefined') {
-      logger.error(`'${oldName}' could not be found`)
       return null
     }
     // already exists
     if (typeof this.bookmarks.get(newName) !== 'undefined') {
-      logger.error(`'${newName}' already exists`)
       return null
     }
 
@@ -55,7 +52,6 @@ export class Bookmarks {
   update(name: string, commit: CommitHash) {
     const bookmark = this.getBookmark(name)
     if (bookmark === null) {
-      logger.error(`Failed to update ${name}. Bookmark not found`)
       return null
     }
 

@@ -189,7 +189,14 @@ export function HistoryItemChip({ item }: { item: HistoryItem }) {
                 logger.error('Bookmark already exists')
                 return
               }
-              vcs.addBookmark(name, commit.hash).catch(logger.error)
+              vcs
+                .addBookmark(name, commit.hash)
+                .then((result) => {
+                  if (!result.ok) {
+                    logger.error(result.error)
+                  }
+                })
+                .catch(logger.error)
               setIsEditing(null)
             }}
             initialValue={isEditing}

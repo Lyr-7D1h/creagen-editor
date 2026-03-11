@@ -12,7 +12,7 @@ import {
 } from '../settings/SettingsConfig'
 import { CustomKeybinding, Keybindings } from './keybindings'
 import { Importer, LibraryImport } from '../importer'
-import { VCS } from '../vcs/VCS'
+import { BookmarkNotFoundError, CommitNotFoundError, VCS } from '../vcs/VCS'
 import { ClientStorage } from '../storage/ClientStorage'
 import { editorEvents } from '../events/events'
 import { Bookmark, isBookmark } from '../vcs/Bookmarks'
@@ -189,7 +189,12 @@ export class CreagenEditor {
 
   /** Create new sketch */
   async new(hash?: CommitHash) {
-    const checkout = await this.vcs.new(hash)
+    const checkoutResult = await this.vcs.new(hash)
+    if (!checkoutResult.ok) {
+      logger.error(checkoutResult.error)
+      return
+    }
+    const checkout = checkoutResult.value
 
     // no checkout so empty commit
     if (checkout === null) {
@@ -218,11 +223,22 @@ export class CreagenEditor {
   async checkout(hash: CommitHash): Promise<void>
   async checkout(bookmark: Bookmark): Promise<void>
   async checkout(id: CommitHash | Bookmark) {
-    const checkout = await this.vcs.checkout(id)
-    if (checkout === null) {
-      logger.warn(`'${isBookmark(id) ? id.name : id.toSub()}' not found in vcs`)
+    const checkoutResult = await this.vcs.checkout(id)
+    if (!checkoutResult.ok) {
+      checkoutResult
+        .match()
+        .when(CommitNotFoundError, () => {
+          logger.warn(
+            `'${isBookmark(id) ? id.name : id.toSub()}' not found in vcs`,
+          )
+        })
+        .else((error) => {
+          logger.error(error)
+        })
+        .run()
       return
     }
+    const checkout = checkoutResult.value
 
     const {
       commit: { editorVersion, libraries },
@@ -379,7 +395,16 @@ export class CreagenEditor {
 
     const libraries = [...this.libraryImports.values()]
     // store code and change url
-    if ((await this.vcs.commit(code, libraries)) === null) return null
+    const commitResult = await this.vcs.commit(code, libraries)
+    if (!commitResult.ok) {
+      commitResult
+        .match()
+        .when(BookmarkNotFoundError, (error) => {
+          logger.error(error)
+        })
+        .run()
+      return null
+    }
 
     return { code, libraries }
   }
