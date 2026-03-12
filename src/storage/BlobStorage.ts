@@ -5,7 +5,7 @@ import { BloomFilter } from '../BloomFilter'
 import { BlobHash } from '../vcs/Commit'
 import { BLOB_STORE, DELTA_STORE } from './ClientStorage'
 import { createContextLogger } from '../logs/logger'
-import { Sha256Hash } from '../Sha256Hash'
+import { Sha256Hash } from '../vcs/Sha256Hash'
 
 const logger = createContextLogger('blob-storage')
 

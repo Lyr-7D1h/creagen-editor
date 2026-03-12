@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach } from 'vitest'
 import { BlobStorage } from './BlobStorage'
-import { Sha256Hash } from '../Sha256Hash'
+import { Sha256Hash } from '../vcs/Sha256Hash'
 import { BlobHash } from '../vcs/Commit'
 
 // Mock IndexedDB

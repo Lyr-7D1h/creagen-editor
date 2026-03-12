@@ -1,12 +1,14 @@
-import { Commit, CommitHash, Checkout as Checkout, BlobHash } from './Commit'
+import { Commit, CommitHash, BlobHash } from './Commit'
 import { Library } from '../settings/SettingsConfig'
 import { isBookmark, Bookmark, Bookmarks } from './Bookmarks'
 import { editorEvents } from '../events/events'
 import { generateHumanReadableName } from './generateHumanReadableName'
-import { ClientStorage } from '../storage/ClientStorage'
-import { Sha256Hash } from '../Sha256Hash'
+import { Storage } from './Storage'
+import { Sha256Hash } from './Sha256Hash'
 import { SemVer } from 'semver'
 import { AsyncResult, Result } from 'typescript-result'
+
+export type Checkout = { commit: Commit; data: string }
 
 export type HistoryItem = {
   commit: Commit
@@ -76,7 +78,7 @@ function generateUncommittedBookmark() {
 
 /** Version Control Software for creagen-editor */
 export class VCS {
-  static async create(storage: ClientStorage) {
+  static async create(storage: Storage) {
     const bms = (await storage.get('bookmarks')) ?? new Bookmarks([])
 
     return new VCS(storage, bms, generateUncommittedBookmark())
@@ -84,7 +86,7 @@ export class VCS {
 
   private _head: Commit | null = null
   private constructor(
-    private readonly storage: ClientStorage,
+    private readonly storage: Storage,
     private readonly _bookmarks: Bookmarks,
     private _activeBookmark: ActiveBookmark,
   ) {}

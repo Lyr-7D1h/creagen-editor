@@ -2,7 +2,7 @@ import { SemVer } from 'semver'
 import { Library, librarySchema } from '../settings/SettingsConfig'
 import { z } from 'zod'
 import { dateNumberSchema, semverSchema } from '../creagen-editor/schemaUtils'
-import { Sha256Hash, sha256HashSchema } from '../Sha256Hash'
+import { Sha256Hash, sha256HashSchema } from './Sha256Hash'
 import { Tagged } from '../util'
 import { $ZodSuperRefineIssue } from 'zod/v4/core'
 
@@ -127,81 +127,6 @@ export class Commit {
       createdOn,
       parent,
       author,
-    )
-  }
-
-  /**
-   * Convert a string representation to commit
-   *
-   * returns error string if it didn't pass
-   */
-  static async fromInnerString(input: string): Promise<Commit | string> {
-    if (input.length === 0) return 'Empty string'
-
-    if (!input) return 'Failed to decompress id string'
-    const parts = input.split(':')
-    if (parts.length < 5) return 'Commit must have more than 5 parts'
-
-    let blob
-    try {
-      blob = Sha256Hash.fromHex(parts[0]!) as BlobHash
-    } catch (e) {
-      return `Failed to parse blob: ${e as Error}`
-    }
-
-    let editorVersion
-    try {
-      editorVersion = new SemVer(parts[1]!)
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (_) {
-      return `Failed to parse version: ${parts[1]}`
-    }
-
-    const libs = libraryStringSchema
-      .array()
-      .safeParse(JSON.parse(`[${parts[2]!}]`))
-    if (libs.success === false) {
-      return `Failed to parse libraries: ${libs.error.message}`
-    }
-
-    let parent
-    try {
-      if (parts[3]!.length > 0)
-        parent = Sha256Hash.fromHex(parts[3]!) as CommitHash
-    } catch (e) {
-      return `Failed to parse blob: ${e as Error}`
-    }
-
-    let author
-    if (parts[4]!.length > 0) author = parts[4]!
-
-    const createdOnNumber = Number(parts[5]!)
-    if (isNaN(createdOnNumber)) {
-      return `Failed to parse creation date: "${parts[5]}" is not a valid number`
-    }
-    const createdOn = dateNumberSchema.safeParse(createdOnNumber)
-    if (createdOn.success === false) {
-      return `Failed to parse creation date: ${createdOn.error.message}`
-    }
-
-    return Commit.create(
-      blob,
-      editorVersion,
-      libs.data,
-      createdOn.data,
-      parent,
-      author,
-    )
-  }
-
-  toInnerString() {
-    return toInnerString(
-      this.blob,
-      this.editorVersion,
-      this.libraries,
-      this.createdOn,
-      this.parent,
-      this.author,
     )
   }
 

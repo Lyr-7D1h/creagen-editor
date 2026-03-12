@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test } from 'vitest'
 import { UrlMutator } from './UrlMutator'
 import { SemVer } from 'semver'
-import { Sha256Hash } from './Sha256Hash'
+import { Sha256Hash } from './vcs/Sha256Hash'
 import { decompressFromEncodedURIComponent } from 'lz-string'
 
 describe('UrlMutator query params', () => {
@@ -206,11 +206,12 @@ describe('UrlMutator shareable link', () => {
     expect(JSON.parse(metadataRaw)).toEqual([
       source.bookmarkName,
       source.editorVersion.toString(),
-      source.libraries.map((l) => `${l.name}@${l.version.toString()}`).join(','),
+      source.libraries
+        .map((l) => `${l.name}@${l.version.toString()}`)
+        .join(','),
       source.createdOn.getTime(),
     ])
   })
-
 })
 
 describe('UrlMutator commit path', () => {
