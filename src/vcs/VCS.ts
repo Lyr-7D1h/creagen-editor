@@ -1,22 +1,26 @@
-import { Commit, CommitHash, BlobHash } from './Commit'
-import { Library } from '../settings/SettingsConfig'
+import { Commit, CommitHash, BlobHash, MetaData } from './Commit'
 import { isBookmark, Bookmark, Bookmarks } from './Bookmarks'
 import { editorEvents } from '../events/events'
 import { generateHumanReadableName } from './generateHumanReadableName'
 import { Storage } from './Storage'
-import { Sha256Hash } from './Sha256Hash'
-import { SemVer } from 'semver'
 import { AsyncResult, Result } from 'typescript-result'
+import { ParseError, StorageError, VCSStorage } from './VCSStorage'
+import { Sha256Hash } from './Sha256Hash'
 
-export type Checkout = { commit: Commit; data: string }
+export type Checkout<M extends MetaData> = {
+  commit: Commit<M>
+  data: string
+}
 
-export type HistoryItem = {
-  commit: Commit
+export type HistoryItem<M extends MetaData> = {
+  commit: Commit<M>
   bookmarks: Bookmark[]
 }
 
 /** Active Reference, a reference that might not be comitted yet */
-export type ActiveBookmark = Omit<Bookmark, 'commit'> & {
+export type ActiveBookmark = {
+  name: string
+  createdOn: Date
   /** If set it means that the ref is stored otherwise it is an uncommited bookmark */
   commit: CommitHash | null
 }
@@ -77,16 +81,23 @@ function generateUncommittedBookmark() {
 }
 
 /** Version Control Software for creagen-editor */
-export class VCS {
-  static async create(storage: Storage) {
-    const bms = (await storage.get('bookmarks')) ?? new Bookmarks([])
+export class VCS<M extends MetaData> {
+  static async create<M extends MetaData, S extends Storage<M>>(
+    storage: S,
+    parseMetadata: (raw: unknown) => M,
+  ) {
+    const vcsStorage = new VCSStorage(storage, parseMetadata)
+    const bmsResult = await vcsStorage.getBookmarks()
+    if (!bmsResult.ok) return bmsResult
 
-    return new VCS(storage, bms, generateUncommittedBookmark())
+    return Result.ok(
+      new VCS<M>(vcsStorage, bmsResult.value, generateUncommittedBookmark()),
+    )
   }
 
-  private _head: Commit | null = null
+  private _head: Commit<M> | null = null
   private constructor(
-    private readonly storage: Storage,
+    private readonly storage: VCSStorage<M>,
     private readonly _bookmarks: Bookmarks,
     private _activeBookmark: ActiveBookmark,
   ) {}
@@ -107,14 +118,15 @@ export class VCS {
   addBookmark(
     name: string,
     commit: CommitHash,
-  ): AsyncResult<Bookmark, BookmarkAlreadyExistsError> {
+  ): AsyncResult<Bookmark, BookmarkAlreadyExistsError | StorageError> {
     return Result.fromAsync(async () => {
       if (this.bookmarks.getBookmark(name) !== null) {
         return Result.error(new BookmarkAlreadyExistsError(name))
       }
-      const bookmark: Bookmark = { name, commit, createdOn: new Date() }
+      const bookmark = new Bookmark(name, commit, new Date())
       this.bookmarks.add(bookmark)
-      await this.storage.set('bookmarks', this.bookmarks)
+      const setResult = await this.storage.setBookmarks(this.bookmarks)
+      if (!setResult.ok) return setResult
       editorEvents.emit('vcs:bookmark-update', undefined)
       return Result.ok(bookmark)
     })
@@ -124,13 +136,19 @@ export class VCS {
     return this.bookmarks.bookmarkLookup(commit)
   }
 
-  async removeBookmark(name: string) {
-    this.bookmarks.remove(name)
-    if (this._activeBookmark.name === name) {
-      this._activeBookmark = generateUncommittedBookmark()
-    }
-    await this.storage.set('bookmarks', this.bookmarks)
-    editorEvents.emit('vcs:bookmark-update', undefined)
+  removeBookmark(name: string): AsyncResult<void, StorageError> {
+    return Result.fromAsync(async () => {
+      this.bookmarks.remove(name)
+      if (this._activeBookmark.name === name) {
+        this._activeBookmark = generateUncommittedBookmark()
+      }
+
+      const setResult = await this.storage.setBookmarks(this.bookmarks)
+      if (!setResult.ok) return setResult
+
+      editorEvents.emit('vcs:bookmark-update', undefined)
+      return Result.ok()
+    })
   }
 
   renameBookmark(
@@ -141,6 +159,7 @@ export class VCS {
     | BookmarkNotFoundError
     | BookmarkAlreadyExistsError
     | BookmarkRenameFailedError
+    | StorageError
   > {
     return Result.fromAsync(async () => {
       const bookmark = this.bookmarks.getBookmark(oldName)
@@ -172,7 +191,8 @@ export class VCS {
       if (this._activeBookmark.name === oldName) {
         this._activeBookmark = newBookmark as ActiveBookmark
       }
-      await this.storage.set('bookmarks', this.bookmarks)
+      const setResult = await this.storage.setBookmarks(this.bookmarks)
+      if (!setResult.ok) return setResult
       editorEvents.emit('vcs:bookmark-update', undefined)
       return Result.ok(true as const)
     })
@@ -186,25 +206,38 @@ export class VCS {
    * Get history
    * @param n - How far to go back
    */
-  async history(n: number, start?: Commit): Promise<HistoryItem[]> {
-    let next = start ?? this._head
-    const history: HistoryItem[] = []
-    for (let i = 0; i < n; i++) {
-      if (next === null) break
-      const bookmarks = this.bookmarks.bookmarkLookup(next.hash) ?? []
-      history.push({ commit: next, bookmarks })
+  history(
+    n: number,
+    start?: Commit<M>,
+  ): AsyncResult<HistoryItem<M>[], ParseError | StorageError> {
+    return Result.fromAsync(async () => {
+      /** PERF: Make more efficient by querying commits by same author around that time and caching those commits */
+      let next: Commit<M> | null = start ?? this._head
+      const history: HistoryItem<M>[] = []
+      for (let i = 0; i < n; i++) {
+        if (next === null) break
+        const bookmarks = this.bookmarks.bookmarkLookup(next.hash) ?? []
+        history.push({ commit: next, bookmarks })
 
-      if (typeof next.parent === 'undefined') break
-      next = await this.storage.get('commit', next.parent)
-    }
-    return history
+        if (typeof next.parent === 'undefined') break
+        const parentResult = await this.storage.getCommit(next.parent)
+        if (!parentResult.ok) {
+          return Result.error(parentResult.error)
+        }
+        if (parentResult.value === null) {
+          break
+        }
+        next = parentResult.value
+      }
+      return Result.ok(history)
+    })
   }
 
   /**
    * Get all commits from storage
    */
-  async getAllCommits(): Promise<Commit[]> {
-    return await this.storage.getAllCommits()
+  getAllCommits() {
+    return this.storage.getAllCommits()
   }
 
   /**
@@ -214,13 +247,17 @@ export class VCS {
    */
   private updateActiveBookmark(
     commit: CommitHash,
-  ): AsyncResult<void, BookmarkNotFoundError> {
+  ): AsyncResult<void, BookmarkNotFoundError | StorageError> {
     return Result.fromAsync(async () => {
       if (this.activeBookmark.commit === null) {
         // commit uncommitted bookmark
-        const ref: Bookmark = { ...this._activeBookmark, commit }
+        const ref = new Bookmark(
+          this._activeBookmark.name,
+          commit,
+          this._activeBookmark.createdOn,
+        )
         this.bookmarks.add(ref)
-        this._activeBookmark = ref as ActiveBookmark
+        this._activeBookmark = ref
       } else {
         // update currently active to this commit
         const newBookmark = this.bookmarks.update(
@@ -234,7 +271,8 @@ export class VCS {
         this._activeBookmark = newBookmark
       }
 
-      await this.storage.set('bookmarks', this.bookmarks)
+      const setResult = await this.storage.setBookmarks(this.bookmarks)
+      if (setResult.ok === false) return setResult
       editorEvents.emit('vcs:bookmark-update', undefined)
       return Result.ok()
     })
@@ -246,54 +284,51 @@ export class VCS {
    * @returns null in case nothing changed
    * */
   commit(
-    code: string,
-    libraries: Library[],
-    /** Will update the current bookmark to point to this commit */
-    updateBookmark: boolean = true,
-    metadata?: {
-      editorVersion?: SemVer
-      createdOn?: Date
-      author?: string
-      parent?: CommitHash | null
-    },
-  ): AsyncResult<Commit | null, BookmarkNotFoundError> {
+    /** The value to be stored and comitted */
+    value: string,
+    /** Metadata related to this commit */
+    metadata: M,
+    /** Update active bookmark to this commit */
+    updateActiveBookmark: boolean = true,
+  ): AsyncResult<Commit<M> | null, BookmarkNotFoundError | StorageError> {
     return Result.fromAsync(async () => {
-      const blob = (await Sha256Hash.create(code)) as BlobHash
-      const commit = await Commit.create(
-        blob,
-        new SemVer(CREAGEN_EDITOR_VERSION),
-        libraries,
-        metadata?.createdOn ?? new Date(),
-        typeof metadata?.parent !== 'undefined'
-          ? (metadata.parent ?? undefined)
-          : this._head?.hash,
-        metadata?.author,
-      )
-
+      const blob = (await Sha256Hash.create(value)) as BlobHash
       // don't commit if nothing changed
-      if (this._head && commit.compareData(this._head)) {
+      if (
+        this._head &&
+        blob.compare(this._head.blob) &&
+        (this._head.metadata && metadata
+          ? this._head.metadata.compare(metadata)
+          : true)
+      ) {
         return Result.ok(null)
       }
 
-      await this.storage.set('commit', commit, commit.hash)
-      await this.storage.set('blob', code, commit.blob, this._head?.blob)
+      const commit = await Commit.create(
+        blob,
+        new Date(),
+        metadata,
+        this._head ? this._head.hash : undefined,
+      )
 
-      if (updateBookmark) {
+      const setCommitResult = await this.storage.setCommit(commit)
+      if (setCommitResult.ok === false) return setCommitResult
+
+      const setBlobResult = await this.storage.setBlob(
+        value,
+        commit.blob,
+        this._head?.blob,
+      )
+      if (setBlobResult.ok === false) return setBlobResult
+
+      if (updateActiveBookmark) {
         const updateResult = await this.updateActiveBookmark(commit.hash)
-        if (!updateResult.ok) {
+        if (updateResult.ok === false) {
           return updateResult
         }
       }
 
-      const old = this._head
       this._head = commit
-
-      // Emit global events
-      editorEvents.emit('vcs:commit', {
-        commit,
-        code,
-      })
-      editorEvents.emit('vcs:checkout', { old, new: commit })
       return Result.ok(commit)
     })
   }
@@ -303,16 +338,30 @@ export class VCS {
    *
    * @returns Checkout of `hash` when `hash` is given
    * */
-  new(hash?: CommitHash): AsyncResult<Checkout | null, BlobNotFoundError> {
+  new(
+    hash?: CommitHash,
+  ): AsyncResult<
+    Checkout<M> | null,
+    ParseError | StorageError | BlobNotFoundError | CommitNotFoundError
+  > {
     return Result.fromAsync(async () => {
-      const old = this._head
-      this._head = hash ? await this.storage.get('commit', hash) : null
+      if (hash) {
+        const res = await this.storage.getCommit(hash)
+        if (!res.ok) return res
+        if (res.value === null)
+          return Result.error(new CommitNotFoundError(hash))
+        this._head = res.value
+      } else {
+        this._head = null
+      }
+
       this._activeBookmark = generateUncommittedBookmark()
-      editorEvents.emit('vcs:checkout', { old, new: this._head ?? null })
 
       let data = null
       if (this._head) {
-        data = await this.storage.get('blob', this._head.blob)
+        const blobResult = await this.storage.getBlob(this._head.blob)
+        if (blobResult.ok === false) return blobResult
+        data = blobResult.value
         if (data === null) {
           return Result.error(new BlobNotFoundError(this._head.blob))
         }
@@ -336,26 +385,42 @@ export class VCS {
   checkout(
     id: CommitHash,
   ): AsyncResult<
-    Checkout,
-    CommitNotFoundError | BlobNotFoundError | BookmarkNotFoundError
+    Checkout<M>,
+    | ParseError
+    | StorageError
+    | CommitNotFoundError
+    | BlobNotFoundError
+    | BookmarkNotFoundError
   >
   checkout(
-    ref: Bookmark,
+    bookmark: Bookmark,
   ): AsyncResult<
-    Checkout,
-    CommitNotFoundError | BlobNotFoundError | BookmarkNotFoundError
+    Checkout<M>,
+    | ParseError
+    | StorageError
+    | CommitNotFoundError
+    | BlobNotFoundError
+    | BookmarkNotFoundError
   >
   checkout(
     id: CommitHash | Bookmark,
   ): AsyncResult<
-    Checkout,
-    CommitNotFoundError | BlobNotFoundError | BookmarkNotFoundError
+    Checkout<M>,
+    | ParseError
+    | StorageError
+    | CommitNotFoundError
+    | BlobNotFoundError
+    | BookmarkNotFoundError
   >
   checkout(
     id: CommitHash | Bookmark,
   ): AsyncResult<
-    Checkout,
-    CommitNotFoundError | BlobNotFoundError | BookmarkNotFoundError
+    Checkout<M>,
+    | ParseError
+    | StorageError
+    | CommitNotFoundError
+    | BlobNotFoundError
+    | BookmarkNotFoundError
   > {
     return Result.fromAsync(async () => {
       const hash = isBookmark(id) ? id.commit : id
@@ -366,12 +431,20 @@ export class VCS {
         id = id.commit
       }
 
-      const commit =
+      let commit =
         id === this._head?.hash // use head if it matches to prevent storage call
           ? this._head
-          : await this.storage.get('commit', id)
+          : null
+      if (commit === null) {
+        const commitResult = await this.storage.getCommit(id)
+        if (!commitResult.ok) return commitResult
+        commit = commitResult.value
+      }
       if (commit === null) return Result.error(new CommitNotFoundError(hash))
-      const data = await this.storage.get('blob', commit.blob)
+      const blobResult = await this.storage.getBlob(commit.blob)
+      if (!blobResult.ok) return blobResult
+
+      const data = blobResult.value
       if (data === null) return Result.error(new BlobNotFoundError(commit.blob))
 
       if (bookmark) {
@@ -384,13 +457,27 @@ export class VCS {
         }
       }
 
-      const old = this._head
       this._head = commit
-
-      // Emit global events
-      editorEvents.emit('vcs:checkout', { old, new: commit })
 
       return Result.ok({ commit, data })
     })
+  }
+
+  /**
+   * Import data into vcs
+   *
+   * NOTE: Skips inner validation due to performance overhead
+   */
+  import(data: unknown) {
+    return this.storage.import(data)
+  }
+
+  /**
+   * Export data into vcs
+   *
+   * NOTE: Skips inner validation due to performance overhead
+   */
+  export() {
+    return this.storage.export()
   }
 }

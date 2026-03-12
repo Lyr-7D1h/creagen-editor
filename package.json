@@ -35,7 +35,7 @@
     "jsdom": "^27.2.0",
     "prettier": "3.5.3",
     "rollup": "^4.34.8",
-    "typescript": "^5.5.4",
+    "typescript": "^5.9.3",
     "vite": "^6.3.5",
     "vite-plugin-html": "^3.2.2",
     "vitest": "^2.1.8"

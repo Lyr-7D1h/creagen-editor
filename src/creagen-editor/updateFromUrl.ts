@@ -1,7 +1,9 @@
 import { logger } from '../logs/logger'
 import { UrlMutator } from '../UrlMutator'
 import { generateHumanReadableName } from '../vcs/generateHumanReadableName'
-import { BookmarkAlreadyExistsError, BookmarkNotFoundError } from '../vcs/VCS'
+import { BookmarkAlreadyExistsError } from '../vcs/VCS'
+import { StorageError } from '../vcs/VCSStorage'
+import { CommitMetadata } from './CommitMetadata'
 import { CreagenEditor } from './CreagenEditor'
 import { creagenEditorVersionMismatch } from './creagenEditorVersionMatches'
 
@@ -28,23 +30,14 @@ async function updateFromSharableLinkData(
     return null
   }
 
-  const { code, editorVersion, libraries, createdOn, author } = sharableDataLink
+  const { code, editorVersion, libraries, author } = sharableDataLink
   creagenEditorVersionMismatch(editorVersion)
 
   // create a commit
-  const commitResult = await editor.vcs.commit(code, libraries, false, {
-    createdOn,
-    author,
-    parent: null,
-    editorVersion,
-  })
+  const metadata = new CommitMetadata(editorVersion, libraries, author)
+  const commitResult = await editor.vcs.commit(code, metadata, false)
   if (!commitResult.ok) {
-    commitResult
-      .match()
-      .when(BookmarkNotFoundError, (error) => {
-        logger.error(error)
-      })
-      .run()
+    logger.error(commitResult.error)
     return null
   }
   const commit = commitResult.value
@@ -60,6 +53,7 @@ async function updateFromSharableLinkData(
     const retryWithNewName = bookmark
       .match()
       .when(BookmarkAlreadyExistsError, () => true)
+      .when(StorageError, () => false)
       .run()
     if (!retryWithNewName) {
       return null

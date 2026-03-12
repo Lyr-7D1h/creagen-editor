@@ -18,9 +18,12 @@ export function ImportTab() {
   const handleExport = () => {
     setIsExporting(true)
     setMessage(null)
-    creagenEditor.storage
+    creagenEditor
       .export()
-      .then((data) => {
+      .then((res) => {
+        if (!res.ok) throw res.error
+        const data = res.value
+
         // Create a JSON blob with the exported data
         const blob = new Blob([JSON.stringify(data, null, 2)], {
           type: 'application/json',
@@ -36,11 +39,9 @@ export function ImportTab() {
         document.body.removeChild(link)
         URL.revokeObjectURL(url)
 
-        const commits = data.commits as unknown[]
-        const blobs = data.blobs as unknown[]
         setMessage({
           type: 'success',
-          text: `Exported ${commits.length} commits and ${blobs.length} blobs`,
+          text: `Exported ${data.commits.length} commits, ${data.blobs.length + data.delta.length} blobs and deltas and ${data.bookmarks.length} bookmarks`,
         })
       })
       .catch((error) => {
@@ -68,31 +69,11 @@ export function ImportTab() {
 
     file
       .text()
-      .then((text) => {
+      .then(async (text) => {
         const data = JSON.parse(text) as unknown
 
-        // Validate the data structure
-        if (
-          typeof data !== 'object' ||
-          data === null ||
-          !('commits' in data) ||
-          !('blobs' in data)
-        ) {
-          throw new Error('Invalid export file: missing commits or blobs')
-        }
-
-        const { commits, blobs } = data as { commits: unknown; blobs: unknown }
-
-        if (!Array.isArray(commits) || !Array.isArray(blobs)) {
-          throw new Error(
-            'Invalid export file: commits and blobs must be arrays',
-          )
-        }
-
-        return creagenEditor.storage.import({
-          commits: commits as Array<{ key: string; value: unknown }>,
-          blobs: blobs as Array<{ key: string; value: unknown }>,
-        })
+        const res = await creagenEditor.import(data)
+        if (!res.ok) throw res.error
       })
       .then(() => {
         setMessage({

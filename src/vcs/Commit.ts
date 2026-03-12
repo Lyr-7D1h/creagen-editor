@@ -1,10 +1,8 @@
-import { SemVer } from 'semver'
-import { Library, librarySchema } from '../settings/SettingsConfig'
 import { z } from 'zod'
-import { dateNumberSchema, semverSchema } from '../creagen-editor/schemaUtils'
+import { dateNumberSchema } from '../creagen-editor/schemaUtils'
 import { Sha256Hash, sha256HashSchema } from './Sha256Hash'
 import { Tagged } from '../util'
-import { $ZodSuperRefineIssue } from 'zod/v4/core'
+import { JsonValue } from './Storage'
 
 export const commitHashSchema = sha256HashSchema as z.ZodPipe<
   z.ZodString,
@@ -18,130 +16,70 @@ export const blobHashSchema = sha256HashSchema as z.ZodPipe<
 >
 export type BlobHash = Tagged<Sha256Hash, 'BlobHash'>
 
-export const commitSchema = z
-  .object({
-    blob: blobHashSchema,
-    editorVersion: semverSchema,
-    libraries: librarySchema.array(),
-    parent: commitHashSchema.optional(),
-    author: z.string().optional(),
-    createdOn: dateNumberSchema,
-  })
-  .transform(
-    async (
-      { blob, editorVersion, libraries, parent, author, createdOn },
-      ctx,
-    ) => {
-      try {
-        return await Commit.create(
-          blob,
-          editorVersion,
-          libraries,
-          createdOn,
-          parent,
-          author,
-        )
-      } catch (e) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `Failed to transform commit: ${e as Error}`,
-        })
-        return z.NEVER
-      }
-    },
-  )
-
-export type Checkout = { commit: Commit; data: string }
-
-export const libraryStringSchema = z.string().transform((data, ctx) => {
-  const parts = data.split('@')
-  const name = parts.splice(0, parts.length - 1).join('@')
-  if (typeof parts[0] === 'undefined') {
-    ctx.addIssue({
-      code: 'invalid_format',
-      message: 'No version',
-      format: 'includes',
-    })
-    return z.NEVER
-  }
-  const version = semverSchema.safeParse(parts[0])
-  if (version.error) {
-    version.error.issues.forEach((i) => ctx.addIssue(i as $ZodSuperRefineIssue))
-    return z.NEVER
-  }
-  return {
-    name,
-    version: version.data,
-  }
+export const commitSchema = z.object({
+  blob: blobHashSchema,
+  parent: commitHashSchema.optional(),
+  createdOn: dateNumberSchema,
+  metadata: z.unknown(),
 })
+
+export interface _MetaData {
+  toJson(): JsonValue
+  /**
+   * Return true when `this` is the same as `meta`
+   *
+   * NOTE: metadata has to change in order to commit
+   */
+  compare(meta: this): boolean
+}
+
+export type MetaData = _MetaData | undefined
 
 /**
  * Commit of a change made: [64 byte hash][hex encoded Extension]
  */
-export class Commit {
+export class Commit<M extends MetaData> {
   constructor(
     readonly hash: CommitHash,
     /** Hash of the blob of code */
     readonly blob: BlobHash,
-    readonly editorVersion: SemVer,
-    /** libraries used for generating code */
-    readonly libraries: Library[],
     readonly createdOn: Date,
+    readonly metadata: M,
     /** Hash of parent commit */
     readonly parent?: CommitHash,
-    /** Author undefined means its a local commit */
-    readonly author?: string,
   ) {}
 
   /**
    * Creates a new Commit
    */
-  static async create(
+  static async create<M extends MetaData>(
     /** Hash of the blob of code */
     blob: BlobHash,
-    editorVersion: SemVer,
-    /** libraries used for generating code */
-    libraries: Library[],
     createdOn = new Date(),
-    /** Hash of parent commit */
+    metadata: M,
+    /** Hash of parent commit, null if it is a root commit */
     parent?: CommitHash,
-    /** Author undefined means its a local commit */
-    author?: string,
-  ): Promise<Commit> {
+  ): Promise<Commit<M>> {
     const hash = (await Sha256Hash.create(
-      toInnerString(
-        blob,
-        new SemVer(CREAGEN_EDITOR_VERSION),
-        libraries,
-        createdOn,
-        parent,
-        author,
-      ),
+      `${blob.toBase64()}${createdOn.getTime()}${parent?.toBase64() ?? ''}${typeof metadata !== 'undefined' ? JSON.stringify(metadata.toJson()) : ''}`,
     )) as CommitHash
 
-    return new Commit(
-      hash,
-      blob,
-      editorVersion,
-      libraries,
-      createdOn,
-      parent,
-      author,
-    )
+    return new Commit(hash, blob, createdOn, metadata, parent)
   }
 
-  toJson() {
-    const { blob, editorVersion, libraries, parent, author } = this
+  /** Get a json serializable object with only primitive types */
+  toJson(): {
+    blob: string
+    createdOn: number
+    parent?: string
+    metadata?: JsonValue
+  } {
+    const { metadata, blob, parent, createdOn } = this
     return {
       blob: blob.toHex(),
-      editorVersion: editorVersion.toString(),
-      libraries: libraries.map((lib) => ({
-        name: lib.name,
-        version: lib.version.toString(),
-      })),
-      createdOn: this.createdOn.getTime(),
+      createdOn: createdOn.getTime(),
       parent: parent?.toHex(),
-      author,
+      ...(metadata ? { metadata: metadata.toJson() } : {}),
     }
   }
 
@@ -152,36 +90,4 @@ export class Commit {
   toHex() {
     return this.hash.toHex()
   }
-
-  /** 
-   * Compare the data parts of a commit with another to see if anything has changed 
-
-   * returns `true` when they are equal
-   */
-  compareData(commit: Commit): boolean {
-    // don't commit with same content
-    if (!this.blob.compare(commit.blob)) return false
-
-    // Check if libraries are the same
-    if (this.libraries.length !== commit.libraries.length) return false
-
-    return this.libraries.every((thisLib) =>
-      commit.libraries.some(
-        (otherLib) =>
-          thisLib.name === otherLib.name &&
-          thisLib.version.compare(otherLib.version) === 0,
-      ),
-    )
-  }
-}
-
-function toInnerString(
-  blob: Sha256Hash,
-  editorVersion: SemVer,
-  libraries: Library[],
-  createdOn: Date,
-  parent?: Sha256Hash,
-  author?: string,
-) {
-  return `${blob.toHex()}:${editorVersion.toString()}:${libraries.map((l) => `"${l.name}@${l.version.toString()}"`).join(',')}:${parent ? parent.toHex() : ''}:${author ?? ''}:${createdOn.getTime()}`
 }

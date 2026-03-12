@@ -149,7 +149,7 @@ export class Settings {
     value: unknown,
     oldValue?: unknown,
   ): void {
-    this.storage.set('settings', this.values).catch(logger.error)
+    this.storage.set('settings', this.values)
     // Emit settings changed event
     editorEvents.emit('settings:changed', { key, value, oldValue })
   }

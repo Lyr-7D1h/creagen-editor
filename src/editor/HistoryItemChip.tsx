@@ -17,6 +17,7 @@ import { TextInput } from './TextInput'
 import { HtmlTooltip } from './HtmlTooltip'
 import React from 'react'
 import { CommitTooltip } from './CommitTooltip'
+import { CommitMetadata } from '../creagen-editor/CommitMetadata'
 
 interface BookmarkMenuProps {
   bookmarks: Bookmark[]
@@ -134,7 +135,11 @@ function CollapsibleButton({
   )
 }
 
-export function HistoryItemChip({ item }: { item: HistoryItem }) {
+export function HistoryItemChip({
+  item,
+}: {
+  item: HistoryItem<CommitMetadata>
+}) {
   const fullscreen = useSettings('editor.fullscreen')
   const creagenEditor = useCreagenEditor()
   const activeBookmark = useActiveBookmark()

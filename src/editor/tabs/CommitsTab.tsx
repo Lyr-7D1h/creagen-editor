@@ -16,10 +16,11 @@ import { Commit } from '../../vcs/Commit'
 import * as d3 from 'd3'
 import { logger } from '../../logs/logger'
 import { useForceUpdateOnEditorEvent } from '../../events/useEditorEvents'
+import { CommitMetadata } from '../../creagen-editor/CommitMetadata'
 
 type CommitNode = {
   id: string
-  commit: Commit | null // null for virtual root node
+  commit: Commit<CommitMetadata> | null // null for virtual root node
   bookmarks: string[]
   x: number
   y: number
@@ -42,10 +43,11 @@ export function CommitsTab() {
   ])
   const vcs = creagenEditor.vcs
   const svgRef = useRef<SVGSVGElement>(null)
-  const [commits, setCommits] = useState<Commit[]>([])
+  const [commits, setCommits] = useState<Commit<CommitMetadata>[]>([])
   const [searchText, setSearchText] = useState('')
   const [authorFilter, setAuthorFilter] = useState<string | null>(null)
-  const [selectedCommit, setSelectedCommit] = useState<Commit | null>(null)
+  const [selectedCommit, setSelectedCommit] =
+    useState<Commit<CommitMetadata> | null>(null)
   const [focusedCommitHash, setFocusedCommitHash] = useState<string | null>(
     () => vcs.activeBookmark.commit?.toHex() ?? null,
   )
@@ -54,7 +56,16 @@ export function CommitsTab() {
   const [minifyGraph, setMinifyGraph] = useState(true)
 
   useEffect(() => {
-    vcs.getAllCommits().then(setCommits).catch(logger.error)
+    vcs
+      .getAllCommits()
+      .then((c) => {
+        if (!c.ok) {
+          logger.error(c.error)
+          return
+        }
+        setCommits(c.value)
+      })
+      .catch(logger.error)
   }, [vcs, hook])
 
   useEffect(() => {
@@ -65,16 +76,18 @@ export function CommitsTab() {
       const matchesSearch =
         searchText === '' ||
         commit.hash.toHex().includes(searchText.toLowerCase()) ||
-        (commit.author?.toLowerCase().includes(searchText.toLowerCase()) ??
+        (commit.metadata.author
+          ?.toLowerCase()
+          .includes(searchText.toLowerCase()) ??
           false) ||
-        commit.libraries.some((lib) =>
+        commit.metadata.libraries.some((lib) =>
           lib.name.toLowerCase().includes(searchText.toLowerCase()),
         )
 
       const matchesAuthor =
         authorFilter === null ||
-        (authorFilter === 'local' && (commit.author ?? '') === '') ||
-        commit.author === authorFilter
+        (authorFilter === 'local' && (commit.metadata.author ?? '') === '') ||
+        commit.metadata.author === authorFilter
 
       return matchesSearch && matchesAuthor
     })
@@ -83,7 +96,7 @@ export function CommitsTab() {
     let displayCommits = filteredCommits
     if (minifyGraph) {
       // Build parent-child relationships
-      const childrenMap = new Map<string, Commit[]>()
+      const childrenMap = new Map<string, Commit<CommitMetadata>[]>()
       filteredCommits.forEach((commit) => {
         if (commit.parent) {
           const parentKey = commit.parent.toHex()
@@ -165,7 +178,7 @@ export function CommitsTab() {
 
     // Helper function to find the nearest visible ancestor
     const findNearestVisibleAncestor = (
-      commit: Commit,
+      commit: Commit<CommitMetadata>,
     ): { node: CommitNode; intermediateCount: number } | null => {
       let current = commit.parent
       let count = 0
@@ -428,7 +441,7 @@ export function CommitsTab() {
         if (d.commit === null) return '#000' // gray for virtual root
         if (d.bookmarks.length > 0) return '#fff'
         if (vcs.head?.hash.toHex() === d.id) return '#2196f3' // blue for HEAD
-        if ((d.commit.author ?? '') !== '') return '#4caf50' // green for authored
+        if ((d.commit.metadata.author ?? '') !== '') return '#4caf50' // green for authored
         return '#ff9800' // orange for local
       })
       .attr('stroke', (d) => {
@@ -436,7 +449,7 @@ export function CommitsTab() {
         if (d.bookmarks.length > 0) {
           // Use appropriate color for bookmarked commits
           if (vcs.head?.hash.toHex() === d.id) return '#2196f3' // blue for HEAD
-          if ((d.commit.author ?? '') !== '') return '#4caf50' // green for authored
+          if ((d.commit.metadata.author ?? '') !== '') return '#4caf50' // green for authored
           return '#ff9800' // orange for local
         }
         return '#fff'
@@ -503,10 +516,12 @@ export function CommitsTab() {
   ])
 
   const uniqueAuthors = Array.from(
-    new Set(commits.map((c) => c.author).filter((a) => (a ?? '') !== '')),
+    new Set(
+      commits.map((c) => c.metadata.author).filter((a) => (a ?? '') !== ''),
+    ),
   )
 
-  const handleCheckout = async (commit: Commit) => {
+  const handleCheckout = async (commit: Commit<CommitMetadata>) => {
     await creagenEditor.new(commit.hash)
     logger.info('Successfully checked out commit', {
       hash: commit.hash.toHex(),
@@ -523,7 +538,9 @@ export function CommitsTab() {
     }
   }
 
-  const handleCheckoutCommitWithActiveBookmark = async (commit: Commit) => {
+  const handleCheckoutCommitWithActiveBookmark = async (
+    commit: Commit<CommitMetadata>,
+  ) => {
     await creagenEditor.checkout(commit.hash)
     logger.info('Successfully checked out commit with active bookmark', {
       hash: commit.hash.toHex(),
@@ -532,7 +549,7 @@ export function CommitsTab() {
   }
 
   const handleCheckoutCommitAsBookmark = async (
-    commit: Commit,
+    commit: Commit<CommitMetadata>,
     bookmarkName: string,
   ) => {
     const bookmark = vcs.bookmarks.getBookmark(bookmarkName)
@@ -758,7 +775,7 @@ export function CommitsTab() {
             <strong>Hash:</strong> {selectedCommit.hash.toHex()}
           </Typography>
           <Typography variant="body2">
-            <strong>Author:</strong> {selectedCommit.author ?? 'local'}
+            <strong>Author:</strong> {selectedCommit.metadata.author ?? 'local'}
           </Typography>
           <Typography variant="body2">
             <strong>Created:</strong>{' '}
@@ -766,11 +783,12 @@ export function CommitsTab() {
           </Typography>
           <Typography variant="body2">
             <strong>Editor Version:</strong>{' '}
-            {selectedCommit.editorVersion.toString()}
+            {selectedCommit.metadata.editorVersion.toString()}
           </Typography>
           <Typography variant="body2">
             <strong>Libraries:</strong>{' '}
-            {selectedCommit.libraries.map((l) => l.name).join(', ') || 'None'}
+            {selectedCommit.metadata.libraries.map((l) => l.name).join(', ') ||
+              'None'}
           </Typography>
           {selectedCommit.parent && (
             <Typography variant="body2">

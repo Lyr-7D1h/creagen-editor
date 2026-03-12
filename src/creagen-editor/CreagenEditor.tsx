@@ -12,7 +12,7 @@ import {
 } from '../settings/SettingsConfig'
 import { CustomKeybinding, Keybindings } from './keybindings'
 import { Importer, LibraryImport } from '../importer'
-import { BookmarkNotFoundError, CommitNotFoundError, VCS } from '../vcs/VCS'
+import { CommitNotFoundError, VCS } from '../vcs/VCS'
 import { ClientStorage } from '../storage/ClientStorage'
 import { editorEvents } from '../events/events'
 import { Bookmark, isBookmark } from '../vcs/Bookmarks'
@@ -23,6 +23,9 @@ import { Controller } from '../controller/Controller'
 import { UrlMutator } from '../UrlMutator'
 import { updateFromUrl } from './updateFromUrl'
 import { creagenEditorVersionMismatch } from './creagenEditorVersionMatches'
+import { CommitMetadata } from './CommitMetadata'
+import { IndexDBStorage } from '../vcs/IndexDBStorage'
+import { SemVer } from 'semver'
 
 export class CreagenEditor {
   resourceMonitor = new ResourceMonitor()
@@ -31,7 +34,7 @@ export class CreagenEditor {
   settings: Settings
   editor: Editor
   sandbox: Sandbox
-  vcs: VCS
+  vcs: VCS<CommitMetadata>
   keybindings: Keybindings
   controller: Controller | null
 
@@ -39,12 +42,21 @@ export class CreagenEditor {
   libraryImports: Map<string, LibraryImport> = new Map()
 
   static async create() {
-    const storage = await ClientStorage.create()
+    const storage = new ClientStorage()
     const settings = await Settings.create(storage)
     const editor = await Editor.create(settings)
     const sandbox = Sandbox.create()
-    const vcs = await VCS.create(storage)
-    const customKeybindings = (await storage.get('custom-keybindings')) ?? []
+    const indexdbStorageResult = await IndexDBStorage.create<CommitMetadata>()
+    if (!indexdbStorageResult.ok) throw indexdbStorageResult.error
+    if (!indexdbStorageResult.value.persisted)
+      logger.warn('Failed to persist storage')
+    const indexdbStorage = indexdbStorageResult.value.creagen
+    const vcsResult = await VCS.create(indexdbStorage, (raw) => {
+      return CommitMetadata.parse(raw)
+    })
+    if (!vcsResult.ok) throw vcsResult.error
+    const vcs = vcsResult.value
+    const customKeybindings = storage.get('custom-keybindings') ?? []
 
     return new CreagenEditor(
       sandbox,
@@ -61,7 +73,7 @@ export class CreagenEditor {
     editor: Editor,
     settings: Settings,
     storage: ClientStorage,
-    vcs: VCS,
+    vcs: VCS<CommitMetadata>,
     customKeybindings: CustomKeybinding[],
   ) {
     this.sandbox = sandbox
@@ -189,6 +201,7 @@ export class CreagenEditor {
 
   /** Create new sketch */
   async new(hash?: CommitHash) {
+    const old = this.vcs.head
     const checkoutResult = await this.vcs.new(hash)
     if (!checkoutResult.ok) {
       logger.error(checkoutResult.error)
@@ -199,11 +212,14 @@ export class CreagenEditor {
     // no checkout so empty commit
     if (checkout === null) {
       this.editor.setValue('')
+      editorEvents.emit('vcs:checkout', { old, new: null })
       return
     }
 
     const {
-      commit: { editorVersion, libraries },
+      commit: {
+        metadata: { editorVersion, libraries },
+      },
       data,
     } = checkout
     creagenEditorVersionMismatch(editorVersion)
@@ -212,6 +228,7 @@ export class CreagenEditor {
     await this.loadLibraries(libraries)
 
     this.editor.setValue(data)
+    editorEvents.emit('vcs:checkout', { old, new: checkout.commit })
   }
 
   /**
@@ -223,6 +240,7 @@ export class CreagenEditor {
   async checkout(hash: CommitHash): Promise<void>
   async checkout(bookmark: Bookmark): Promise<void>
   async checkout(id: CommitHash | Bookmark) {
+    const old = this.vcs.head
     const checkoutResult = await this.vcs.checkout(id)
     if (!checkoutResult.ok) {
       checkoutResult
@@ -241,7 +259,9 @@ export class CreagenEditor {
     const checkout = checkoutResult.value
 
     const {
-      commit: { editorVersion, libraries },
+      commit: {
+        metadata: { editorVersion, libraries },
+      },
       data,
     } = checkout
     creagenEditorVersionMismatch(editorVersion)
@@ -254,6 +274,7 @@ export class CreagenEditor {
     await this.loadLibraries(libraries)
 
     this.editor.setValue(data)
+    editorEvents.emit('vcs:checkout', { old, new: checkout.commit })
   }
 
   /** Reset all editor typings */
@@ -390,20 +411,26 @@ export class CreagenEditor {
       await this.editor.format()
     }
 
+    const old = this.vcs.head
     const code = this.editor.getValue()
     if (code.length === 0) return null
 
     const libraries = [...this.libraryImports.values()]
+    const metadata = new CommitMetadata(
+      new SemVer(CREAGEN_EDITOR_VERSION),
+      libraries,
+    )
     // store code and change url
-    const commitResult = await this.vcs.commit(code, libraries)
+    const commitResult = await this.vcs.commit(code, metadata)
     if (!commitResult.ok) {
-      commitResult
-        .match()
-        .when(BookmarkNotFoundError, (error) => {
-          logger.error(error)
-        })
-        .run()
+      logger.error(commitResult.error)
       return null
+    }
+
+    const commit = commitResult.value
+    if (commit !== null) {
+      editorEvents.emit('vcs:commit', { commit, code })
+      editorEvents.emit('vcs:checkout', { old, new: commit })
     }
 
     return { code, libraries }
@@ -444,5 +471,13 @@ export class CreagenEditor {
 
   executeCommand(command: Command) {
     COMMANDS[command].handler(this)
+  }
+
+  import(data: unknown) {
+    return this.vcs.import(data)
+  }
+
+  export() {
+    return this.vcs.export()
   }
 }

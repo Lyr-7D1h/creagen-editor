@@ -3,8 +3,13 @@ import React from 'react'
 import { timeAgoString, dateString } from '../util'
 import { HistoryItem } from '../vcs/VCS'
 import { HtmlTooltip } from './HtmlTooltip'
+import { CommitMetadata } from '../creagen-editor/CommitMetadata'
 
-export function CommitText({ historyItem }: { historyItem: HistoryItem }) {
+export function CommitText({
+  historyItem,
+}: {
+  historyItem: HistoryItem<CommitMetadata>
+}) {
   const { commit, bookmarks } = historyItem
   return (
     <div style={{ lineHeight: 1.5, position: 'relative' }}>
@@ -26,7 +31,7 @@ export function CommitTooltip({
   historyItem,
   children,
 }: {
-  historyItem: HistoryItem
+  historyItem: HistoryItem<CommitMetadata>
   children: React.ReactElement
 }) {
   const { commit, bookmarks } = historyItem

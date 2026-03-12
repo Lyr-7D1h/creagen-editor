@@ -1,52 +1,49 @@
 import { LRUCache } from 'lru-cache'
 import pako from 'pako'
 import diff from 'fast-diff'
-import { BloomFilter } from '../BloomFilter'
-import { BlobHash } from '../vcs/Commit'
-import { BLOB_STORE, DELTA_STORE } from './ClientStorage'
+import { BloomFilter } from './BloomFilter'
+import { BlobHash, MetaData } from './Commit'
 import { createContextLogger } from '../logs/logger'
-import { Sha256Hash } from '../vcs/Sha256Hash'
+import { Sha256Hash } from './Sha256Hash'
+import { Storage } from './Storage'
 
 const logger = createContextLogger('blob-storage')
-
-type StoreName = typeof DELTA_STORE | typeof BLOB_STORE
 
 const MAX_DELTA_CHAIN_COUNT = 50
 
 // TODO: Run in web worker, diffing algorithm can be expensive
 /**
- * Blob storage, storing changes mostly in deltas but also as complete blob
+ * Blob storage, storing changes mostly in deltas but also as complete blobs
  */
-export class BlobStorage {
-  constructor(private readonly db: IDBDatabase) {}
+export class BlobStorage<M extends MetaData> {
+  constructor(private readonly storage: Storage<M>) {}
 
   deltaFilter: BloomFilter = BloomFilter.withTargetError(2000, 0.01)
   async get(hash: BlobHash): Promise<string | null> {
     const id = hash.toBase64()
     if (this.deltaFilter.test(id)) {
-      return await this.reconstructFromDelta(id)
+      return await this.reconstructFromDelta(hash)
     }
-    const blob = await this.getBlob(id)
+    const blob = await this.getBlobContent(hash)
     if (blob !== null) {
       return blob
     }
-    const delta = await this._get('delta', id)
+    const delta = await this.storage.getDelta(hash)
     if (delta !== null) {
       this.deltaFilter.add(id)
-      return await this.reconstructFromDelta(id)
+      return await this.reconstructFromDelta(hash)
     }
     return null
   }
 
-  private async reconstructFromDelta(
-    identifier: string,
-  ): Promise<string | null> {
-    const delta = await this._get('delta', identifier)
-    if (delta == null) return null
+  private async reconstructFromDelta(hash: BlobHash): Promise<string | null> {
+    const raw = await this.storage.getDelta(hash)
+    if (raw == null) return null
+    const delta = pako.inflate(raw)
     const { base: baseHash, ops } = dedeltize(delta)
     const base = await this.get(baseHash)
     if (base == null) {
-      logger.error('Could not find base of delta ' + identifier)
+      logger.error('Could not find base of delta ' + hash.toBase64())
       return null
     }
     let result = ''
@@ -65,37 +62,12 @@ export class BlobStorage {
     return result
   }
 
-  private async getBlob(identifier: string) {
-    const b = await this._get('blobs', identifier)
-    if (b === null) return null
+  private async getBlobContent(hash: BlobHash): Promise<string | null> {
+    const raw = await this.storage.getBlob(hash)
+    if (raw === null) return null
+    const bytes = pako.inflate(raw)
     const decoder = new TextDecoder()
-    const str = decoder.decode(b)
-    return str
-  }
-
-  private async _get(
-    storeName: StoreName,
-    identifier: string,
-  ): Promise<null | Uint8Array<ArrayBuffer>> {
-    const trans = this.db.transaction(storeName)
-    return await new Promise((resolve, reject) => {
-      trans.onerror = (_e) => {
-        reject(new Error(`failed to set value: ${trans.error?.message ?? ''}`))
-      }
-      const store = trans.objectStore(storeName)
-      const req = store.get(identifier)
-      req.onsuccess = () => {
-        if (typeof req.result === 'undefined') return resolve(null)
-
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        const out = pako.inflate(req.result)
-
-        resolve(out)
-      }
-      req.onerror = (_e) => {
-        reject(new Error(`failed to get item: ${req.error?.message ?? ''}`))
-      }
-    })
+    return decoder.decode(bytes)
   }
 
   deltaChainCountCache = new LRUCache<BlobHash, number>({ max: 200 })
@@ -107,12 +79,12 @@ export class BlobStorage {
     }
 
     // if delta doesnt exist return 0
-    const id = hash.toBase64()
-    const delta = await this._get('delta', id)
-    if (delta === null) return 0
+    const raw = await this.storage.getDelta(hash)
+    if (raw === null) return 0
+    const delta = pako.inflate(raw)
 
     // get count from base and add 1
-    const base = Sha256Hash.fromBuffer(delta.slice(0, 32).buffer) as BlobHash
+    const base = Sha256Hash.fromBuffer(delta.slice(0, 32)) as BlobHash
     // chain count is previous + 1
     const count = (await this.getDeltaCount(base)) + 1
     this.deltaChainCountCache.set(hash, count)
@@ -124,7 +96,7 @@ export class BlobStorage {
     if (base) {
       const baseValue = await this.get(base)
       if (baseValue == null) {
-        logger.error(`Could not find ${baseValue}`)
+        logger.error(`Could not find base ${base.toSub()}`)
         return
       }
       const count = await this.getDeltaCount(base)
@@ -139,37 +111,14 @@ export class BlobStorage {
           )
         } else {
           const deltaValue = deltize(base, baseValue, value)
-          await this._set('delta', hash, deltaValue.buffer as ArrayBuffer)
+          await this.storage.setDelta(hash, pako.deflate(deltaValue))
           return
         }
       }
     }
 
     const encoder = new TextEncoder()
-    await this._set('blobs', hash, encoder.encode(value).buffer)
-  }
-
-  private async _set(storeName: StoreName, hash: BlobHash, value: ArrayBuffer) {
-    const trans = this.db.transaction(storeName, 'readwrite')
-    await new Promise<void>((resolve, reject) => {
-      trans.oncomplete = () => {
-        resolve()
-      }
-      trans.onerror = (_e) => {
-        reject(new Error(`failed to set value: ${trans.error?.message ?? ''}`))
-      }
-
-      const store = trans.objectStore(storeName)
-
-      const out = pako.deflate(value)
-      const req = store.add(out, hash.toBase64())
-      req.onsuccess = () => {
-        resolve()
-      }
-      req.onerror = (_e) => {
-        reject(new Error(`failed to set item: ${req.error?.message ?? ''}`))
-      }
-    })
+    await this.storage.setBlob(hash, pako.deflate(encoder.encode(value)))
   }
 }
 
@@ -238,23 +187,23 @@ function deltize(baseHash: BlobHash, base: string, value: string): Uint8Array {
   // diff returns: [op, text] where op is -1 (delete), 0 (equal), 1 (insert)
   const diffs = diff(base, value)
 
-  let chatOffset = 0
+  let charOffset = 0
 
   for (const [op, text] of diffs) {
     switch (op) {
       case -1: {
         // Delete - skip these characters in the base
-        chatOffset += text.length
+        charOffset += text.length
         break
       }
       case 0: {
         // Equal - this is a copy operation
         ops.push({
           type: DeltaType.Copy,
-          offset: chatOffset,
+          offset: charOffset,
           length: text.length,
         })
-        chatOffset += text.length
+        charOffset += text.length
         break
       }
       case 1: {
@@ -285,7 +234,7 @@ function deltize(baseHash: BlobHash, base: string, value: string): Uint8Array {
   let offset = 0
 
   // Write base hash (BlobHash is a Sha256Hash which has a .hash property)
-  buffer.set(new Uint8Array(baseHash.hash), offset)
+  buffer.set(new Uint8Array(baseHash.buffer), offset)
   offset += 32
 
   // Write operations
@@ -329,7 +278,7 @@ enum DeltaType {
 }
 /** Convert a base with a delta to the full original blob */
 function dedeltize(data: Uint8Array): Delta {
-  const base = Sha256Hash.fromBuffer(data.slice(0, 32).buffer) as BlobHash
+  const base = Sha256Hash.fromBuffer(data.slice(0, 32)) as BlobHash
   const view = new DataView(data.buffer, data.byteOffset, data.byteLength)
 
   const ops: DeltaOperation[] = []

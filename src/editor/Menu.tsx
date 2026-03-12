@@ -13,7 +13,6 @@ import { DependenciesTab } from './tabs/DependenciesTab'
 import { StorageBar } from './StorageBar'
 import { MenuLinks } from '../shared/IconLinks'
 import { CommitsTab } from './tabs/CommitsTab'
-import { logger } from '../logs/logger'
 import BookmarkIcon from '@mui/icons-material/Bookmark'
 import CommitIcon from '@mui/icons-material/Commit'
 import { ImportTab } from './tabs/ImportTab'
@@ -95,9 +94,7 @@ export function Menu<T>({ ref, width }: MenuProps & RefAttributes<T>) {
   }, [selectedTabKey, setSelectedTabKey])
 
   const setTab = (tab: string) => {
-    creagenEditor.storage
-      .set('menu-view-tab', selectedTabKey)
-      .catch(logger.error)
+    creagenEditor.storage.set('menu-view-tab', selectedTabKey)
     setSelectedTabKey(tab)
   }
 

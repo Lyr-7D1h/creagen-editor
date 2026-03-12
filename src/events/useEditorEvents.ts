@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { editorEvents } from './events'
 import { EditorEvent, EditorEventData } from './EditorEvent'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
+import { CommitMetadata } from '../creagen-editor/CommitMetadata'
 import { ParamKey, ParamValue } from '../settings/SettingsConfig'
 import { ActiveBookmark, HistoryItem } from '../vcs/VCS'
 import { logger } from '../logs/logger'
@@ -132,13 +133,17 @@ export const useBookmarks = () => {
 
 export const useHistory = (size: number) => {
   const creagenEditor = useCreagenEditor()
-  const [history, setHistory] = useState<HistoryItem[]>([])
+  const [history, setHistory] = useState<HistoryItem<CommitMetadata>[]>([])
   useEffect(() => {
     const updateHistory = () => {
       creagenEditor.vcs
         .history(size)
-        .then((history) => {
-          setHistory(history)
+        .then((historyResult) => {
+          if (!historyResult.ok) {
+            logger.error(historyResult.error)
+            return
+          }
+          setHistory(historyResult.value)
         })
         .catch(logger.error)
     }

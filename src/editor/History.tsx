@@ -8,8 +8,15 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { useSettings } from '../events/useEditorEvents'
 import { HistoryItemChip } from './HistoryItemChip'
 import { HistoryItem } from '../vcs/VCS'
+import { CommitMetadata } from '../creagen-editor/CommitMetadata'
 
-function HistoryLink({ item, last }: { item: HistoryItem; last: boolean }) {
+function HistoryLink({
+  item,
+  last,
+}: {
+  item: HistoryItem<CommitMetadata>
+  last: boolean
+}) {
   const fullscreen = useSettings('editor.fullscreen')
   return (
     <>
@@ -30,7 +37,7 @@ export function History({
   parentRef,
   onExpandedChange,
 }: {
-  items: HistoryItem[]
+  items: HistoryItem<CommitMetadata>[]
   parentRef: React.RefObject<HTMLDivElement | null>
   onExpandedChange?: (expanded: boolean) => void
 }) {

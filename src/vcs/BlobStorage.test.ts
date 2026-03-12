@@ -1,7 +1,9 @@
 import { describe, test, expect, beforeEach } from 'vitest'
 import { BlobStorage } from './BlobStorage'
-import { Sha256Hash } from '../vcs/Sha256Hash'
-import { BlobHash } from '../vcs/Commit'
+import { Sha256Hash } from './Sha256Hash'
+import { BlobHash, Commit, CommitHash } from './Commit'
+import { Bookmark } from './Bookmarks'
+import { JsonValue, Storage, VCSImport } from './Storage'
 
 // Mock IndexedDB
 
@@ -269,9 +271,109 @@ class MockIDBDatabase implements IDBDatabase {
   }
 }
 
+class MockStorage implements Storage<undefined> {
+  constructor(private readonly db: IDBDatabase) {}
+
+  getBookmark(_id: string): Promise<JsonValue | null> {
+    return Promise.resolve(null)
+  }
+
+  getCommit(_id: CommitHash): Promise<JsonValue | null> {
+    return Promise.resolve(null)
+  }
+
+  async getBlob(id: BlobHash): Promise<Uint8Array | null> {
+    return await this.getFromStore('blobs', id.buffer)
+  }
+
+  async getDelta(id: BlobHash): Promise<Uint8Array | null> {
+    return await this.getFromStore('delta', id.buffer)
+  }
+
+  async setBookmark(_bookmark: Bookmark): Promise<void> {}
+
+  async setCommit(_commit: Commit<undefined>): Promise<void> {}
+
+  async setBlob(id: BlobHash, value: Uint8Array): Promise<void> {
+    await this.putToStore('blobs', id.buffer, value)
+  }
+
+  async setDelta(id: BlobHash, value: Uint8Array): Promise<void> {
+    await this.putToStore('delta', id.buffer, value)
+  }
+
+  getAllDeltas(): Promise<JsonValue[]> {
+    return Promise.resolve([])
+  }
+
+  getAllBlobs(): Promise<JsonValue[]> {
+    return Promise.resolve([])
+  }
+
+  getAllCommits(): Promise<JsonValue[]> {
+    return Promise.resolve([])
+  }
+
+  getAllBookmarks(): Promise<JsonValue[]> {
+    return Promise.resolve([])
+  }
+
+  async import(_data: VCSImport): Promise<void> {}
+
+  export(): Promise<VCSImport> {
+    return Promise.resolve({
+      version: 1,
+      bookmarks: [],
+      commits: [],
+      blobs: [],
+      delta: [],
+    })
+  }
+
+  private async getFromStore(
+    storeName: string,
+    key: IDBValidKey,
+  ): Promise<Uint8Array | null> {
+    const transaction = this.db.transaction(storeName, 'readonly')
+    return await new Promise((resolve, reject) => {
+      transaction.onerror = () => {
+        reject(transaction.error ?? new Error('Transaction failed'))
+      }
+      const request = transaction.objectStore(storeName).get(key)
+      request.onsuccess = () => {
+        resolve((request.result as Uint8Array | undefined) ?? null)
+      }
+      request.onerror = () => {
+        reject(request.error ?? new Error('Request failed'))
+      }
+    })
+  }
+
+  private async putToStore(
+    storeName: string,
+    key: IDBValidKey,
+    value: Uint8Array,
+  ): Promise<void> {
+    const transaction = this.db.transaction(storeName, 'readwrite')
+    await new Promise<void>((resolve, reject) => {
+      transaction.onerror = () => {
+        reject(transaction.error ?? new Error('Transaction failed'))
+      }
+      const request = transaction.objectStore(storeName).put(value, key)
+      request.onsuccess = () => {
+        resolve()
+      }
+      request.onerror = () => {
+        reject(request.error ?? new Error('Request failed'))
+      }
+    })
+  }
+}
+
 describe('BlobStorage', () => {
   let db: MockIDBDatabase
-  let storage: BlobStorage
+  let mockStorage: MockStorage
+  let storage: BlobStorage<undefined>
 
   // Helper to create a BlobHash from a string
   const createHash = async (str: string): Promise<BlobHash> => {
@@ -280,8 +382,9 @@ describe('BlobStorage', () => {
 
   beforeEach(() => {
     db = new MockIDBDatabase()
+    mockStorage = new MockStorage(db as IDBDatabase)
 
-    storage = new BlobStorage(db as IDBDatabase)
+    storage = new BlobStorage(mockStorage)
   })
 
   describe('Basic Blob Storage', () => {

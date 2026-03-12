@@ -101,7 +101,11 @@ export function Actions({
       buttons.push(
         <Export
           key="export"
-          color={isFullscreen ? theme.palette.common.white : theme.palette.primary.main}
+          color={
+            isFullscreen
+              ? theme.palette.common.white
+              : theme.palette.primary.main
+          }
           size={size}
           isFullscreen={isFullscreen}
         />,
@@ -128,10 +132,10 @@ export function Actions({
                   const url = UrlMutator.createShareableLink({
                     code,
                     bookmarkName,
-                    editorVersion: head.editorVersion,
-                    libraries: head.libraries,
+                    editorVersion: head.metadata.editorVersion,
+                    libraries: head.metadata.libraries,
                     createdOn: head.createdOn,
-                    author: head.author,
+                    author: head.metadata.author,
                   })
 
                   await navigator.clipboard.writeText(url.toString())
