@@ -1,8 +1,7 @@
-import { Commit } from '../vcs/Commit'
+import { CommitHash } from '../vcs/Commit'
 import { LocalStorageKey, StorageValue } from '../storage/StorageKey'
 import { ParamKey } from '../settings/SettingsConfig'
 import { AnalyzeContainerResult } from '../sandbox/SandboxMessageHandler'
-import { CommitMetadata } from '../creagen-editor/CommitMetadata'
 
 type EditorEvents = {
   render: void
@@ -18,11 +17,11 @@ type EditorEvents = {
   'params:value': void
 
   // VCS events
-  'vcs:commit': { commit: Commit<CommitMetadata>; code: string }
+  'vcs:commit': { commit: CommitHash; code: string }
   /** Change active head */
   'vcs:checkout': {
-    old: Commit<CommitMetadata> | null
-    new: Commit<CommitMetadata> | null
+    old?: CommitHash
+    new?: CommitHash
   }
   'vcs:bookmark-update': void
 

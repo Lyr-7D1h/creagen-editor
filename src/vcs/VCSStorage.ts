@@ -54,12 +54,12 @@ export class VCSStorage<M extends MetaData> {
   }
 
   getBookmark(
-    id: string,
+    name: string,
   ): AsyncResult<Bookmark | null, ParseError | StorageError> {
     return Result.fromAsync(async () => {
       let raw: Awaited<ReturnType<Storage<M>['getBookmark']>>
       try {
-        raw = await this.storage.getBookmark(id)
+        raw = await this.storage.getBookmark(name)
       } catch (error) {
         return Result.error(this.toStorageError(error))
       }
@@ -83,10 +83,10 @@ export class VCSStorage<M extends MetaData> {
     })
   }
 
-  removeBookmark(id: string): AsyncResult<void, StorageError> {
+  removeBookmark(name: string): AsyncResult<void, StorageError> {
     return Result.fromAsync(async () => {
       try {
-        await this.storage.removeBookmark(id)
+        await this.storage.removeBookmark(name)
         return Result.ok()
       } catch (error) {
         return Result.error(this.toStorageError(error))
@@ -97,12 +97,12 @@ export class VCSStorage<M extends MetaData> {
   // --- Commits ---
 
   getCommit(
-    id: CommitHash,
+    hash: CommitHash,
   ): AsyncResult<Commit<M> | null, ParseError | StorageError> {
     return Result.fromAsync(async () => {
       let raw: JsonValue | null
       try {
-        raw = await this.storage.getCommit(id)
+        raw = await this.storage.getCommit(hash)
       } catch (error) {
         return Result.error(this.toStorageError(error))
       }
@@ -116,7 +116,7 @@ export class VCSStorage<M extends MetaData> {
 
       return Result.ok(
         new Commit(
-          id,
+          hash,
           parsed.data.blob,
           parsed.data.createdOn,
           metadata,
@@ -186,10 +186,10 @@ export class VCSStorage<M extends MetaData> {
     })
   }
 
-  getBlob(id: BlobHash): AsyncResult<string | null, StorageError> {
+  getBlob(hash: BlobHash): AsyncResult<string | null, StorageError> {
     return Result.fromAsync(async () => {
       try {
-        return Result.ok(await this.blobStorage.get(id))
+        return Result.ok(await this.blobStorage.get(hash))
       } catch (error) {
         return Result.error(this.toStorageError(error))
       }
@@ -198,12 +198,12 @@ export class VCSStorage<M extends MetaData> {
 
   setBlob(
     code: string,
-    id: BlobHash,
+    hash: BlobHash,
     base?: BlobHash,
   ): AsyncResult<void, StorageError> {
     return Result.fromAsync(async () => {
       try {
-        await this.blobStorage.set(id, code, base)
+        await this.blobStorage.set(hash, code, base)
         return Result.ok()
       } catch (error) {
         return Result.error(this.toStorageError(error))

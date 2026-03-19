@@ -1,6 +1,5 @@
 import { Commit, CommitHash, BlobHash, MetaData } from './Commit'
 import {
-  isBookmark,
   Bookmark,
   Bookmarks,
   BookmarkNotFoundError,
@@ -11,7 +10,6 @@ import { Storage } from './Storage'
 import { AsyncResult, Result } from 'typescript-result'
 import { ParseError, StorageError, VCSStorage } from './VCSStorage'
 import { Sha256Hash } from './Sha256Hash'
-import { generateHumanReadableName } from '../creagen-editor/generateHumanReadableName'
 import { VCSError } from './VCSError'
 
 export type Checkout<M extends MetaData> = {
@@ -22,14 +20,6 @@ export type Checkout<M extends MetaData> = {
 export type HistoryItem<M extends MetaData> = {
   commit: Commit<M>
   bookmarks: Bookmark[]
-}
-
-/** Active Reference, a reference that might not be comitted yet */
-export type ActiveBookmark = {
-  name: string
-  createdOn: Date
-  /** If set it means that the ref is stored otherwise it is an uncommited bookmark */
-  commit: CommitHash | null
 }
 
 export class CommitNotFoundError extends VCSError {
@@ -48,14 +38,6 @@ export class BlobNotFoundError extends VCSError {
   }
 }
 
-function generateUncommittedBookmark() {
-  return {
-    name: generateHumanReadableName(),
-    createdOn: new Date(),
-    commit: null,
-  }
-}
-
 // TODO: use https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system for storage
 /** Version Control Software for creagen-editor */
 export class VCS<M extends MetaData> {
@@ -71,7 +53,6 @@ export class VCS<M extends MetaData> {
   }
 
   private _head: Commit<M> | null = null
-  private _activeBookmark: ActiveBookmark = generateUncommittedBookmark()
   private constructor(
     private readonly storage: VCSStorage<M>,
     private readonly _bookmarks: Bookmarks<M>,
@@ -81,17 +62,17 @@ export class VCS<M extends MetaData> {
     return this._head
   }
 
-  get activeBookmark() {
-    return this._activeBookmark
-  }
-
   /**
    * Add a bookmark
    *
    * returns null if already exists
    * */
-  addBookmark(name: string, commit: CommitHash) {
-    return this.bookmarks.add(new Bookmark(name, commit, new Date()))
+  addBookmark(bookmark: Bookmark) {
+    return this.bookmarks.add(bookmark)
+  }
+
+  setBookmarkCommit(name: string, commit: CommitHash) {
+    return this.bookmarks.setCommit(name, commit)
   }
 
   bookmarkLookup(commit: CommitHash) {
@@ -141,6 +122,10 @@ export class VCS<M extends MetaData> {
     })
   }
 
+  getCommit(hash: CommitHash) {
+    return this.storage.getCommit(hash)
+  }
+
   /**
    * Get all commits from storage
    */
@@ -149,42 +134,7 @@ export class VCS<M extends MetaData> {
   }
 
   /**
-   * Update current active bookmark to this commit, or commit the bookmark
-   *
-   * @returns null when failed to update bookmarks
-   */
-  private updateActiveBookmark(
-    commit: CommitHash,
-  ): AsyncResult<
-    void,
-    BookmarkNotFoundError | StorageError | BookmarkAlreadyExistsError
-  > {
-    return Result.fromAsync(async () => {
-      if (this.activeBookmark.commit === null) {
-        // commit uncommitted bookmark
-        const ref = new Bookmark(
-          this._activeBookmark.name,
-          commit,
-          this._activeBookmark.createdOn,
-        )
-        const result = await this.bookmarks.add(ref)
-        if (!result.ok) return result
-        this._activeBookmark = result.value
-      } else {
-        // update currently active to this commit
-        const result = await this.bookmarks.setCommit(
-          this.activeBookmark.name,
-          commit,
-        )
-        if (!result.ok) return result
-        this._activeBookmark = result.value
-      }
-      return Result.ok()
-    })
-  }
-
-  /**
-   * Create a new commit and update the head to this commit
+   * Create a new commit on current head and point head to this commit
    *
    * @returns null in case nothing changed
    * */
@@ -193,8 +143,6 @@ export class VCS<M extends MetaData> {
     value: string,
     /** Metadata related to this commit */
     metadata: M,
-    /** Update active bookmark to this commit */
-    updateActiveBookmark: boolean = true,
   ): AsyncResult<
     Commit<M> | null,
     BookmarkNotFoundError | StorageError | BookmarkAlreadyExistsError
@@ -229,59 +177,8 @@ export class VCS<M extends MetaData> {
       )
       if (setBlobResult.ok === false) return setBlobResult
 
-      if (updateActiveBookmark) {
-        const updateResult = await this.updateActiveBookmark(commit.hash)
-        if (updateResult.ok === false) {
-          return updateResult
-        }
-      }
-
       this._head = commit
       return Result.ok(commit)
-    })
-  }
-
-  /**
-   * Create a new bookmark on a optional commit and checkout
-   *
-   * @returns Checkout of `hash` when `hash` is given
-   * */
-  new(
-    hash?: CommitHash,
-  ): AsyncResult<
-    Checkout<M> | null,
-    ParseError | StorageError | BlobNotFoundError | CommitNotFoundError
-  > {
-    return Result.fromAsync(async () => {
-      if (hash) {
-        const res = await this.storage.getCommit(hash)
-        if (!res.ok) return res
-        if (res.value === null)
-          return Result.error(new CommitNotFoundError(hash))
-        this._head = res.value
-      } else {
-        this._head = null
-      }
-
-      this._activeBookmark = generateUncommittedBookmark()
-
-      let data = null
-      if (this._head) {
-        const blobResult = await this.storage.getBlob(this._head.blob)
-        if (blobResult.ok === false) return blobResult
-        data = blobResult.value
-        if (data === null) {
-          return Result.error(new BlobNotFoundError(this._head.blob))
-        }
-      }
-      return Result.ok(
-        this._head && data != null
-          ? {
-              data,
-              commit: this._head,
-            }
-          : null,
-      )
     })
   }
 
@@ -291,40 +188,7 @@ export class VCS<M extends MetaData> {
    * Checking out a `Commit` will set the active `Bookmark` to that commit
    * */
   checkout(
-    id: CommitHash,
-  ): AsyncResult<
-    Checkout<M>,
-    | ParseError
-    | StorageError
-    | CommitNotFoundError
-    | BlobNotFoundError
-    | BookmarkNotFoundError
-    | BookmarkAlreadyExistsError
-  >
-  checkout(
-    bookmark: Bookmark,
-  ): AsyncResult<
-    Checkout<M>,
-    | ParseError
-    | StorageError
-    | CommitNotFoundError
-    | BlobNotFoundError
-    | BookmarkNotFoundError
-    | BookmarkAlreadyExistsError
-  >
-  checkout(
-    id: CommitHash | Bookmark,
-  ): AsyncResult<
-    Checkout<M>,
-    | ParseError
-    | StorageError
-    | CommitNotFoundError
-    | BlobNotFoundError
-    | BookmarkNotFoundError
-    | BookmarkAlreadyExistsError
-  >
-  checkout(
-    id: CommitHash | Bookmark,
+    hash: CommitHash,
   ): AsyncResult<
     Checkout<M>,
     | ParseError
@@ -335,20 +199,12 @@ export class VCS<M extends MetaData> {
     | BookmarkAlreadyExistsError
   > {
     return Result.fromAsync(async () => {
-      const hash = isBookmark(id) ? id.commit : id
-      let bookmark
-      if (isBookmark(id)) {
-        bookmark = id
-
-        id = id.commit
-      }
-
       let commit =
-        id === this._head?.hash // use head if it matches to prevent storage call
+        hash === this._head?.hash // use head if it matches to prevent storage call
           ? this._head
           : null
       if (commit === null) {
-        const commitResult = await this.storage.getCommit(id)
+        const commitResult = await this.storage.getCommit(hash)
         if (!commitResult.ok) return commitResult
         commit = commitResult.value
       }
@@ -358,16 +214,6 @@ export class VCS<M extends MetaData> {
 
       const data = blobResult.value
       if (data === null) return Result.error(new BlobNotFoundError(commit.blob))
-
-      if (bookmark) {
-        this._activeBookmark = bookmark
-      } else if (this._activeBookmark.commit !== null) {
-        // set current active bookmark to this commit unless the bookmark is uncommitted
-        const updateResult = await this.updateActiveBookmark(commit.hash)
-        if (!updateResult.ok) {
-          return updateResult
-        }
-      }
 
       this._head = commit
 

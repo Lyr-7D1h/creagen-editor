@@ -49,7 +49,7 @@ export function CommitsTab() {
   const [selectedCommit, setSelectedCommit] =
     useState<Commit<CommitMetadata> | null>(null)
   const [focusedCommitHash, setFocusedCommitHash] = useState<string | null>(
-    () => vcs.activeBookmark.commit?.toHex() ?? null,
+    () => creagenEditor.activeBookmark.commit?.toHex() ?? null,
   )
   const [checkoutMenuAnchor, setCheckoutMenuAnchor] =
     useState<null | HTMLElement>(null)
@@ -544,7 +544,7 @@ export function CommitsTab() {
     await creagenEditor.checkout(commit.hash)
     logger.info('Successfully checked out commit with active bookmark', {
       hash: commit.hash.toHex(),
-      bookmark: vcs.activeBookmark.name,
+      bookmark: creagenEditor.activeBookmark.name,
     })
   }
 
@@ -637,7 +637,7 @@ export function CommitsTab() {
                   handleCheckoutBookmark(bookmark.name).catch(console.error)
                 }}
                 color={
-                  vcs.activeBookmark.name === bookmark.name
+                  creagenEditor.activeBookmark.name === bookmark.name
                     ? 'primary'
                     : 'default'
                 }
@@ -718,7 +718,7 @@ export function CommitsTab() {
                             handleCloseCheckoutMenu()
                           }}
                         >
-                          {vcs.activeBookmark.name} (active)
+                          {creagenEditor.activeBookmark.name} (active)
                         </MenuItem>
                         {commitBookmarks.map((bookmark) => (
                           <MenuItem
@@ -750,7 +750,7 @@ export function CommitsTab() {
                         vcs.head?.hash.toHex() === selectedCommit.hash.toHex()
                       }
                     >
-                      Checkout as {vcs.activeBookmark.name}
+                      Checkout as {creagenEditor.activeBookmark.name}
                     </Button>
                   )
                 }

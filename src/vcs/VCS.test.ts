@@ -123,6 +123,9 @@ describe('VCS import / export', () => {
 
     const commitResult = await vcs.commit('const x = 1', undefined)
     if (!commitResult.ok) throw commitResult.error
+    const commit = commitResult.value
+    if (commit === null) throw new Error('No commit made')
+    await vcs.addBookmark(new Bookmark('main', commit.hash, new Date()))
 
     const exportResult = await vcs.export()
     if (!exportResult.ok) throw exportResult.error
@@ -157,7 +160,14 @@ describe('VCS import / export', () => {
     const storage1 = new MemoryStorage()
     const vcs1Result = await VCS.create(storage1, parseMetadata)
     if (!vcs1Result.ok) throw vcs1Result.error
-    await vcs1Result.value.commit(code, undefined)
+    const commitResult = await vcs1Result.value.commit(code, undefined)
+    if (!commitResult.ok) throw commitResult.error
+    const commit = commitResult.value
+    if (commit === null) throw new Error('No commit made')
+
+    await vcs1Result.value.addBookmark(
+      new Bookmark('asdf', commit.hash, new Date()),
+    )
 
     const exportResult = await vcs1Result.value.export()
     if (!exportResult.ok) throw exportResult.error
@@ -177,7 +187,7 @@ describe('VCS import / export', () => {
     const bookmarks = vcs2.bookmarks.getBookmarks()
     expect(bookmarks).toHaveLength(1)
 
-    const checkoutResult = await vcs2.checkout(bookmarks[0]!)
+    const checkoutResult = await vcs2.checkout(bookmarks[0]!.commit)
     if (!checkoutResult.ok) throw checkoutResult.error
     expect(checkoutResult.value.data).toBe(code)
   })

@@ -46,6 +46,12 @@ export class Bookmark {
       createdOn: this.createdOn.getTime(),
     }
   }
+
+  static isBookmark(
+    bm: Bookmark | Commit<MetaData> | CommitHash,
+  ): bm is Bookmark {
+    return 'name' in bm
+  }
 }
 
 /** Simple data structure for modifying and looking up vcs bookmarks in memory */
@@ -188,10 +194,4 @@ export class Bookmarks<M extends MetaData> {
     if (!res.ok) return res
     return Result.ok(bm)
   }
-}
-
-export function isBookmark(
-  bm: Bookmark | Commit<MetaData> | CommitHash,
-): bm is Bookmark {
-  return 'name' in bm
 }

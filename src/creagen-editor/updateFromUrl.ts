@@ -1,7 +1,7 @@
 import { logger } from '../logs/logger'
 import { UrlMutator } from '../UrlMutator'
 import { generateHumanReadableName } from './generateHumanReadableName'
-import { BookmarkAlreadyExistsError } from '../vcs/Bookmarks'
+import { Bookmark, BookmarkAlreadyExistsError } from '../vcs/Bookmarks'
 import { StorageError } from '../vcs/VCSStorage'
 import { CommitMetadata } from './CommitMetadata'
 import { CreagenEditor } from './CreagenEditor'
@@ -35,7 +35,7 @@ async function updateFromSharableLinkData(
 
   // create a commit
   const metadata = new CommitMetadata(editorVersion, libraries, author)
-  const commitResult = await editor.vcs.commit(code, metadata, false)
+  const commitResult = await editor.vcs.commit(code, metadata)
   if (!commitResult.ok) {
     logger.error(commitResult.error)
     return null
@@ -48,7 +48,9 @@ async function updateFromSharableLinkData(
   // try and add bookmark, with different names if failed
   // We only retry on collisions; all other errors should stop processing.
   while (
-    !(bookmark = await editor.vcs.addBookmark(bookmarkName, commit.hash)).ok
+    !(bookmark = await editor.vcs.addBookmark(
+      new Bookmark(bookmarkName, commit.hash, new Date()),
+    )).ok
   ) {
     const retryWithNewName = bookmark
       .match()

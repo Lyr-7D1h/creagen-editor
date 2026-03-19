@@ -123,7 +123,7 @@ export function Actions({
                 .then(async () => {
                   const code = creagenEditor.editor.getValue()
                   const head = creagenEditor.vcs.head
-                  const bookmarkName = creagenEditor.vcs.activeBookmark.name
+                  const bookmarkName = creagenEditor.activeBookmark.name
                   if (code.length === 0 || head === null) {
                     logger.warn('Cannot create shareable link for empty code')
                     return

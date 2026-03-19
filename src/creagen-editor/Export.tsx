@@ -36,7 +36,7 @@ export function Export({
   const analysisResult = useEditorEvent('sandbox:analysis-complete')
   const creagenEditor = useCreagenEditor()
   const head = useHead()
-  const activeRef = useActiveBookmark()
+  const activeBookmark = useActiveBookmark()
 
   const [downloading, setDownloading] = useState<boolean>(false)
   const [selectedIndex, setSelectedIndex] = useState<number>(0)
@@ -48,7 +48,7 @@ export function Export({
     const blob = await creagenEditor.sandbox.svgExport(
       selectedIndex,
       optimizeExport,
-      head?.hash,
+      head,
     )
     if (blob === null) {
       logger.error('No svg found')
@@ -58,7 +58,7 @@ export function Export({
 
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
-    a.setAttribute('download', `${activeRef.name}.svg`)
+    a.setAttribute('download', `${activeBookmark.name}.svg`)
     a.setAttribute('href', url)
     a.style.display = 'none'
     document.body.appendChild(a)

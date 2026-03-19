@@ -78,7 +78,7 @@ export class Controller {
   constructor(private readonly url: string) {}
 
   /** Make a new controller channel */
-  async new() {
+  async create() {
     const res = await fetch(`${this.url}/api/new`)
     const body = (await res.json()) as unknown
     const r = await newSchema.parseAsync(body)

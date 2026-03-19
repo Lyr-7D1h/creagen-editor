@@ -4,9 +4,10 @@ import { EditorEvent, EditorEventData } from './EditorEvent'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import { CommitMetadata } from '../creagen-editor/CommitMetadata'
 import { ParamKey, ParamValue } from '../settings/SettingsConfig'
-import { ActiveBookmark, HistoryItem } from '../vcs/VCS'
+import { HistoryItem } from '../vcs/VCS'
 import { logger } from '../logs/logger'
 import { useLocalStorage } from '../storage/useLocalStorage'
+import { ActiveBookmark } from '../creagen-editor/CreagenEditor'
 
 /**
  * Hook that subscribes to an event and triggers re-render when emitted
@@ -78,7 +79,7 @@ export const useHead = () => {
   const editor = useCreagenEditor()
   const vcs = editor.vcs
 
-  const [value, setValue] = useState(() => vcs.head)
+  const [value, setValue] = useState(() => vcs.head?.hash)
 
   useEffect(() => {
     return editorEvents.on('vcs:checkout', ({ new: n }) => {
@@ -92,21 +93,20 @@ export const useHead = () => {
 /** Get the current active reference */
 export const useActiveBookmark = () => {
   const editor = useCreagenEditor()
-  const vcs = editor.vcs
 
-  const [value, setValue] = useState<ActiveBookmark>(vcs.activeBookmark)
+  const [value, setValue] = useState<ActiveBookmark>(editor.activeBookmark)
 
   useEffect(() => {
     const listeners = [
       editorEvents.on('vcs:checkout', () => {
-        setValue(vcs.activeBookmark)
+        setValue(editor.activeBookmark)
       }),
       editorEvents.on('vcs:bookmark-update', () => {
-        setValue(vcs.activeBookmark)
+        setValue(editor.activeBookmark)
       }),
     ]
     return () => listeners.forEach((l) => l())
-  }, [vcs.activeBookmark])
+  }, [editor.activeBookmark])
 
   return value
 }

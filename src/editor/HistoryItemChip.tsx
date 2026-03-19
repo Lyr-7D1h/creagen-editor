@@ -195,7 +195,7 @@ export function HistoryItemChip({
                 return
               }
               vcs
-                .addBookmark(name, commit.hash)
+                .addBookmark(new Bookmark(name, commit.hash, new Date()))
                 .then((result) => {
                   if (!result.ok) {
                     logger.error(result.error)
