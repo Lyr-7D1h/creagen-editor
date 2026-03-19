@@ -185,6 +185,10 @@ export class IndexDBStorage<M extends MetaData> implements Storage<M> {
     return this._set(BLOB_STORE, id.buffer, value)
   }
 
+  removeBookmark(id: string): Promise<void> {
+    return this._delete(BOOKMARKS_STORE, id)
+  }
+
   getAllBookmarks(): Promise<JsonValue[]> {
     return this._getAll(BOOKMARKS_STORE)
   }
@@ -256,6 +260,25 @@ export class IndexDBStorage<M extends MetaData> implements Storage<M> {
         reject(
           new Error(`failed to get all commits: ${req.error?.message ?? ''}`),
         )
+      }
+    })
+  }
+
+  private async _delete(storeName: string, id: IDBValidKey): Promise<void> {
+    const trans = this.db.transaction(storeName, 'readwrite')
+    await new Promise<void>((resolve, reject) => {
+      trans.onerror = (_e) => {
+        reject(
+          new Error(`failed to delete value: ${trans.error?.message ?? ''}`),
+        )
+      }
+      const store = trans.objectStore(storeName)
+      const req = store.delete(id)
+      req.onsuccess = () => {
+        resolve()
+      }
+      req.onerror = (_e) => {
+        reject(new Error(`failed to delete item: ${req.error?.message ?? ''}`))
       }
     })
   }

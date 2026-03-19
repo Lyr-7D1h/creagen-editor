@@ -47,6 +47,11 @@ class MemoryStorage implements Storage<undefined> {
     return Promise.resolve()
   }
 
+  removeBookmark(id: string): Promise<void> {
+    this.bookmarks.delete(id)
+    return Promise.resolve()
+  }
+
   getAllBookmarks(): Promise<JsonValue[]> {
     return Promise.resolve([...this.bookmarks.values()])
   }

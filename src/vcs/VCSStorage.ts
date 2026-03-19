@@ -117,6 +117,17 @@ export class VCSStorage<M extends MetaData> {
     })
   }
 
+  removeBookmark(id: string): AsyncResult<void, StorageError> {
+    return Result.fromAsync(async () => {
+      try {
+        await this.storage.removeBookmark(id)
+        return Result.ok()
+      } catch (error) {
+        return Result.error(this.toStorageError(error))
+      }
+    })
+  }
+
   // --- Commits ---
 
   getCommit(

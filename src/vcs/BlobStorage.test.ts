@@ -302,6 +302,8 @@ class MockStorage implements Storage<undefined> {
     await this.putToStore('delta', id.buffer, value)
   }
 
+  async removeBookmark(_id: string): Promise<void> {}
+
   getAllDeltas(): Promise<JsonValue[]> {
     return Promise.resolve([])
   }

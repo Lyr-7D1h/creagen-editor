@@ -19,6 +19,8 @@ export interface Storage<M extends MetaData> {
   setBlob(id: BlobHash, value: Uint8Array): Promise<void>
   setDelta(id: BlobHash, value: Uint8Array): Promise<void>
 
+  removeBookmark(id: string): Promise<void>
+
   getAllDeltas(): Promise<JsonValue[]>
   getAllBlobs(): Promise<JsonValue[]>
   getAllCommits(): Promise<JsonValue[]>
