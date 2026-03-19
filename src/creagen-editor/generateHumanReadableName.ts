@@ -19,7 +19,6 @@ export function generateHumanReadableName(): string {
     'admirable',
     'admired',
     'adolescent',
-    'adorable',
     'adored',
     'advanced',
     'afraid',
@@ -278,8 +277,6 @@ export function generateHumanReadableName(): string {
     'dirty',
     'disguised',
     'dishonest',
-    'dismal',
-    'distant',
     'distinct',
     'distorted',
     'dizzy',
@@ -785,7 +782,6 @@ export function generateHumanReadableName(): string {
     'obese',
     'oblong',
     'oily',
-    'oblong',
     'obvious',
     'occasional',
     'odd',
@@ -873,7 +869,6 @@ export function generateHumanReadableName(): string {
     'present',
     'prestigious',
     'pretty',
-    'precious',
     'previous',
     'pricey',
     'prickly',
@@ -1169,7 +1164,6 @@ export function generateHumanReadableName(): string {
     'tremendous',
     'tragic',
     'trained',
-    'tremendous',
     'triangular',
     'tricky',
     'trifling',
@@ -2855,7 +2849,7 @@ export function generateHumanReadableName(): string {
   ]
 
   const r1 = Math.floor(Math.random() * name1.length)
-  const r2 = Math.floor(Math.random() * name1.length)
+  const r2 = Math.floor(Math.random() * name2.length)
   const name = name1[r1] + '-' + name2[r2]
   return name
 }

@@ -1,11 +1,6 @@
 import { AsyncResult, Result } from 'typescript-result'
 import { z, ZodError } from 'zod'
-import {
-  Bookmark,
-  bookmarkSchema,
-  Bookmarks,
-  bookmarksSchema,
-} from './Bookmarks'
+import { Bookmark, bookmarkSchema } from './Bookmarks'
 import { BlobStorage } from './BlobStorage'
 import { Commit, CommitHash, BlobHash, MetaData, commitSchema } from './Commit'
 import { JsonValue, Storage, VCSImport } from './Storage'
@@ -58,22 +53,6 @@ export class VCSStorage<M extends MetaData> {
     return new StorageError(new Error(String(error)))
   }
 
-  getBookmarks(): AsyncResult<Bookmarks, ParseError | StorageError> {
-    return Result.fromAsync(async () => {
-      let rawBookmarks
-      try {
-        rawBookmarks = await this.storage.getAllBookmarks()
-      } catch (error) {
-        return Result.error(this.toStorageError(error))
-      }
-
-      const result = bookmarksSchema.safeParse(rawBookmarks)
-      return result.success
-        ? Result.ok(result.data)
-        : Result.error(new ParseError(result.error))
-    })
-  }
-
   getBookmark(
     id: string,
   ): AsyncResult<Bookmark | null, ParseError | StorageError> {
@@ -97,19 +76,6 @@ export class VCSStorage<M extends MetaData> {
     return Result.fromAsync(async () => {
       try {
         await this.storage.setBookmark(bookmark)
-        return Result.ok()
-      } catch (error) {
-        return Result.error(this.toStorageError(error))
-      }
-    })
-  }
-
-  setBookmarks(bookmarks: Bookmarks): AsyncResult<void, StorageError> {
-    return Result.fromAsync(async () => {
-      try {
-        await Promise.all(
-          bookmarks.getBookmarks().map((bm) => this.storage.setBookmark(bm)),
-        )
         return Result.ok()
       } catch (error) {
         return Result.error(this.toStorageError(error))
@@ -168,6 +134,26 @@ export class VCSStorage<M extends MetaData> {
       } catch (error) {
         return Result.error(this.toStorageError(error))
       }
+    })
+  }
+
+  getAllBookmarks() {
+    return Result.fromAsync(async () => {
+      let rawList
+      try {
+        rawList = await this.storage.getAllBookmarks()
+      } catch (error) {
+        return Result.error(this.toStorageError(error))
+      }
+
+      const bookmarks: Bookmark[] = []
+      for (const raw of rawList) {
+        const parsed = bookmarkSchema.safeParse(raw)
+        if (!parsed.success) return Result.error(new ParseError(parsed.error))
+
+        bookmarks.push(parsed.data)
+      }
+      return Result.ok(bookmarks)
     })
   }
 

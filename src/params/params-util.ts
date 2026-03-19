@@ -1,4 +1,4 @@
-import { generateHumanReadableName } from '../vcs/generateHumanReadableName'
+import { generateHumanReadableName } from '../creagen-editor/generateHumanReadableName'
 import { ParamConfig } from './Params'
 
 export function generateRandomValue(config: ParamConfig): unknown {

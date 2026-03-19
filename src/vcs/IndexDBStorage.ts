@@ -213,12 +213,35 @@ export class IndexDBStorage<M extends MetaData> implements Storage<M> {
       }
 
       const store = trans.objectStore(storeName)
-      const req = store.add(value, id)
+      const req = store.put(value, id)
       req.onsuccess = () => {
         resolve()
       }
       req.onerror = (_e) => {
         reject(new Error(`failed to set item: ${req.error?.message ?? ''}`))
+      }
+    })
+  }
+
+  private async _delete(storeName: string, id: IDBValidKey) {
+    const trans = this.db.transaction(storeName, 'readwrite')
+    await new Promise<void>((resolve, reject) => {
+      trans.oncomplete = () => {
+        resolve()
+      }
+      trans.onerror = (_e) => {
+        reject(
+          new Error(`failed to delete value: ${trans.error?.message ?? ''}`),
+        )
+      }
+
+      const store = trans.objectStore(storeName)
+      const req = store.delete(id)
+      req.onsuccess = () => {
+        resolve()
+      }
+      req.onerror = (_e) => {
+        reject(new Error(`failed to delete item: ${req.error?.message ?? ''}`))
       }
     })
   }
@@ -260,25 +283,6 @@ export class IndexDBStorage<M extends MetaData> implements Storage<M> {
         reject(
           new Error(`failed to get all commits: ${req.error?.message ?? ''}`),
         )
-      }
-    })
-  }
-
-  private async _delete(storeName: string, id: IDBValidKey): Promise<void> {
-    const trans = this.db.transaction(storeName, 'readwrite')
-    await new Promise<void>((resolve, reject) => {
-      trans.onerror = (_e) => {
-        reject(
-          new Error(`failed to delete value: ${trans.error?.message ?? ''}`),
-        )
-      }
-      const store = trans.objectStore(storeName)
-      const req = store.delete(id)
-      req.onsuccess = () => {
-        resolve()
-      }
-      req.onerror = (_e) => {
-        reject(new Error(`failed to delete item: ${req.error?.message ?? ''}`))
       }
     })
   }

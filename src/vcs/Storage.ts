@@ -14,6 +14,7 @@ export interface Storage<M extends MetaData> {
   getBlob(id: BlobHash): Promise<Uint8Array | null>
   getDelta(id: BlobHash): Promise<Uint8Array | null>
 
+  /** Overwrite existing bookmark or set a new one */
   setBookmark(bookmark: Bookmark): Promise<void>
   setCommit(commit: Commit<M>): Promise<void>
   setBlob(id: BlobHash, value: Uint8Array): Promise<void>

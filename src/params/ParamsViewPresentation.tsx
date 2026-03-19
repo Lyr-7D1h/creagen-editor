@@ -19,7 +19,7 @@ import {
   Checkbox,
 } from '@mui/material'
 import React from 'react'
-import { generateHumanReadableName } from '../vcs/generateHumanReadableName'
+import { generateHumanReadableName } from '../creagen-editor/generateHumanReadableName'
 import { ParamConfig, Params } from './Params'
 
 function StringInput({
@@ -120,7 +120,11 @@ function ColorInput({
       <Box
         component="input"
         type="color"
-        value={localValue.length === 7 || localValue.length === 9 ? localValue.substring(0, 7) : localValue}
+        value={
+          localValue.length === 7 || localValue.length === 9
+            ? localValue.substring(0, 7)
+            : localValue
+        }
         onChange={(e) => handleChange((e.target as HTMLInputElement).value)}
         sx={{
           width: 50,
