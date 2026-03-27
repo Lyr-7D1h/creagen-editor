@@ -177,7 +177,12 @@ export function HistoryItemChip({
         }}
         onClick={() => {
           if (isEditing === null) {
-            creagenEditor.checkout(commit.hash).catch(logger.error)
+            creagenEditor
+              .checkout(commit.hash)
+              .then((result) => {
+                if (!result.ok) logger.error(result.error)
+              })
+              .catch(logger.error)
           }
         }}
       >
@@ -238,7 +243,12 @@ export function HistoryItemChip({
   const handleBookmarkSelect = (bookmarkName: string) => {
     const bookmark = vcs.bookmarks.getBookmark(bookmarkName)
     if (bookmark) {
-      creagenEditor.checkout(bookmark).catch(logger.error)
+      creagenEditor
+        .checkout(bookmark)
+        .then((r) => {
+          if (!r.ok) logger.error(r.error)
+        })
+        .catch(logger.error)
     }
     handleMenuClose()
   }

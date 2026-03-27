@@ -8,7 +8,7 @@ import {
   Stack,
 } from '@mui/material'
 import { ExpandMore, ExpandLess } from '@mui/icons-material'
-import { useCreagenEditor } from '../creagen-editor/CreagenContext'
+import { useCreagenEditor } from './CreagenContext'
 
 interface PerformanceStats {
   averageFPS: number

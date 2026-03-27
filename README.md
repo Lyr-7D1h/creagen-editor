@@ -68,6 +68,8 @@ npm start
   - git pack files
   - Cloudflare r2
 - Import code using ID `import('a123487e...')
+- Rollback failing actions
+  - checkout, add bookmark enc
 - Crop, compress and convert dropped images to base64 string
 - Html meta tags
 

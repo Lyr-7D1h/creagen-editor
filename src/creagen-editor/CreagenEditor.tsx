@@ -12,7 +12,7 @@ import {
 } from '../settings/SettingsConfig'
 import { CustomKeybinding, Keybindings } from './keybindings'
 import { Importer, LibraryImport } from '../importer'
-import { CommitNotFoundError, VCS } from '../vcs/VCS'
+import { BlobNotFoundError, CommitNotFoundError, VCS } from '../vcs/VCS'
 import { ClientStorage } from '../storage/ClientStorage'
 import { editorEvents } from '../events/events'
 import {
@@ -21,7 +21,7 @@ import {
   BookmarkNotFoundError,
 } from '../vcs/Bookmarks'
 import { Command, COMMANDS } from './commands'
-import { ResourceMonitor } from '../resource-monitor/ResourceMonitor'
+import { ResourceMonitor } from './ResourceMonitor'
 import { Params } from '../params/Params'
 import { Controller } from '../controller/Controller'
 import { UrlMutator } from '../UrlMutator'
@@ -32,7 +32,7 @@ import { IndexDBStorage } from '../vcs/IndexDBStorage'
 import { SemVer } from 'semver'
 import { generateHumanReadableName } from './generateHumanReadableName'
 import { AsyncResult, Result } from 'typescript-result'
-import { StorageError } from '../vcs/VCSStorage'
+import { ParseError, StorageError } from '../vcs/VCSStorage'
 
 function generateUncommittedBookmark() {
   return {
@@ -281,9 +281,45 @@ export class CreagenEditor {
    *
    * Checking out by bookmark will set active bookmark to the bookmark given and checkout the commit this bookmark is pointing to
    */
-  async checkout(hash: CommitHash): Promise<void>
-  async checkout(bookmark: Bookmark): Promise<void>
-  async checkout(id: CommitHash | Bookmark) {
+  checkout(
+    hash: CommitHash,
+  ): Promise<
+    Result<
+      void,
+      | CommitNotFoundError
+      | BookmarkNotFoundError
+      | StorageError
+      | BookmarkAlreadyExistsError
+      | ParseError
+      | BlobNotFoundError
+    >
+  >
+  checkout(
+    bookmark: Bookmark,
+  ): Promise<
+    Result<
+      void,
+      | CommitNotFoundError
+      | BookmarkNotFoundError
+      | StorageError
+      | BookmarkAlreadyExistsError
+      | ParseError
+      | BlobNotFoundError
+    >
+  >
+  async checkout(
+    id: CommitHash | Bookmark,
+  ): Promise<
+    Result<
+      void,
+      | CommitNotFoundError
+      | BookmarkNotFoundError
+      | StorageError
+      | BookmarkAlreadyExistsError
+      | ParseError
+      | BlobNotFoundError
+    >
+  > {
     const old = this.vcs.head?.hash
     let bookmark
     if (Bookmark.isBookmark(id)) {
@@ -293,18 +329,7 @@ export class CreagenEditor {
 
     const checkoutResult = await this.vcs.checkout(id)
     if (!checkoutResult.ok) {
-      checkoutResult
-        .match()
-        .when(CommitNotFoundError, () => {
-          logger.warn(
-            `'${Bookmark.isBookmark(id) ? id.name : id.toSub()}' not found in vcs`,
-          )
-        })
-        .else((error) => {
-          logger.error(error)
-        })
-        .run()
-      return
+      return checkoutResult
     }
     const checkout = checkoutResult.value
 
@@ -314,9 +339,7 @@ export class CreagenEditor {
       // set current active bookmark to this commit unless the bookmark is uncommitted
       const updateResult = await this.updateActiveBookmark(id)
       if (!updateResult.ok) {
-        logger.error(
-          `Failed to update active bookmark: ${updateResult.error.message}`,
-        )
+        return updateResult
       }
     }
 
@@ -338,6 +361,7 @@ export class CreagenEditor {
 
     this.editor.setValue(data)
     editorEvents.emit('vcs:checkout', { old, new: checkout.commit.hash })
+    return Result.ok()
   }
 
   /** Reset all editor typings */
@@ -465,9 +489,8 @@ export class CreagenEditor {
     return code
   }
 
-  /** Commit code and library changes if editor is not empty
-   *
-   * @returns null if nothing changed
+  /**
+   * Commit code and library changes if editor is not empty
    */
   async commit(
     /** Update active bookmark to this commit */
@@ -489,8 +512,7 @@ export class CreagenEditor {
     // store code and change url
     const commitResult = await this.vcs.commit(code, metadata)
     if (!commitResult.ok) {
-      logger.error(commitResult.error)
-      return null
+      return commitResult
     }
 
     // Explicitly handle the "no changes" case where commitResult.value is null.

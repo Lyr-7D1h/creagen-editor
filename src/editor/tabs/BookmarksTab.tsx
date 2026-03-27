@@ -97,7 +97,11 @@ export const BookmarksTab = () => {
           columns={columns}
           data={bms}
           getRowKey={(bookmark) => bookmark.commit.toHex() + bookmark.name}
-          onRowClick={(bookmark) => void creagenEditor.checkout(bookmark)}
+          onRowClick={(bookmark) =>
+            void creagenEditor.checkout(bookmark).then((result) => {
+              if (!result.ok) logger.error(result.error)
+            })
+          }
         />
       )}
     </>

@@ -66,7 +66,11 @@ async function updateFromSharableLinkData(
     )
   }
 
-  await editor.checkout(bookmark.value)
+  const checkoutResult = await editor.checkout(bookmark.value)
+  if (!checkoutResult.ok) {
+    logger.error(checkoutResult.error)
+    return null
+  }
   return true
 }
 
@@ -86,11 +90,19 @@ async function updateFromCommit(editor: CreagenEditor, mutator: UrlMutator) {
     const mostRecent = bookmarks.sort(
       (a, b) => b.createdOn.getTime() - a.createdOn.getTime(),
     )[0]!
-    editor.checkout(mostRecent).catch(logger.error)
+    editor
+      .checkout(mostRecent)
+      .then((result) => {
+        if (!result.ok) logger.error(result.error)
+      })
+      .catch(logger.error)
     return
   }
 
-  await editor.checkout(commit)
+  const checkoutResult = await editor.checkout(commit)
+  if (!checkoutResult.ok) {
+    logger.error(checkoutResult.error)
+  }
   return
 }
 

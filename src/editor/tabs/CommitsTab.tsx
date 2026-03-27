@@ -531,7 +531,11 @@ export function CommitsTab() {
   const handleCheckoutBookmark = async (bookmark: string) => {
     const bm = vcs.bookmarks.getBookmark(bookmark)
     if (bm) {
-      await creagenEditor.checkout(bm)
+      const result = await creagenEditor.checkout(bm)
+      if (!result.ok) {
+        logger.error(result.error)
+        return
+      }
       logger.info('Successfully checked out bookmark', { bookmark })
       // Set the focused commit to the bookmark's commit
       setFocusedCommitHash(bm.commit.toHex())
@@ -541,7 +545,11 @@ export function CommitsTab() {
   const handleCheckoutCommitWithActiveBookmark = async (
     commit: Commit<CommitMetadata>,
   ) => {
-    await creagenEditor.checkout(commit.hash)
+    const result = await creagenEditor.checkout(commit.hash)
+    if (!result.ok) {
+      logger.error(result.error)
+      return
+    }
     logger.info('Successfully checked out commit with active bookmark', {
       hash: commit.hash.toHex(),
       bookmark: creagenEditor.activeBookmark.name,
@@ -554,7 +562,12 @@ export function CommitsTab() {
   ) => {
     const bookmark = vcs.bookmarks.getBookmark(bookmarkName)
     if (bookmark) {
-      await creagenEditor.checkout(bookmark)
+      const result = await creagenEditor.checkout(bookmark)
+      if (!result.ok) {
+        logger.error(result.error)
+        setCheckoutMenuAnchor(null)
+        return
+      }
       logger.info('Successfully checked out commit as bookmark', {
         hash: commit.hash.toHex(),
         bookmark: bookmarkName,
