@@ -82,7 +82,7 @@ export class CreagenEditor {
     })
     if (!vcsResult.ok) throw vcsResult.error
     const vcs = vcsResult.value
-    const customKeybindings = storage.get('custom-keybindings') ?? []
+    const customKeybindings = (await storage.get('custom-keybindings')) ?? []
 
     return new CreagenEditor(
       sandbox,
