@@ -12,7 +12,7 @@ import {
 } from '@mui/material'
 import React, { useState, useEffect, useRef } from 'react'
 import { useCreagenEditor } from '../../creagen-editor/CreagenContext'
-import { Commit } from '../../vcs/Commit'
+import { Commit } from 'versie'
 import * as d3 from 'd3'
 import { logger } from '../../logs/logger'
 import { useForceUpdateOnEditorEvent } from '../../events/useEditorEvents'
@@ -41,7 +41,6 @@ export function CommitsTab() {
     'vcs:bookmark-update',
     'vcs:commit',
   ])
-  const vcs = creagenEditor.vcs
   const svgRef = useRef<SVGSVGElement>(null)
   const [commits, setCommits] = useState<Commit<CommitMetadata>[]>([])
   const [searchText, setSearchText] = useState('')
@@ -56,7 +55,7 @@ export function CommitsTab() {
   const [minifyGraph, setMinifyGraph] = useState(true)
 
   useEffect(() => {
-    vcs
+    creagenEditor
       .getAllCommits()
       .then((c) => {
         if (!c.ok) {
@@ -66,7 +65,7 @@ export function CommitsTab() {
         setCommits(c.value)
       })
       .catch(logger.error)
-  }, [vcs, hook])
+  }, [creagenEditor, hook])
 
   useEffect(() => {
     if (!svgRef.current || commits.length === 0) return
@@ -117,7 +116,7 @@ export function CommitsTab() {
       filteredCommits.forEach((commit) => {
         const commitKey = commit.hash.toHex()
         const children = childrenMap.get(commitKey) ?? []
-        const bookmarks = vcs.bookmarks.bookmarkLookup(commit.hash)
+        const bookmarks = creagenEditor.bookmarks.bookmarkLookup(commit.hash)
 
         // Keep if it has bookmarks
         if (bookmarks && bookmarks.length > 0) {
@@ -162,7 +161,7 @@ export function CommitsTab() {
 
     // Add all display commits
     displayCommits.forEach((commit) => {
-      const bookmarks = vcs.bookmarks.bookmarkLookup(commit.hash)
+      const bookmarks = creagenEditor.bookmarks.bookmarkLookup(commit.hash)
       commitMap.set(commit.hash.toHex(), {
         id: commit.hash.toHex(),
         commit,
@@ -440,7 +439,7 @@ export function CommitsTab() {
       .attr('fill', (d) => {
         if (d.commit === null) return '#000' // gray for virtual root
         if (d.bookmarks.length > 0) return '#fff'
-        if (vcs.head?.hash.toHex() === d.id) return '#2196f3' // blue for HEAD
+        if (creagenEditor.head?.hash.toHex() === d.id) return '#2196f3' // blue for HEAD
         if ((d.commit.metadata.author ?? '') !== '') return '#4caf50' // green for authored
         return '#ff9800' // orange for local
       })
@@ -448,7 +447,7 @@ export function CommitsTab() {
         if (d.commit === null) return '#fff'
         if (d.bookmarks.length > 0) {
           // Use appropriate color for bookmarked commits
-          if (vcs.head?.hash.toHex() === d.id) return '#2196f3' // blue for HEAD
+          if (creagenEditor.head?.hash.toHex() === d.id) return '#2196f3' // blue for HEAD
           if ((d.commit.metadata.author ?? '') !== '') return '#4caf50' // green for authored
           return '#ff9800' // orange for local
         }
@@ -511,8 +510,8 @@ export function CommitsTab() {
     focusedCommitHash,
     minifyGraph,
     hook,
-    vcs.bookmarks,
-    vcs.head?.hash,
+    creagenEditor.bookmarks,
+    creagenEditor.head?.hash,
   ])
 
   const uniqueAuthors = Array.from(
@@ -529,7 +528,7 @@ export function CommitsTab() {
   }
 
   const handleCheckoutBookmark = async (bookmark: string) => {
-    const bm = vcs.bookmarks.getBookmark(bookmark)
+    const bm = creagenEditor.bookmarks.getBookmark(bookmark)
     if (bm) {
       const result = await creagenEditor.checkout(bm)
       if (!result.ok) {
@@ -560,7 +559,7 @@ export function CommitsTab() {
     commit: Commit<CommitMetadata>,
     bookmarkName: string,
   ) => {
-    const bookmark = vcs.bookmarks.getBookmark(bookmarkName)
+    const bookmark = creagenEditor.bookmarks.getBookmark(bookmarkName)
     if (bookmark) {
       const result = await creagenEditor.checkout(bookmark)
       if (!result.ok) {
@@ -636,13 +635,13 @@ export function CommitsTab() {
       </Stack>
 
       {/* Bookmarks section */}
-      {vcs.bookmarks.getBookmarks().length > 0 && (
+      {creagenEditor.bookmarks.getBookmarks().length > 0 && (
         <Box sx={{ mb: 2 }}>
           <Typography variant="subtitle2" sx={{ mb: 1 }}>
             Bookmarks
           </Typography>
           <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-            {vcs.bookmarks.getBookmarks().map((bookmark) => (
+            {creagenEditor.bookmarks.getBookmarks().map((bookmark) => (
               <Chip
                 key={bookmark.name}
                 label={bookmark.name}
@@ -702,7 +701,7 @@ export function CommitsTab() {
             <Typography variant="subtitle2">Selected Commit</Typography>
             <Box sx={{ display: 'flex', gap: 1 }}>
               {(() => {
-                const commitBookmarks = vcs.bookmarks.bookmarkLookup(
+                const commitBookmarks = creagenEditor.bookmarks.bookmarkLookup(
                   selectedCommit.hash,
                 )
                 if (commitBookmarks && commitBookmarks.length > 0) {
@@ -713,7 +712,8 @@ export function CommitsTab() {
                         size="small"
                         onClick={handleOpenCheckoutMenu}
                         disabled={
-                          vcs.head?.hash.toHex() === selectedCommit.hash.toHex()
+                          creagenEditor.head?.hash.toHex() ===
+                          selectedCommit.hash.toHex()
                         }
                       >
                         Checkout as...
@@ -760,7 +760,8 @@ export function CommitsTab() {
                         ).catch(console.error)
                       }}
                       disabled={
-                        vcs.head?.hash.toHex() === selectedCommit.hash.toHex()
+                        creagenEditor.head?.hash.toHex() ===
+                        selectedCommit.hash.toHex()
                       }
                     >
                       Checkout as {creagenEditor.activeBookmark.name}
@@ -775,10 +776,12 @@ export function CommitsTab() {
                   handleCheckout(selectedCommit).catch(console.error)
                 }}
                 disabled={
-                  vcs.head?.hash.toHex() === selectedCommit.hash.toHex()
+                  creagenEditor.head?.hash.toHex() ===
+                  selectedCommit.hash.toHex()
                 }
               >
-                {vcs.head?.hash.toHex() === selectedCommit.hash.toHex()
+                {creagenEditor.head?.hash.toHex() ===
+                selectedCommit.hash.toHex()
                   ? 'Current'
                   : 'Checkout'}
               </Button>
@@ -809,7 +812,7 @@ export function CommitsTab() {
             </Typography>
           )}
           {(() => {
-            const commitBookmarks = vcs.bookmarks.bookmarkLookup(
+            const commitBookmarks = creagenEditor.bookmarks.bookmarkLookup(
               selectedCommit.hash,
             )
             if (commitBookmarks && commitBookmarks.length > 0) {

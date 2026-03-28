@@ -52,7 +52,6 @@ npm start
   - Order bookmarks by recently used
   - View entire history of sketch
   - Show graph of all commits and bookmarks ever made
-  - Change id to keep a unique id even though commits might change content
   - Show diffs between commits
 - Moveable windows
 - Shareable links

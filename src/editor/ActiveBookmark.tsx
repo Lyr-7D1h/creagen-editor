@@ -4,10 +4,10 @@ import { logger } from '../logs/logger'
 import { useActiveBookmark } from '../events/useEditorEvents'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import { TextInput } from './TextInput'
-import { bookmarkNameSchema } from '../vcs/Bookmarks'
+import { bookmarkNameSchema } from 'versie'
 
 export function ActiveBookmark({ color }: { color?: string }) {
-  const vcs = useCreagenEditor().vcs
+  const creagenEditor = useCreagenEditor()
   const activeBookmark = useActiveBookmark()
   const [isEditing, setIsEditing] = useState(false)
 
@@ -17,7 +17,7 @@ export function ActiveBookmark({ color }: { color?: string }) {
       logger.error(data.error)
       return
     }
-    vcs
+    creagenEditor
       .renameBookmark(activeBookmark.name, value)
       .then((v) => {
         if (v.ok) {

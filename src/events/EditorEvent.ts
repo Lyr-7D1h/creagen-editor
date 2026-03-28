@@ -1,4 +1,4 @@
-import { CommitHash } from '../vcs/Commit'
+import { CommitHash } from 'versie'
 import { LocalStorageKey, StorageValue } from '../storage/StorageKey'
 import { ParamKey } from '../settings/SettingsConfig'
 import { AnalyzeContainerResult } from '../sandbox/SandboxMessageHandler'

@@ -2,7 +2,7 @@ import { Editor } from '../editor/Editor'
 import { log, logger, Severity } from '../logs/logger'
 import { Sandbox } from '../sandbox/Sandbox'
 import { Settings } from '../settings/Settings'
-import { CommitHash } from '../vcs/Commit'
+import { CommitHash } from 'versie'
 import { LIBRARY_CONFIGS } from './libraryConfigs'
 import { parseCode } from './parseCode'
 import {
@@ -12,14 +12,14 @@ import {
 } from '../settings/SettingsConfig'
 import { CustomKeybinding, Keybindings } from './keybindings'
 import { Importer, LibraryImport } from '../importer'
-import { BlobNotFoundError, CommitNotFoundError, VCS } from '../vcs/VCS'
+import { BlobNotFoundError, Commit, CommitNotFoundError, Versie } from 'versie'
 import { ClientStorage } from '../storage/ClientStorage'
 import { editorEvents } from '../events/events'
 import {
   Bookmark,
   BookmarkAlreadyExistsError,
   BookmarkNotFoundError,
-} from '../vcs/Bookmarks'
+} from 'versie'
 import { Command, COMMANDS } from './commands'
 import { ResourceMonitor } from './ResourceMonitor'
 import { Params } from '../params/Params'
@@ -28,11 +28,11 @@ import { UrlMutator } from '../UrlMutator'
 import { updateFromUrl } from './updateFromUrl'
 import { creagenEditorVersionMismatch as creagenEditorVersionMismatchWarning } from './creagenEditorVersionMatches'
 import { CommitMetadata } from './CommitMetadata'
-import { IndexDBStorage } from '../vcs/IndexDBStorage'
+import { IndexDBStorage } from 'versie'
 import { SemVer } from 'semver'
 import { generateHumanReadableName } from './generateHumanReadableName'
 import { AsyncResult, Result } from 'typescript-result'
-import { ParseError, StorageError } from '../vcs/VCSStorage'
+import { ParseError, StorageError } from 'versie'
 
 function generateUncommittedBookmark() {
   return {
@@ -58,7 +58,7 @@ export class CreagenEditor {
   editor: Editor
   sandbox: Sandbox
 
-  vcs: VCS<CommitMetadata>
+  private readonly vcs: Versie<CommitMetadata>
   activeBookmark: ActiveBookmark = generateUncommittedBookmark()
 
   keybindings: Keybindings
@@ -77,7 +77,7 @@ export class CreagenEditor {
     if (!indexdbStorageResult.value.persisted)
       logger.warn('Failed to persist storage')
     const indexdbStorage = indexdbStorageResult.value.creagen
-    const vcsResult = await VCS.create(indexdbStorage, (raw) => {
+    const vcsResult = await Versie.create(indexdbStorage, (raw) => {
       return CommitMetadata.parse(raw)
     })
     if (!vcsResult.ok) throw vcsResult.error
@@ -99,7 +99,7 @@ export class CreagenEditor {
     editor: Editor,
     settings: Settings,
     storage: ClientStorage,
-    vcs: VCS<CommitMetadata>,
+    vcs: Versie<CommitMetadata>,
     customKeybindings: CustomKeybinding[],
   ) {
     this.sandbox = sandbox
@@ -576,5 +576,48 @@ export class CreagenEditor {
 
   export() {
     return this.vcs.export()
+  }
+
+  get head() {
+    return this.vcs.head
+  }
+
+  getAllBookmarks() {
+    return this.vcs.getAllBookmarks()
+  }
+
+  getAllCommits() {
+    return this.vcs.getAllCommits()
+  }
+
+  history(n: number, start?: Commit<CommitMetadata>) {
+    return this.vcs.history(n, start)
+  }
+
+  addBookmark(bookmark: Bookmark) {
+    return this.vcs.addBookmark(bookmark)
+  }
+
+  async removeBookmark(name: string) {
+    const result = await this.vcs.removeBookmark(name)
+    if (result.ok && this.activeBookmark.name === name) {
+      this.activeBookmark = generateUncommittedBookmark()
+      editorEvents.emit('vcs:bookmark-update', undefined)
+    }
+    return result
+  }
+
+  async renameBookmark(oldName: string, newName: string) {
+    const result = await this.vcs.renameBookmark(oldName, newName)
+    if (result.ok && this.activeBookmark.name === oldName) {
+      this.activeBookmark = { ...this.activeBookmark, name: newName }
+      editorEvents.emit('vcs:bookmark-update', undefined)
+    }
+    return result
+  }
+
+  /** Low-level commit used when building a commit from external data (e.g. a sharable link) */
+  createCommit(code: string, metadata: CommitMetadata) {
+    return this.vcs.commit(code, metadata)
   }
 }

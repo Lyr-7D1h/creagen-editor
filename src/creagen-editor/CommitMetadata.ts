@@ -2,7 +2,7 @@ import { SemVer } from 'semver'
 import { Library, librarySchema } from '../settings/SettingsConfig'
 import z from 'zod'
 import { semverSchema } from './schemaUtils'
-import { JsonValue } from '../vcs/Storage'
+import { JsonValue } from 'versie'
 
 const commitMetadataSchema = z.object({
   editorVersion: semverSchema,

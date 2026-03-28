@@ -1,7 +1,7 @@
 import { Typography } from '@mui/material'
 import React from 'react'
 import { timeAgoString, dateString } from '../util'
-import { HistoryItem } from '../vcs/VCS'
+import { HistoryItem } from 'versie'
 import { HtmlTooltip } from './HtmlTooltip'
 import { CommitMetadata } from '../creagen-editor/CommitMetadata'
 

@@ -1,8 +1,8 @@
 import { logger } from '../logs/logger'
 import { UrlMutator } from '../UrlMutator'
 import { generateHumanReadableName } from './generateHumanReadableName'
-import { Bookmark, BookmarkAlreadyExistsError } from '../vcs/Bookmarks'
-import { StorageError } from '../vcs/VCSStorage'
+import { Bookmark, BookmarkAlreadyExistsError } from 'versie'
+import { StorageError } from 'versie'
 import { CommitMetadata } from './CommitMetadata'
 import { CreagenEditor } from './CreagenEditor'
 import { creagenEditorVersionMismatch } from './creagenEditorVersionMatches'
@@ -35,7 +35,7 @@ async function updateFromSharableLinkData(
 
   // create a commit
   const metadata = new CommitMetadata(editorVersion, libraries, author)
-  const commitResult = await editor.vcs.commit(code, metadata)
+  const commitResult = await editor.createCommit(code, metadata)
   if (!commitResult.ok) {
     logger.error(commitResult.error)
     return null
@@ -44,11 +44,11 @@ async function updateFromSharableLinkData(
   if (commit === null) return null
 
   let bookmarkName = sharableDataLink.bookmarkName
-  let bookmark: Awaited<ReturnType<typeof editor.vcs.addBookmark>>
+  let bookmark: Awaited<ReturnType<typeof editor.addBookmark>>
   // try and add bookmark, with different names if failed
   // We only retry on collisions; all other errors should stop processing.
   while (
-    !(bookmark = await editor.vcs.addBookmark(
+    !(bookmark = await editor.addBookmark(
       new Bookmark(bookmarkName, commit.hash, new Date()),
     )).ok
   ) {
@@ -85,7 +85,7 @@ async function updateFromCommit(editor: CreagenEditor, mutator: UrlMutator) {
   }
 
   // if commit is part of bookmark just use that bookmark name
-  const bookmarks = editor.vcs.bookmarkLookup(commit)
+  const bookmarks = editor.bookmarks.bookmarkLookup(commit)
   if (bookmarks !== null && bookmarks.length > 0) {
     const mostRecent = bookmarks.sort(
       (a, b) => b.createdOn.getTime() - a.createdOn.getTime(),

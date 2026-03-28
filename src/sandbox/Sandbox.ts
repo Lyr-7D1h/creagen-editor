@@ -1,7 +1,7 @@
 import { editorEvents } from '../events/events'
 import { LibraryImport } from '../importer'
 import { createContextLogger } from '../logs/logger'
-import { CommitHash } from '../vcs/Commit'
+import { CommitHash } from 'versie'
 import {
   SandboxMessageHandler,
   SandboxMessageHandlerMode,

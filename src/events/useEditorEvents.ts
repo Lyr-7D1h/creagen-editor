@@ -4,7 +4,7 @@ import { EditorEvent, EditorEventData } from './EditorEvent'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import { CommitMetadata } from '../creagen-editor/CommitMetadata'
 import { ParamKey, ParamValue } from '../settings/SettingsConfig'
-import { HistoryItem } from '../vcs/VCS'
+import { HistoryItem } from 'versie'
 import { logger } from '../logs/logger'
 import { useLocalStorage } from '../storage/useLocalStorage'
 import { ActiveBookmark } from '../creagen-editor/CreagenEditor'
@@ -77,15 +77,13 @@ export const useSettings = <P extends ParamKey>(key: P): ParamValue<P> => {
 
 export const useHead = () => {
   const editor = useCreagenEditor()
-  const vcs = editor.vcs
-
-  const [value, setValue] = useState(() => vcs.head?.hash)
+  const [value, setValue] = useState(() => editor.head?.hash)
 
   useEffect(() => {
     return editorEvents.on('vcs:checkout', ({ new: n }) => {
       setValue(n)
     })
-  }, [vcs.head])
+  }, [editor.head])
 
   return value
 }
@@ -113,22 +111,21 @@ export const useActiveBookmark = () => {
 
 export const useBookmarks = () => {
   const editor = useCreagenEditor()
-  const vcs = editor.vcs
-  const [, forceUpdate] = useState({})
+  const [value, setValue] = useState(editor.getAllBookmarks())
 
   useEffect(() => {
     const listeners = [
       editorEvents.on('vcs:checkout', () => {
-        forceUpdate({})
+        setValue(editor.getAllBookmarks())
       }),
       editorEvents.on('vcs:bookmark-update', () => {
-        forceUpdate({})
+        setValue(editor.getAllBookmarks())
       }),
     ]
     return () => listeners.forEach((l) => l())
-  }, [])
+  }, [editor])
 
-  return vcs.bookmarks
+  return value
 }
 
 export const useHistory = (size: number) => {
@@ -136,7 +133,7 @@ export const useHistory = (size: number) => {
   const [history, setHistory] = useState<HistoryItem<CommitMetadata>[]>([])
   useEffect(() => {
     const updateHistory = () => {
-      creagenEditor.vcs
+      creagenEditor
         .history(size)
         .then((historyResult) => {
           if (!historyResult.ok) {
@@ -156,7 +153,7 @@ export const useHistory = (size: number) => {
       editorEvents.on('vcs:bookmark-update', updateHistory),
     ]
     return () => destroy.forEach((cb) => cb())
-  }, [creagenEditor.vcs, setHistory, size])
+  }, [creagenEditor, setHistory, size])
 
   return history
 }

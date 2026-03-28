@@ -5,22 +5,21 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import { useBookmarks } from '../../events/useEditorEvents'
 import { dateString } from '../../util'
 import { ColumnDef, Table } from '../../shared/Table'
-import { Bookmark } from '../../vcs/Bookmarks'
+import { Bookmark } from 'versie'
 import { logger } from '../../logs/logger'
 
 export const BookmarksTab = () => {
   const creagenEditor = useCreagenEditor()
-  const vcs = creagenEditor.vcs
-  const bms = useBookmarks().getBookmarks()
+  const bookmarks = useBookmarks()
 
-  bms.sort((a, b) => b.createdOn.getTime() - a.createdOn.getTime())
+  bookmarks.sort((a, b) => b.createdOn.getTime() - a.createdOn.getTime())
 
   const handleDeleteBookmark = (
     event: React.MouseEvent,
     bookmarkName: string,
   ) => {
     event.stopPropagation()
-    vcs.removeBookmark(bookmarkName).catch(logger.error)
+    creagenEditor.removeBookmark(bookmarkName).catch(logger.error)
   }
 
   const columns: ColumnDef<Bookmark>[] = [
@@ -88,14 +87,14 @@ export const BookmarksTab = () => {
 
   return (
     <>
-      {bms.length === 0 ? (
+      {bookmarks.length === 0 ? (
         <Typography variant="body2" color="text.secondary" sx={{ p: 1 }}>
           No bookmarks found
         </Typography>
       ) : (
         <Table
           columns={columns}
-          data={bms}
+          data={bookmarks}
           getRowKey={(bookmark) => bookmark.commit.toHex() + bookmark.name}
           onRowClick={(bookmark) =>
             void creagenEditor.checkout(bookmark).then((result) => {

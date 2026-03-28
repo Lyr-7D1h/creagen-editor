@@ -11,8 +11,8 @@ import { useState, useRef } from 'react'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import { useActiveBookmark, useSettings } from '../events/useEditorEvents'
 import { logger } from '../logs/logger'
-import { bookmarkNameSchema, Bookmark } from '../vcs/Bookmarks'
-import { HistoryItem } from '../vcs/VCS'
+import { bookmarkNameSchema, Bookmark } from 'versie'
+import { HistoryItem } from 'versie'
 import { TextInput } from './TextInput'
 import { HtmlTooltip } from './HtmlTooltip'
 import React from 'react'
@@ -143,7 +143,6 @@ export function HistoryItemChip({
   const fullscreen = useSettings('editor.fullscreen')
   const creagenEditor = useCreagenEditor()
   const activeBookmark = useActiveBookmark()
-  const vcs = creagenEditor.vcs
   const chipRef = useRef<HTMLDivElement>(null)
 
   const [collapsed, setCollapsed] = useState(false)
@@ -195,11 +194,11 @@ export function HistoryItemChip({
                 logger.error(data.error)
                 return
               }
-              if (vcs.bookmarks.getBookmark(name) !== null) {
+              if (creagenEditor.bookmarks.getBookmark(name) !== null) {
                 logger.error('Bookmark already exists')
                 return
               }
-              vcs
+              creagenEditor
                 .addBookmark(new Bookmark(name, commit.hash, new Date()))
                 .then((result) => {
                   if (!result.ok) {
@@ -241,7 +240,7 @@ export function HistoryItemChip({
   }
 
   const handleBookmarkSelect = (bookmarkName: string) => {
-    const bookmark = vcs.bookmarks.getBookmark(bookmarkName)
+    const bookmark = creagenEditor.bookmarks.getBookmark(bookmarkName)
     if (bookmark) {
       creagenEditor
         .checkout(bookmark)

@@ -4,7 +4,7 @@ import {
   compressToEncodedURIComponent,
   decompressFromEncodedURIComponent,
 } from 'lz-string'
-import { commitHashSchema } from './vcs/Commit'
+import { commitHashSchema } from 'versie'
 import { z } from 'zod'
 
 export interface SharableLinkData {

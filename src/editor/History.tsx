@@ -7,7 +7,7 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { useSettings } from '../events/useEditorEvents'
 import { HistoryItemChip } from './HistoryItemChip'
-import { HistoryItem } from '../vcs/VCS'
+import { HistoryItem } from 'versie'
 import { CommitMetadata } from '../creagen-editor/CommitMetadata'
 
 function HistoryLink({
