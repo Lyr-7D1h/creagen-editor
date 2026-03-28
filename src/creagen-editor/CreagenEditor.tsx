@@ -509,7 +509,7 @@ export class CreagenEditor {
       new SemVer(CREAGEN_EDITOR_VERSION),
       libraries,
     )
-    // store code and change url
+    // store code
     const commitResult = await this.vcs.commit(code, metadata)
     if (!commitResult.ok) {
       return commitResult
@@ -519,6 +519,11 @@ export class CreagenEditor {
     if (commitResult.value == null) {
       return null
     }
+
+    // set url
+    const mutator = new UrlMutator()
+    if (this.vcs.head) mutator.setCommit(this.vcs.head.hash.toHex())
+    mutator.pushState(null, this.activeBookmark.name)
 
     const commitHash = commitResult.value.hash
     if (updateActiveBookmark) {
