@@ -267,10 +267,12 @@ export class CreagenEditor {
       // checkout base
       await this.checkout(base)
     } else {
+      this.vcs.setHead(null)
       // clear everything
       this.editor.setValue('')
       await this.loadLibraries([])
-      editorEvents.emit('vcs:checkout', { old, new: base })
+      new UrlMutator().setCommit().pushState()
+      editorEvents.emit('vcs:checkout', { old })
     }
   }
 

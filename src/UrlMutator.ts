@@ -175,8 +175,8 @@ export class UrlMutator {
     return this
   }
 
-  setCommit(commit: string) {
-    this.url.pathname = `/${commit}`
+  setCommit(commit?: string) {
+    this.url.pathname = `/${commit ?? ''}`
     return this
   }
 
