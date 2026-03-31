@@ -61,11 +61,11 @@ const creagenFullscreenTheme: monaco.editor.IStandaloneThemeData = {
 }
 
 export const typescriptCompilerOptions = {
-  target: monaco.languages.typescript.ScriptTarget.ESNext,
+  target: monaco.typescript.ScriptTarget.ESNext,
   allowNonTsExtensions: true,
-  moduleResolution: monaco.languages.typescript.ModuleResolutionKind.Classic,
+  moduleResolution: monaco.typescript.ModuleResolutionKind.Classic,
   esModuleInterop: true,
-  module: monaco.languages.typescript.ModuleKind.ESNext,
+  module: monaco.typescript.ModuleKind.ESNext,
   noEmit: true,
 }
 
@@ -74,13 +74,13 @@ export interface EditorSettings {
 }
 
 function handleBeforeMount(monaco: Monaco) {
-  monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+  monaco.typescript.typescriptDefaults.setDiagnosticsOptions({
     noSemanticValidation: false,
     noSyntaxValidation: false,
     // 1378,1375: allow await on top level
     diagnosticCodesToIgnore: [1375, 1378],
   })
-  monaco.languages.typescript.typescriptDefaults.setCompilerOptions(
+  monaco.typescript.typescriptDefaults.setCompilerOptions(
     typescriptCompilerOptions,
   )
   monaco.editor.defineTheme('creagen', creagenLightTheme)
@@ -251,7 +251,7 @@ export class Editor {
     // Clear the typings map
     this.typings.clear()
     // Also clear all extra libs as a fallback
-    monaco.languages.typescript.typescriptDefaults.setExtraLibs([])
+    monaco.typescript.typescriptDefaults.setExtraLibs([])
   }
 
   typingsExist(uri: string) {
@@ -269,8 +269,10 @@ export class Editor {
         imports: regexTokeniser(typings),
       })
     }
-    const disposable =
-      monaco.languages.typescript.typescriptDefaults.addExtraLib(typings, uri)
+    const disposable = monaco.typescript.typescriptDefaults.addExtraLib(
+      typings,
+      uri,
+    )
     this.typings.set(uri, disposable)
   }
 

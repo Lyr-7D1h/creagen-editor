@@ -85,7 +85,7 @@ async function updateFromCommit(editor: CreagenEditor, mutator: UrlMutator) {
   }
 
   // if commit is part of bookmark just use that bookmark name
-  const bookmarks = editor.bookmarks.bookmarkLookup(commit)
+  const bookmarks = editor.bookmarkLookup(commit)
   if (bookmarks !== null && bookmarks.length > 0) {
     const mostRecent = bookmarks.sort(
       (a, b) => b.createdOn.getTime() - a.createdOn.getTime(),

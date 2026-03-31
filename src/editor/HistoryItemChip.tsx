@@ -194,7 +194,7 @@ export function HistoryItemChip({
                 logger.error(data.error)
                 return
               }
-              if (creagenEditor.bookmarks.getBookmark(name) !== null) {
+              if (creagenEditor.getBookmark(name) !== null) {
                 logger.error('Bookmark already exists')
                 return
               }
@@ -240,7 +240,7 @@ export function HistoryItemChip({
   }
 
   const handleBookmarkSelect = (bookmarkName: string) => {
-    const bookmark = creagenEditor.bookmarks.getBookmark(bookmarkName)
+    const bookmark = creagenEditor.getBookmark(bookmarkName)
     if (bookmark) {
       creagenEditor
         .checkout(bookmark)

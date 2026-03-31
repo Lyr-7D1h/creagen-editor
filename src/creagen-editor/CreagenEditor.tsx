@@ -599,8 +599,16 @@ export class CreagenEditor {
     return this.vcs.history(n, start)
   }
 
+  getBookmark(name: string) {
+    return this.vcs.getBookmark(name)
+  }
+
   addBookmark(bookmark: Bookmark) {
     return this.vcs.addBookmark(bookmark)
+  }
+
+  bookmarkLookup(commit: CommitHash) {
+    return this.vcs.bookmarkLookup(commit)
   }
 
   async removeBookmark(name: string) {

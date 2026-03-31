@@ -116,7 +116,7 @@ export function CommitsTab() {
       filteredCommits.forEach((commit) => {
         const commitKey = commit.hash.toHex()
         const children = childrenMap.get(commitKey) ?? []
-        const bookmarks = creagenEditor.bookmarks.bookmarkLookup(commit.hash)
+        const bookmarks = creagenEditor.bookmarkLookup(commit.hash)
 
         // Keep if it has bookmarks
         if (bookmarks && bookmarks.length > 0) {
@@ -161,7 +161,7 @@ export function CommitsTab() {
 
     // Add all display commits
     displayCommits.forEach((commit) => {
-      const bookmarks = creagenEditor.bookmarks.bookmarkLookup(commit.hash)
+      const bookmarks = creagenEditor.bookmarkLookup(commit.hash)
       commitMap.set(commit.hash.toHex(), {
         id: commit.hash.toHex(),
         commit,
@@ -510,7 +510,7 @@ export function CommitsTab() {
     focusedCommitHash,
     minifyGraph,
     hook,
-    creagenEditor.bookmarks,
+    creagenEditor.getAllBookmarks(),
     creagenEditor.head?.hash,
   ])
 
@@ -528,7 +528,7 @@ export function CommitsTab() {
   }
 
   const handleCheckoutBookmark = async (bookmark: string) => {
-    const bm = creagenEditor.bookmarks.getBookmark(bookmark)
+    const bm = creagenEditor.getBookmark(bookmark)
     if (bm) {
       const result = await creagenEditor.checkout(bm)
       if (!result.ok) {
@@ -559,7 +559,7 @@ export function CommitsTab() {
     commit: Commit<CommitMetadata>,
     bookmarkName: string,
   ) => {
-    const bookmark = creagenEditor.bookmarks.getBookmark(bookmarkName)
+    const bookmark = creagenEditor.getBookmark(bookmarkName)
     if (bookmark) {
       const result = await creagenEditor.checkout(bookmark)
       if (!result.ok) {
@@ -635,13 +635,13 @@ export function CommitsTab() {
       </Stack>
 
       {/* Bookmarks section */}
-      {creagenEditor.bookmarks.getBookmarks().length > 0 && (
+      {creagenEditor.getAllBookmarks().length > 0 && (
         <Box sx={{ mb: 2 }}>
           <Typography variant="subtitle2" sx={{ mb: 1 }}>
             Bookmarks
           </Typography>
           <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-            {creagenEditor.bookmarks.getBookmarks().map((bookmark) => (
+            {creagenEditor.getAllBookmarks().map((bookmark) => (
               <Chip
                 key={bookmark.name}
                 label={bookmark.name}
@@ -701,7 +701,7 @@ export function CommitsTab() {
             <Typography variant="subtitle2">Selected Commit</Typography>
             <Box sx={{ display: 'flex', gap: 1 }}>
               {(() => {
-                const commitBookmarks = creagenEditor.bookmarks.bookmarkLookup(
+                const commitBookmarks = creagenEditor.bookmarkLookup(
                   selectedCommit.hash,
                 )
                 if (commitBookmarks && commitBookmarks.length > 0) {
@@ -812,7 +812,7 @@ export function CommitsTab() {
             </Typography>
           )}
           {(() => {
-            const commitBookmarks = creagenEditor.bookmarks.bookmarkLookup(
+            const commitBookmarks = creagenEditor.bookmarkLookup(
               selectedCommit.hash,
             )
             if (commitBookmarks && commitBookmarks.length > 0) {
