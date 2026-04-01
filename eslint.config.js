@@ -50,7 +50,7 @@ module.exports = [
     },
     settings: {
       react: {
-        version: 'detect',
+        version: '19',
       },
     },
     rules: {
@@ -62,10 +62,6 @@ module.exports = [
       ...reactHooksPlugin.configs.recommended.rules,
 
       // React
-      'react-refresh/only-export-components': [
-        'warn',
-        { allowConstantExport: true },
-      ],
       'react/prop-types': 'off', // TypeScript handles this
       'react/jsx-key': 'error',
       'react/jsx-no-duplicate-props': 'error',

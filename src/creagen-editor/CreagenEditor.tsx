@@ -273,7 +273,7 @@ export class CreagenEditor {
         // clear everything
         this.editor.setValue('')
         await this.loadLibraries([])
-        new UrlMutator().setCommit().pushState()
+        new UrlMutator().setCommit().pushState(null, this.activeBookmark.name)
         editorEvents.emit('vcs:checkout', { old })
       }
       return Result.ok()
