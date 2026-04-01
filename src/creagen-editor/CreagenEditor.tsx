@@ -261,19 +261,23 @@ export class CreagenEditor {
 
   /** Create new sketch on an optional base commit */
   async new(base?: CommitHash) {
-    const old = this.vcs.head?.hash
-    this.activeBookmark = generateUncommittedBookmark()
-    if (base) {
-      // checkout base
-      await this.checkout(base)
-    } else {
-      this.vcs.setHead(null)
-      // clear everything
-      this.editor.setValue('')
-      await this.loadLibraries([])
-      new UrlMutator().setCommit().pushState()
-      editorEvents.emit('vcs:checkout', { old })
-    }
+    return Result.fromAsyncCatching(async () => {
+      const old = this.vcs.head?.hash
+      this.activeBookmark = generateUncommittedBookmark()
+      if (base) {
+        // checkout base
+        await this.checkout(base)
+      } else {
+        const res = await this.vcs.setHead(null)
+        if (!res.ok) return res
+        // clear everything
+        this.editor.setValue('')
+        await this.loadLibraries([])
+        new UrlMutator().setCommit().pushState()
+        editorEvents.emit('vcs:checkout', { old })
+      }
+      return Result.ok()
+    })
   }
 
   /**

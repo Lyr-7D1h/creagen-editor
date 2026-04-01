@@ -77,7 +77,8 @@ async function updateFromSharableLinkData(
 async function updateFromCommit(editor: CreagenEditor, mutator: UrlMutator) {
   const commit = await mutator.getCommit()
   if (commit === null) {
-    editor.new()
+    const res = await editor.new()
+    if (!res.ok) logger.error(res.error)
     return
   }
   if (commit instanceof Error) {

@@ -521,7 +521,11 @@ export function CommitsTab() {
   )
 
   const handleCheckout = async (commit: Commit<CommitMetadata>) => {
-    await creagenEditor.new(commit.hash)
+    const res = await creagenEditor.new(commit.hash)
+    if (!res.ok) {
+      logger.error(res.error)
+      return
+    }
     logger.info('Successfully checked out commit', {
       hash: commit.hash.toHex(),
     })

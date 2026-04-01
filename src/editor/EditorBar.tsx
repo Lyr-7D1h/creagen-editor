@@ -120,7 +120,7 @@ export function EditorBar({
               color: 'inherit',
             }}
             onClick={() => {
-              creagenEditor.new().catch(logger.error)
+              creagenEditor.new().then((r) => r.onFailure(logger.error))
             }}
             size="small"
           >
