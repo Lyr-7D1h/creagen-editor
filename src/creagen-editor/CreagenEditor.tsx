@@ -2,7 +2,7 @@ import { Editor } from '../editor/Editor'
 import { log, logger, Severity } from '../logs/logger'
 import { Sandbox } from '../sandbox/Sandbox'
 import { Settings } from '../settings/Settings'
-import { CommitHash } from 'versie'
+import { CommitHash, DeltizingError, IndexdbImport } from 'versie'
 import { LIBRARY_CONFIGS } from './libraryConfigs'
 import { parseCode } from './parseCode'
 import {
@@ -69,15 +69,17 @@ export class CreagenEditor {
   libraryImports: Map<string, LibraryImport> = new Map()
 
   static async create() {
-    const storage = new ClientStorage()
-    const settings = await Settings.create(storage)
-    const editor = await Editor.create(settings)
     const sandbox = Sandbox.create()
     const indexdbStorageResult = await IndexDBStorage.create<CommitMetadata>()
     if (!indexdbStorageResult.ok) throw indexdbStorageResult.error
     if (!indexdbStorageResult.value.persisted)
       logger.warn('Failed to persist storage')
-    const indexdbStorage = indexdbStorageResult.value.creagen
+    const indexdbStorage = indexdbStorageResult.value.indexdb
+
+    const storage = new ClientStorage(indexdbStorage)
+    const settings = await Settings.create(storage)
+    const editor = await Editor.create(settings)
+
     const vcsResult = await Versie.create(indexdbStorage, (raw) => {
       return CommitMetadata.parse(raw)
     })
@@ -325,6 +327,7 @@ export class CreagenEditor {
       | BookmarkAlreadyExistsError
       | ParseError
       | BlobNotFoundError
+      | DeltizingError
     >
   > {
     const old = this.vcs.head?.hash
@@ -583,12 +586,12 @@ export class CreagenEditor {
   }
 
   import(data: unknown) {
-    const validated = vcsImportSchema.parse(data)
-    return this.vcs.import(validated)
+    const validated = indexDbSchema.parse(data)
+    return this.storage.import(validated as IndexdbImport)
   }
 
   export() {
-    return this.vcs.export()
+    return this.storage.export()
   }
 
   get head() {
@@ -643,7 +646,7 @@ export class CreagenEditor {
   }
 }
 
-const vcsImportSchema = z.object({
+const indexDbSchema = z.object({
   version: z.number(),
   bookmarks: z.unknown().array(),
   commits: z.unknown().array(),

@@ -20,10 +20,7 @@ export function ImportTab() {
     setMessage(null)
     creagenEditor
       .export()
-      .then((res) => {
-        if (!res.ok) throw res.error
-        const data = res.value
-
+      .then((data) => {
         // Create a JSON blob with the exported data
         const blob = new Blob([JSON.stringify(data, null, 2)], {
           type: 'application/json',
@@ -41,7 +38,7 @@ export function ImportTab() {
 
         setMessage({
           type: 'success',
-          text: `Exported ${data.commits.length} commits, ${data.blobs.length + data.delta.length} blobs and deltas and ${data.bookmarks.length} bookmarks`,
+          text: `Exported ${data.commits.length} commits, ${data.blobs.length} blobs and deltas and ${data.bookmarks.length} bookmarks`,
         })
       })
       .catch((error) => {
@@ -72,8 +69,7 @@ export function ImportTab() {
       .then(async (text) => {
         const data = JSON.parse(text) as unknown
 
-        const res = await creagenEditor.import(data)
-        if (!res.ok) throw res.error
+        await creagenEditor.import(data)
       })
       .then(() => {
         setMessage({
