@@ -33,7 +33,7 @@ async function getStoredSettings(
   )
 
   // Load stored settings from localStorage
-  const storedSettings = await storage.get('settings')
+  const storedSettings = await storage.getSettings()
 
   if (typeof storedSettings !== 'object' || storedSettings === null)
     return config
@@ -149,7 +149,7 @@ export class Settings {
     value: unknown,
     oldValue?: unknown,
   ): void {
-    this.storage.set('settings', this.values)
+    this.storage.setSettings(this.values).catch(logger.error)
     // Emit settings changed event
     editorEvents.emit('settings:changed', { key, value, oldValue })
   }

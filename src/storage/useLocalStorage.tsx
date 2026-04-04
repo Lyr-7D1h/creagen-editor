@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { logger } from '../logs/logger'
 import { localStorage } from './LocalStorage'
-import { LocalStorageOnlyKey, StorageValue } from './StorageKey'
+import { LocalStorageOnlyKey, LocalStorageValue } from './StorageKey'
 import { editorEvents } from '../events/events'
 
 // Extend WindowEventMap to include 'local-storage' event
@@ -24,8 +24,8 @@ function isCustomEvent(
 
 export function useLocalStorage<K extends LocalStorageOnlyKey>(
   key: K,
-  initialValue: StorageValue<K>,
-): [StorageValue<K>, (value: StorageValue<K>) => void] {
+  initialValue: LocalStorageValue<K>,
+): [LocalStorageValue<K>, (value: LocalStorageValue<K>) => void] {
   const [storedValue, setStoredValue] = useState(() => {
     try {
       const item = localStorage.get(key)
@@ -37,7 +37,7 @@ export function useLocalStorage<K extends LocalStorageOnlyKey>(
     }
   })
 
-  const setValue = (value: StorageValue<K>) => {
+  const setValue = (value: LocalStorageValue<K>) => {
     try {
       setStoredValue(value)
       localStorage.set(key, value)
@@ -51,11 +51,11 @@ export function useLocalStorage<K extends LocalStorageOnlyKey>(
       if (event instanceof StorageEvent && event.key === key) {
         setStoredValue(
           event.newValue != null
-            ? (JSON.parse(event.newValue) as StorageValue<K>)
+            ? (JSON.parse(event.newValue) as LocalStorageValue<K>)
             : initialValue,
         )
       } else if (isCustomEvent(event) && event.detail.key === key) {
-        setStoredValue(event.detail.value as StorageValue<K>)
+        setStoredValue(event.detail.value as LocalStorageValue<K>)
       }
     },
     [key, initialValue],
@@ -64,7 +64,7 @@ export function useLocalStorage<K extends LocalStorageOnlyKey>(
   useEffect(() => {
     return editorEvents.on('local-storage', (e) => {
       if (e.key === key) {
-        setStoredValue(e.value as StorageValue<K>)
+        setStoredValue(e.value as LocalStorageValue<K>)
       }
     })
   }, [handleStorageChange, key])

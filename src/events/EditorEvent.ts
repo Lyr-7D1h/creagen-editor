@@ -1,5 +1,5 @@
 import { CommitHash } from 'versie'
-import { LocalStorageKey, StorageValue } from '../storage/StorageKey'
+import { LocalStorageKey, LocalStorageValue } from '../storage/StorageKey'
 import { ParamKey } from '../settings/SettingsConfig'
 import { AnalyzeContainerResult } from '../sandbox/SandboxMessageHandler'
 
@@ -48,7 +48,7 @@ type EditorEvents = {
 
   'local-storage': {
     key: LocalStorageKey
-    value: StorageValue<LocalStorageKey>
+    value: LocalStorageValue<LocalStorageKey>
   }
 
   welcome: boolean

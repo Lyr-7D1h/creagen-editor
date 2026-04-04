@@ -4,7 +4,6 @@ import { Box, Button, ButtonGroup, Typography } from '@mui/material'
 import KeyboardIcon from '@mui/icons-material/Keyboard'
 import { AccountTree, Settings } from '@mui/icons-material'
 import { BookmarksTab } from './tabs/BookmarksTab'
-import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import { SettingsTab } from './tabs/SettingsTab'
 import { KeybindingsTab } from './tabs/KeybindingsTab'
 import { useLocalStorage } from '../storage/useLocalStorage'
@@ -16,6 +15,7 @@ import { CommitsTab } from './tabs/CommitsTab'
 import BookmarkIcon from '@mui/icons-material/Bookmark'
 import CommitIcon from '@mui/icons-material/Commit'
 import { ImportTab } from './tabs/ImportTab'
+import { localStorage } from '../storage/LocalStorage'
 
 export type MenuProps = {
   width?: string
@@ -80,7 +80,6 @@ const childTabs = Object.entries(tabs).filter(
 )
 
 export function Menu<T>({ ref, width }: MenuProps & RefAttributes<T>) {
-  const creagenEditor = useCreagenEditor()
   const [selectedTabKey, setSelectedTabKey] = useLocalStorage(
     'menu-view-tab',
     defaultKey,
@@ -94,7 +93,7 @@ export function Menu<T>({ ref, width }: MenuProps & RefAttributes<T>) {
   }, [selectedTabKey, setSelectedTabKey])
 
   const setTab = (tab: string) => {
-    creagenEditor.storage.set('menu-view-tab', selectedTabKey)
+    localStorage.set('menu-view-tab', selectedTabKey)
     setSelectedTabKey(tab)
   }
 

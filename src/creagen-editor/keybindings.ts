@@ -212,7 +212,7 @@ export class Keybindings {
   /** Save changes (custom) made to keybindings */
   private async save() {
     this.setupKeybindings()
-    await this.editor.storage.set('custom-keybindings', this.customKeybindings)
+    await this.editor.storage.setCustomKeybindings(this.customKeybindings)
   }
 }
 

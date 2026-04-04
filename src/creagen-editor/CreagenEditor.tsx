@@ -33,6 +33,7 @@ import { SemVer } from 'semver'
 import { generateHumanReadableName } from './generateHumanReadableName'
 import { AsyncResult, Result } from 'typescript-result'
 import { ParseError, StorageError } from 'versie'
+import z from 'zod'
 
 function generateUncommittedBookmark() {
   return {
@@ -82,7 +83,7 @@ export class CreagenEditor {
     })
     if (!vcsResult.ok) throw vcsResult.error
     const vcs = vcsResult.value
-    const customKeybindings = (await storage.get('custom-keybindings')) ?? []
+    const customKeybindings = (await storage.getCustomKeybindings()) ?? []
 
     return new CreagenEditor(
       sandbox,
@@ -582,7 +583,8 @@ export class CreagenEditor {
   }
 
   import(data: unknown) {
-    return this.vcs.import(data)
+    const validated = vcsImportSchema.parse(data)
+    return this.vcs.import(validated)
   }
 
   export() {
@@ -640,3 +642,11 @@ export class CreagenEditor {
     return this.vcs.commit(code, metadata)
   }
 }
+
+const vcsImportSchema = z.object({
+  version: z.number(),
+  bookmarks: z.unknown().array(),
+  commits: z.unknown().array(),
+  blobs: z.unknown().array(),
+  delta: z.unknown().array(),
+})

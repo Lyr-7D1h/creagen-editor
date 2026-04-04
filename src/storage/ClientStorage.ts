@@ -1,17 +1,21 @@
-import { StorageKey, StorageValue } from './StorageKey'
 import { localStorage } from './LocalStorage'
-
-export const COMMITS_STORE = 'commits'
-export const BLOB_STORE = 'blobs'
-export const DELTA_STORE = 'delta'
+import { CustomKeybinding } from '../creagen-editor/keybindings'
 
 /** Entry point for fetching all data */
 export class ClientStorage {
-  set<K extends StorageKey>(key: K, item: StorageValue<K>) {
-    return Promise.resolve(localStorage.set(key, item))
-  }
+  constructor() {}
 
-  get<K extends StorageKey>(key: K): Promise<StorageValue<K> | null> {
-    return Promise.resolve(localStorage.get(key))
+  // TODO: call api
+  setSettings(value: unknown) {
+    return Promise.resolve(localStorage.set('settings', value))
+  }
+  getSettings() {
+    return Promise.resolve(localStorage.get('settings'))
+  }
+  setCustomKeybindings(keybindings: CustomKeybinding[]) {
+    return Promise.resolve(localStorage.set('custom-keybindings', keybindings))
+  }
+  getCustomKeybindings() {
+    return Promise.resolve(localStorage.get('custom-keybindings'))
   }
 }

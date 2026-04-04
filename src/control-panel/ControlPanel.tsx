@@ -57,7 +57,7 @@ export function ControlPanel({
   // Force update when params change
   useForceUpdateOnEditorEvent('render')
 
-  const [activeTab, setActiveTab] = useLocalStorage('contorl-panel-tab', 0)
+  const [activeTab, setActiveTab] = useLocalStorage('control-panel-tab', 0)
 
   // Get parameter count
   const paramCount = creagenEditor.params.length
