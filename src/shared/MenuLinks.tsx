@@ -6,6 +6,7 @@ import { HtmlTooltip } from '../editor/HtmlTooltip'
 import { DiscordIcon } from '../editor/DiscordIcon'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
+import { LoginButton } from '../user/LoginButton'
 
 export function MenuLinks() {
   const creagenEditor = useCreagenEditor()
@@ -56,6 +57,7 @@ export function MenuLinks() {
           <BugReportIcon style={{ fontSize: '1.3rem' }} />
         </IconButton>
       </HtmlTooltip>
+      <LoginButton />
     </div>
   )
 }

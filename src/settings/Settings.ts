@@ -7,7 +7,7 @@ import {
   ParamValue,
 } from './SettingsConfig'
 import { editorEvents } from '../events/events'
-import { ClientStorage } from '../storage/ClientStorage'
+import { LocalClientStorage } from '../storage/LocalClientStorage'
 import { createContextLogger } from '../logs/logger'
 
 export const logger = createContextLogger('settings')
@@ -17,7 +17,7 @@ export function parentKey(key: string) {
 }
 
 async function getStoredSettings(
-  storage: ClientStorage,
+  storage: LocalClientStorage,
 ): Promise<Record<ParamKey, Entry>> {
   // Initialize with deep cloned default settings
   const config = (
@@ -67,14 +67,17 @@ export interface SettingsContextType {
 export class Settings {
   config: DefaultSettingsConfig
 
-  private readonly storage: ClientStorage
+  private readonly storage: LocalClientStorage
 
-  private constructor(storage: ClientStorage, config: DefaultSettingsConfig) {
+  private constructor(
+    storage: LocalClientStorage,
+    config: DefaultSettingsConfig,
+  ) {
     this.storage = storage
     this.config = config
   }
 
-  static async create(storage: ClientStorage) {
+  static async create(storage: LocalClientStorage) {
     const config = await getStoredSettings(storage)
 
     return new Settings(storage, config as DefaultSettingsConfig)

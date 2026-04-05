@@ -13,6 +13,7 @@ export type LocalStorageOnlyKey =
   | 'control-panel-size'
 /** LocalStorage + Remote */
 export type LocalStorageKey =
+  | 'creagen-auth-token'
   | 'editor-scroll-position'
   | 'custom-keybindings'
   | 'settings'
@@ -22,6 +23,7 @@ export type LocalStorageKey =
 /** Any key used for storage */
 
 type LocalStorageKeyValueMap = {
+  'creagen-auth-token': string
   welcome: boolean
   'menu-view': boolean
   'menu-view-tab': string

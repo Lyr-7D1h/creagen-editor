@@ -24,6 +24,7 @@ export function WelcomeScreen() {
       onClose={handleClose}
       fullWidth
       maxWidth="sm"
+      slotProps={{ backdrop: { sx: { backdropFilter: 'blur(4px)' } } }}
       sx={{
         '& .MuiDialog-container': {
           alignItems: 'flex-start',

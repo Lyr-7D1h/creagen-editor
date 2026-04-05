@@ -7,20 +7,19 @@ import {
 import React, { useEffect, useState } from 'react'
 import { roundToDec } from '../util'
 import { logger } from '../logs/logger'
+import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 
 function LinearProgressWithLabelSetting({
   value,
   minLabel,
   maxLabel,
   current,
-  max,
   ...props
 }: LinearProgressProps & {
   value: number
   minLabel: string
   maxLabel: string
   current: number
-  max: number
 }) {
   const [isHovered, setIsHovered] = useState(false)
   const toGB = (bytes: number) => `${roundToDec(bytes / 1000000000, 3)}GB`
@@ -87,10 +86,11 @@ function LinearProgressWithLabelSetting({
 }
 
 export function StorageBar() {
+  const creagenEditor = useCreagenEditor()
   const [storage, setStorage] = useState<Storage | null>(null)
   useEffect(() => {
-    navigator.storage
-      .estimate()
+    creagenEditor.storage
+      .estimateUsage()
       .then((storage) =>
         setStorage({
           current: storage.usage ?? 0,
@@ -98,7 +98,7 @@ export function StorageBar() {
         }),
       )
       .catch(logger.error)
-  }, [])
+  }, [creagenEditor])
 
   return (
     <LinearProgressWithLabelSetting
@@ -107,7 +107,6 @@ export function StorageBar() {
       variant="determinate"
       value={roundToDec(storage ? (storage.current / storage.max) * 100 : 0, 3)}
       current={storage?.current ?? 0}
-      max={storage?.max ?? 1}
     />
   )
 }

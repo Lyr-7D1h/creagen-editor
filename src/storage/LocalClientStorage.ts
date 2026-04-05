@@ -12,10 +12,9 @@ import type {
 import { CommitMetadata } from '../creagen-editor/CommitMetadata'
 
 /** Entry point for fetching all data */
-export class ClientStorage implements Storage<CommitMetadata> {
+export class LocalClientStorage implements Storage<CommitMetadata> {
   constructor(readonly indexdb: IndexDBStorage<CommitMetadata>) {}
 
-  // TODO: call api
   setSettings(value: unknown) {
     return Promise.resolve(localStorage.set('settings', value))
   }
@@ -62,5 +61,9 @@ export class ClientStorage implements Storage<CommitMetadata> {
   }
   export() {
     return this.indexdb.export()
+  }
+
+  estimateUsage() {
+    return navigator.storage.estimate()
   }
 }

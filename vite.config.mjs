@@ -138,6 +138,10 @@ export default defineConfig(async ({ mode }) => {
     CREAGEN_LOG_LEVEL: process.env.CREAGEN_LOG_LEVEL
       ? JSON.stringify(process.env.CREAGEN_LOG_LEVEL)
       : '"0"',
+    CREAGEN_REMOTE_URL: JSON.stringify(process.env.CREAGEN_REMOTE_URL ?? null),
+    CREAGEN_TURNSTILE_SITE_KEY: JSON.stringify(
+      process.env.CREAGEN_TURNSTILE_SITE_KEY ?? '1x00000000000000000000AA', // default to test key
+    ),
   }
   return {
     define: defines,

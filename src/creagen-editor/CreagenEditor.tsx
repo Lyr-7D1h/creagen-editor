@@ -13,7 +13,7 @@ import {
 import { CustomKeybinding, Keybindings } from './keybindings'
 import { Importer, LibraryImport } from '../importer'
 import { BlobNotFoundError, Commit, CommitNotFoundError, Versie } from 'versie'
-import { ClientStorage } from '../storage/ClientStorage'
+import { LocalClientStorage } from '../storage/LocalClientStorage'
 import { editorEvents } from '../events/events'
 import {
   Bookmark,
@@ -34,6 +34,7 @@ import { generateHumanReadableName } from './generateHumanReadableName'
 import { AsyncResult, Result } from 'typescript-result'
 import { ParseError, StorageError } from 'versie'
 import z from 'zod'
+import { RemoteClientStorage } from '../storage/RemoteClientStorage'
 
 function generateUncommittedBookmark() {
   return {
@@ -54,7 +55,7 @@ export type ActiveBookmark = {
 export class CreagenEditor {
   resourceMonitor = new ResourceMonitor()
   params: Params
-  storage: ClientStorage
+  storage: LocalClientStorage | RemoteClientStorage
   settings: Settings
   editor: Editor
   sandbox: Sandbox
@@ -76,7 +77,10 @@ export class CreagenEditor {
       logger.warn('Failed to persist storage')
     const indexdbStorage = indexdbStorageResult.value.indexdb
 
-    const storage = new ClientStorage(indexdbStorage)
+    const storage =
+      CREAGEN_REMOTE_URL != null
+        ? new RemoteClientStorage(indexdbStorage)
+        : new LocalClientStorage(indexdbStorage)
     const settings = await Settings.create(storage)
     const editor = await Editor.create(settings)
 
@@ -101,15 +105,15 @@ export class CreagenEditor {
     sandbox: Sandbox,
     editor: Editor,
     settings: Settings,
-    storage: ClientStorage,
-    vcs: Versie<CommitMetadata>,
+    storage: LocalClientStorage | RemoteClientStorage,
+    versie: Versie<CommitMetadata>,
     customKeybindings: CustomKeybinding[],
   ) {
     this.sandbox = sandbox
     this.editor = editor
     this.settings = settings
     this.storage = storage
-    this.vcs = vcs
+    this.vcs = versie
     this.keybindings = new Keybindings(customKeybindings, this)
     this.controller =
       CREAGEN_EDITOR_CONTROLLER_URL != null

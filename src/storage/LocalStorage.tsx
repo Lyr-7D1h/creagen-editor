@@ -17,6 +17,12 @@ class LocalStorage {
 
     return JSON.parse(value) as LocalStorageValue<K>
   }
+
+  remove<K extends LocalStorageKey>(key: K): void {
+    logger.trace(`Removing ${key}`)
+    globalThis.localStorage.removeItem(key)
+    editorEvents.emit('local-storage', { key, value: null })
+  }
 }
 
 export const localStorage = new LocalStorage()

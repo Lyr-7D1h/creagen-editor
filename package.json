@@ -11,9 +11,10 @@
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "test": "vitest",
-    "test:watch": "vitest --watch"
+    "test:watch": "vitest --watch",
+    "generate-types:remote": "openapi-typescript https://storage.creagen.dev/openapi.json -o src/remote/storage.d.ts"
   },
-  "keywords": [],
+  "keywords": ["creative coding", "editor", "web"],
   "author": "Lyr",
   "license": "Apache-2.0",
   "devDependencies": {
@@ -30,6 +31,7 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "fast-glob": "^3.3.3",
     "jsdom": "^29.0.2",
+    "openapi-typescript": "^7.13.0",
     "prettier": "3.8.1",
     "typescript": "^6.0.2",
     "vite": "^7.3.2",
@@ -48,6 +50,7 @@
     "lz-string": "^1.5.0",
     "monaco-editor": "^0.55.1",
     "monaco-vim": "^0.4.4",
+    "openapi-fetch": "^0.17.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-qr-code": "^2.0.18",
