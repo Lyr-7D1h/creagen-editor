@@ -40,18 +40,23 @@ const tabs: Record<string, TabConfig> = {
     icon: <BookmarkIcon />,
     parent: 'vcs',
   },
-  'vcs-commits': {
-    title: 'Commits',
-    content: <CommitsTab />,
-    icon: <CommitIcon />,
-    parent: 'vcs',
-  },
-  'vcs-actions': {
-    title: 'Import/Export',
-    content: <ImportTab />,
-    icon: <PublishIcon />,
-    parent: 'vcs',
-  },
+  // TODO: add support for remote
+  ...(CREAGEN_REMOTE_URL == null
+    ? {
+        'vcs-commits': {
+          title: 'Commits',
+          content: <CommitsTab />,
+          icon: <CommitIcon />,
+          parent: 'vcs',
+        },
+        'vcs-actions': {
+          title: 'Import/Export',
+          content: <ImportTab />,
+          icon: <PublishIcon />,
+          parent: 'vcs',
+        },
+      }
+    : {}),
   dependencies: {
     icon: <AutoStoriesIcon />,
     title: 'Dependencies',

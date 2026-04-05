@@ -9,14 +9,14 @@ type Mode = 'login' | 'signup'
 interface LoginModalProps {
   open: boolean
   onClose: () => void
-  onLoginSuccess: (token: string) => void
+  login: (username: string, password: string, turnstileToken: string) => Promise<true | string>
   initialMode?: Mode
 }
 
 export function LoginModal({
   open,
   onClose,
-  onLoginSuccess,
+  login,
   initialMode = 'login',
 }: LoginModalProps) {
   const [mode, setMode] = useState<Mode>(initialMode)
@@ -45,32 +45,16 @@ export function LoginModal({
     password: string,
     turnstileToken: string,
   ) {
-    if (remoteClient == null) return
-
     setError(null)
     setSuccessMessage(null)
     setLoading(true)
 
     try {
-      const {
-        data,
-        error: apiError,
-        response,
-      } = await remoteClient.POST('/login', {
-        body: {
-          username,
-          password,
-          turnstileToken,
-        },
-      })
-      if (!response.ok || !data) {
-        const msg =
-          (apiError as { error?: { message?: string } } | undefined)?.error
-            ?.message ?? 'Login failed'
-        setError(msg)
+      const result = await login(username, password, turnstileToken)
+      if (result !== true) {
+        setError(result)
         return
       }
-      onLoginSuccess(data.token)
       handleClose()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'An unexpected error occurred')

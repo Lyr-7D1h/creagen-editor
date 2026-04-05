@@ -7,8 +7,8 @@ import {
   ParamValue,
 } from './SettingsConfig'
 import { editorEvents } from '../events/events'
-import { LocalClientStorage } from '../storage/LocalClientStorage'
 import { createContextLogger } from '../logs/logger'
+import { ClientStorage } from '../creagen-editor/CreagenEditor'
 
 export const logger = createContextLogger('settings')
 
@@ -17,7 +17,7 @@ export function parentKey(key: string) {
 }
 
 async function getStoredSettings(
-  storage: LocalClientStorage,
+  storage: ClientStorage,
 ): Promise<Record<ParamKey, Entry>> {
   // Initialize with deep cloned default settings
   const config = (
@@ -67,17 +67,14 @@ export interface SettingsContextType {
 export class Settings {
   config: DefaultSettingsConfig
 
-  private readonly storage: LocalClientStorage
+  private readonly storage: ClientStorage
 
-  private constructor(
-    storage: LocalClientStorage,
-    config: DefaultSettingsConfig,
-  ) {
+  private constructor(storage: ClientStorage, config: DefaultSettingsConfig) {
     this.storage = storage
     this.config = config
   }
 
-  static async create(storage: LocalClientStorage) {
+  static async create(storage: ClientStorage) {
     const config = await getStoredSettings(storage)
 
     return new Settings(storage, config as DefaultSettingsConfig)

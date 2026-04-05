@@ -4,6 +4,8 @@ import { ParamKey } from '../settings/SettingsConfig'
 import { AnalyzeContainerResult } from '../sandbox/SandboxMessageHandler'
 
 type EditorEvents = {
+  login: void
+  logout: void
   render: void
 
   'controller:connected': void

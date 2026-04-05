@@ -28,14 +28,14 @@ export class LocalClientStorage implements Storage<CommitMetadata> {
     return Promise.resolve(localStorage.get('custom-keybindings'))
   }
 
-  getBookmark(id: string) {
-    return this.indexdb.getBookmark(id)
-  }
   getCommit(id: CommitHash) {
     return this.indexdb.getCommit(id)
   }
   getCommitData(hash: BlobHash) {
     return this.indexdb.getCommitData(hash)
+  }
+  getCheckout(hash: CommitHash) {
+    return this.indexdb.getCheckout(hash)
   }
   setBookmark(bookmark: Bookmark) {
     return this.indexdb.setBookmark(bookmark)
@@ -45,9 +45,6 @@ export class LocalClientStorage implements Storage<CommitMetadata> {
   }
   removeBookmark(id: string) {
     return this.indexdb.removeBookmark(id)
-  }
-  getAllCommitData() {
-    return this.indexdb.getAllCommitData()
   }
   getAllCommits() {
     return this.indexdb.getAllCommits()

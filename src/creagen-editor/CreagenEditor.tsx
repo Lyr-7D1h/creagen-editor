@@ -52,10 +52,12 @@ export type ActiveBookmark = {
   commit: CommitHash | null
 }
 
+export type ClientStorage = LocalClientStorage | RemoteClientStorage
+
 export class CreagenEditor {
   resourceMonitor = new ResourceMonitor()
   params: Params
-  storage: LocalClientStorage | RemoteClientStorage
+  storage: ClientStorage
   settings: Settings
   editor: Editor
   sandbox: Sandbox
@@ -105,7 +107,7 @@ export class CreagenEditor {
     sandbox: Sandbox,
     editor: Editor,
     settings: Settings,
-    storage: LocalClientStorage | RemoteClientStorage,
+    storage: ClientStorage,
     versie: Versie<CommitMetadata>,
     customKeybindings: CustomKeybinding[],
   ) {
@@ -591,11 +593,14 @@ export class CreagenEditor {
 
   import(data: unknown) {
     const validated = indexDbSchema.parse(data)
-    return this.storage.import(validated as IndexdbImport)
+    if (this.storage instanceof LocalClientStorage)
+      return this.storage.import(validated as IndexdbImport)
+    throw Error('import unsupported')
   }
 
   export() {
-    return this.storage.export()
+    if (this.storage instanceof LocalClientStorage) return this.storage.export()
+    throw Error('export unsupported')
   }
 
   get head() {

@@ -11,13 +11,13 @@ import {
   Typography,
 } from '@mui/material'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
+import { parseJwtPayload } from './jwt'
 
 interface AccountModalProps {
   open: boolean
   onClose: () => void
   username: string
-  iat: number
-  exp: number
+  token?: string
   onLogout: () => void
 }
 
@@ -25,10 +25,11 @@ export function AccountModal({
   open,
   onClose,
   username,
-  iat,
-  exp,
+  token,
   onLogout,
 }: AccountModalProps) {
+  const payload = typeof token !== 'undefined' ? parseJwtPayload(token) : null
+
   function handleLogout() {
     onLogout()
     onClose()
@@ -57,7 +58,7 @@ export function AccountModal({
               Logged in since
             </Typography>
             <Typography variant="body2">
-              {new Date(iat * 1000).toLocaleString()}
+              {payload ? new Date(payload.iat * 1000).toLocaleString() : '—'}
             </Typography>
           </Stack>
           <Stack direction="row" justifyContent="space-between">
@@ -65,7 +66,7 @@ export function AccountModal({
               Session expires
             </Typography>
             <Typography variant="body2">
-              {new Date(exp * 1000).toLocaleString()}
+              {payload ? new Date(payload.exp * 1000).toLocaleString() : '—'}
             </Typography>
           </Stack>
         </Stack>
@@ -74,7 +75,12 @@ export function AccountModal({
         <Button onClick={onClose} size="small">
           Close
         </Button>
-        <Button onClick={handleLogout} size="small" color="error" variant="outlined">
+        <Button
+          onClick={handleLogout}
+          size="small"
+          color="error"
+          variant="outlined"
+        >
           Log out
         </Button>
       </DialogActions>

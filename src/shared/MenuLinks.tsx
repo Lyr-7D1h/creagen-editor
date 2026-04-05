@@ -57,7 +57,7 @@ export function MenuLinks() {
           <BugReportIcon style={{ fontSize: '1.3rem' }} />
         </IconButton>
       </HtmlTooltip>
-      <LoginButton />
+      {CREAGEN_REMOTE_URL != null && <LoginButton />}
     </div>
   )
 }

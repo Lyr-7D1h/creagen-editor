@@ -6,6 +6,7 @@ const payloadSchema = z.object({
   iat: z.number(),
   exp: z.number(),
 })
+export type JwtPayload = z.infer<typeof payloadSchema>
 export function parseJwtPayload(token: string) {
   try {
     const payload = token.split('.')[1]

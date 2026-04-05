@@ -146,6 +146,7 @@ export interface operations {
                     "application/json": {
                         success: boolean;
                         user: {
+                            username: string;
                             /** Format: date-time */
                             createdOn: string;
                             quotaBytesUsed: number;
@@ -156,6 +157,21 @@ export interface operations {
             };
             /** @description Turnstile verification failed */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success: boolean;
+                        error: {
+                            code: string;
+                            message: string;
+                        };
+                    };
+                };
+            };
+            /** @description Username already taken */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -198,6 +214,7 @@ export interface operations {
                         success: boolean;
                         token: string;
                         user: {
+                            username: string;
                             /** Format: date-time */
                             createdOn: string;
                             quotaBytesUsed: number;
@@ -256,6 +273,7 @@ export interface operations {
                     "application/json": {
                         success: boolean;
                         user: {
+                            username: string;
                             /** Format: date-time */
                             createdOn: string;
                             quotaBytesUsed: number;
@@ -304,6 +322,51 @@ export interface operations {
                         success: boolean;
                         /** @enum {string} */
                         status: "created" | "exists";
+                    };
+                };
+            };
+            /** @description Invalid request body */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success: boolean;
+                        error: {
+                            code: string;
+                            message: string;
+                        };
+                    };
+                };
+            };
+            /** @description User or parent commit not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success: boolean;
+                        error: {
+                            code: string;
+                            message: string;
+                        };
+                    };
+                };
+            };
+            /** @description Storage quota exceeded */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success: boolean;
+                        error: {
+                            code: string;
+                            message: string;
+                        };
                     };
                 };
             };
@@ -372,6 +435,21 @@ export interface operations {
                     };
                 };
             };
+            /** @description Commit not found */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success: boolean;
+                        error: {
+                            code: string;
+                            message: string;
+                        };
+                    };
+                };
+            };
         };
     };
     get_BookmarkFetch: {
@@ -399,6 +477,21 @@ export interface operations {
                             commit: string;
                             /** Format: date-time */
                             createdOn: string;
+                        };
+                    };
+                };
+            };
+            /** @description Bookmark not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success: boolean;
+                        error: {
+                            code: string;
+                            message: string;
                         };
                     };
                 };

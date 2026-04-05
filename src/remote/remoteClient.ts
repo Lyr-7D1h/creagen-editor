@@ -1,5 +1,5 @@
 import createClient, { type Client } from 'openapi-fetch'
-import type { paths } from './storage'
+import type { operations, paths } from './storage'
 
 export const remoteClient =
   CREAGEN_REMOTE_URL != null
@@ -8,4 +8,6 @@ export const remoteClient =
       })
     : null
 
+export type User =
+  operations['post_UserLogin']['responses']['200']['content']['application/json']['user']
 export type RemoteClient = Client<paths>

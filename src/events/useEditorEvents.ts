@@ -8,6 +8,7 @@ import { HistoryItem } from 'versie'
 import { logger } from '../logs/logger'
 import { useLocalStorage } from '../storage/useLocalStorage'
 import { ActiveBookmark } from '../creagen-editor/CreagenEditor'
+import { RemoteClientStorage } from '../storage/RemoteClientStorage'
 
 /**
  * Hook that subscribes to an event and triggers re-render when emitted
@@ -181,4 +182,23 @@ export function useLibraries() {
   })
 
   return libs
+}
+
+/** Rerender a component on login */
+export function useLogin() {
+  // resolved in compile time
+  if (CREAGEN_REMOTE_URL === null) return
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const storage = useCreagenEditor().storage as RemoteClientStorage
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const [user, setUser] = useState(storage.user)
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    return editorEvents.on(['login', 'logout'], () => {
+      setUser(storage.user)
+    })
+  }, [storage])
+
+  return user
 }
