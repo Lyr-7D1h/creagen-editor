@@ -45,30 +45,11 @@ export function serializeForPostMessage(args: unknown[]): unknown[] {
 
     // Handle objects (including plain objects, dates, etc.)
     if (typeof arg === 'object') {
-      try {
-        // Try to use structured clone algorithm (will throw if not cloneable)
-        structuredClone(arg)
-        return arg
-      } catch {
-        // If structured clone fails, manually serialize
-        try {
-          const serialized: Record<string, unknown> = {}
-          for (const key in arg) {
-            if (Object.prototype.hasOwnProperty.call(arg, key)) {
-              const value = (arg as Record<string, unknown>)[key]
-              serialized[key] = serializeForPostMessage([value])[0]
-            }
-          }
-          return serialized
-        } catch {
-          // If all else fails, try JSON.stringify or return type info
-          try {
-            return JSON.stringify(arg)
-          } catch {
-            return `[Object: ${Object.prototype.toString.call(arg)}]`
-          }
-        }
-      }
+      // Return as-is; postMessage's structured clone algorithm handles plain objects
+      // (Date, Map, Set, TypedArray, etc.) without any extra allocation.
+      // Non-cloneable objects (DOM nodes, canvas contexts, etc.) cause a DataCloneError
+      // at the send site — the caller is responsible for catching that and falling back.
+      return arg
     }
 
     // Fallback for any other types

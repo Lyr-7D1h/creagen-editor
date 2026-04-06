@@ -84,7 +84,7 @@ export class CreagenEditor {
         ? new RemoteClientStorage(indexdbStorage)
         : new LocalClientStorage(indexdbStorage)
     const settings = await Settings.create(storage)
-    const editor = await Editor.create(settings)
+    const editor = Editor.create(settings)
 
     const vcsResult = await Versie.create(indexdbStorage, (raw) => {
       return CommitMetadata.parse(raw)

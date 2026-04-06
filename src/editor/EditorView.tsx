@@ -21,12 +21,12 @@ export function EditorView({ width, height, menu, toggleMenu }: EditorProps) {
 
   useEffect(() => {
     const editorContent = editorContentRef.current
-    if (editorContent) {
+    if (editorContent?.children.length === 0) {
       const htmlElement = creagenEditor.editor.html()
       editorContent.appendChild(htmlElement)
       creagenEditor.editor.layout()
     }
-  }, [creagenEditor.editor, menu])
+  }, [creagenEditor.editor])
 
   useEffect(() => {
     const vimStatus = vimStatusRef.current

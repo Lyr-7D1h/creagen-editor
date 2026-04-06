@@ -76,6 +76,8 @@ async function init() {
   window.requestAnimationFrame = (cb: FrameRequestCallback): number => {
     if (!rafActive) return -1
     const wrapped: FrameRequestCallback = (time) => {
+      // rAF is one-shot: remove the handle as soon as the callback fires
+      rafHandles.delete(id)
       if (!rafActive) return
       try {
         cb(time)
@@ -108,6 +110,8 @@ async function init() {
   ): number => {
     if (!timersActive) return -1
     const wrapped = () => {
+      // setTimeout is one-shot: remove the handle as soon as the callback fires
+      timeoutHandles.delete(id)
       if (!timersActive) return
       try {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
@@ -271,33 +275,40 @@ async function init() {
     }
   })
 
+  const sendLog = (
+    level: 'debug' | 'info' | 'warn' | 'error',
+    args: unknown[],
+  ) => {
+    try {
+      messageHandler.send({
+        type: 'log',
+        level,
+        data: serializeForPostMessage(args),
+      })
+    } catch {
+      // DataCloneError: a non-cloneable object slipped through (e.g. DOM node,
+      // canvas context). Fall back to string representations.
+      messageHandler.send({
+        type: 'log',
+        level,
+        data: args.map((arg) => {
+          try {
+            return String(arg)
+          } catch {
+            return `[${typeof arg}]`
+          }
+        }),
+      })
+    }
+  }
+
   try {
     window.console = {
       ...window.console,
-      debug: (...args) =>
-        messageHandler.send({
-          type: 'log',
-          level: 'debug',
-          data: serializeForPostMessage(args),
-        }),
-      info: (...args) =>
-        messageHandler.send({
-          type: 'log',
-          level: 'info',
-          data: serializeForPostMessage(args),
-        }),
-      log: (...args) =>
-        messageHandler.send({
-          type: 'log',
-          level: 'info',
-          data: serializeForPostMessage(args),
-        }),
-      error: (...args) =>
-        messageHandler.send({
-          type: 'log',
-          level: 'error',
-          data: serializeForPostMessage(args),
-        }),
+      debug: (...args) => sendLog('debug', args),
+      info: (...args) => sendLog('info', args),
+      log: (...args) => sendLog('info', args),
+      error: (...args) => sendLog('error', args),
     }
   } catch (error) {
     messageHandler.send({ type: 'error', error: error as Error })

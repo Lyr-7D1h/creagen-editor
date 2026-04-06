@@ -71,7 +71,7 @@ function SeedInput({
   }
 
   return (
-    <Stack direction="row" spacing={0.5} alignItems="center">
+    <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
       <TextField
         fullWidth
         value={localValue}
@@ -116,7 +116,7 @@ function ColorInput({
   }
 
   return (
-    <Stack direction="row" spacing={1} alignItems="center">
+    <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
       <Box
         component="input"
         type="color"
@@ -157,8 +157,10 @@ function ColorInput({
         }}
         size="small"
         placeholder="#000000"
-        inputProps={{
-          style: { fontFamily: 'monospace' },
+        slotProps={{
+          htmlInput: {
+            style: { fontFamily: 'monospace' },
+          },
         }}
       />
     </Stack>
@@ -873,10 +875,13 @@ export function ParamsViewPresentation({
     >
       <Stack
         direction="row"
-        alignItems="center"
         spacing={1}
-        justifyContent="flex-end"
-        sx={{ flexShrink: 0, pr: 0.5 }}
+        sx={{
+          flexShrink: 0,
+          pr: 0.5,
+          alignItems: 'center',
+          justifyContent: 'flex-end',
+        }}
       >
         <Tooltip title="Reset all to defaults">
           <span>

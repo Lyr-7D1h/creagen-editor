@@ -1,16 +1,15 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { localStorage } from '../storage/LocalStorage'
 import AutoImport, { regexTokeniser } from '@kareemkermad/monaco-auto-import'
-import { Monaco } from '@monaco-editor/react'
+
 import * as monaco from 'monaco-editor'
 import type * as m from 'monaco-editor'
-import { loader } from '@monaco-editor/react'
+
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
 import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
 import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
 import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker'
 import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
+
 import './editor.css'
 
 import { initVimMode } from 'monaco-vim'
@@ -20,7 +19,10 @@ import { createContextLogger } from '../logs/logger'
 
 const logger = createContextLogger('editor')
 
-// Use monaco without cdn: https://www.npmjs.com/package/@monaco-editor/react#loader-config
+export type Monaco = typeof m
+
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 self.MonacoEnvironment = {
   getWorker(_, label) {
     if (label === 'json') {
@@ -38,9 +40,6 @@ self.MonacoEnvironment = {
     return new editorWorker()
   },
 }
-
-loader.config({ monaco })
-loader.init().catch(logger.error)
 
 // https://github.com/brijeshb42/monaco-themes/tree/master
 const creagenLightTheme: monaco.editor.IStandaloneThemeData = {
@@ -96,9 +95,7 @@ export class Editor {
   private readonly typings = new Map<string, monaco.IDisposable>()
   private readonly _html
 
-  static async create(settings: Settings) {
-    const monaco: Monaco = await loader.init()
-
+  static create(settings: Settings) {
     handleBeforeMount(monaco)
 
     const html = document.createElement('div')

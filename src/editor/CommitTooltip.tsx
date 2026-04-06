@@ -13,7 +13,7 @@ export function CommitText({
   const { commit, bookmarks } = historyItem
   return (
     <div style={{ lineHeight: 1.5, position: 'relative' }}>
-      <Typography textAlign="right" variant="body2" color="grey">
+      <Typography sx={{ textAlign: 'right' }} variant="body2" color="grey">
         {timeAgoString(commit.createdOn)} ({dateString(commit.createdOn)})
       </Typography>
       {bookmarks.map((bm) => (
@@ -38,7 +38,7 @@ export function CommitTooltip({
 
   const tooltip = (
     <div style={{ lineHeight: 1.5, position: 'relative' }}>
-      <Typography textAlign="right" variant="body2" color="grey">
+      <Typography sx={{ textAlign: 'right' }} variant="body2" color="grey">
         {timeAgoString(commit.createdOn)} ({dateString(commit.createdOn)})
       </Typography>
       {bookmarks.map((bm) => (

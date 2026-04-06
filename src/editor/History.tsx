@@ -130,8 +130,8 @@ export function History({
           <Stack
             direction="row"
             spacing={1}
-            alignItems="center"
             sx={{
+              alignItems: 'center',
               color: 'black',
               paddingLeft: 1,
               paddingRight: isOverflowing ? 4 : 1, // Add padding for the expand button

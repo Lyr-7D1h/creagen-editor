@@ -45,7 +45,7 @@ export function AccountModal({
     >
       <DialogTitle sx={{ pb: 0 }}>Account</DialogTitle>
       <DialogContent>
-        <Stack alignItems="center" spacing={1.5} sx={{ py: 2 }}>
+        <Stack spacing={1.5} sx={{ py: 2, alignItems: 'center' }}>
           <Avatar sx={{ width: 56, height: 56, bgcolor: 'primary.main' }}>
             <AccountCircleIcon sx={{ fontSize: 40 }} />
           </Avatar>
@@ -53,7 +53,7 @@ export function AccountModal({
         </Stack>
         <Divider sx={{ mb: 2 }} />
         <Stack spacing={0.75}>
-          <Stack direction="row" justifyContent="space-between">
+          <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
             <Typography variant="body2" color="text.secondary">
               Logged in since
             </Typography>
@@ -61,7 +61,7 @@ export function AccountModal({
               {payload ? new Date(payload.iat * 1000).toLocaleString() : '—'}
             </Typography>
           </Stack>
-          <Stack direction="row" justifyContent="space-between">
+          <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
             <Typography variant="body2" color="text.secondary">
               Session expires
             </Typography>
