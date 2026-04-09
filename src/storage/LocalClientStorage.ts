@@ -40,7 +40,7 @@ export class LocalClientStorage implements Storage<CommitMetadata> {
   setBookmark(bookmark: Bookmark) {
     return this.indexdb.setBookmark(bookmark)
   }
-  setCommit(commit: Commit<CommitMetadata>, data: Uint8Array) {
+  setCommit(commit: Commit<CommitMetadata>, data: string) {
     return this.indexdb.setCommit(commit, data)
   }
   removeBookmark(id: string) {

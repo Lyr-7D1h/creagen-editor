@@ -13,6 +13,7 @@ export type LocalStorageOnlyKey =
   | 'control-panel-size'
 /** LocalStorage + Remote */
 export type LocalStorageKey =
+  | 'commit-seq'
   | 'creagen-auth-token'
   | 'editor-scroll-position'
   | 'custom-keybindings'
@@ -23,7 +24,11 @@ export type LocalStorageKey =
 /** Any key used for storage */
 
 type LocalStorageKeyValueMap = {
+  // Remote enabled keys
+  /** Defines when commit synchronization was last run */
+  'commit-seq': number
   'creagen-auth-token': string
+
   welcome: boolean
   'menu-view': boolean
   'menu-view-tab': string

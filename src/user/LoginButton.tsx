@@ -6,7 +6,6 @@ import { LoginModal } from './LoginModal'
 import { AccountModal } from './AccountModal'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import { RemoteClientStorage } from '../storage/RemoteClientStorage'
-import { useLogin } from '../events/useEditorEvents'
 
 export function LoginButton() {
   // resolved in compile time
@@ -17,8 +16,7 @@ export function LoginButton() {
   const [initialMode, setInitialMode] = useState<'login' | 'signup'>('login')
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const storage = useCreagenEditor().storage as RemoteClientStorage
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const user = useLogin()
+  const user = storage.user
 
   function handleLogout() {
     storage.logout()
@@ -58,7 +56,6 @@ export function LoginButton() {
           open={open}
           onClose={() => setOpen(false)}
           username={user.username}
-          token={storage.token}
           onLogout={handleLogout}
         />
       ) : (

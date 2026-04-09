@@ -11,13 +11,13 @@ import {
   Typography,
 } from '@mui/material'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
-import { parseJwtPayload } from './jwt'
+import { useCreagenEditor } from '../creagen-editor/CreagenContext'
+import { RemoteClientStorage } from '../storage/RemoteClientStorage'
 
 interface AccountModalProps {
   open: boolean
   onClose: () => void
   username: string
-  token?: string
   onLogout: () => void
 }
 
@@ -25,10 +25,10 @@ export function AccountModal({
   open,
   onClose,
   username,
-  token,
   onLogout,
 }: AccountModalProps) {
-  const payload = typeof token !== 'undefined' ? parseJwtPayload(token) : null
+  const storage = useCreagenEditor().storage as RemoteClientStorage
+  const payload = storage.session()
 
   function handleLogout() {
     onLogout()

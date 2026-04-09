@@ -2,7 +2,12 @@ import { Editor } from '../editor/Editor'
 import { log, logger, Severity } from '../logs/logger'
 import { Sandbox } from '../sandbox/Sandbox'
 import { Settings } from '../settings/Settings'
-import { CommitHash, DeltizingError, IndexdbImport } from 'versie'
+import {
+  CommitHash,
+  DeltizingError,
+  IndexdbImport,
+  VersieStorageError,
+} from 'versie'
 import { LIBRARY_CONFIGS } from './libraryConfigs'
 import { parseCode } from './parseCode'
 import {
@@ -81,12 +86,12 @@ export class CreagenEditor {
 
     const storage =
       CREAGEN_REMOTE_URL != null
-        ? new RemoteClientStorage(indexdbStorage)
+        ? await RemoteClientStorage.create(indexdbStorage)
         : new LocalClientStorage(indexdbStorage)
     const settings = await Settings.create(storage)
     const editor = Editor.create(settings)
 
-    const vcsResult = await Versie.create(indexdbStorage, (raw) => {
+    const vcsResult = await Versie.create(storage, (raw) => {
       return CommitMetadata.parse(raw)
     })
     if (!vcsResult.ok) throw vcsResult.error
@@ -195,7 +200,7 @@ export class CreagenEditor {
     commit: CommitHash,
   ): AsyncResult<
     void,
-    BookmarkNotFoundError | StorageError | BookmarkAlreadyExistsError
+    BookmarkNotFoundError | VersieStorageError | BookmarkAlreadyExistsError
   > {
     return Result.fromAsync(async () => {
       if (this.activeBookmark.commit === null) {
@@ -505,6 +510,10 @@ export class CreagenEditor {
     return code
   }
 
+  async formatCode() {
+    await this.editor.format()
+  }
+
   /**
    * Commit code and library changes if editor is not empty
    */
@@ -512,10 +521,6 @@ export class CreagenEditor {
     /** Update active bookmark to this commit */
     updateActiveBookmark: boolean = true,
   ) {
-    if (this.settings.values['editor.format_on_render'] != null) {
-      await this.editor.format()
-    }
-
     const old = this.vcs.head?.hash
     const code = this.editor.getValue()
     if (code.length === 0) return null
@@ -524,11 +529,14 @@ export class CreagenEditor {
     const metadata = new CommitMetadata(
       new SemVer(CREAGEN_EDITOR_VERSION),
       libraries,
+      this.storage instanceof RemoteClientStorage
+        ? this.storage.user?.username
+        : undefined,
     )
     // store code
     const commitResult = await this.vcs.commit(code, metadata)
     if (!commitResult.ok) {
-      return commitResult
+      throw new Error(`Failed to commit code: ${commitResult.error.message}`)
     }
 
     // Explicitly handle the "no changes" case where commitResult.value is null.
@@ -545,7 +553,7 @@ export class CreagenEditor {
     if (updateActiveBookmark) {
       const updateResult = await this.updateActiveBookmark(commitHash)
       if (updateResult.ok === false) {
-        return updateResult
+        throw updateResult.error
       }
     }
     editorEvents.emit('vcs:commit', { commit: commitHash, code })
@@ -558,10 +566,6 @@ export class CreagenEditor {
   async render() {
     const info = log(Severity.Info, 'rendering code', null)
     try {
-      if (this.settings.values['editor.format_on_render'] != null) {
-        await this.editor.format()
-      }
-
       let code = this.editor.getValue()
       if (code.length === 0) {
         logger.remove(info)
@@ -588,7 +592,10 @@ export class CreagenEditor {
   }
 
   executeCommand(command: Command) {
-    COMMANDS[command].handler(this)
+    const res = COMMANDS[command].handler(this)
+    if (res instanceof Promise) {
+      res.catch(logger.error)
+    }
   }
 
   import(data: unknown) {

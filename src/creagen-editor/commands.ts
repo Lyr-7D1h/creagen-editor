@@ -24,9 +24,12 @@ export const COMMANDS = {
   },
   'editor.run': {
     description: 'Run/Render the current code',
-    handler: (editor: CreagenEditor) => {
+    handler: async (editor: CreagenEditor) => {
       let a: number | undefined
       if (CREAGEN_MODE === 'dev') a = performance.now()
+      if (editor.settings.values['editor.format_on_render'] === true) {
+        await editor.editor.format()
+      }
       Promise.all([editor.commit(), editor.render()]).catch(logger.error)
       if (CREAGEN_MODE === 'dev' && a !== undefined) {
         logger.debug('Render took ' + (performance.now() - a) + 'ms')

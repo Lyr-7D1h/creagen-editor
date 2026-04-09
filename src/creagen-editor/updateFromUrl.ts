@@ -1,7 +1,7 @@
 import { logger } from '../logs/logger'
 import { UrlMutator } from '../UrlMutator'
 import { generateHumanReadableName } from './generateHumanReadableName'
-import { Bookmark, BookmarkAlreadyExistsError } from 'versie'
+import { Bookmark, BookmarkAlreadyExistsError, DeltizingError } from 'versie'
 import { StorageError } from 'versie'
 import { CommitMetadata } from './CommitMetadata'
 import { CreagenEditor } from './CreagenEditor'
@@ -55,7 +55,7 @@ async function updateFromSharableLinkData(
     const retryWithNewName = bookmark
       .match()
       .when(BookmarkAlreadyExistsError, () => true)
-      .when(StorageError, () => false)
+      .when(StorageError, DeltizingError, () => false)
       .run()
     if (!retryWithNewName) {
       return null

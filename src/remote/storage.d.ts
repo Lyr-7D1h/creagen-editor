@@ -4,7 +4,7 @@
  */
 
 export interface paths {
-    "/register": {
+    "/api/register": {
         parameters: {
             query?: never;
             header?: never;
@@ -21,7 +21,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/login": {
+    "/api/login": {
         parameters: {
             query?: never;
             header?: never;
@@ -38,7 +38,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/profile": {
+    "/api/commits/{commitHash}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get commit metadata by hash */
+        get: operations["get_CommitFetch"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/commits/data/{blobHash}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get raw blob data for a blob hash */
+        get: operations["get_CommitDataFetch"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/commits/{commitHash}/checkout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get commit metadata and blob data together (msgpack encoded) */
+        get: operations["get_CheckoutFetch"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user": {
         parameters: {
             query?: never;
             header?: never;
@@ -55,14 +106,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/commit": {
+    "/api/user/settings": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Get user settings */
+        get: operations["get_SettingsFetch"];
+        put?: never;
+        /** Save user settings */
+        post: operations["post_SettingsCreate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user/keybindings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get custom keybindings */
+        get: operations["get_KeybindingFetch"];
+        put?: never;
+        /** Save custom keybindings */
+        post: operations["post_KeybindingCreate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user/commits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List commits for authenticated user (incremental sync) */
+        get: operations["get_UserCommitList"];
         put?: never;
         /** Create immutable commit with blob */
         post: operations["post_CommitCreate"];
@@ -72,7 +160,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/bookmarks": {
+    "/api/user/bookmarks": {
         parameters: {
             query?: never;
             header?: never;
@@ -90,7 +178,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/bookmarks/{bookmarkName}": {
+    "/api/user/bookmarks/{bookmarkName}": {
         parameters: {
             query?: never;
             header?: never;
@@ -255,6 +343,148 @@ export interface operations {
             };
         };
     };
+    get_CommitFetch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description SHA-256 commit hash (hex) */
+                commitHash: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Commit metadata */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success: boolean;
+                        commit: {
+                            blob: string;
+                            createdOn: number;
+                            parent?: string;
+                            editorVersion: string;
+                            libraries: {
+                                name: string;
+                                version: string;
+                            }[];
+                            author: string;
+                        };
+                    };
+                };
+            };
+            /** @description Commit not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success: boolean;
+                        error: {
+                            code: string;
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    get_CommitDataFetch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description SHA-256 blob hash (hex) */
+                blobHash: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Raw deflate-compressed blob bytes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/octet-stream": string;
+                };
+            };
+            /** @description Invalid blob hash */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success: boolean;
+                        error: {
+                            code: string;
+                            message: string;
+                        };
+                    };
+                };
+            };
+            /** @description Blob not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success: boolean;
+                        error: {
+                            code: string;
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    get_CheckoutFetch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description SHA-256 commit hash (hex) */
+                commitHash: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description msgpack-encoded object: { commit: StoredCommit, data: Uint8Array } */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/octet-stream": string;
+                };
+            };
+            /** @description Commit or blob not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success: boolean;
+                        error: {
+                            code: string;
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+    };
     get_UserProfile: {
         parameters: {
             query?: never;
@@ -282,6 +512,22 @@ export interface operations {
                     };
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: false;
+                        error: {
+                            code: "UNAUTHORIZED" | "INVALID_USER_ID";
+                            message: string;
+                        };
+                    };
+                };
+            };
             /** @description User not found */
             404: {
                 headers: {
@@ -291,7 +537,262 @@ export interface operations {
                     "application/json": {
                         success: boolean;
                         error: {
-                            code: string;
+                            /** @enum {string} */
+                            code: "USER_NOT_FOUND";
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    get_SettingsFetch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description User settings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success: boolean;
+                        settings: {
+                            [key: string]: unknown;
+                        } | null;
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: false;
+                        error: {
+                            code: "UNAUTHORIZED" | "INVALID_USER_ID";
+                            message: string;
+                        };
+                    };
+                };
+            };
+            /** @description Invalid data stored */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success: boolean;
+                        error: string;
+                    };
+                };
+            };
+        };
+    };
+    post_SettingsCreate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            /** @description Settings saved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success: boolean;
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: false;
+                        error: {
+                            code: "UNAUTHORIZED" | "INVALID_USER_ID";
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    get_KeybindingFetch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Custom keybindings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success: boolean;
+                        keybindings: {
+                            key: string;
+                            command: string;
+                            remove?: boolean;
+                            when?: ("editor" | "sandbox")[];
+                        }[] | null;
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: false;
+                        error: {
+                            code: "UNAUTHORIZED" | "INVALID_USER_ID";
+                            message: string;
+                        };
+                    };
+                };
+            };
+            /** @description Invalid data stored */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success: boolean;
+                        error: string;
+                    };
+                };
+            };
+        };
+    };
+    post_KeybindingCreate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    key: string;
+                    command: string;
+                    remove?: boolean;
+                    when?: ("editor" | "sandbox")[];
+                }[];
+            };
+        };
+        responses: {
+            /** @description Keybindings saved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success: boolean;
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: false;
+                        error: {
+                            code: "UNAUTHORIZED" | "INVALID_USER_ID";
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    get_UserCommitList: {
+        parameters: {
+            query?: {
+                /** @description Get all commits after a given sequence number */
+                seq?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Commits with sequence numbers for incremental sync */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success: boolean;
+                        commits: {
+                            seq: number;
+                            hash: string;
+                            parent: string | null;
+                            createdOn: number;
+                            blob: string;
+                            editorVersion: string;
+                            libraries: {
+                                name: string;
+                                version: string;
+                            }[];
+                        }[];
+                        nextSeq: number;
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: false;
+                        error: {
+                            code: "UNAUTHORIZED" | "INVALID_USER_ID";
                             message: string;
                         };
                     };
@@ -322,6 +823,7 @@ export interface operations {
                         success: boolean;
                         /** @enum {string} */
                         status: "created" | "exists";
+                        size?: number;
                     };
                 };
             };
@@ -335,6 +837,22 @@ export interface operations {
                         success: boolean;
                         error: {
                             code: string;
+                            message: string;
+                        };
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: false;
+                        error: {
+                            code: "UNAUTHORIZED" | "INVALID_USER_ID";
                             message: string;
                         };
                     };
@@ -394,9 +912,24 @@ export interface operations {
                         bookmarks: {
                             name: string;
                             commit: string;
-                            /** Format: date-time */
-                            createdOn: string;
+                            createdOn: number;
                         }[];
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: false;
+                        error: {
+                            code: "UNAUTHORIZED" | "INVALID_USER_ID";
+                            message: string;
+                        };
                     };
                 };
             };
@@ -429,22 +962,22 @@ export interface operations {
                         bookmark: {
                             name: string;
                             commit: string;
-                            /** Format: date-time */
-                            createdOn: string;
+                            createdOn: number;
                         };
                     };
                 };
             };
-            /** @description Commit not found */
-            422: {
+            /** @description Unauthorized */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        success: boolean;
+                        /** @enum {boolean} */
+                        success: false;
                         error: {
-                            code: string;
+                            code: "UNAUTHORIZED" | "INVALID_USER_ID";
                             message: string;
                         };
                     };
@@ -475,8 +1008,23 @@ export interface operations {
                         bookmark: {
                             name: string;
                             commit: string;
-                            /** Format: date-time */
-                            createdOn: string;
+                            createdOn: number;
+                        };
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: false;
+                        error: {
+                            code: "UNAUTHORIZED" | "INVALID_USER_ID";
+                            message: string;
                         };
                     };
                 };
@@ -519,6 +1067,22 @@ export interface operations {
                     "application/json": {
                         success: boolean;
                         deleted: boolean;
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: false;
+                        error: {
+                            code: "UNAUTHORIZED" | "INVALID_USER_ID";
+                            message: string;
+                        };
                     };
                 };
             };

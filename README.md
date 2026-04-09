@@ -25,7 +25,12 @@ npm start
 
 ## Roadmap
 
-- Resize code to editor size
+- Remote mode
+  - Show two storage bars, one local, one remote
+- Hybrid Mode: Remote enabled build that handles local changes well
+  - Sync local changes the moment editor gets back online
+  - Handle merge conflicts
+- Feature to resize code to editor view size
 - Make folding optional
 - Generate controller id from unique browser id
 - Define how to randomize each param and what distribution the randomization should be. 

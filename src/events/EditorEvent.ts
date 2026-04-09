@@ -4,8 +4,7 @@ import { ParamKey } from '../settings/SettingsConfig'
 import { AnalyzeContainerResult } from '../sandbox/SandboxMessageHandler'
 
 type EditorEvents = {
-  login: void
-  logout: void
+  'login-prompt': void
   render: void
 
   'controller:connected': void
@@ -28,6 +27,7 @@ type EditorEvents = {
   'vcs:bookmark-update': void
 
   // Settings events
+  /** A single setting changed  */
   'settings:changed': {
     key: ParamKey
     value: unknown

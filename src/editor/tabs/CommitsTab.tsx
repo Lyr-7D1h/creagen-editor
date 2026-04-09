@@ -510,8 +510,8 @@ export function CommitsTab() {
     focusedCommitHash,
     minifyGraph,
     hook,
-    creagenEditor.getAllBookmarks(),
     creagenEditor.head?.hash,
+    creagenEditor,
   ])
 
   const uniqueAuthors = Array.from(

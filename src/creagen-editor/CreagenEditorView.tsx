@@ -11,6 +11,7 @@ import { WelcomeScreen } from './WelcomeScreen'
 import { ErrorBoundary } from './ErrorBoundary'
 import { isMobile } from './isMobile'
 import { CreagenEditorContext } from './CreagenContext'
+import { LoginPromptHandler } from '../user/LoginPromptHandler'
 
 export function CreagenEditorView() {
   const [creagenEditor, setCreagenEditor] = useState<CreagenEditor | null>(null)
@@ -60,6 +61,7 @@ export function CreagenEditorView() {
     <CreagenEditorContext.Provider value={creagenEditor}>
       <ErrorBoundary>
         <WelcomeScreen />
+        {CREAGEN_REMOTE_URL != null && <LoginPromptHandler />}
         {mobile ? (
           <CreagenEditorViewContentMobile />
         ) : (

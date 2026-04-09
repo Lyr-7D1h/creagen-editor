@@ -9,7 +9,11 @@ type Mode = 'login' | 'signup'
 interface LoginModalProps {
   open: boolean
   onClose: () => void
-  login: (username: string, password: string, turnstileToken: string) => Promise<true | string>
+  login: (
+    username: string,
+    password: string,
+    turnstileToken: string,
+  ) => Promise<true | string>
   initialMode?: Mode
 }
 
@@ -76,7 +80,7 @@ export function LoginModal({
 
     try {
       const { error: apiError, response } = await remoteClient.POST(
-        '/register',
+        '/api/register',
         {
           body: {
             username,

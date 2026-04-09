@@ -8,7 +8,7 @@ import React, { useEffect, useState } from 'react'
 import { roundToDec } from '../util'
 import { logger } from '../logs/logger'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
-import { useLogin } from '../events/useEditorEvents'
+import { editorEvents } from '../events/events'
 
 function LinearProgressWithLabelSetting({
   value,
@@ -96,18 +96,22 @@ function formatBytes(bytes: number) {
 export function StorageBar() {
   const creagenEditor = useCreagenEditor()
   const [usageEstimation, setUsageEstimation] = useState<Storage | null>(null)
-  const user = useLogin()
   useEffect(() => {
-    creagenEditor.storage
-      .estimateUsage()
-      .then((storage) =>
-        setUsageEstimation({
-          current: storage.usage ?? 0,
-          max: storage.quota ?? 1,
-        }),
-      )
-      .catch(logger.error)
-  }, [creagenEditor, user])
+    function calculate() {
+      creagenEditor.storage
+        .estimateUsage()
+        .then((storage) =>
+          setUsageEstimation({
+            current: storage.usage ?? 0,
+            max: storage.quota ?? 1,
+          }),
+        )
+        .catch(logger.error)
+    }
+    calculate()
+    // recalculate usage on commit
+    editorEvents.on('vcs:commit', calculate)
+  }, [creagenEditor])
 
   return (
     <LinearProgressWithLabelSetting
