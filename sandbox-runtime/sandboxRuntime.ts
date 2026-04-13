@@ -8,21 +8,6 @@ import { analyzeContainer } from './analyzeContainer'
 import { svgExportRequest } from './svgExport'
 import { serializeForPostMessage } from './serializeForPostMessage'
 
-declare global {
-  interface Window {
-    creagen: {
-      constants: {
-        creagenEditorVersion: string
-      }
-    }
-  }
-}
-window.creagen = {
-  constants: {
-    creagenEditorVersion: '',
-  },
-}
-
 async function init() {
   // Create message handler in iframe mode
   const messageHandler = await SandboxMessageHandler.create(
@@ -262,10 +247,6 @@ async function init() {
         messageHandler.send({ type: 'analysisResult', result })
       }, 500)
     })().catch(sendError)
-  })
-
-  messageHandler.on('init', (msg) => {
-    window.creagen.constants = msg.constants
   })
 
   messageHandler.on('svgExportRequest', (msg) => {

@@ -13,6 +13,12 @@ import { isMobile } from './isMobile'
 import { CreagenEditorContext } from './CreagenContext'
 import { LoginPromptHandler } from '../user/LoginPromptHandler'
 
+declare global {
+  interface Window {
+    creagen: CreagenEditor
+  }
+}
+
 export function CreagenEditorView() {
   const [creagenEditor, setCreagenEditor] = useState<CreagenEditor | null>(null)
 
@@ -22,6 +28,7 @@ export function CreagenEditorView() {
     CreagenEditor.create()
       .then((creagenEditor) => {
         setCreagenEditor(creagenEditor)
+        window.creagen = creagenEditor
       })
       .catch((e) => logger.error(e))
   }, [])

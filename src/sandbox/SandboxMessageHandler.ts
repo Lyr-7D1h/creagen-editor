@@ -41,14 +41,6 @@ type SandboxMessageDefinitions =
   | { type: 'renderComplete' }
   /** Sent by Sandbox */
   | {
-      type: 'init'
-      msg: {
-        constants: {
-          creagenEditorVersion: string
-        }
-      }
-    }
-  | {
       type: 'svgExportRequest'
       msg: {
         /** Commit hash */
