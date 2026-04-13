@@ -5,22 +5,34 @@ import { IconButton, Collapse, Stack } from '@mui/material'
 import ArrowLeft from '@mui/icons-material/ArrowLeft'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import { useSettings } from '../events/useEditorEvents'
+import { useActiveBookmark, useSettings } from '../events/useEditorEvents'
 import { HistoryItemChip } from './HistoryItemChip'
 import { HistoryItem } from 'versie'
 import { CommitMetadata } from '../creagen-editor/CommitMetadata'
+import { ActiveBookmark } from '../creagen-editor/CreagenEditor'
+import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 
 function HistoryLink({
   item,
   last,
+  fullscreen,
+  head,
+  activeBookmark,
 }: {
   item: HistoryItem<CommitMetadata>
   last: boolean
+  fullscreen: boolean
+  head?: string
+  activeBookmark: ActiveBookmark
 }) {
-  const fullscreen = useSettings('editor.fullscreen')
   return (
     <>
-      <HistoryItemChip item={item} />
+      <HistoryItemChip
+        active={head === item.commit.hash.toHex()}
+        item={item}
+        fullscreen={fullscreen}
+        activeBookmark={activeBookmark}
+      />
       {!last && (
         <ArrowLeft
           sx={{ color: fullscreen ? '#bbb' : undefined }}
@@ -42,6 +54,8 @@ export function History({
   onExpandedChange?: (expanded: boolean) => void
 }) {
   const fullscreen = useSettings('editor.fullscreen')
+  const activeBookmark = useActiveBookmark()
+  const editor = useCreagenEditor()
   const [expanded, setExpanded] = useState(false)
   const [isOverflowing, setIsOverflowing] = useState(false)
 
@@ -84,7 +98,13 @@ export function History({
   const renderHistoryItems = () => {
     return items.map((item, index) => (
       <React.Fragment key={index}>
-        <HistoryLink item={item} last={index >= items.length - 1} />
+        <HistoryLink
+          item={item}
+          head={editor.head?.hash.toHex()}
+          last={index >= items.length - 1}
+          fullscreen={fullscreen}
+          activeBookmark={activeBookmark}
+        />
       </React.Fragment>
     ))
   }

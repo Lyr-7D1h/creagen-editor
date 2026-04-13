@@ -9,7 +9,7 @@ import {
 } from '@mui/material'
 import { useState, useRef } from 'react'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
-import { useActiveBookmark, useSettings } from '../events/useEditorEvents'
+import { ActiveBookmark } from '../creagen-editor/CreagenEditor'
 import { logger } from '../logs/logger'
 import { bookmarkNameSchema, Bookmark } from 'versie'
 import { HistoryItem } from 'versie'
@@ -137,12 +137,16 @@ function CollapsibleButton({
 
 export function HistoryItemChip({
   item,
+  fullscreen,
+  activeBookmark,
+  active,
 }: {
   item: HistoryItem<CommitMetadata>
+  fullscreen: boolean
+  activeBookmark: ActiveBookmark
+  active: boolean
 }) {
-  const fullscreen = useSettings('editor.fullscreen')
   const creagenEditor = useCreagenEditor()
-  const activeBookmark = useActiveBookmark()
   const chipRef = useRef<HTMLDivElement>(null)
 
   const [collapsed, setCollapsed] = useState(false)
@@ -153,7 +157,6 @@ export function HistoryItemChip({
   const { commit } = item
   let { bookmarks } = item
   bookmarks = bookmarks.filter((b) => b.name !== activeBookmark.name)
-  const active = commit.hash.toHex() === activeBookmark.commit?.toHex()
 
   const label = (
     <CommitTooltip historyItem={item}>
