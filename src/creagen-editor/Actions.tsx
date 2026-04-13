@@ -110,7 +110,7 @@ export function Actions({
           isFullscreen={isFullscreen}
         />,
       )
-    if (!isMobileDevice) {
+    if (!isMobileDevice && CREAGEN_REMOTE_URL == null) {
       buttons.push(
         <HtmlTooltip key="share" title="Copy shareable link">
           <IconButton
