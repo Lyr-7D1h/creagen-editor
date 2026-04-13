@@ -620,12 +620,6 @@ export function CommitsTab() {
             color={authorFilter === null ? 'primary' : 'default'}
             size="small"
           />
-          <Chip
-            label="local"
-            onClick={() => setAuthorFilter('local')}
-            color={authorFilter === 'local' ? 'primary' : 'default'}
-            size="small"
-          />
           {uniqueAuthors.map((author) => (
             <Chip
               key={author}
