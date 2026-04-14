@@ -89,8 +89,7 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
 
   async syncCommits() {
     if (!this.user) {
-      this.promptLogin()
-      return
+      this.promptLogin('Log in to sync your commits from the cloud.')
     }
     const lastSeq = localStorage.get('commit-seq') ?? 0
     const res = unwrapDataResponse(
@@ -128,8 +127,9 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
     return parseJwtPayload(this.token)
   }
 
-  promptLogin() {
-    editorEvents.emit('login-prompt', undefined)
+  promptLogin(message?: string): never {
+    editorEvents.emit('login-prompt', message == null ? {} : { message })
+    throw new Error(message ?? 'Login required')
   }
 
   async login(username: string, password: string, turnstileToken: string) {
@@ -296,8 +296,7 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
 
   async setCommit(commit: Commit<CommitMetadata>, data: string) {
     if (typeof this.token === 'undefined' || typeof this.user === 'undefined') {
-      this.promptLogin()
-      return
+      this.promptLogin('Log in to save commits across sessions.')
     }
 
     const compressedData = new Uint8Array(
@@ -337,8 +336,7 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
   // bookmark references are saved in memory
   async setBookmark(bookmark: Bookmark) {
     if (typeof this.token === 'undefined' || typeof this.user === 'undefined') {
-      this.promptLogin()
-      return Promise.resolve()
+      this.promptLogin('Log in to create bookmarks.')
     }
     unwrapResponse(
       await this.remoteClient.POST('/api/user/bookmarks', {
@@ -350,8 +348,7 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
 
   async removeBookmark(id: string) {
     if (typeof this.token === 'undefined' || typeof this.user === 'undefined') {
-      this.promptLogin()
-      return Promise.resolve()
+      this.promptLogin('Log in to remove bookmarks.')
     }
     unwrapResponse(
       await this.remoteClient.DELETE('/api/user/bookmarks/{bookmarkName}', {

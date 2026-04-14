@@ -9,6 +9,7 @@ type Mode = 'login' | 'signup'
 interface LoginModalProps {
   open: boolean
   onClose: () => void
+  message?: string | null
   login: (
     username: string,
     password: string,
@@ -20,6 +21,7 @@ interface LoginModalProps {
 export function LoginModal({
   open,
   onClose,
+  message,
   login,
   initialMode = 'login',
 }: LoginModalProps) {
@@ -123,6 +125,7 @@ export function LoginModal({
       {mode === 'login' ? (
         <LoginForm
           error={error}
+          message={message ?? null}
           successMessage={successMessage}
           loading={loading}
           onClose={handleClose}

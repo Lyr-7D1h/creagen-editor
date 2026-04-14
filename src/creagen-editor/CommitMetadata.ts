@@ -54,7 +54,6 @@ export class CommitMetadata implements CommitMetadataInterface<CommitMetadataJso
             (l) => l.name === lib.name && l.version.compare(lib.version) === 0,
           ) >= 0,
       )
-    console.log(b, this, meta)
     return b
   }
 }

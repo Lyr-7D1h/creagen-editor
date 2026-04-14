@@ -14,6 +14,7 @@ import { Turnstile } from './Turnstile'
 
 interface LoginFormProps {
   error: string | null
+  message: string | null
   successMessage: string | null
   loading: boolean
   onClose: () => void
@@ -22,6 +23,7 @@ interface LoginFormProps {
 
 export function LoginForm({
   error,
+  message,
   successMessage,
   loading,
   onClose,
@@ -48,6 +50,7 @@ export function LoginForm({
     >
       <DialogContent>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+          {message != null && <Alert severity="info">{message}</Alert>}
           {error != null && <Alert severity="error">{error}</Alert>}
           {successMessage != null && (
             <Alert severity="success">{successMessage}</Alert>

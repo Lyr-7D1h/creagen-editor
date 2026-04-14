@@ -4,7 +4,7 @@ import { ParamKey } from '../settings/SettingsConfig'
 import { AnalyzeContainerResult } from '../sandbox/SandboxMessageHandler'
 
 type EditorEvents = {
-  'login-prompt': void
+  'login-prompt': { message?: string }
   render: void
 
   'controller:connected': void
