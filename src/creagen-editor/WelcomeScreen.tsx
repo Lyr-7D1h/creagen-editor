@@ -9,6 +9,7 @@ import {
 } from '@mui/material'
 import { useWelcome } from '../events/useEditorEvents'
 import { editorEvents } from '../events/events'
+import { isMobile } from './isMobile'
 
 export function WelcomeScreen() {
   const open = useWelcome()
@@ -17,6 +18,7 @@ export function WelcomeScreen() {
     editorEvents.emit('welcome', false)
   }
 
+  const mobile = isMobile()
   return (
     <Dialog
       open={open}
@@ -42,21 +44,33 @@ export function WelcomeScreen() {
           Getting Started
         </Typography>
         <DialogContentText component="div">
-          <ol>
-            <li>Write Code</li>
-            <li>
-              Press <b>Control+Shift+Enter</b> to render code or{' '}
-              <b>press the top right button</b>
-            </li>
-            <li>
-              In the <b>Menu</b>{' '}
-              <span style={{ color: 'grey', fontSize: '0.9rem' }}>
-                (Sideways arrow in the top left corner)
-              </span>
-              : Add dependencies, Look at saved changes, Change keybindings,
-              change settings and more
-            </li>
-          </ol>
+          {mobile ? (
+            <ol>
+              <li>
+                To run the current code, tap the button in the top right corner.
+              </li>
+              <li>
+                Open the <b>Menu</b> to view saved changes, settings, and other
+                project options.
+              </li>
+            </ol>
+          ) : (
+            <ol>
+              <li>Write Code</li>
+              <li>
+                Press <b>Control+Shift+Enter</b> to render code or{' '}
+                <b>press the top right button</b>
+              </li>
+              <li>
+                In the <b>Menu</b>{' '}
+                <span style={{ color: 'grey', fontSize: '0.9rem' }}>
+                  (Sideways arrow in the top left corner)
+                </span>
+                : Add dependencies, Look at saved changes, Change keybindings,
+                change settings and more
+              </li>
+            </ol>
+          )}
         </DialogContentText>
       </DialogContent>
       <DialogActions>
