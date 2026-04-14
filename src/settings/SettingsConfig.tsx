@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { semverSchema } from '../creagen-editor/schemaUtils'
 import { isMobile } from '../creagen-editor/isMobile'
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const librarySchema = z.object({
   name: z.string(),
   version: semverSchema,

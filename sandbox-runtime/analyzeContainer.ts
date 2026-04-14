@@ -35,7 +35,7 @@ function analyzeSvg(html: Element): SvgProps {
   let rects = 0
   for (const c of Array.from(html.children)) {
     switch (c.tagName.toLocaleLowerCase()) {
-      case 'path':
+      case 'path': {
         const d = c.getAttribute('d')
         if (d === null || d.length === 0) {
           console.warn('Path has no d attribute')
@@ -43,6 +43,7 @@ function analyzeSvg(html: Element): SvgProps {
         }
         paths++
         break
+      }
       case 'circle':
         circles++
         break
@@ -59,8 +60,10 @@ function analyzeSvg(html: Element): SvgProps {
   }
 
   if (html.tagName === 'svg') {
-    const height = Number(html.getAttribute('height')) ?? undefined
-    const width = Number(html.getAttribute('width')) ?? undefined
+    const heightAttr = html.getAttribute('height')
+    const widthAttr = html.getAttribute('width')
+    const height = heightAttr !== null ? Number(heightAttr) : undefined
+    const width = widthAttr !== null ? Number(widthAttr) : undefined
     return { paths, circles, rects, width, height }
   }
 

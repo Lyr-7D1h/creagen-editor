@@ -3,7 +3,6 @@ import {
   ExpandLess as ExpandLessIcon,
 } from '@mui/icons-material'
 import { IconButton } from '@mui/material'
-import React from 'react'
 
 export function CollapseButton({
   collapsed,

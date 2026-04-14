@@ -25,7 +25,7 @@ export function svgExportRequest({
     'metadata',
   )
   const creagen = document.createElement('creagen')
-  if (head) creagen.setAttribute('id', head)
+  if (head != null) creagen.setAttribute('id', head)
   metadata.appendChild(creagen)
   svg.appendChild(metadata)
 

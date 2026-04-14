@@ -8,9 +8,11 @@ function severityToAlertColor(severity: Severity): AlertColor {
       return 'error'
     case Severity.Warning:
       return 'warning'
-    case Severity.Info:
-      return 'info'
+    case Severity.Success:
+      return 'success'
+    case Severity.Trace:
     case Severity.Debug:
+    case Severity.Info:
       return 'info'
     default:
       return 'info'
@@ -62,6 +64,7 @@ const MessageChip = React.memo(
     )
   },
 )
+MessageChip.displayName = 'MessageChip'
 
 export function Messages() {
   const [logs, setLogs] = useState<Message[]>(logger.getMessages())
@@ -98,12 +101,12 @@ export function Messages() {
         const updated = { ...prev }
         let hasChanges = false
 
-        Object.keys(updated).forEach((id) => {
+            for (const id of Object.keys(updated)) {
           const log = logs.find((log) => log.id === id)
           if (typeof log === 'undefined') {
             delete updated[id]
             hasChanges = true
-            return
+            continue
           }
 
           const duration = log.autoHideDuration ?? AUTOHIDE_DURATION_DEFAULT
@@ -114,7 +117,7 @@ export function Messages() {
             updated[id] = newValue
             hasChanges = true
           }
-        })
+        }
 
         return hasChanges ? updated : prev
       })
@@ -131,7 +134,7 @@ export function Messages() {
   const alerts = useMemo(() => {
     return logs.map((log) => {
       const progress =
-        log.autoHideDuration !== null ? 100 - (timeLeft[log.id] || 0) : 0
+        log.autoHideDuration != null ? 100 - (timeLeft[log.id] ?? 0) : 0
 
       return (
         <MessageChip

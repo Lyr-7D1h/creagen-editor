@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 
 declare global {
   interface Window {

@@ -8,6 +8,8 @@ export const remoteClient =
       })
     : null
 
+export type StoredCommit =
+  operations['get_CommitFetch']['responses']['200']['content']['application/json']['commit']
 export type User =
   operations['post_UserLogin']['responses']['200']['content']['application/json']['user']
 export type RemoteClient = Client<paths>

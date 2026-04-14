@@ -1,7 +1,7 @@
 import { Button } from '@mui/material'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
 import PersonAddIcon from '@mui/icons-material/PersonAdd'
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { LoginModal } from './LoginModal'
 import { AccountModal } from './AccountModal'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'

@@ -86,7 +86,7 @@ export class Controller {
   }
 
   open() {
-    return this.ws != null && this.ws.readyState === WebSocket.OPEN
+    return this.ws?.readyState === WebSocket.OPEN
   }
 
   connect(id: string) {

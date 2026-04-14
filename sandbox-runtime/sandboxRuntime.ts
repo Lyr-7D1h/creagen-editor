@@ -88,11 +88,11 @@ async function init() {
   const timeoutHandles = new Set<number>()
   const intervalHandles = new Set<number>()
 
-  window.setTimeout = (
+  const patchedSetTimeout = ((
     cb: TimerHandler,
     ms?: number,
     ...args: unknown[]
-  ): number => {
+  ) => {
     if (!timersActive) return -1
     const wrapped = () => {
       // setTimeout is one-shot: remove the handle as soon as the callback fires
@@ -106,21 +106,23 @@ async function init() {
         sendError(e as Error)
       }
     }
-    const id = originalSetTimeout(wrapped, ms) as unknown as number
+    const id = originalSetTimeout(wrapped, ms)
     timeoutHandles.add(id)
     return id
-  }
+  }) as unknown as typeof window.setTimeout
 
-  window.clearTimeout = (id?: number) => {
-    if (id != null) timeoutHandles.delete(id)
-    return originalClearTimeout(id)
-  }
+  const patchedClearTimeout = ((id?: number | string) => {
+    if (typeof id === 'number') {
+      timeoutHandles.delete(id)
+    }
+    return originalClearTimeout(id as number | undefined)
+  }) as unknown as typeof window.clearTimeout
 
-  window.setInterval = (
+  const patchedSetInterval = ((
     cb: TimerHandler,
     ms?: number,
     ...args: unknown[]
-  ): number => {
+  ) => {
     if (!timersActive) return -1
     const wrapped = () => {
       if (!timersActive) return
@@ -132,15 +134,22 @@ async function init() {
         sendError(e as Error)
       }
     }
-    const id = originalSetInterval(wrapped, ms) as unknown as number
+    const id = originalSetInterval(wrapped, ms)
     intervalHandles.add(id)
     return id
-  }
+  }) as unknown as typeof window.setInterval
 
-  window.clearInterval = (id?: number) => {
-    if (id != null) intervalHandles.delete(id)
-    return originalClearInterval(id)
-  }
+  const patchedClearInterval = ((id?: number | string) => {
+    if (typeof id === 'number') {
+      intervalHandles.delete(id)
+    }
+    return originalClearInterval(id as number | undefined)
+  }) as unknown as typeof window.clearInterval
+
+  window.setTimeout = patchedSetTimeout
+  window.clearTimeout = patchedClearTimeout
+  window.setInterval = patchedSetInterval
+  window.clearInterval = patchedClearInterval
 
   function resetScheduledTasks() {
     // prevent new callbacks from running while we cancel existing handles

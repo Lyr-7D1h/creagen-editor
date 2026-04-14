@@ -4,7 +4,7 @@ import {
   Typography,
   LinearProgress,
 } from '@mui/material'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { roundToDec } from '../util'
 import { logger } from '../logs/logger'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'

@@ -1,6 +1,5 @@
 import GitHubIcon from '@mui/icons-material/GitHub'
 import { IconButton } from '@mui/material'
-import React from 'react'
 import BugReportIcon from '@mui/icons-material/BugReport'
 import { HtmlTooltip } from '../editor/HtmlTooltip'
 import { DiscordIcon } from '../editor/DiscordIcon'

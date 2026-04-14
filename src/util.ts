@@ -19,7 +19,7 @@ export function groupBy<T, K extends keyof T>(
       const groupKey = currentItem[key] as T[K] & PropertyKey
 
       // If the group key doesn't exist in the result object, create it.
-      if (!result[groupKey]) {
+      if (!(groupKey in result)) {
         result[groupKey] = []
       }
 

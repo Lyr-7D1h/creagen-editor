@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import {
   Alert,
   Box,
@@ -90,14 +90,12 @@ export function LoginForm({
               },
             }}
           />
-          {CREAGEN_TURNSTILE_SITE_KEY != null && (
-            <Turnstile
-              siteKey={CREAGEN_TURNSTILE_SITE_KEY}
-              onSuccess={setTurnstileToken}
-              onExpire={() => setTurnstileToken(null)}
-              onError={() => setTurnstileToken(null)}
-            />
-          )}
+          <Turnstile
+            siteKey={CREAGEN_TURNSTILE_SITE_KEY}
+            onSuccess={setTurnstileToken}
+            onExpire={() => setTurnstileToken(null)}
+            onError={() => setTurnstileToken(null)}
+          />
         </Box>
       </DialogContent>
       <DialogActions>

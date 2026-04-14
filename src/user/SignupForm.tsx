@@ -181,14 +181,12 @@ export function SignupForm({
               },
             }}
           />
-          {CREAGEN_TURNSTILE_SITE_KEY != null && (
-            <Turnstile
-              siteKey={CREAGEN_TURNSTILE_SITE_KEY}
-              onSuccess={setTurnstileToken}
-              onExpire={() => setTurnstileToken(null)}
-              onError={() => setTurnstileToken(null)}
-            />
-          )}
+          <Turnstile
+            siteKey={CREAGEN_TURNSTILE_SITE_KEY}
+            onSuccess={setTurnstileToken}
+            onExpire={() => setTurnstileToken(null)}
+            onError={() => setTurnstileToken(null)}
+          />
         </Box>
       </DialogContent>
       <DialogActions>

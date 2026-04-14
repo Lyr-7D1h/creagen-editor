@@ -8,10 +8,18 @@ import type {
   CommitHash,
   BlobHash,
   Bookmark,
-  StorageCheckout,
+  CommitJson,
 } from 'versie'
-import { CommitMetadata } from '../creagen-editor/CommitMetadata'
-import { remoteClient, RemoteClient, User } from '../remote/remoteClient'
+import {
+  CommitMetadata,
+  CommitMetadataJson,
+} from '../creagen-editor/CommitMetadata'
+import {
+  remoteClient,
+  RemoteClient,
+  StoredCommit,
+  User,
+} from '../remote/remoteClient'
 import { parseJwtPayload } from '../user/jwt'
 import { logger } from '../logs/logger'
 import { editorEvents } from '../events/events'
@@ -199,16 +207,36 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
     return res.keybindings as CustomKeybinding[]
   }
 
+  private toCommit({
+    blob,
+    createdOn,
+    parent,
+    editorVersion,
+    libraries,
+    author,
+  }: StoredCommit): CommitJson<CommitMetadataJson> {
+    return {
+      blob,
+      createdOn,
+      parent,
+      metadata: {
+        editorVersion,
+        libraries,
+        author,
+      },
+    }
+  }
   async getCommit(id: CommitHash) {
     const local = await this.indexdb.getCommit(id)
     if (local !== null) return local
+
     const res = unwrapDataResponse(
       await this.remoteClient.GET('/api/commits/{commitHash}', {
         params: { path: { commitHash: id.toHex() } },
       }),
     )
     if (res == null) return null
-    return res.commit
+    return this.toCommit(res.commit)
   }
 
   async getCommitData(hash: BlobHash) {
@@ -228,7 +256,7 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
     ).text()
   }
 
-  async getCheckout(commitHash: CommitHash): Promise<StorageCheckout | null> {
+  async getCheckout(commitHash: CommitHash) {
     const local = await this.indexdb.getCheckout(commitHash)
     if (local !== null) return local
     const res = unwrapDataResponse(
@@ -255,12 +283,13 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
       (await Sha256Hash.fromString(decoded.commit.blob)) as BlobHash,
       compressedData,
     )
+    const commit = this.toCommit(decoded.commit)
     const data = await new Response(
       new Blob([compressedData])
         .stream()
         .pipeThrough(new DecompressionStream('deflate')),
     ).text()
-    return { commit: decoded.commit, data }
+    return { commit, data }
   }
 
   async setCommit(commit: Commit<CommitMetadata>, data: string) {

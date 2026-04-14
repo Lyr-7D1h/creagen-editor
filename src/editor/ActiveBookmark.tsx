@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Typography } from '@mui/material'
 import { logger } from '../logs/logger'
 import { useActiveBookmark } from '../events/useEditorEvents'

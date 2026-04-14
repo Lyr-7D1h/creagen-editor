@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useCreagenEditor } from '../../creagen-editor/CreagenContext'
 import ReplayIcon from '@mui/icons-material/Replay'
 import DeleteIcon from '@mui/icons-material/Delete'

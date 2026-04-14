@@ -47,7 +47,6 @@ export function log(
 ): MessageId {
   if (CREAGEN_LOG_LEVEL > (severity as number)) return ''
   if (typeof autoHideDuration === 'undefined')
-    // eslint-disable-next-line no-param-reassign
     autoHideDuration = AUTOHIDE_DURATION_DEFAULT
   const id = Date.now().toString(36) + Math.random().toString(36).substring(4)
   const newAlert = { id, message, severity, autoHideDuration }

@@ -5,28 +5,6 @@ import { HistoryItem } from 'versie'
 import { HtmlTooltip } from './HtmlTooltip'
 import { CommitMetadata } from '../creagen-editor/CommitMetadata'
 
-export function CommitText({
-  historyItem,
-}: {
-  historyItem: HistoryItem<CommitMetadata>
-}) {
-  const { commit, bookmarks } = historyItem
-  return (
-    <div style={{ lineHeight: 1.5, position: 'relative' }}>
-      <Typography sx={{ textAlign: 'right' }} variant="body2" color="grey">
-        {timeAgoString(commit.createdOn)} ({dateString(commit.createdOn)})
-      </Typography>
-      {bookmarks.map((bm) => (
-        <Typography variant="body1" key={bm.name}>
-          {bm.name}
-        </Typography>
-      ))}
-      <Typography variant="body2">
-        <em>{commit.toHex()}</em>
-      </Typography>
-    </div>
-  )
-}
 export function CommitTooltip({
   historyItem,
   children,
@@ -41,12 +19,25 @@ export function CommitTooltip({
       <Typography sx={{ textAlign: 'right' }} variant="body2" color="grey">
         {timeAgoString(commit.createdOn)} ({dateString(commit.createdOn)})
       </Typography>
-      {bookmarks.map((bm) => (
-        <Typography variant="body1" key={bm.name}>
-          {bm.name}
-        </Typography>
-      ))}
       <Typography variant="body2">
+        <strong>Bookmarks:</strong> {bookmarks.map((bm) => bm.name).join(', ')}
+      </Typography>
+      <Typography variant="body2">
+        <strong>Author:</strong> {commit.metadata.author ?? 'local'}
+      </Typography>
+      <Typography variant="body2">
+        <strong>Editor Version:</strong>{' '}
+        {commit.metadata.editorVersion.toString()}
+      </Typography>
+      {commit.metadata.libraries.length > 0 && (
+        <Typography variant="body2">
+          <strong>Libraries:</strong>{' '}
+          {commit.metadata.libraries
+            .map((l) => `${l.name}@${l.version.toString()}`)
+            .join(', ')}
+        </Typography>
+      )}
+      <Typography variant="body2" sx={{ mt: 1 }}>
         <em>{commit.toHex()}</em>
       </Typography>
     </div>

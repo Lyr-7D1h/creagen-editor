@@ -15,7 +15,6 @@ import { bookmarkNameSchema, Bookmark } from 'versie'
 import { HistoryItem } from 'versie'
 import { TextInput } from './TextInput'
 import { HtmlTooltip } from './HtmlTooltip'
-import React from 'react'
 import { CommitTooltip } from './CommitTooltip'
 import { CommitMetadata } from '../creagen-editor/CommitMetadata'
 

@@ -44,13 +44,18 @@ export function Table<T extends object>({
   const startX = useRef(0)
   const startWidth = useRef(0)
   const tableRef = useRef<HTMLTableElement>(null)
+  const handleMouseUpRef = useRef<() => void>(() => {})
 
   useLayoutEffect(() => {
-    if (tableRef.current) {
-      const totalWidth = tableRef.current.parentElement?.clientWidth ?? 0
+    const tableElement = tableRef.current
+    const parent = tableElement?.parentElement
+    if (!parent) return
+
+    const observer = new ResizeObserver((entries) => {
+      const totalWidth = entries[0]?.contentRect.width ?? 0
       if (totalWidth === 0) return
 
-      const columnsWithInitialWidth = columns.filter((c) => c.width)
+      const columnsWithInitialWidth = columns.filter((c) => c.width != null)
       const fixedWidth = columnsWithInitialWidth.reduce(
         (sum, c) =>
           sum +
@@ -59,29 +64,18 @@ export function Table<T extends object>({
             : parseInt(c.width?.toString() ?? '0', 10)),
         0,
       )
-      const flexColumns = columns.filter((c) => !c.width)
+      const flexColumns = columns.filter((c) => c.width == null)
 
       if (flexColumns.length > 0) {
         const availableWidth = totalWidth - fixedWidth
         const flexWidth = Math.max(50, availableWidth / flexColumns.length)
         setColumnWidths(columns.map((c) => c.width ?? flexWidth))
       }
-    }
-  }, [columns, data]) // Rerun when data changes as well to account for scrollbar
+    })
 
-  const handleMouseDown = (
-    index: number,
-    e: React.MouseEvent<HTMLDivElement>,
-  ) => {
-    e.preventDefault()
-    e.stopPropagation()
-    resizingColumnIndex.current = index
-    startX.current = e.clientX
-    const th = tableRef.current?.querySelectorAll('th')[index]
-    startWidth.current = th?.offsetWidth ?? 0
-    window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('mouseup', handleMouseUp)
-  }
+    observer.observe(parent)
+    return () => observer.disconnect()
+  }, [columns]) // Rerun when columns change; ResizeObserver handles scrollbar-induced width changes
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (resizingColumnIndex.current === null) return
@@ -97,8 +91,25 @@ export function Table<T extends object>({
   const handleMouseUp = useCallback(() => {
     resizingColumnIndex.current = null
     window.removeEventListener('mousemove', handleMouseMove)
-    window.removeEventListener('mouseup', handleMouseUp)
+    window.removeEventListener('mouseup', handleMouseUpRef.current)
   }, [handleMouseMove])
+  useLayoutEffect(() => {
+    handleMouseUpRef.current = handleMouseUp
+  }, [handleMouseUp])
+
+  const handleMouseDown = (
+    index: number,
+    e: React.MouseEvent<HTMLDivElement>,
+  ) => {
+    e.preventDefault()
+    e.stopPropagation()
+    resizingColumnIndex.current = index
+    startX.current = e.clientX
+    const th = tableRef.current?.querySelectorAll('th')[index]
+    startWidth.current = th?.offsetWidth ?? 0
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUpRef.current)
+  }
 
   return (
     <TableContainer component={Paper} sx={{ maxHeight: 'calc(100vh - 200px)' }}>
@@ -176,7 +187,7 @@ export function Table<T extends object>({
               {columns.map((col, index) => {
                 const cellContent = col.cell
                   ? col.cell(row)
-                  : col.accessorKey && row[col.accessorKey]
+                  : col.accessorKey != null && row[col.accessorKey]
                     ? (row[col.accessorKey] as React.ReactNode)
                     : null
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import { useSettings } from '../events/useEditorEvents'
 import { EditorBar } from './EditorBar'

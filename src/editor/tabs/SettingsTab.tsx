@@ -1,4 +1,3 @@
-import React from 'react'
 import { Entry, Folder, ParamKey } from '../../settings/SettingsConfig'
 import {
   Accordion,

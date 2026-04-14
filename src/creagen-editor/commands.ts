@@ -24,16 +24,18 @@ export const COMMANDS = {
   },
   'editor.run': {
     description: 'Run/Render the current code',
-    handler: async (editor: CreagenEditor) => {
-      let a: number | undefined
-      if (CREAGEN_MODE === 'dev') a = performance.now()
-      if (editor.settings.values['editor.format_on_render'] === true) {
-        await editor.editor.format()
-      }
-      Promise.all([editor.commit(), editor.render()]).catch(logger.error)
-      if (CREAGEN_MODE === 'dev' && a !== undefined) {
-        logger.debug('Render took ' + (performance.now() - a) + 'ms')
-      }
+    handler: (editor: CreagenEditor) => {
+      ;(async () => {
+        let a: number | undefined
+        if (CREAGEN_MODE === 'dev') a = performance.now()
+        if (editor.settings.values['editor.format_on_render'] === true) {
+          await editor.editor.format()
+        }
+        await Promise.all([editor.commit(), editor.render()])
+        if (CREAGEN_MODE === 'dev' && a !== undefined) {
+          logger.debug('Render took ' + (performance.now() - a) + 'ms')
+        }
+      })().catch(logger.error)
     },
   },
   'editor.toggleFullscreen': {

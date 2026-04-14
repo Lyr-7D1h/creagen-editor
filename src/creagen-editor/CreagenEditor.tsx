@@ -592,10 +592,7 @@ export class CreagenEditor {
   }
 
   executeCommand(command: Command) {
-    const res = COMMANDS[command].handler(this)
-    if (res instanceof Promise) {
-      res.catch(logger.error)
-    }
+    COMMANDS[command].handler(this)
   }
 
   import(data: unknown) {

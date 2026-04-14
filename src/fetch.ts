@@ -20,7 +20,7 @@ export async function fetch(
   setTimeout(() => controller.abort(), timeout)
   let resp
   try {
-    const { validate, ...fetchOpts } = options ?? {}
+    const { validate: _, ...fetchOpts } = options ?? {}
     resp = await window.fetch(url, { ...fetchOpts, signal: controller.signal })
   } catch (e) {
     const error = e as Error

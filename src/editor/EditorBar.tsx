@@ -1,7 +1,7 @@
 import { Add, ChevronRight } from '@mui/icons-material'
 import { IconButton } from '@mui/material'
 import { History } from './History'
-import React, { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ActiveBookmark } from './ActiveBookmark'
 import { HtmlTooltip } from './HtmlTooltip'
 import { useHistory, useSettings } from '../events/useEditorEvents'
@@ -108,7 +108,7 @@ export function EditorBar({
           </IconButton>
         </HtmlTooltip>
         <HtmlTooltip
-          title={`New project (${creagenEditor.getKeybindKeyString('new')})`}
+          title={`New sketch (${creagenEditor.getKeybindKeyString('new')})`}
           placement="right"
         >
           <IconButton
@@ -120,7 +120,10 @@ export function EditorBar({
               color: 'inherit',
             }}
             onClick={() => {
-              creagenEditor.new().then((r) => r.onFailure(logger.error))
+              creagenEditor
+                .new()
+                .then((r) => r.onFailure(logger.error))
+                .catch(logger.error)
             }}
             size="small"
           >

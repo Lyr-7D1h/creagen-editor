@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import { Allotment } from 'allotment'
 import 'allotment/dist/style.css'
 import { EditorView } from '../editor/EditorView'

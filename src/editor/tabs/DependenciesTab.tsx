@@ -4,7 +4,7 @@ import {
   Select,
   MenuItem,
 } from '@mui/material'
-import React, { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { SemVer } from 'semver'
 import { useCreagenEditor } from '../../creagen-editor/CreagenContext'
 import { useLibraries } from '../../events/useEditorEvents'

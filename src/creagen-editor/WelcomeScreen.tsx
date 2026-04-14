@@ -7,7 +7,6 @@ import {
   DialogTitle,
   Typography,
 } from '@mui/material'
-import React from 'react'
 import { useWelcome } from '../events/useEditorEvents'
 import { editorEvents } from '../events/events'
 
@@ -37,7 +36,7 @@ export function WelcomeScreen() {
         <DialogContentText>
           This is a creative coding web editor with a focus on being minimal,
           customizable, fast and powerful. Its goal is to provide easy
-          accessibility to make creative coding projects.
+          accessibility to make and share creative coding projects.
         </DialogContentText>
         <Typography variant="h6" sx={{ mt: 2 }}>
           Getting Started
@@ -47,7 +46,7 @@ export function WelcomeScreen() {
             <li>Write Code</li>
             <li>
               Press <b>Control+Shift+Enter</b> to render code or{' '}
-              <b>the top right button</b>
+              <b>press the top right button</b>
             </li>
             <li>
               In the <b>Menu</b>{' '}

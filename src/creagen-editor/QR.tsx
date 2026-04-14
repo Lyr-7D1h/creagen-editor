@@ -1,4 +1,3 @@
-import React from 'react'
 import { useCreagenEditor } from './CreagenContext'
 import QRCode from 'react-qr-code'
 import CircularProgress from '@mui/material/CircularProgress'

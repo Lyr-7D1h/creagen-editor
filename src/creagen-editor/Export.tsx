@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useCreagenEditor } from './CreagenContext'
-import React from 'react'
 import { Download, ExpandMore } from '@mui/icons-material'
 import {
   CircularProgress,

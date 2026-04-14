@@ -1,6 +1,5 @@
 import { Close as CloseIcon } from '@mui/icons-material'
 import { IconButton } from '@mui/material'
-import React from 'react'
 
 export function CloseButton({ onClose }: { onClose: () => void }) {
   return (

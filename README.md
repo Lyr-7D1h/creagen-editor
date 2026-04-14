@@ -25,6 +25,7 @@ npm start
 
 ## Roadmap
 
+- Put url in svg export
 - Remote mode
   - Show two storage bars, one local, one remote
 - Hybrid Mode: Remote enabled build that handles local changes well
