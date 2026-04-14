@@ -50,7 +50,8 @@ async function resolveAuth(
     const auth = authMiddleware(token)
     remoteClient.use(auth)
     const res = await remoteClient.GET('/api/user')
-    if (res.error?.error.code === 'UNAUTHORIZED') {
+    const code = res.error?.error.code
+    if (code === 'UNAUTHORIZED' || code === 'USER_NOT_FOUND') {
       localStorage.remove('creagen-auth-token')
       remoteClient.eject(auth)
       logger.error('User is unauthorized')
@@ -108,6 +109,7 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
       const metadata = CommitMetadata.parse({
         editorVersion: remoteCommit.editorVersion,
         libraries: remoteCommit.libraries,
+        author: this.user.username,
       })
       const commit = new Commit(
         hash,

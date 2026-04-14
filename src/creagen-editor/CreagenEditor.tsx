@@ -539,6 +539,8 @@ export class CreagenEditor {
       throw new Error(`Failed to commit code: ${commitResult.error.message}`)
     }
 
+    this.editor.markClean()
+
     // Explicitly handle the "no changes" case where commitResult.value is null.
     if (commitResult.value == null) {
       return null
@@ -637,10 +639,13 @@ export class CreagenEditor {
 
   async removeBookmark(name: string) {
     const result = await this.vcs.removeBookmark(name)
-    if (result.ok && this.activeBookmark.name === name) {
+
+    if (!result.ok) throw result.error
+    // If removing the current active bookmark, generate a new one
+    if (this.activeBookmark.name === name) {
       this.activeBookmark = generateUncommittedBookmark()
-      editorEvents.emit('vcs:bookmark-update', undefined)
     }
+    editorEvents.emit('vcs:bookmark-update', undefined)
     return result
   }
 

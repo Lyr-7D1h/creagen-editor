@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Typography } from '@mui/material'
 import { logger } from '../logs/logger'
-import { useActiveBookmark } from '../events/useEditorEvents'
+import { useActiveBookmark, useIsDirty } from '../events/useEditorEvents'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import { TextInput } from './TextInput'
 import { bookmarkNameSchema } from 'versie'
@@ -9,6 +9,7 @@ import { bookmarkNameSchema } from 'versie'
 export function ActiveBookmark({ color }: { color?: string }) {
   const creagenEditor = useCreagenEditor()
   const activeBookmark = useActiveBookmark()
+  const isDirty = useIsDirty(creagenEditor)
   const [isEditing, setIsEditing] = useState(false)
 
   function onSave(value: string) {
@@ -29,7 +30,17 @@ export function ActiveBookmark({ color }: { color?: string }) {
       .catch(logger.error)
   }
 
-  const uncommitted = activeBookmark.commit === null ? '*' : ''
+  const isUncommitted = activeBookmark.commit === null
+  const uncommittedMarker = useMemo(
+    () =>
+      isDirty || isUncommitted ? (
+        <Typography component="span" sx={{ color: 'text.disabled' }}>
+          *
+        </Typography>
+      ) : null,
+    [isUncommitted, isDirty],
+  )
+
   return (
     <>
       <Typography
@@ -60,9 +71,16 @@ export function ActiveBookmark({ color }: { color?: string }) {
             initialValue={activeBookmark.name}
           />
         ) : activeBookmark.name.length > 30 ? (
-          activeBookmark.name.substring(0, 30) + uncommitted + '...'
+          <>
+            {activeBookmark.name.substring(0, 30)}
+            {uncommittedMarker}
+            ...
+          </>
         ) : (
-          activeBookmark.name + uncommitted
+          <>
+            {activeBookmark.name}
+            {uncommittedMarker}
+          </>
         )}
       </Typography>
     </>

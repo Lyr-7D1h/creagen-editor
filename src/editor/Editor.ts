@@ -95,6 +95,9 @@ export class Editor {
   private readonly typings = new Map<string, monaco.IDisposable>()
   private readonly _html
 
+  private cleanAlternativeVersionId: number
+  private dirty = false
+
   static create(settings: Settings) {
     handleBeforeMount(monaco)
 
@@ -139,18 +142,32 @@ export class Editor {
     })
     this.vimMode = null
     this.fullscreendecorators = null
+    this.cleanAlternativeVersionId = this.getAlternativeVersionId()
 
     editorEvents.on('settings:changed', ({ key }) => {
       if (key.startsWith('editor')) this.updateFromSettings(settings)
     })
+
     this.updateFromSettings(settings)
+
+    this.editor.onDidChangeModelContent(() => {
+      const wasDirty = this.dirty
+      this.updateDirtyState()
+      if (this.dirty === wasDirty) return
+      editorEvents.emit('editor:code-dirty', undefined)
+    })
 
     // Save scroll position when the page is about to unload
     const scrollPosition = localStorage.get('editor-scroll-position')
     if (scrollPosition != null) this.setScrollPosition(scrollPosition)
-    window.addEventListener('beforeunload', () => {
+    window.addEventListener('beforeunload', (event) => {
       const position = this.editor.getScrollTop()
       localStorage.set('editor-scroll-position', position)
+
+      if (!this.isDirty()) return
+      event.preventDefault()
+      // Required for some browsers to show the native unsaved changes prompt.
+      event.returnValue = ''
     })
   }
 
@@ -286,8 +303,19 @@ export class Editor {
     return this.editor.getValue()
   }
 
+  isDirty() {
+    return this.dirty
+  }
+
+  markClean() {
+    this.cleanAlternativeVersionId = this.getAlternativeVersionId()
+    this.updateDirtyState()
+    editorEvents.emit('editor:code-dirty', undefined)
+  }
+
   setValue(value: string) {
     this.editor.setValue(value)
+    this.markClean()
 
     if (this.fullscreendecorators) {
       this.fullscreendecorators.clear()
@@ -312,5 +340,14 @@ export class Editor {
       scrollTop,
       scrollLeft: scrollLeft ?? this.editor.getScrollLeft(),
     })
+  }
+
+  private getAlternativeVersionId() {
+    return this.editor.getModel()?.getAlternativeVersionId() ?? 0
+  }
+
+  private updateDirtyState() {
+    this.dirty =
+      this.getAlternativeVersionId() !== this.cleanAlternativeVersionId
   }
 }

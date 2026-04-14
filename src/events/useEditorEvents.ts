@@ -7,7 +7,7 @@ import { ParamKey, ParamValue } from '../settings/SettingsConfig'
 import { HistoryItem } from 'versie'
 import { logger } from '../logs/logger'
 import { useLocalStorage } from '../storage/useLocalStorage'
-import { ActiveBookmark } from '../creagen-editor/CreagenEditor'
+import { ActiveBookmark, CreagenEditor } from '../creagen-editor/CreagenEditor'
 
 /**
  * Hook that subscribes to an event and triggers re-render when emitted
@@ -156,6 +156,16 @@ export const useHistory = (size: number) => {
   }, [creagenEditor, setHistory, size])
 
   return history
+}
+
+export const useIsDirty = (editor: CreagenEditor) => {
+  const [isDirty, setIsDirty] = useState(editor.editor.isDirty())
+  useEffect(() => {
+    return editorEvents.on('editor:code-dirty', () => {
+      setIsDirty(editor.editor.isDirty())
+    })
+  }, [editor.editor])
+  return isDirty
 }
 
 export const useWelcome = () => {

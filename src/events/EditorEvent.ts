@@ -43,7 +43,7 @@ type EditorEvents = {
   'sandbox:unfreeze': void
 
   // Editor events
-  'editor:code-changed': { code: string; hasChanges: boolean }
+  'editor:code-dirty': void
   'editor:libraries-changed': { libraries: unknown[] }
   'editor:tab-changed': { activeTab: string }
   'editor:save': { code: string }
@@ -75,7 +75,7 @@ export const EDITOR_EVENTS: ReadonlyArray<EditorEvent> = [
   'sandbox:render-complete',
 
   // Editor events
-  'editor:code-changed',
+  'editor:code-dirty',
   'editor:libraries-changed',
   'editor:tab-changed',
   'editor:save',
