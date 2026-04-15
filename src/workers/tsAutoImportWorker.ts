@@ -10,6 +10,11 @@ interface BaseTypeScriptWorkerInstance {
     fileName: string,
     position: number,
   ): Promise<ts.CompletionInfo | undefined>
+  getCompletionEntryDetails(
+    fileName: string,
+    position: number,
+    entryName: string,
+  ): Promise<ts.CompletionEntryDetails | undefined>
 }
 
 type BaseTypeScriptWorkerCtor = new (
@@ -22,6 +27,8 @@ const BaseTypeScriptWorker =
 const initializeWorker = initialize as unknown as (
   callback: (ctx: unknown, createData: unknown) => unknown,
 ) => void
+const defaultFormatOptions: ts.FormatCodeSettings = {}
+const defaultUserPreferences: ts.UserPreferences = {}
 
 /** Extend base typescript language worker with extra auto completion functionality */
 class AutoImportWorker extends BaseTypeScriptWorker {
@@ -34,6 +41,30 @@ class AutoImportWorker extends BaseTypeScriptWorker {
         includeCompletionsForModuleExports: true,
       }),
     )
+  }
+
+  getCompletionEntryDetailsWithImports(
+    fileName: string,
+    position: number,
+    entryName: string,
+    source?: string,
+    data?: ts.CompletionEntryData,
+  ): Promise<ts.CompletionEntryDetails | undefined> {
+    try {
+      return Promise.resolve(
+        this.getLanguageService().getCompletionEntryDetails(
+          fileName,
+          position,
+          entryName,
+          defaultFormatOptions,
+          source,
+          defaultUserPreferences,
+          data,
+        ),
+      )
+    } catch {
+      return Promise.resolve(undefined)
+    }
   }
 }
 

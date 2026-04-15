@@ -1,25 +1,20 @@
 import { encode, decode } from '@msgpack/msgpack'
 import { z } from 'zod'
 import { localStorage } from './LocalStorage'
-import { CustomKeybinding } from '../creagen-editor/keybindings'
-import { IndexDBStorage, Commit, Sha256Hash } from 'versie'
+import type { CustomKeybinding } from '../creagen-editor/keybindings'
+import { Commit, Sha256Hash } from 'versie'
 import type {
   Storage,
   CommitHash,
   BlobHash,
   Bookmark,
   CommitJson,
+  IndexDBStorage,
 } from 'versie'
-import {
-  CommitMetadata,
-  CommitMetadataJson,
-} from '../creagen-editor/CommitMetadata'
-import {
-  remoteClient,
-  RemoteClient,
-  StoredCommit,
-  User,
-} from '../remote/remoteClient'
+import type { CommitMetadataJson } from '../creagen-editor/CommitMetadata'
+import { CommitMetadata } from '../creagen-editor/CommitMetadata'
+import type { RemoteClient, StoredCommit, User } from '../remote/remoteClient'
+import { remoteClient } from '../remote/remoteClient'
 import { parseJwtPayload } from '../user/jwt'
 import { logger } from '../logs/logger'
 import { editorEvents } from '../events/events'
