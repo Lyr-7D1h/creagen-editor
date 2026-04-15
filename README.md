@@ -25,61 +25,43 @@ npm start
 
 ## Roadmap
 
+- Add docs
 - Put url in svg export
+- Add caching of package information to Imported
 - Remote mode
-  - Show two storage bars, one local, one remote
+  - Show two storage bars, one locally cached, one remote
 - Hybrid Mode: Remote enabled build that handles local changes well
   - Sync local changes the moment editor gets back online
   - Handle merge conflicts
 - Feature to resize code to editor view size
-- Make folding optional
 - Generate controller id from unique browser id
-- Define how to randomize each param and what distribution the randomization should be. 
-    - Add randomize interval.
-- Add sketch params
-  - Randomize params in interval
-  - Define distribution randomization distribution per param
-  - Add groups 
-    ```
-    const asdf = useGroup("asdf") 
-    const title = asdf.useParam("string")
-    ```
-  - Input mathematical functions
-  - Input colors
-  - Input images
-  - Set values through a QR
-  - Use /#/params in path for defining params
-- Actions
-    - For shareable link
-    - Running in interval
-- Use hash/active bookmark in title
-- Keep commit history buffer when changing commits
+- Improve parameters
+  - Define how to randomize each param and what distribution the randomization should be. 
+      - Add randomize interval.
+  - Add sketch params
+    - Randomize params in interval
+    - Define distribution randomization distribution per param
+    - Add groups 
+      ```
+      const asdf = useGroup("asdf") 
+      const title = asdf.useParam("string")
+      ```
+    - Input mathematical functions
+    - Input colors
+    - Input images
+    - Set values through a QR
+    - Use /#/params in path for defining params
 - Version Control Software
   - Order bookmarks by recently used
   - View entire history of sketch
-  - Show graph of all commits and bookmarks ever made
   - Show diffs between commits
-- Moveable windows
-- Shareable links
-    - Url minifier for code urls
 - Live coding, no delay in updates
 - Export to html with js inlined
 - Add Hydra support https://github.com/hydra-synth/hydra-synth?tab=readme-ov-file
-- use importmap to map module names to urls https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap
-- Dynamically add npm packages
 - Download canvas as png
-- Remote storage
-  - Fastcdc for file chunking https://www.usenix.org/system/files/conference/atc16/atc16-paper-xia.pdf
-  - git pack files
-  - Cloudflare r2
-- Import code using ID `import('a123487e...')
-- Rollback failing actions
-  - checkout, add bookmark enc
+- Import code from another sketch using hash `import('a123487e...')
 - Crop, compress and convert dropped images to base64 string
-- Html meta tags
-
-## Known bugs
-- Old bookmarks not going away: When renaming bookmark update history
+  - https://base64.guru/converter/encode/image/png
 
 ## Useful links
 PNG to Base64:

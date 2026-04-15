@@ -402,7 +402,7 @@ export class CreagenEditor {
         continue
       }
       if (t.value != null) {
-        this.editor.addTypings(t.value, `ts:${name}.d.ts`, name)
+        this.editor.addTypings(t.value, `ts:${name}.d.ts`)
       }
     }
   }
@@ -455,11 +455,7 @@ export class CreagenEditor {
             .typings()
             .then((typings) => {
               if (typings != null) {
-                this.editor.addTypings(
-                  typings,
-                  `ts:${library.name}.d.ts`,
-                  library.name,
-                )
+                this.editor.addTypings(typings, `ts:${library.name}.d.ts`)
               }
             })
             .catch(logger.error)

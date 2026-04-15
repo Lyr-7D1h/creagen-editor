@@ -1,6 +1,4 @@
 import { localStorage } from '../storage/LocalStorage'
-import AutoImport, { regexTokeniser } from '@kareemkermad/monaco-auto-import'
-
 import * as monaco from 'monaco-editor'
 import type * as m from 'monaco-editor'
 
@@ -8,7 +6,6 @@ import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
 import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
 import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
 import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker'
-import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 
 import './editor.css'
 
@@ -35,7 +32,10 @@ self.MonacoEnvironment = {
       return new htmlWorker()
     }
     if (label === 'typescript' || label === 'javascript') {
-      return new tsWorker()
+      return new Worker(
+        new URL('../workers/tsAutoImportWorker.ts', import.meta.url),
+        { type: 'module' },
+      )
     }
     return new editorWorker()
   },
@@ -62,12 +62,11 @@ const creagenFullscreenTheme: monaco.editor.IStandaloneThemeData = {
 export const typescriptCompilerOptions = {
   target: monaco.typescript.ScriptTarget.ESNext,
   allowNonTsExtensions: true,
-  moduleResolution: monaco.typescript.ModuleResolutionKind.Classic,
+  moduleResolution: monaco.typescript.ModuleResolutionKind.NodeJs,
   esModuleInterop: true,
   module: monaco.typescript.ModuleKind.ESNext,
   noEmit: true,
 }
-
 export interface EditorSettings {
   value?: string
 }
@@ -86,10 +85,92 @@ function handleBeforeMount(monaco: Monaco) {
   monaco.editor.defineTheme('creagen-fullscreen', creagenFullscreenTheme)
 }
 
+function registerCompletionProvider() {
+  return monaco.typescript
+    .getTypeScriptWorker()
+    .then((getWorker) => getWorker())
+    .then((worker: unknown) => {
+      monaco.languages.registerCompletionItemProvider('typescript', {
+        triggerCharacters: ['.', '"', "'", '/', '@'],
+        async provideCompletionItems(model, position) {
+          const completions = await (
+            worker as {
+              getCompletionsWithImportsAtPosition(
+                file: string,
+                position: number,
+              ): Promise<import('typescript').CompletionInfo | undefined>
+            }
+          ).getCompletionsWithImportsAtPosition(
+            model.uri.toString(),
+            model.getOffsetAt(position),
+          )
+
+          const wordAtPosition = model.getWordAtPosition(position)
+          const baseRange = wordAtPosition
+            ? new monaco.Range(
+                position.lineNumber,
+                wordAtPosition.startColumn,
+                position.lineNumber,
+                wordAtPosition.endColumn,
+              )
+            : new monaco.Range(
+                position.lineNumber,
+                position.column,
+                position.lineNumber,
+                position.column,
+              )
+
+          const suggestions: monaco.languages.CompletionItem[] = (
+            completions?.entries ?? []
+          ).reduce((acc, completion) => {
+            if (!completion.data?.moduleSpecifier) return acc
+
+            const startPosition = completion.replacementSpan
+              ? model.getPositionAt(completion.replacementSpan.start)
+              : baseRange.getStartPosition()
+            const endPosition = completion.replacementSpan
+              ? model.getPositionAt(
+                  completion.replacementSpan.start +
+                    completion.replacementSpan.length,
+                )
+              : baseRange.getEndPosition()
+
+            const item: monaco.languages.CompletionItem = {
+              label: {
+                label: completion.name,
+                description: completion.data?.moduleSpecifier,
+              },
+              kind: monaco.languages.CompletionItemKind.Variable,
+              insertText: completion.insertText ?? completion.name,
+              range: new monaco.Range(
+                startPosition.lineNumber,
+                startPosition.column,
+                endPosition.lineNumber,
+                endPosition.column,
+              ),
+              sortText: `~${completion.sortText ?? completion.name}`,
+            }
+
+            item.additionalTextEdits = [
+              {
+                range: new monaco.Range(1, 1, 1, 1),
+                text: `import { ${completion.insertText ?? completion.name} } from '${completion.data.moduleSpecifier}';\n`,
+              },
+            ]
+
+            acc.push(item)
+            return acc
+          }, [] as monaco.languages.CompletionItem[])
+
+          return { suggestions, incomplete: true }
+        },
+      })
+    })
+}
+
 /** The actual code editor, responsible for text modification */
 export class Editor {
   private readonly editor: m.editor.IStandaloneCodeEditor
-  private readonly autoimport: AutoImport
   private vimMode: m.editor.IStandaloneCodeEditor | null
   private vimRef?: HTMLElement
   private fullscreendecorators: m.editor.IEditorDecorationsCollection | null
@@ -122,25 +203,17 @@ export class Editor {
       fixedOverflowWidgets: true,
     })
 
-    return new Editor(html, settings, monaco, editor)
+    return new Editor(html, settings, editor)
   }
 
   constructor(
     html: HTMLElement,
     settings: Settings,
-    monaco: Monaco,
     editor: m.editor.IStandaloneCodeEditor,
   ) {
     this._html = html
     this.editor = editor
-    this.autoimport = new AutoImport({
-      monaco,
-      editor: this.editor,
-      spacesBetweenBraces: true,
-      doubleQuotes: true,
-      semiColon: false,
-      alwaysApply: false,
-    })
+    registerCompletionProvider().catch(logger.error)
     this.vimMode = null
     this.fullscreendecorators = null
     this.cleanAlternativeVersionId = this.getAlternativeVersionId()
@@ -273,17 +346,9 @@ export class Editor {
     return this.typings.has(uri)
   }
 
-  /** If `packageName` given will also add autoimports */
-  addTypings(typings: string, uri: string, packageName?: string) {
+  addTypings(typings: string, uri: string) {
     if (this.typingsExist(uri)) return
     logger.info(`Adding typings for ${uri}`)
-    if (typeof packageName === 'string') {
-      this.autoimport.imports.saveFile({
-        path: packageName,
-        aliases: [packageName],
-        imports: regexTokeniser(typings),
-      })
-    }
     const disposable = monaco.typescript.typescriptDefaults.addExtraLib(
       typings,
       uri,

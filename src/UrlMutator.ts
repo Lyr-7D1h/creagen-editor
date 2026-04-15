@@ -325,14 +325,15 @@ export class UrlMutator {
   }
 
   pushState(state: unknown = null, title = '') {
+    if (title.length > 0) {
+      this.setWindowTitle(title)
+    }
+
     // don't update if no changes to url
     if (new URL(window.location.href).toString() === this.url.toString()) {
       return
     }
 
-    if (title.length > 0) {
-      this.setWindowTitle(title)
-    }
     window.history.pushState(state, title, this.url)
   }
 }

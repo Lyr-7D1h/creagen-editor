@@ -60,6 +60,7 @@ const SUPPORTED_CDN = {
 }
 type SupportedCDN = keyof typeof SUPPORTED_CDN
 
+// TODO: add caching of imported packages and types
 /** Takes care of handling proper typings and importing libraries */
 export class Importer {
   /** Get a library, latest if version is not given */
