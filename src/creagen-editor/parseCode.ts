@@ -304,7 +304,7 @@ export function parseCode(
 
   const transpiled = ts.transpile(transformedCode, typescriptCompilerOptions)
 
-  logger.trace(transpiled)
+  logger.trace(`Transpiled code:\n${transpiled}`)
 
   return transpiled
 }

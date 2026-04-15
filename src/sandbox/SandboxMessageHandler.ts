@@ -93,7 +93,7 @@ export enum SandboxMessageHandlerMode {
   Iframe,
 }
 
-const HANDSHAKE_TIMEOUT_MS = 5000
+export const SANDBOX_MESSAGE_HANDLER_HANDSHAKE_TIMEOUT_MS = 5000
 
 function getMessageType(data: unknown): unknown {
   if (data === null || typeof data !== 'object' || !('type' in data)) {
@@ -124,7 +124,7 @@ function waitForMessage(
 
     const timeoutId = window.setTimeout(() => {
       finish(() => reject(new Error(timeoutMessage)))
-    }, HANDSHAKE_TIMEOUT_MS)
+    }, SANDBOX_MESSAGE_HANDLER_HANDSHAKE_TIMEOUT_MS)
 
     window.addEventListener('message', listener)
   })

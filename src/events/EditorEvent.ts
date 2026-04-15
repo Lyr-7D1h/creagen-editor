@@ -39,6 +39,8 @@ type EditorEvents = {
   'sandbox:error': { error: Error }
   'sandbox:render': void
   'sandbox:render-complete': void
+  /** Emitted whenever Sandbox got connected to its iframe */
+  'sandbox:connect': void
   'sandbox:freeze': void
   'sandbox:unfreeze': void
 
@@ -58,27 +60,3 @@ type EditorEvents = {
 
 export type EditorEvent = keyof EditorEvents
 export type EditorEventData<T extends EditorEvent> = EditorEvents[T]
-
-export const EDITOR_EVENTS: ReadonlyArray<EditorEvent> = [
-  // TODO fill
-  // VCS events
-  'vcs:commit',
-  'vcs:checkout',
-  'vcs:bookmark-update',
-
-  // Settings events
-  'settings:changed',
-
-  // Sandbox events
-  'sandbox:analysis-complete',
-  'sandbox:error',
-  'sandbox:render-complete',
-
-  // Editor events
-  'editor:code-dirty',
-  'editor:libraries-changed',
-  'editor:tab-changed',
-  'editor:save',
-
-  'local-storage',
-]

@@ -86,6 +86,7 @@ function handleBeforeMount(monaco: Monaco) {
   monaco.editor.defineTheme('creagen-fullscreen', creagenFullscreenTheme)
 }
 
+/** The actual code editor, responsible for text modification */
 export class Editor {
   private readonly editor: m.editor.IStandaloneCodeEditor
   private readonly autoimport: AutoImport
@@ -137,7 +138,7 @@ export class Editor {
       editor: this.editor,
       spacesBetweenBraces: true,
       doubleQuotes: true,
-      semiColon: true,
+      semiColon: false,
       alwaysApply: false,
     })
     this.vimMode = null

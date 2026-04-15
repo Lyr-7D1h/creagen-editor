@@ -3,6 +3,7 @@ import { LibraryImport } from '../importer'
 import { createContextLogger } from '../logs/logger'
 import { CommitHash } from 'versie'
 import {
+  SANDBOX_MESSAGE_HANDLER_HANDSHAKE_TIMEOUT_MS,
   SandboxMessageHandler,
   SandboxMessageHandlerMode,
 } from './SandboxMessageHandler'
@@ -34,6 +35,34 @@ export class Sandbox {
 
   private constructor(private readonly iframe: HTMLIFrameElement) {
     this.setupMessageHandlers()
+  }
+
+  /** Wait for message handler connection if not already connected */
+  ensureConnection(): Promise<SandboxMessageHandler> {
+    if (typeof this.messageHandler !== 'undefined')
+      return Promise.resolve(this.messageHandler)
+
+    return new Promise((res, rej) => {
+      const timer = setTimeout(() => {
+        unsub()
+        rej(new Error('Sandbox connection timeout'))
+      }, SANDBOX_MESSAGE_HANDLER_HANDSHAKE_TIMEOUT_MS)
+
+      const unsub = editorEvents.on(
+        'sandbox:connect',
+        () => {
+          clearTimeout(timer)
+          if (typeof this.messageHandler === 'undefined')
+            return rej(
+              new Error(
+                'Sandbox Message Handler still not defined after connection',
+              ),
+            )
+          res(this.messageHandler)
+        },
+        { once: true },
+      )
+    })
   }
 
   /**
@@ -68,6 +97,7 @@ export class Sandbox {
       SandboxMessageHandlerMode.Parent,
       this.iframe,
     )
+    editorEvents.emit('sandbox:connect', undefined)
     this.setupMessageHandlers()
     logger.info('Message handler reconnected')
   }
@@ -77,10 +107,12 @@ export class Sandbox {
   }
 
   async render(code: string, libraryImports: LibraryImport[]) {
-    if (!this.messageHandler) return
+    // wait for sandbox to be connected before sending anything
+    const messageHandler = await this.ensureConnection()
+
     editorEvents.emit('sandbox:render', undefined)
     if (this.isFrozen) await this.unfreeze()
-    this.messageHandler.send({
+    messageHandler.send({
       type: 'render',
       code,
       preloadedLibraries: libraryImports.map(
@@ -155,22 +187,19 @@ export class Sandbox {
     optimize: boolean,
     head?: CommitHash,
   ): Promise<Blob | null> {
+    const messageHandler = await this.ensureConnection()
     return new Promise((resolve, reject) => {
-      if (!this.messageHandler) return
       const timeout = setTimeout(() => {
         unsubscribe()
         reject(new Error('SVG export timeout'))
       }, 20000)
 
-      const unsubscribe = this.messageHandler.once(
-        'svgExportResponse',
-        (event) => {
-          clearTimeout(timeout)
-          resolve(event.svg)
-        },
-      )
+      const unsubscribe = messageHandler.once('svgExportResponse', (event) => {
+        clearTimeout(timeout)
+        resolve(event.svg)
+      })
 
-      this.messageHandler.send({
+      messageHandler.send({
         type: 'svgExportRequest',
         svgIndex,
         optimize,

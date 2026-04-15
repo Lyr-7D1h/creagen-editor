@@ -40,8 +40,8 @@ npm start
   - Randomize params in interval
   - Define distribution randomization distribution per param
   - Add groups 
-    - ```
-    const asdf = useGroup("asdf")
+    ```
+    const asdf = useGroup("asdf") 
     const title = asdf.useParam("string")
     ```
   - Input mathematical functions

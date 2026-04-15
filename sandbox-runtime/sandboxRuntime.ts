@@ -5,8 +5,11 @@ import {
   SandboxMessageHandlerMode,
 } from '../src/sandbox/SandboxMessageHandler'
 import { analyzeContainer } from './analyzeContainer'
+import { createScheduledTaskController } from './createScheduledTaskController'
+import { createWindowEventListenerTracker } from './createWindowEventListenerTracker'
+import { setupConsoleBridge } from './setupConsoleBridge'
 import { svgExportRequest } from './svgExport'
-import { serializeForPostMessage } from './serializeForPostMessage'
+import { syncPreloadedLibraries } from './syncPreloadedLibraries'
 
 async function init() {
   // Create message handler in iframe mode
@@ -18,230 +21,22 @@ async function init() {
     messageHandler.send({ type: 'error', error })
   }
 
-  // Track event listeners added to window
-  const windowEventListeners = new Map<
-    string,
-    Set<{
-      listener: EventListenerOrEventListenerObject
-      options?: AddEventListenerOptions | boolean
-    }>
-  >()
-
-  // Override addEventListener to track listeners
-  const originalAddEventListener = window.addEventListener.bind(window)
-  window.addEventListener = function (
-    type: string,
-    listener: EventListenerOrEventListenerObject,
-    options?: AddEventListenerOptions | boolean,
-  ) {
-    if (!windowEventListeners.has(type)) {
-      windowEventListeners.set(type, new Set())
-    }
-    windowEventListeners.get(type)!.add({ listener, options })
-    return originalAddEventListener(type, listener, options)
-  } as typeof window.addEventListener
-
-  // Function to reset all window event handlers
-  function resetWindowEventHandlers() {
-    windowEventListeners.forEach((listeners, eventType) => {
-      listeners.forEach(({ listener, options }) => {
-        window.removeEventListener(eventType, listener, options)
-      })
-    })
-    windowEventListeners.clear()
-  }
-
-  // Track and control requestAnimationFrame, setTimeout and setInterval
-  const originalRequestAnimationFrame =
-    window.requestAnimationFrame.bind(window)
-  const originalCancelAnimationFrame = window.cancelAnimationFrame.bind(window)
-  let rafActive = true
-  const rafHandles = new Set<number>()
-
-  window.requestAnimationFrame = (cb: FrameRequestCallback): number => {
-    if (!rafActive) return -1
-    const wrapped: FrameRequestCallback = (time) => {
-      // rAF is one-shot: remove the handle as soon as the callback fires
-      rafHandles.delete(id)
-      if (!rafActive) return
-      try {
-        cb(time)
-      } catch (e) {
-        sendError(e as Error)
-      }
-    }
-    const id = originalRequestAnimationFrame(wrapped)
-    rafHandles.add(id)
-    return id
-  }
-
-  window.cancelAnimationFrame = (id: number) => {
-    rafHandles.delete(id)
-    return originalCancelAnimationFrame(id)
-  }
-
-  const originalSetTimeout = window.setTimeout.bind(window)
-  const originalClearTimeout = window.clearTimeout.bind(window)
-  const originalSetInterval = window.setInterval.bind(window)
-  const originalClearInterval = window.clearInterval.bind(window)
-  let timersActive = true
-  const timeoutHandles = new Set<number>()
-  const intervalHandles = new Set<number>()
-
-  const patchedSetTimeout = ((
-    cb: TimerHandler,
-    ms?: number,
-    ...args: unknown[]
-  ) => {
-    if (!timersActive) return -1
-    const wrapped = () => {
-      // setTimeout is one-shot: remove the handle as soon as the callback fires
-      timeoutHandles.delete(id)
-      if (!timersActive) return
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        if (typeof cb === 'function') cb(...args)
-        else eval(String(cb))
-      } catch (e) {
-        sendError(e as Error)
-      }
-    }
-    const id = originalSetTimeout(wrapped, ms)
-    timeoutHandles.add(id)
-    return id
-  }) as unknown as typeof window.setTimeout
-
-  const patchedClearTimeout = ((id?: number | string) => {
-    if (typeof id === 'number') {
-      timeoutHandles.delete(id)
-    }
-    return originalClearTimeout(id as number | undefined)
-  }) as unknown as typeof window.clearTimeout
-
-  const patchedSetInterval = ((
-    cb: TimerHandler,
-    ms?: number,
-    ...args: unknown[]
-  ) => {
-    if (!timersActive) return -1
-    const wrapped = () => {
-      if (!timersActive) return
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        if (typeof cb === 'function') cb(...args)
-        else eval(String(cb))
-      } catch (e) {
-        sendError(e as Error)
-      }
-    }
-    const id = originalSetInterval(wrapped, ms)
-    intervalHandles.add(id)
-    return id
-  }) as unknown as typeof window.setInterval
-
-  const patchedClearInterval = ((id?: number | string) => {
-    if (typeof id === 'number') {
-      intervalHandles.delete(id)
-    }
-    return originalClearInterval(id as number | undefined)
-  }) as unknown as typeof window.clearInterval
-
-  window.setTimeout = patchedSetTimeout
-  window.clearTimeout = patchedClearTimeout
-  window.setInterval = patchedSetInterval
-  window.clearInterval = patchedClearInterval
-
-  function resetScheduledTasks() {
-    // prevent new callbacks from running while we cancel existing handles
-    rafActive = false
-    timersActive = false
-
-    for (const id of rafHandles) {
-      try {
-        originalCancelAnimationFrame(id)
-      } catch {
-        /* empty */
-      }
-    }
-    rafHandles.clear()
-
-    for (const id of timeoutHandles) {
-      try {
-        originalClearTimeout(id)
-      } catch {
-        /* empty */
-      }
-    }
-    timeoutHandles.clear()
-
-    for (const id of intervalHandles) {
-      try {
-        originalClearInterval(id)
-      } catch {
-        /* empty */
-      }
-    }
-    intervalHandles.clear()
-
-    // re-enable scheduling for the next render
-    rafActive = true
-    timersActive = true
-  }
+  const eventListenerTracker = createWindowEventListenerTracker()
+  const scheduledTaskController = createScheduledTaskController(sendError)
 
   let loadedLibraries: string[] = []
   messageHandler.on('render', ({ code, preloadedLibraries }) => {
     ;(async () => {
-      // Reset window event handlers
-      resetWindowEventHandlers()
-
-      // Reset scheduled tasks (rAF, timeouts, intervals)
-      resetScheduledTasks()
+      eventListenerTracker.reset()
+      scheduledTaskController.reset()
 
       // Clear previous content
       document.body.innerHTML = ''
 
-      for (const [name, lib] of preloadedLibraries) {
-        if (loadedLibraries.includes(name)) continue
-        loadedLibraries.push(name)
-
-        for (const path of lib) {
-          switch (path.type) {
-            case 'main': {
-              const script = document.createElement('script')
-              script.dataset['libname'] = name
-              script.src = path.path
-              await new Promise((resolve, reject) => {
-                script.onload = resolve
-                script.onerror = reject
-                document.head.appendChild(script)
-              })
-              break
-            }
-            case 'module': {
-              const link = document.createElement('link')
-              link.dataset['libname'] = name
-              link.rel = 'modulepreload'
-              link.href = path.path
-              document.head.appendChild(link)
-              break
-            }
-          }
-        }
-      }
-
-      // Remove libraries that are no longer active
-      loadedLibraries = loadedLibraries.filter((name) => {
-        for (const [lname] of preloadedLibraries) {
-          if (name === lname) {
-            return true
-          }
-        }
-        // Remove any elements with this libname
-        const elements = document.querySelectorAll(`[data-libname="${name}"]`)
-        elements.forEach((element) => element.remove())
-
-        return false
-      })
+      loadedLibraries = await syncPreloadedLibraries(
+        preloadedLibraries,
+        loadedLibraries,
+      )
 
       // Execute user code
       const script = document.createElement('script')
@@ -265,44 +60,7 @@ async function init() {
     }
   })
 
-  const sendLog = (
-    level: 'debug' | 'info' | 'warn' | 'error',
-    args: unknown[],
-  ) => {
-    try {
-      messageHandler.send({
-        type: 'log',
-        level,
-        data: serializeForPostMessage(args),
-      })
-    } catch {
-      // DataCloneError: a non-cloneable object slipped through (e.g. DOM node,
-      // canvas context). Fall back to string representations.
-      messageHandler.send({
-        type: 'log',
-        level,
-        data: args.map((arg) => {
-          try {
-            return String(arg)
-          } catch {
-            return `[${typeof arg}]`
-          }
-        }),
-      })
-    }
-  }
-
-  try {
-    window.console = {
-      ...window.console,
-      debug: (...args) => sendLog('debug', args),
-      info: (...args) => sendLog('info', args),
-      log: (...args) => sendLog('info', args),
-      error: (...args) => sendLog('error', args),
-    }
-  } catch (error) {
-    messageHandler.send({ type: 'error', error: error as Error })
-  }
+  setupConsoleBridge(messageHandler)
 }
 
 init().catch(console.error)

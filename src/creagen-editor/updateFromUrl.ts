@@ -10,7 +10,7 @@ import { creagenEditorVersionMismatch } from './creagenEditorVersionMatches'
 /** Update creagen state from url data */
 export async function updateFromUrl(editor: CreagenEditor) {
   const mutator = new UrlMutator()
-  loadFromQueryParams(editor, mutator)
+  updateSettingsFromQueryParams(editor, mutator)
 
   if (await updateFromSharableLinkData(editor, mutator)) {
     return
@@ -82,8 +82,7 @@ async function updateFromCommit(editor: CreagenEditor, mutator: UrlMutator) {
     return
   }
   if (commit instanceof Error) {
-    logger.error(commit)
-    return commit
+    throw commit
   }
 
   // if commit is part of bookmark just use that bookmark name
@@ -92,24 +91,21 @@ async function updateFromCommit(editor: CreagenEditor, mutator: UrlMutator) {
     const mostRecent = bookmarks.sort(
       (a, b) => b.createdOn.getTime() - a.createdOn.getTime(),
     )[0]!
-    editor
-      .checkout(mostRecent)
-      .then((result) => {
-        if (!result.ok) logger.error(result.error)
-      })
-      .catch(logger.error)
+    const res = await editor.checkout(mostRecent)
+    if (!res.ok) throw res.error
     return
   }
 
   const checkoutResult = await editor.checkout(commit)
-  if (!checkoutResult.ok) {
-    logger.error(checkoutResult.error)
-  }
+  if (!checkoutResult.ok) throw checkoutResult.error
   return
 }
 
 /** Update settings from query params */
-function loadFromQueryParams(editor: CreagenEditor, mutator: UrlMutator) {
+function updateSettingsFromQueryParams(
+  editor: CreagenEditor,
+  mutator: UrlMutator,
+) {
   mutator.forEachQueryParam((value, key) => {
     if (!editor.settings.isParam(key)) {
       return

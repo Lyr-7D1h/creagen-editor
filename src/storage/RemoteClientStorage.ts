@@ -50,8 +50,8 @@ async function resolveAuth(
     const auth = authMiddleware(token)
     remoteClient.use(auth)
     const res = await remoteClient.GET('/api/user')
-    const code = res.error?.error.code
-    if (code === 'UNAUTHORIZED' || code === 'USER_NOT_FOUND') {
+    const status = res.response.status
+    if (status === 401 || status === 404) {
       localStorage.remove('creagen-auth-token')
       remoteClient.eject(auth)
       logger.error('User is unauthorized')
