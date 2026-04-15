@@ -1,4 +1,4 @@
-import { PackageJsonImportField } from '../importer/exportMapResolver'
+import type { PackageJsonImportField } from '../importer/exportMapResolver'
 
 export interface LibraryConfig {
   /** Overwrite which package.json key to use to import library */

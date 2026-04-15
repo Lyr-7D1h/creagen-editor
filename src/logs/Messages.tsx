@@ -1,6 +1,8 @@
-import { Alert, AlertColor, Stack, LinearProgress } from '@mui/material'
+import type { AlertColor} from '@mui/material';
+import { Alert, Stack, LinearProgress } from '@mui/material'
 import React, { useEffect, useState, useCallback, useMemo } from 'react'
-import { AUTOHIDE_DURATION_DEFAULT, Message, Severity, logger } from './logger'
+import type { Message} from './logger';
+import { AUTOHIDE_DURATION_DEFAULT, Severity, logger } from './logger'
 
 function severityToAlertColor(severity: Severity): AlertColor {
   switch (severity) {

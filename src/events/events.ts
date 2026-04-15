@@ -1,5 +1,5 @@
 import { createContextLogger } from '../logs/logger'
-import { EditorEvent, EditorEventData } from './EditorEvent'
+import type { EditorEvent, EditorEventData } from './EditorEvent'
 
 const logger = createContextLogger('events')
 

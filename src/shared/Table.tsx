@@ -1,17 +1,19 @@
+import type {
+  SxProps,
+  Theme} from '@mui/material';
 import {
   Box,
   Paper,
-  SxProps,
   Table as MuiTable,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Theme,
   Typography,
 } from '@mui/material'
-import React, { useCallback, useLayoutEffect, useRef, useState } from 'react'
+import type React from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 
 export interface ColumnDef<T> {
   header: React.ReactNode

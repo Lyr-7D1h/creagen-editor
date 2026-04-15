@@ -3,7 +3,7 @@ import {
   Fullscreen as FullscreenIcon,
 } from '@mui/icons-material'
 import { Box, Tabs, Tab, Tooltip, IconButton } from '@mui/material'
-import React from 'react'
+import type React from 'react'
 import { CloseButton } from './CloseButton'
 
 interface TopBarProps {

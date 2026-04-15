@@ -1,11 +1,12 @@
-import React from 'react'
+import type React from 'react'
 import { useCreagenEditor } from '../../creagen-editor/CreagenContext'
 import { Typography, IconButton } from '@mui/material'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { useBookmarks } from '../../events/useEditorEvents'
 import { dateString } from '../../util'
-import { ColumnDef, Table } from '../../shared/Table'
-import { Bookmark } from 'versie'
+import type { ColumnDef} from '../../shared/Table';
+import { Table } from '../../shared/Table'
+import type { Bookmark } from 'versie'
 import { logger } from '../../logs/logger'
 
 export const BookmarksTab = () => {

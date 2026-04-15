@@ -1,7 +1,7 @@
-import { CommitHash } from 'versie'
-import { LocalStorageKey, LocalStorageValue } from '../storage/StorageKey'
-import { ParamKey } from '../settings/SettingsConfig'
-import { AnalyzeContainerResult } from '../sandbox/SandboxMessageHandler'
+import type { CommitHash } from 'versie'
+import type { LocalStorageKey, LocalStorageValue } from '../storage/StorageKey'
+import type { ParamKey } from '../settings/SettingsConfig'
+import type { AnalyzeContainerResult } from '../sandbox/SandboxMessageHandler'
 
 type EditorEvents = {
   'login-prompt': { message?: string }

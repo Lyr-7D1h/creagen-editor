@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test } from 'vitest'
 import { UrlMutator } from './UrlMutator'
 import { SemVer } from 'semver'
-import { Sha256Hash } from 'versie'
+import type { Sha256Hash } from 'versie'
 import { decompressFromEncodedURIComponent } from 'lz-string'
 
 describe('UrlMutator query params', () => {

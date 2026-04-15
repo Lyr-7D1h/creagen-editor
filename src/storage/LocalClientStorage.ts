@@ -1,6 +1,6 @@
 import { localStorage } from './LocalStorage'
-import { CustomKeybinding } from '../creagen-editor/keybindings'
-import { IndexDBStorage } from 'versie'
+import type { CustomKeybinding } from '../creagen-editor/keybindings'
+import type { IndexDBStorage } from 'versie'
 import type {
   Storage,
   CommitHash,
@@ -9,7 +9,7 @@ import type {
   Commit,
   IndexdbImport,
 } from 'versie'
-import { CommitMetadata } from '../creagen-editor/CommitMetadata'
+import type { CommitMetadata } from '../creagen-editor/CommitMetadata'
 
 /** Entry point for fetching all data */
 export class LocalClientStorage implements Storage<CommitMetadata> {

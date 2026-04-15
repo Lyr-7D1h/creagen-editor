@@ -7,9 +7,9 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { useActiveBookmark, useSettings } from '../events/useEditorEvents'
 import { HistoryItemChip } from './HistoryItemChip'
-import { HistoryItem } from 'versie'
-import { CommitMetadata } from '../creagen-editor/CommitMetadata'
-import { ActiveBookmark } from '../creagen-editor/CreagenEditor'
+import type { HistoryItem } from 'versie'
+import type { CommitMetadata } from '../creagen-editor/CommitMetadata'
+import type { ActiveBookmark } from '../creagen-editor/CreagenEditor'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 
 function HistoryLink({

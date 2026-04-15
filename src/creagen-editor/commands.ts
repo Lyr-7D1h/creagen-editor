@@ -1,7 +1,8 @@
 import z from 'zod'
-import { createContextLogger, MessageId, Severity } from '../logs/logger'
+import type { MessageId} from '../logs/logger';
+import { createContextLogger, Severity } from '../logs/logger'
 import { localStorage } from '../storage/LocalStorage'
-import { CreagenEditor } from './CreagenEditor'
+import type { CreagenEditor } from './CreagenEditor'
 import { editorEvents } from '../events/events'
 
 export type CommandHandler = (editor: CreagenEditor) => void

@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { LoginModal } from './LoginModal'
 import { AccountModal } from './AccountModal'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
-import { RemoteClientStorage } from '../storage/RemoteClientStorage'
+import type { RemoteClientStorage } from '../storage/RemoteClientStorage'
 
 export function LoginButton() {
   // resolved in compile time

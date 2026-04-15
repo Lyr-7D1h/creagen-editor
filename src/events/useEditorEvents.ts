@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 import { editorEvents } from './events'
-import { EditorEvent, EditorEventData } from './EditorEvent'
+import type { EditorEvent, EditorEventData } from './EditorEvent'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
-import { CommitMetadata } from '../creagen-editor/CommitMetadata'
-import { ParamKey, ParamValue } from '../settings/SettingsConfig'
-import { HistoryItem } from 'versie'
+import type { CommitMetadata } from '../creagen-editor/CommitMetadata'
+import type { ParamKey, ParamValue } from '../settings/SettingsConfig'
+import type { HistoryItem } from 'versie'
 import { logger } from '../logs/logger'
 import { useLocalStorage } from '../storage/useLocalStorage'
-import { ActiveBookmark, CreagenEditor } from '../creagen-editor/CreagenEditor'
+import type { ActiveBookmark, CreagenEditor } from '../creagen-editor/CreagenEditor'
 
 /**
  * Hook that subscribes to an event and triggers re-render when emitted

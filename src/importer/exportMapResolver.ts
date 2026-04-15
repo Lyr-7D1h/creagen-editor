@@ -1,5 +1,5 @@
 import { LIBRARY_CONFIGS } from '../creagen-editor/libraryConfigs'
-import { ImportPath, PackageJson } from './index'
+import type { ImportPath, PackageJson } from './index'
 
 export interface ExportCondition {
   import?: string

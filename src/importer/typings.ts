@@ -1,6 +1,7 @@
 import { JS_EXTENSION, TYPESCRIPT_IMPORT_REGEX } from '../constants'
 import { LIBRARY_CONFIGS } from '../creagen-editor/libraryConfigs'
-import { Importer, PackageJson } from '../importer'
+import type { PackageJson } from '../importer';
+import { Importer } from '../importer'
 import { Path } from './path'
 import { resolveExports } from './exportMapResolver'
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { logger } from '../logs/logger'
 import { localStorage } from './LocalStorage'
-import { LocalStorageOnlyKey, LocalStorageValue } from './StorageKey'
+import type { LocalStorageOnlyKey, LocalStorageValue } from './StorageKey'
 import { editorEvents } from '../events/events'
 
 // Extend WindowEventMap to include 'local-storage' event

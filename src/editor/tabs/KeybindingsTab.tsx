@@ -2,15 +2,18 @@ import { useState } from 'react'
 import { useCreagenEditor } from '../../creagen-editor/CreagenContext'
 import ReplayIcon from '@mui/icons-material/Replay'
 import DeleteIcon from '@mui/icons-material/Delete'
-import { COMMANDS, Command } from '../../creagen-editor/commands'
-import {
+import type { Command } from '../../creagen-editor/commands';
+import { COMMANDS } from '../../creagen-editor/commands'
+import type {
   ActiveKeybinding,
-  KeyInfo,
+  KeyInfo} from '../../creagen-editor/keybindings';
+import {
   getDefaultKeybindingsForCommand,
 } from '../../creagen-editor/keybindings'
 import { KeyCaptureInput } from './KeyCaptureInput'
 import { Chip, IconButton } from '@mui/material'
-import { ColumnDef, Table } from '../../shared/Table'
+import type { ColumnDef} from '../../shared/Table';
+import { Table } from '../../shared/Table'
 import { logger } from '../../logs/logger'
 
 const formatKey = (key: string): string => {

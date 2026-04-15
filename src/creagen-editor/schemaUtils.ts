@@ -1,4 +1,5 @@
-import { SemVer, valid, parse } from 'semver'
+import type { SemVer} from 'semver';
+import { valid, parse } from 'semver'
 import { z } from 'zod'
 
 export const semverSchema = z

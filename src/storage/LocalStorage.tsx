@@ -1,6 +1,6 @@
 import { editorEvents } from '../events/events'
 import { createContextLogger } from '../logs/logger'
-import { LocalStorageKey, LocalStorageValue } from './StorageKey'
+import type { LocalStorageKey, LocalStorageValue } from './StorageKey'
 
 const logger = createContextLogger('local-storage')
 class LocalStorage {

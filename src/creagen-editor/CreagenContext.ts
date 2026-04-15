@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react'
-import { CreagenEditor } from './CreagenEditor'
+import type { CreagenEditor } from './CreagenEditor'
 
 export const CreagenEditorContext = createContext<CreagenEditor | null>(null)
 

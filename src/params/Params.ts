@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { generateHumanReadableName } from '../creagen-editor/generateHumanReadableName'
-import { Controller, ControllerMessage } from '../controller/Controller'
+import type { Controller, ControllerMessage } from '../controller/Controller'
 import { deepEqual } from '../util'
 import { UrlMutator } from '../UrlMutator'
 

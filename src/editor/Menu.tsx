@@ -1,5 +1,7 @@
 import PublishIcon from '@mui/icons-material/Publish'
-import React, { RefAttributes, useEffect } from 'react'
+import type { RefAttributes} from 'react';
+import type React from 'react';
+import { useEffect } from 'react'
 import { Box, Button, ButtonGroup, Typography } from '@mui/material'
 import KeyboardIcon from '@mui/icons-material/Keyboard'
 import { AccountTree, Settings } from '@mui/icons-material'

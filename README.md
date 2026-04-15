@@ -26,6 +26,7 @@ npm start
 ## Roadmap
 
 - Add docs
+- Add way to view and edit code on mobile
 - Put url in svg export
 - Add caching of package information to Imported
 - Remote mode

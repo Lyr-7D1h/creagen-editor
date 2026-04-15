@@ -1,4 +1,4 @@
-import React from 'react'
+import type React from 'react'
 import { Box } from '@mui/material'
 import { Rnd } from 'react-rnd'
 import { ParamsView } from '../params/ParamsView'

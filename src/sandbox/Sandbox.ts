@@ -1,7 +1,7 @@
 import { editorEvents } from '../events/events'
-import { LibraryImport } from '../importer'
+import type { LibraryImport } from '../importer'
 import { createContextLogger } from '../logs/logger'
-import { CommitHash } from 'versie'
+import type { CommitHash } from 'versie'
 import {
   SANDBOX_MESSAGE_HANDLER_HANDSHAKE_TIMEOUT_MS,
   SandboxMessageHandler,

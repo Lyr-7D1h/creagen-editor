@@ -1,5 +1,6 @@
+import type {
+  LinearProgressProps} from '@mui/material';
 import {
-  LinearProgressProps,
   Box,
   Typography,
   LinearProgress,

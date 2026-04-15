@@ -1,8 +1,9 @@
 import ts from 'typescript'
 import { typescriptCompilerOptions } from '../editor/Editor'
-import { LibraryImport } from '../importer'
+import type { LibraryImport } from '../importer'
 import { logger } from '../logs/logger'
-import { Params, paramConfigSchema } from '../params/Params'
+import type { Params} from '../params/Params';
+import { paramConfigSchema } from '../params/Params'
 
 const P5_LIFECYCLE_FUNCTIONS = [
   'preload',

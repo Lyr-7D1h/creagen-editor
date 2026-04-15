@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { LoginModal } from './LoginModal'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
-import { RemoteClientStorage } from '../storage/RemoteClientStorage'
+import type { RemoteClientStorage } from '../storage/RemoteClientStorage'
 import { editorEvents } from '../events/events'
 
 export function LoginPromptHandler() {

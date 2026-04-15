@@ -10,13 +10,14 @@ import {
   FormControlLabel,
   Checkbox,
 } from '@mui/material'
-import React, { useState, useEffect, useRef } from 'react'
+import type React from 'react';
+import { useState, useEffect, useRef } from 'react'
 import { useCreagenEditor } from '../../creagen-editor/CreagenContext'
-import { Commit } from 'versie'
+import type { Commit } from 'versie'
 import * as d3 from 'd3'
 import { logger } from '../../logs/logger'
 import { useForceUpdateOnEditorEvent } from '../../events/useEditorEvents'
-import { CommitMetadata } from '../../creagen-editor/CommitMetadata'
+import type { CommitMetadata } from '../../creagen-editor/CommitMetadata'
 
 type CommitNode = {
   id: string

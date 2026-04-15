@@ -10,7 +10,7 @@ import {
 import { logger } from '../src/logs/logger'
 import { Messages } from '../src/logs/Messages'
 import { ParamsViewPresentation } from '../src/params/ParamsViewPresentation'
-import { ParamConfig } from '../src/params/Params'
+import type { ParamConfig } from '../src/params/Params'
 import { ErrorBoundary } from '../src/creagen-editor/ErrorBoundary'
 import { Controller } from '../src/controller/Controller'
 import { generateRandomValue } from '../src/params/params-util'

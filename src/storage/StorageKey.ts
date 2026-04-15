@@ -1,4 +1,4 @@
-import { CustomKeybinding } from '../creagen-editor/keybindings'
+import type { CustomKeybinding } from '../creagen-editor/keybindings'
 
 /** LocalStorage */
 export type LocalStorageOnlyKey =

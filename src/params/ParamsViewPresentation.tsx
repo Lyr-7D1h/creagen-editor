@@ -3,6 +3,8 @@ import {
   Shuffle as ShuffleIcon,
   RestartAlt as RestartAltIcon,
 } from '@mui/icons-material'
+import type {
+  SelectChangeEvent} from '@mui/material';
 import {
   TextField,
   Stack,
@@ -13,14 +15,14 @@ import {
   Box,
   Typography,
   Select,
-  SelectChangeEvent,
   MenuItem,
   FormControlLabel,
   Checkbox,
 } from '@mui/material'
 import React from 'react'
 import { generateHumanReadableName } from '../creagen-editor/generateHumanReadableName'
-import { ParamConfig, Params } from './Params'
+import type { ParamConfig} from './Params';
+import { Params } from './Params'
 
 function StringInput({
   value,

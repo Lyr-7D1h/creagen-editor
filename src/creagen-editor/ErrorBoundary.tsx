@@ -1,4 +1,5 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react'
+import type { ErrorInfo, ReactNode } from 'react'
+import React, { Component } from 'react'
 import { logger } from '../logs/logger'
 import { Box, Typography } from '@mui/material'
 import { MenuLinks } from '../shared/MenuLinks'

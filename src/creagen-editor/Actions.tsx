@@ -1,5 +1,6 @@
 import QrCodeIcon from '@mui/icons-material/QrCode'
-import React, { useEffect, useMemo, useState } from 'react'
+import type React from 'react';
+import { useEffect, useMemo, useState } from 'react'
 import { Export } from './Export'
 import { useCreagenEditor } from './CreagenContext'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'

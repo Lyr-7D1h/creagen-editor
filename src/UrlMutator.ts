@@ -1,5 +1,5 @@
 import { SemVer } from 'semver'
-import { Library } from './settings/SettingsConfig'
+import type { Library } from './settings/SettingsConfig'
 import {
   compressToEncodedURIComponent,
   decompressFromEncodedURIComponent,

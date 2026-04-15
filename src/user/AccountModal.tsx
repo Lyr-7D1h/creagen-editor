@@ -11,7 +11,7 @@ import {
 } from '@mui/material'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
-import { RemoteClientStorage } from '../storage/RemoteClientStorage'
+import type { RemoteClientStorage } from '../storage/RemoteClientStorage'
 
 interface AccountModalProps {
   open: boolean

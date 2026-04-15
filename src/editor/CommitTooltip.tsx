@@ -1,9 +1,9 @@
 import { Typography } from '@mui/material'
-import React from 'react'
+import type React from 'react'
 import { timeAgoString, dateString } from '../util'
-import { HistoryItem } from 'versie'
+import type { HistoryItem } from 'versie'
 import { HtmlTooltip } from './HtmlTooltip'
-import { CommitMetadata } from '../creagen-editor/CommitMetadata'
+import type { CommitMetadata } from '../creagen-editor/CommitMetadata'
 
 export function CommitTooltip({
   historyItem,

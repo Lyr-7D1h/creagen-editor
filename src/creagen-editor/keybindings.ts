@@ -1,7 +1,8 @@
 import { KeyCode, KeyMod } from 'monaco-editor'
-import { Command, COMMANDS, commandSchema } from './commands'
-import { CreagenEditor } from './CreagenEditor'
-import { Editor } from '../editor/Editor'
+import type { Command} from './commands';
+import { COMMANDS, commandSchema } from './commands'
+import type { CreagenEditor } from './CreagenEditor'
+import type { Editor } from '../editor/Editor'
 import z from 'zod'
 import { groupBy } from '../util'
 import { createContextLogger } from '../logs/logger'

@@ -1,14 +1,15 @@
-import {
-  DEFAULT_SETTINGS_CONFIG,
+import type {
   DefaultSettingsConfig,
   Entry,
   SettingsParam,
   ParamKey,
-  ParamValue,
+  ParamValue} from './SettingsConfig';
+import {
+  DEFAULT_SETTINGS_CONFIG
 } from './SettingsConfig'
 import { editorEvents } from '../events/events'
 import { createContextLogger } from '../logs/logger'
-import { ClientStorage } from '../creagen-editor/CreagenEditor'
+import type { ClientStorage } from '../creagen-editor/CreagenEditor'
 
 export const logger = createContextLogger('settings')
 

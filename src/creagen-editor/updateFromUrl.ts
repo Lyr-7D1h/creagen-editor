@@ -4,7 +4,7 @@ import { generateHumanReadableName } from './generateHumanReadableName'
 import { Bookmark, BookmarkAlreadyExistsError, DeltizingError } from 'versie'
 import { StorageError } from 'versie'
 import { CommitMetadata } from './CommitMetadata'
-import { CreagenEditor } from './CreagenEditor'
+import type { CreagenEditor } from './CreagenEditor'
 import { creagenEditorVersionMismatch } from './creagenEditorVersionMatches'
 
 /** Update creagen state from url data */

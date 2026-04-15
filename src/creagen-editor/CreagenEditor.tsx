@@ -2,7 +2,7 @@ import { Editor } from '../editor/Editor'
 import { log, logger, Severity } from '../logs/logger'
 import { Sandbox } from '../sandbox/Sandbox'
 import { Settings } from '../settings/Settings'
-import {
+import type {
   CommitHash,
   DeltizingError,
   IndexdbImport,
@@ -10,22 +10,28 @@ import {
 } from 'versie'
 import { LIBRARY_CONFIGS } from './libraryConfigs'
 import { parseCode } from './parseCode'
-import {
-  DEFAULT_SETTINGS_CONFIG,
+import type {
   Library,
-  SettingsParam,
+  SettingsParam} from '../settings/SettingsConfig';
+import {
+  DEFAULT_SETTINGS_CONFIG
 } from '../settings/SettingsConfig'
-import { CustomKeybinding, Keybindings } from './keybindings'
-import { Importer, LibraryImport } from '../importer'
-import { BlobNotFoundError, Commit, CommitNotFoundError, Versie } from 'versie'
+import type { CustomKeybinding} from './keybindings';
+import { Keybindings } from './keybindings'
+import type { LibraryImport } from '../importer';
+import { Importer } from '../importer'
+import type { BlobNotFoundError, Commit, CommitNotFoundError} from 'versie';
+import { Versie } from 'versie'
 import { LocalClientStorage } from '../storage/LocalClientStorage'
 import { editorEvents } from '../events/events'
-import {
-  Bookmark,
+import type {
   BookmarkAlreadyExistsError,
-  BookmarkNotFoundError,
+  BookmarkNotFoundError} from 'versie';
+import {
+  Bookmark
 } from 'versie'
-import { Command, COMMANDS } from './commands'
+import type { Command} from './commands';
+import { COMMANDS } from './commands'
 import { ResourceMonitor } from './ResourceMonitor'
 import { Params } from '../params/Params'
 import { Controller } from '../controller/Controller'
@@ -36,8 +42,9 @@ import { CommitMetadata } from './CommitMetadata'
 import { IndexDBStorage } from 'versie'
 import { SemVer } from 'semver'
 import { generateHumanReadableName } from './generateHumanReadableName'
-import { AsyncResult, Result } from 'typescript-result'
-import { ParseError, StorageError } from 'versie'
+import type { AsyncResult} from 'typescript-result';
+import { Result } from 'typescript-result'
+import type { ParseError, StorageError } from 'versie'
 import z from 'zod'
 import { RemoteClientStorage } from '../storage/RemoteClientStorage'
 

@@ -9,14 +9,14 @@ import {
 } from '@mui/material'
 import { useState, useRef } from 'react'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
-import { ActiveBookmark } from '../creagen-editor/CreagenEditor'
+import type { ActiveBookmark } from '../creagen-editor/CreagenEditor'
 import { logger } from '../logs/logger'
 import { bookmarkNameSchema, Bookmark } from 'versie'
-import { HistoryItem } from 'versie'
+import type { HistoryItem } from 'versie'
 import { TextInput } from './TextInput'
 import { HtmlTooltip } from './HtmlTooltip'
 import { CommitTooltip } from './CommitTooltip'
-import { CommitMetadata } from '../creagen-editor/CommitMetadata'
+import type { CommitMetadata } from '../creagen-editor/CommitMetadata'
 
 interface BookmarkMenuProps {
   bookmarks: Bookmark[]

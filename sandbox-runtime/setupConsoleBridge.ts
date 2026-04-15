@@ -1,4 +1,4 @@
-import { SandboxMessageHandler } from '../src/sandbox/SandboxMessageHandler'
+import type { SandboxMessageHandler } from '../src/sandbox/SandboxMessageHandler'
 import { serializeForPostMessage } from './serializeForPostMessage'
 
 export function setupConsoleBridge(messageHandler: SandboxMessageHandler): void {

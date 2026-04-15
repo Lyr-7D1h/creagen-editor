@@ -1,4 +1,4 @@
-import React from 'react'
+import type React from 'react'
 import { z } from 'zod'
 import { semverSchema } from '../creagen-editor/schemaUtils'
 import { isMobile } from '../creagen-editor/isMobile'

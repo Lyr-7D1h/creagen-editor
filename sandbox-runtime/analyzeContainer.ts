@@ -1,4 +1,4 @@
-import {
+import type {
   AnalyzeContainerResult,
   SvgProps,
 } from '../src/sandbox/SandboxMessageHandler'

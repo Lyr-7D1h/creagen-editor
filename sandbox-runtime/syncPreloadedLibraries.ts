@@ -1,4 +1,4 @@
-import { SandboxMessageByType } from '../src/sandbox/SandboxMessageHandler'
+import type { SandboxMessageByType } from '../src/sandbox/SandboxMessageHandler'
 
 export async function syncPreloadedLibraries(
   preloadedLibraries: SandboxMessageByType<'render'>['preloadedLibraries'],

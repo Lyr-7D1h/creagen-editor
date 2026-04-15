@@ -1,4 +1,4 @@
-import { Entry, Folder, ParamKey } from '../../settings/SettingsConfig'
+import type { Entry, Folder, ParamKey } from '../../settings/SettingsConfig'
 import {
   Accordion,
   AccordionDetails,

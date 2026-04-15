@@ -1,5 +1,5 @@
 import { generateHumanReadableName } from '../creagen-editor/generateHumanReadableName'
-import { ParamConfig } from './Params'
+import type { ParamConfig } from './Params'
 
 export function generateRandomValue(config: ParamConfig): unknown {
   switch (config.type) {

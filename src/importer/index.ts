@@ -3,8 +3,9 @@ import { SemVer } from 'semver'
 import { z } from 'zod'
 import { getTypings } from './typings'
 import { semverSchema } from '../creagen-editor/schemaUtils'
-import { Library } from '../settings/SettingsConfig'
-import { ExportsField, buildImportPaths } from './exportMapResolver'
+import type { Library } from '../settings/SettingsConfig'
+import type { ExportsField} from './exportMapResolver';
+import { buildImportPaths } from './exportMapResolver'
 
 export type ImportPath = {
   /**

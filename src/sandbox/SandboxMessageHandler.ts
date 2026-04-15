@@ -1,4 +1,4 @@
-import { ImportPath } from '../importer'
+import type { ImportPath } from '../importer'
 
 export interface AnalyzeContainerResult {
   svgs: SvgProps[]
