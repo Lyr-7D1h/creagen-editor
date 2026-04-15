@@ -1,3 +1,15 @@
+const CACHE_KEY_DATA_SEPARATOR = '\u001e'
+export function recordToCacheKey(data: Record<string, unknown>) {
+  return Object.entries(data)
+    .filter(([, value]) => value !== undefined)
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    .map(
+      ([key, value]) =>
+        `${key}=${typeof value === 'string' ? value : JSON.stringify(value)}`,
+    )
+    .join(CACHE_KEY_DATA_SEPARATOR)
+}
+
 export class LruCache<K, V> {
   private readonly maxEntries: number
   private readonly cache = new Map<K, V>()

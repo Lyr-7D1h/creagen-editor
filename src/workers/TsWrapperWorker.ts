@@ -30,8 +30,8 @@ const initializeWorker = initialize as unknown as (
 const defaultFormatOptions: ts.FormatCodeSettings = {}
 const defaultUserPreferences: ts.UserPreferences = {}
 
-/** Extend base typescript language worker with extra auto completion functionality */
-class AutoImportWorker extends BaseTypeScriptWorker {
+/** Wrapper around default monaco Typescript Workers, exposes other ts language server functions */
+class TsWrapperWorker extends BaseTypeScriptWorker {
   getCompletionsWithImportsAtPosition(
     fileName: string,
     position: number,
@@ -70,6 +70,6 @@ class AutoImportWorker extends BaseTypeScriptWorker {
 
 self.onmessage = () => {
   initializeWorker((ctx, createData) => {
-    return new AutoImportWorker(ctx, createData)
+    return new TsWrapperWorker(ctx, createData)
   })
 }
