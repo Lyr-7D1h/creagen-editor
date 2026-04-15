@@ -250,12 +250,18 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
     })
     if (!(res.data instanceof ArrayBuffer)) return null
     const compressedData = new Uint8Array(res.data)
-    await this.indexdb.setCommitDataOnly(hash, compressedData)
-    return new Response(
+    const data = await new Response(
       new Blob([compressedData])
         .stream()
         .pipeThrough(new DecompressionStream('deflate')),
     ).text()
+    // store locally non blocking
+    this.indexdb
+      .setCommitDataOnly(hash, data)
+      .catch((e: unknown) =>
+        logger.error('Failed to set commit data locally', e),
+      )
+    return data
   }
 
   async getCheckout(commitHash: CommitHash) {
@@ -281,16 +287,24 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
     })
     const decoded = checkoutSchema.parse(decode(res))
     const compressedData = Uint8Array.from(decoded.data)
-    await this.indexdb.setCommitDataOnly(
-      (await Sha256Hash.fromString(decoded.commit.blob)) as BlobHash,
-      compressedData,
-    )
-    const commit = this.toCommit(decoded.commit)
     const data = await new Response(
       new Blob([compressedData])
         .stream()
         .pipeThrough(new DecompressionStream('deflate')),
     ).text()
+
+    // store locally non blocking
+    this.indexdb
+      .setCommitDataOnly(
+        (await Sha256Hash.fromString(decoded.commit.blob)) as BlobHash,
+        data,
+      )
+      .catch((e: unknown) =>
+        logger.error('Failed to set commit data locally', e),
+      )
+
+    const commit = this.toCommit(decoded.commit)
+
     return { commit, data }
   }
 
