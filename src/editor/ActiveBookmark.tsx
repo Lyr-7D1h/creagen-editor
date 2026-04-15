@@ -20,12 +20,8 @@ export function ActiveBookmark({ color }: { color?: string }) {
     }
     creagenEditor
       .renameBookmark(activeBookmark.name, value)
-      .then((v) => {
-        if (v.ok) {
-          setIsEditing(false)
-          return
-        }
-        logger.error(v.error)
+      .then(() => {
+        setIsEditing(false)
       })
       .catch(logger.error)
   }

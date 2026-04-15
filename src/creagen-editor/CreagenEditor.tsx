@@ -650,11 +650,12 @@ export class CreagenEditor {
   }
 
   async renameBookmark(oldName: string, newName: string) {
-    const result = await this.vcs.renameBookmark(oldName, newName)
-    if (result.ok && this.activeBookmark.name === oldName) {
+    if (oldName === this.activeBookmark.name) {
       this.activeBookmark = { ...this.activeBookmark, name: newName }
-      editorEvents.emit('vcs:bookmark-update', undefined)
+      return
     }
+    const result = await this.vcs.renameBookmark(oldName, newName)
+    if (!result.ok) throw result.error
     return result
   }
 
