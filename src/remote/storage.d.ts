@@ -367,12 +367,14 @@ export interface operations {
                             blob: string;
                             createdOn: number;
                             parent?: string;
-                            editorVersion: string;
-                            libraries: {
-                                name: string;
-                                version: string;
-                            }[];
-                            author: string;
+                            metadata: {
+                                editorVersion: string;
+                                libraries: {
+                                    name: string;
+                                    version: string;
+                                }[];
+                                author: string;
+                            };
                         };
                     };
                 };
@@ -459,7 +461,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description msgpack-encoded object: { commit: StoredCommit, data: Uint8Array } */
+            /** @description msgpack-encoded object: { commit: CommitJson<CommitMetadataJson>, data: Uint8Array } */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -769,14 +771,19 @@ export interface operations {
                         commits: {
                             seq: number;
                             hash: string;
-                            parent: string | null;
-                            createdOn: number;
-                            blob: string;
-                            editorVersion: string;
-                            libraries: {
-                                name: string;
-                                version: string;
-                            }[];
+                            commit: {
+                                blob: string;
+                                createdOn: number;
+                                parent?: string;
+                                metadata: {
+                                    editorVersion: string;
+                                    libraries: {
+                                        name: string;
+                                        version: string;
+                                    }[];
+                                    author: string;
+                                };
+                            };
                         }[];
                         nextSeq: number;
                     };

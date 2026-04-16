@@ -1,4 +1,4 @@
-import type { SemVer} from 'semver';
+import type { SemVer } from 'semver'
 import { valid, parse } from 'semver'
 import { z } from 'zod'
 

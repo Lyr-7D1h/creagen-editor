@@ -10,27 +10,19 @@ import type {
 } from 'versie'
 import { LIBRARY_CONFIGS } from './libraryConfigs'
 import { parseCode } from './parseCode'
-import type {
-  Library,
-  SettingsParam} from '../settings/SettingsConfig';
-import {
-  DEFAULT_SETTINGS_CONFIG
-} from '../settings/SettingsConfig'
-import type { CustomKeybinding} from './keybindings';
+import type { Library, SettingsParam } from '../settings/SettingsConfig'
+import { DEFAULT_SETTINGS_CONFIG } from '../settings/SettingsConfig'
+import type { CustomKeybinding } from './keybindings'
 import { Keybindings } from './keybindings'
-import type { LibraryImport } from '../importer';
+import type { LibraryImport } from '../importer'
 import { Importer } from '../importer'
-import type { BlobNotFoundError, Commit, CommitNotFoundError} from 'versie';
+import type { BlobNotFoundError, Commit, CommitNotFoundError } from 'versie'
 import { Versie } from 'versie'
 import { LocalClientStorage } from '../storage/LocalClientStorage'
 import { editorEvents } from '../events/events'
-import type {
-  BookmarkAlreadyExistsError,
-  BookmarkNotFoundError} from 'versie';
-import {
-  Bookmark
-} from 'versie'
-import type { Command} from './commands';
+import type { BookmarkAlreadyExistsError, BookmarkNotFoundError } from 'versie'
+import { Bookmark } from 'versie'
+import type { Command } from './commands'
 import { COMMANDS } from './commands'
 import { ResourceMonitor } from './ResourceMonitor'
 import { Params } from '../params/Params'
@@ -39,10 +31,9 @@ import { UrlMutator } from '../UrlMutator'
 import { updateFromUrl } from './updateFromUrl'
 import { creagenEditorVersionMismatch as creagenEditorVersionMismatchWarning } from './creagenEditorVersionMatches'
 import { CommitMetadata } from './CommitMetadata'
-import { IndexDBStorage } from 'versie'
 import { SemVer } from 'semver'
 import { generateHumanReadableName } from './generateHumanReadableName'
-import type { AsyncResult} from 'typescript-result';
+import type { AsyncResult } from 'typescript-result'
 import { Result } from 'typescript-result'
 import type { ParseError, StorageError } from 'versie'
 import z from 'zod'
@@ -85,16 +76,10 @@ export class CreagenEditor {
 
   static async create() {
     const sandbox = Sandbox.create()
-    const indexdbStorageResult = await IndexDBStorage.create<CommitMetadata>()
-    if (!indexdbStorageResult.ok) throw indexdbStorageResult.error
-    if (!indexdbStorageResult.value.persisted)
-      logger.warn('Failed to persist storage')
-    const indexdbStorage = indexdbStorageResult.value.indexdb
-
     const storage =
       CREAGEN_REMOTE_URL != null
-        ? await RemoteClientStorage.create(indexdbStorage)
-        : new LocalClientStorage(indexdbStorage)
+        ? await RemoteClientStorage.create()
+        : await LocalClientStorage.create()
     const settings = await Settings.create(storage)
     const editor = Editor.create(settings)
 

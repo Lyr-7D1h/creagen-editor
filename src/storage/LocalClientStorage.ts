@@ -1,6 +1,6 @@
 import { localStorage } from './LocalStorage'
 import type { CustomKeybinding } from '../creagen-editor/keybindings'
-import type { IndexDBStorage } from 'versie'
+import { IndexDBStorage } from 'versie'
 import type {
   Storage,
   CommitHash,
@@ -10,9 +10,19 @@ import type {
   IndexdbImport,
 } from 'versie'
 import type { CommitMetadata } from '../creagen-editor/CommitMetadata'
+import { logger } from '../logs/logger'
 
 /** Entry point for fetching all data */
 export class LocalClientStorage implements Storage<CommitMetadata> {
+  static async create() {
+    const indexdbStorageResult = await IndexDBStorage.create<CommitMetadata>()
+    if (!indexdbStorageResult.ok) throw indexdbStorageResult.error
+    if (!indexdbStorageResult.value.persisted)
+      logger.warn('Failed to persist storage')
+    const indexdb = indexdbStorageResult.value.indexdb
+    return new LocalClientStorage(indexdb)
+  }
+
   constructor(readonly indexdb: IndexDBStorage<CommitMetadata>) {}
 
   setSettings(value: unknown) {

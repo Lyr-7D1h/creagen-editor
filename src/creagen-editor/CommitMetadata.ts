@@ -1,5 +1,5 @@
 import type { SemVer } from 'semver'
-import type { Library} from '../settings/SettingsConfig';
+import type { Library } from '../settings/SettingsConfig'
 import { librarySchema } from '../settings/SettingsConfig'
 import z from 'zod'
 import { semverSchema } from './schemaUtils'
@@ -11,15 +11,13 @@ const commitMetadataSchema = z.object({
   author: z.string().optional(),
 })
 
-type CommitMetadataJsonWithoutAuthor = {
+export type CommitMetadataJson = {
   editorVersion: string
   libraries: { name: string; version: string }[]
+  author?: string
 }
-export type CommitMetadataJson =
-  | CommitMetadataJsonWithoutAuthor
-  | (CommitMetadataJsonWithoutAuthor & { author: string })
 export class CommitMetadata implements CommitMetadataInterface<CommitMetadataJson> {
-  static parse(data: unknown) {
+  static parse(data: CommitMetadataJson) {
     const { editorVersion, libraries, author } =
       commitMetadataSchema.parse(data)
     return new CommitMetadata(editorVersion, libraries, author)

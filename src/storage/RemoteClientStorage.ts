@@ -1,17 +1,9 @@
 import { encode, decode } from '@msgpack/msgpack'
-import { z } from 'zod'
 import { localStorage } from './LocalStorage'
 import type { CustomKeybinding } from '../creagen-editor/keybindings'
 import { Commit, Sha256Hash } from 'versie'
-import type {
-  Storage,
-  CommitHash,
-  BlobHash,
-  Bookmark,
-  CommitJson,
-  IndexDBStorage,
-} from 'versie'
-import type { CommitMetadataJson } from '../creagen-editor/CommitMetadata'
+import type { Storage, CommitHash, BlobHash, Bookmark } from 'versie'
+import { IndexDBStorage } from 'versie'
 import { CommitMetadata } from '../creagen-editor/CommitMetadata'
 import type { RemoteClient, StoredCommit, User } from '../remote/remoteClient'
 import { remoteClient } from '../remote/remoteClient'
@@ -63,7 +55,13 @@ async function resolveAuth(
 
 /** Entry point for fetching all data */
 export class RemoteClientStorage implements Storage<CommitMetadata> {
-  static async create(indexdb: IndexDBStorage<CommitMetadata>) {
+  static async create() {
+    const indexdbStorageResult = await IndexDBStorage.create<CommitMetadata>()
+    if (!indexdbStorageResult.ok) throw indexdbStorageResult.error
+    if (!indexdbStorageResult.value.persisted)
+      logger.warn('Failed to persist storage')
+    const indexdb = indexdbStorageResult.value.indexdb
+
     if (remoteClient === null) {
       throw Error('No remote client configured')
     }
@@ -94,24 +92,7 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
     )
     if (res === null) return
     for (const remoteCommit of res.commits) {
-      const blobHash = Sha256Hash.fromHex(remoteCommit.blob) as BlobHash
-      const hash = Sha256Hash.fromHex(remoteCommit.hash) as CommitHash
-      const parent =
-        remoteCommit.parent != null
-          ? (Sha256Hash.fromHex(remoteCommit.parent) as CommitHash)
-          : undefined
-      const metadata = CommitMetadata.parse({
-        editorVersion: remoteCommit.editorVersion,
-        libraries: remoteCommit.libraries,
-        author: this.user.username,
-      })
-      const commit = new Commit(
-        hash,
-        blobHash,
-        new Date(remoteCommit.createdOn),
-        metadata,
-        parent,
-      )
+      const commit = await this.parseCommit(remoteCommit.commit)
       await this.indexdb.setCommitOnly(commit)
     }
     localStorage.set('commit-seq', res.nextSeq)
@@ -204,25 +185,6 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
     return res.keybindings as CustomKeybinding[]
   }
 
-  private toCommit({
-    blob,
-    createdOn,
-    parent,
-    editorVersion,
-    libraries,
-    author,
-  }: StoredCommit): CommitJson<CommitMetadataJson> {
-    return {
-      blob,
-      createdOn,
-      parent,
-      metadata: {
-        editorVersion,
-        libraries,
-        author,
-      },
-    }
-  }
   async getCommit(id: CommitHash) {
     const local = await this.indexdb.getCommit(id)
     if (local !== null) return local
@@ -233,7 +195,16 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
       }),
     )
     if (res == null) return null
-    return this.toCommit(res.commit)
+    const commit = res.commit
+    // store locally non blocking
+    this.parseCommit(commit)
+      .then((c) => {
+        this.indexdb
+          .setCommitOnly(c)
+          .catch((e) => logger.error('Failed to set commit locally', e))
+      })
+      .catch((e) => logger.error('Failed to parse commit metadata', e))
+    return commit
   }
 
   async getCommitData(hash: BlobHash) {
@@ -259,6 +230,15 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
     return data
   }
 
+  private parseCommit(commit: StoredCommit) {
+    const metadata = CommitMetadata.parse(commit.metadata)
+    const blob = Sha256Hash.fromHex(commit.blob) as BlobHash
+    const parent = commit.parent
+      ? (Sha256Hash.fromHex(commit.parent) as CommitHash)
+      : undefined
+    return Commit.create(blob, new Date(commit.createdOn), metadata, parent)
+  }
+
   async getCheckout(commitHash: CommitHash) {
     const local = await this.indexdb.getCheckout(commitHash)
     if (local !== null) return local
@@ -269,18 +249,7 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
       }),
     )
     if (res === null) return null
-    const checkoutSchema = z.object({
-      commit: z.object({
-        blob: z.string(),
-        createdOn: z.number().int(),
-        parent: z.string().optional(),
-        editorVersion: z.string(),
-        libraries: z.array(z.object({ name: z.string(), version: z.string() })),
-        author: z.string(),
-      }),
-      data: z.instanceof(Uint8Array),
-    })
-    const decoded = checkoutSchema.parse(decode(res))
+    const decoded = decode(res) as { commit: StoredCommit; data: Uint8Array }
     const compressedData = Uint8Array.from(decoded.data)
     const data = await new Response(
       new Blob([compressedData])
@@ -288,19 +257,15 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
         .pipeThrough(new DecompressionStream('deflate')),
     ).text()
 
-    // store locally non blocking
-    this.indexdb
-      .setCommitDataOnly(
-        (await Sha256Hash.fromString(decoded.commit.blob)) as BlobHash,
-        data,
-      )
-      .catch((e: unknown) =>
-        logger.error('Failed to set commit data locally', e),
-      )
+    this.parseCommit(decoded.commit)
+      .then((c) => {
+        this.indexdb
+          .setCommit(c, data)
+          .catch((e) => logger.error('Failed to set commit data locally', e))
+      })
+      .catch((e) => logger.error('Failed to parse commit metadata', e))
 
-    const commit = this.toCommit(decoded.commit)
-
-    return { commit, data }
+    return { commit: decoded.commit, data }
   }
 
   async setCommit(commit: Commit<CommitMetadata>, data: string) {
