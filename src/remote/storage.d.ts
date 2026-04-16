@@ -72,23 +72,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/commits/{commitHash}/checkout": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get commit metadata and blob data together (msgpack encoded) */
-        get: operations["get_CheckoutFetch"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/user": {
         parameters: {
             query?: never;
@@ -408,7 +391,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Raw deflate-compressed blob bytes */
+            /** @description Raw compressed delta blob bytes */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -433,44 +416,6 @@ export interface operations {
                 };
             };
             /** @description Blob not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        success: boolean;
-                        error: {
-                            code: string;
-                            message: string;
-                        };
-                    };
-                };
-            };
-        };
-    };
-    get_CheckoutFetch: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description SHA-256 commit hash (hex) */
-                commitHash: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description msgpack-encoded object: { commit: CommitJson<CommitMetadataJson>, data: Uint8Array } */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/octet-stream": string;
-                };
-            };
-            /** @description Commit or blob not found */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -828,6 +773,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         success: boolean;
+                        commitHash: string;
                         /** @enum {string} */
                         status: "created" | "exists";
                         size?: number;

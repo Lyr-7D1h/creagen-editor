@@ -44,9 +44,6 @@ export class LocalClientStorage implements Storage<CommitMetadata> {
   getCommitData(hash: BlobHash) {
     return this.indexdb.getCommitData(hash)
   }
-  getCheckout(hash: CommitHash) {
-    return this.indexdb.getCheckout(hash)
-  }
   setBookmark(bookmark: Bookmark) {
     return this.indexdb.setBookmark(bookmark)
   }
