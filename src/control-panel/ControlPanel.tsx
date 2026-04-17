@@ -1,6 +1,7 @@
 import type React from 'react'
 import { Box } from '@mui/material'
 import { Rnd } from 'react-rnd'
+import { createPortal } from 'react-dom'
 import { ParamsView } from '../params/ParamsView'
 import { useLocalStorage } from '../storage/useLocalStorage'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
@@ -115,7 +116,7 @@ export function ControlPanel({
     )
   }
 
-  return (
+  const floatingPanel = (
     <Rnd
       position={{ x: position.x, y: position.y }}
       size={{ width: size.width, height: size.height }}
@@ -142,7 +143,7 @@ export function ControlPanel({
           '0px 3px 5px -1px rgba(0,0,0,0.2), 0px 5px 8px 0px rgba(0,0,0,0.14), 0px 1px 14px 0px rgba(0,0,0,0.12)',
         borderRadius: '4px',
         border: '1px solid rgba(0, 0, 0, 0.12)',
-        zIndex: 10,
+        zIndex: 110,
       }}
     >
       <div className="drag-handle" style={{ cursor: 'grab' }}>
@@ -157,4 +158,11 @@ export function ControlPanel({
       <TabContent validActiveTab={validActiveTab} />
     </Rnd>
   )
+
+  if (typeof document === 'undefined') {
+    return floatingPanel
+  }
+
+  // NOTE: Portaling to document.body prevents allotment scaling bars from being rendered on top of the control panel in fullscreen mode
+  return createPortal(floatingPanel, document.body)
 }
