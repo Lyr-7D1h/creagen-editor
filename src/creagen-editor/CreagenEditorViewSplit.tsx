@@ -46,20 +46,6 @@ export function CreagenEditorViewSplit() {
     creagenEditor.editor.layout()
   }, [menu, fullscreen, creagenEditor])
 
-  if (hideAll) {
-    return (
-      <>
-        <SandboxView />
-        {controlOpen && (
-          <ControlPanel
-            floating={true}
-            onClose={() => setControlOpen(!controlOpen)}
-          />
-        )}
-      </>
-    )
-  }
-
   return (
     <div style={{ height: '100vh', width: '100vw' }}>
       <Allotment>
@@ -73,98 +59,98 @@ export function CreagenEditorViewSplit() {
         </Allotment.Pane>
 
         <Allotment.Pane minSize={MIN_WINDOW_SIZE}>
-          {fullscreen ? (
-            <div
-              style={{ position: 'relative', width: '100%', height: '100%' }}
+          <Allotment>
+            <Allotment.Pane
+              minSize={MIN_WINDOW_SIZE}
+              preferredSize="33%"
+              visible={!fullscreen}
             >
-              {/* Sandbox as background */}
-              <div style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
+              <Allotment
+                vertical
+                onChange={(sizes: number[]) => {
+                  // if control panel is close to size 0 close it
+                  const second = sizes[1]
+                  if (!fullscreen && typeof second === 'number') {
+                    if (second < 15 && controlOpen) {
+                      setControlOpen(false)
+                    }
+                  }
+                }}
+              >
+                {(!controlPanelMaximized || !controlOpen) && (
+                  <Allotment.Pane minSize={MIN_WINDOW_SIZE} preferredSize="70%">
+                    <div
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        // needed to show allotment border in between editor and params
+                        marginLeft: 1,
+                      }}
+                    >
+                      <EditorView
+                        menu={menu}
+                        toggleMenu={() => setMenu(!menu)}
+                      />
+                    </div>
+                  </Allotment.Pane>
+                )}
+                <Allotment.Pane visible={controlOpen} snap>
+                  <ControlPanel
+                    onClose={() => setControlOpen(!controlOpen)}
+                    isMaximized={controlPanelMaximized}
+                    onMaximizeToggle={() =>
+                      setControlPanelMaximized(!controlPanelMaximized)
+                    }
+                  />
+                </Allotment.Pane>
+              </Allotment>
+            </Allotment.Pane>
+            <Allotment.Pane minSize={MIN_WINDOW_SIZE}>
+              <div
+                style={{
+                  position: 'relative',
+                  width: '100%',
+                  height: '100%',
+                }}
+              >
+                {/* NOTE: sandbox view should always be mounted to prevent disconnection with iframe */}
                 <SandboxView />
-              </div>
+                {resourceMonitorEnabled && <PerformanceMonitor />}
+                <QR />
 
-              {/* Overlayed allotment for Editor and BottomPanel so both sit above the sandbox
-                  and remain resizable. */}
-              <div style={{ position: 'absolute', inset: 0, zIndex: 2 }}>
-                <div
-                  style={{
-                    position: 'relative',
-                    width: '100%',
-                    height: '100%',
-                  }}
-                >
-                  <EditorView menu={menu} toggleMenu={() => setMenu(!menu)} />
-                  {resourceMonitorEnabled && <PerformanceMonitor />}
-                  <QR />
-                </div>
+                {/* Show fullscreen editor overlay */}
+                {fullscreen && !hideAll && (
+                  <div style={{ position: 'absolute', inset: 0, zIndex: 2 }}>
+                    <div
+                      style={{
+                        position: 'relative',
+                        width: '100%',
+                        height: '100%',
+                      }}
+                    >
+                      <EditorView
+                        menu={menu}
+                        toggleMenu={() => setMenu(!menu)}
+                      />
+                    </div>
 
-                {controlOpen && (
+                    {controlOpen && (
+                      <ControlPanel
+                        floating={true}
+                        onClose={() => setControlOpen(!controlOpen)}
+                      />
+                    )}
+                  </div>
+                )}
+                {hideAll && controlOpen && (
                   <ControlPanel
                     floating={true}
                     onClose={() => setControlOpen(!controlOpen)}
                   />
                 )}
               </div>
-            </div>
-          ) : (
-            <Allotment>
-              <Allotment.Pane minSize={MIN_WINDOW_SIZE} preferredSize="33%">
-                <Allotment
-                  vertical
-                  onChange={(sizes: number[]) => {
-                    const second = sizes[1]
-                    if (typeof second === 'number') {
-                      if (second < 15 && controlOpen) {
-                        setControlOpen(false)
-                      }
-                    }
-                  }}
-                >
-                  {(!controlPanelMaximized || !controlOpen) && (
-                    <Allotment.Pane
-                      minSize={MIN_WINDOW_SIZE}
-                      preferredSize="70%"
-                    >
-                      <div
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          // needed to show allotment border in between editor and params
-                          marginLeft: 1,
-                        }}
-                      >
-                        <EditorView
-                          menu={menu}
-                          toggleMenu={() => setMenu(!menu)}
-                        />
-                      </div>
-                    </Allotment.Pane>
-                  )}
-                  <Allotment.Pane visible={controlOpen} snap>
-                    <ControlPanel
-                      onClose={() => setControlOpen(!controlOpen)}
-                      isMaximized={controlPanelMaximized}
-                      onMaximizeToggle={() =>
-                        setControlPanelMaximized(!controlPanelMaximized)
-                      }
-                    />
-                  </Allotment.Pane>
-                </Allotment>
-              </Allotment.Pane>
-              <Allotment.Pane minSize={MIN_WINDOW_SIZE}>
-                <div
-                  style={{
-                    position: 'relative',
-                    width: '100%',
-                    height: '100%',
-                  }}
-                >
-                  <SandboxView />
-                  {resourceMonitorEnabled && <PerformanceMonitor />}
-                  <QR />
-                </div>
-              </Allotment.Pane>
-            </Allotment>
-          )}
+            </Allotment.Pane>
+          </Allotment>
         </Allotment.Pane>
       </Allotment>
     </div>
@@ -176,7 +162,6 @@ export function CreagenEditorViewContentMobile() {
   useForceUpdateOnEditorEvent('params:config')
   const hideAll = useSettings('hide_all')
   const [menu, setMenu] = useLocalStorage('menu-view', false)
-
   useEffect(() => {
     creagenEditor.editor.setFullscreenMode(true)
     return () => {
@@ -184,31 +169,29 @@ export function CreagenEditorViewContentMobile() {
     }
   }, [creagenEditor])
 
-  if (menu) {
-    return (
-      <>
-        <Menu width="100svw" />
-        <Actions
-          style={{ position: 'fixed', bottom: 10, right: 10 }}
-          toggleMenu={() => setMenu(!menu)}
-        />
-      </>
-    )
-  }
-
-  if (hideAll) return <SandboxView width="100svw" />
-
   return (
     <div style={{ height: '100svh', display: 'flex', flexDirection: 'column' }}>
       <div style={{ flex: 1, position: 'relative' }}>
-        <SandboxView />
-        <Actions
-          style={{ position: 'fixed', bottom: 10, right: 10 }}
-          toggleMenu={() => setMenu(!menu)}
-        />
+        {/* NOTE: sandbox view should always be mounted to prevent disconnection with iframe */}
+        <SandboxView width={hideAll ? '100svw' : undefined} />
+        {!hideAll &&
+          (menu ? (
+            <div style={{ position: 'absolute', inset: 0, zIndex: 10 }}>
+              <Menu width="100svw" />
+              <Actions
+                style={{ position: 'fixed', bottom: 10, right: 10 }}
+                toggleMenu={() => setMenu(!menu)}
+              />
+            </div>
+          ) : (
+            <Actions
+              style={{ position: 'fixed', bottom: 10, right: 10 }}
+              toggleMenu={() => setMenu(!menu)}
+            />
+          ))}
       </div>
 
-      {creagenEditor.params.length > 0 && (
+      {!hideAll && creagenEditor.params.length > 0 && (
         <div
           style={{
             background: '#ffffff',
