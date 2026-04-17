@@ -84,7 +84,7 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
     })
     if (!indexdbStorageResult.ok) throw indexdbStorageResult.error
     if (!indexdbStorageResult.value.persisted)
-      logger.warn('Failed to persist storage')
+      logger.warn('Local storage might not be persisted')
     const indexdb = indexdbStorageResult.value.indexdb
 
     const auth = await resolveAuth(remoteClient)

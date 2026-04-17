@@ -25,6 +25,7 @@ npm start
 
 ## Roadmap
 
+- Use monaco command feature to add creagen editor specific commands like 'render'
 - Add docs
 - Add way to view and edit code on mobile
 - Put url in svg export

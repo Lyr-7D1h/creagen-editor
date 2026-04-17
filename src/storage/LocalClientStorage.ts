@@ -18,7 +18,7 @@ export class LocalClientStorage implements Storage<CommitMetadata> {
     const indexdbStorageResult = await IndexDBStorage.create<CommitMetadata>()
     if (!indexdbStorageResult.ok) throw indexdbStorageResult.error
     if (!indexdbStorageResult.value.persisted)
-      logger.warn('Failed to persist storage')
+      logger.warn('Local storage might not be persisted')
     const indexdb = indexdbStorageResult.value.indexdb
     return new LocalClientStorage(indexdb)
   }
