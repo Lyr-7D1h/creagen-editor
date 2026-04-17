@@ -2,9 +2,9 @@ import {
   Refresh as RefreshIcon,
   Shuffle as ShuffleIcon,
   RestartAlt as RestartAltIcon,
+  HelpOutline as HelpOutlineIcon,
 } from '@mui/icons-material'
-import type {
-  SelectChangeEvent} from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material'
 import {
   TextField,
   Stack,
@@ -21,7 +21,8 @@ import {
 } from '@mui/material'
 import React from 'react'
 import { generateHumanReadableName } from '../creagen-editor/generateHumanReadableName'
-import type { ParamConfig} from './Params';
+import { HtmlTooltip } from '../editor/HtmlTooltip'
+import type { ParamConfig } from './Params'
 import { Params } from './Params'
 
 function StringInput({
@@ -816,7 +817,7 @@ function ParamItem({
         px: 1,
         bgcolor: (theme) =>
           theme.palette.mode === 'light'
-            ? theme.palette.grey[100]
+            ? theme.palette.grey[50]
             : theme.palette.background.paper,
         borderRadius: 1,
         minWidth: compact ? 'fit-content' : 'unset',
@@ -959,6 +960,39 @@ export function ParamsViewPresentation({
             sx={{ mr: 0 }}
           />
         )}
+        <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center' }}>
+          <HtmlTooltip
+            title={
+              <Box>
+                <Typography variant="body2">
+                  Add controls by calling <strong>useParam()</strong> inside
+                  your sketch. The first argument is the parameter type and the
+                  second argument is an options object (such as default, min,
+                  max, step, items, or format).
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 0.75 }}>
+                  Every call automatically creates a matching control in this
+                  panel and keeps its value in sync with your code.
+                </Typography>
+                <Typography
+                  variant="caption"
+                  component="div"
+                  sx={{
+                    fontFamily: 'monospace',
+                    mt: 1,
+                    whiteSpace: 'pre-line',
+                  }}
+                >
+                  {`const count = useParam('integer', { min: 0, max: 100, default: 12 })\nconst speed = useParam('float', { min: 0, max: 2, step: 0.01, default: 0.5 })\nconst color = useParam('color', { default: '#ff6600' })`}
+                </Typography>
+              </Box>
+            }
+          >
+            <IconButton size="small" sx={{ p: 0.5 }}>
+              <HelpOutlineIcon fontSize="small" />
+            </IconButton>
+          </HtmlTooltip>
+        </Box>
       </Stack>
 
       <Box
