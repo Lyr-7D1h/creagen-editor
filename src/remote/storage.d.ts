@@ -777,6 +777,7 @@ export interface operations {
                         /** @enum {string} */
                         status: "created" | "exists";
                         size?: number;
+                        blobsFetched?: number;
                     };
                 };
             };

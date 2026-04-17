@@ -10,7 +10,7 @@ import {
   FormControlLabel,
   Checkbox,
 } from '@mui/material'
-import type React from 'react';
+import type React from 'react'
 import { useState, useEffect, useRef } from 'react'
 import { useCreagenEditor } from '../../creagen-editor/CreagenContext'
 import type { Commit } from 'versie'
@@ -788,6 +788,9 @@ export function CommitsTab() {
           </Box>
           <Typography variant="body2">
             <strong>Hash:</strong> {selectedCommit.hash.toHex()}
+          </Typography>
+          <Typography variant="body2">
+            <strong>Blob Hash:</strong> {selectedCommit.blob.toHex()}
           </Typography>
           <Typography variant="body2">
             <strong>Author:</strong> {selectedCommit.metadata.author ?? 'local'}

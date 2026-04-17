@@ -7,7 +7,10 @@ import type { ParamKey, ParamValue } from '../settings/SettingsConfig'
 import type { HistoryItem } from 'versie'
 import { logger } from '../logs/logger'
 import { useLocalStorage } from '../storage/useLocalStorage'
-import type { ActiveBookmark, CreagenEditor } from '../creagen-editor/CreagenEditor'
+import type {
+  ActiveBookmark,
+  CreagenEditor,
+} from '../creagen-editor/CreagenEditor'
 
 /**
  * Hook that subscribes to an event and triggers re-render when emitted
@@ -96,10 +99,7 @@ export const useActiveBookmark = () => {
 
   useEffect(() => {
     const listeners = [
-      editorEvents.on('vcs:checkout', () => {
-        setValue(editor.activeBookmark)
-      }),
-      editorEvents.on('vcs:bookmark-update', () => {
+      editorEvents.on(['vcs:checkout', 'vcs:bookmark-update'], () => {
         setValue(editor.activeBookmark)
       }),
     ]
@@ -115,10 +115,7 @@ export const useBookmarks = () => {
 
   useEffect(() => {
     const listeners = [
-      editorEvents.on('vcs:checkout', () => {
-        setValue(editor.getAllBookmarks())
-      }),
-      editorEvents.on('vcs:bookmark-update', () => {
+      editorEvents.on(['vcs:checkout', 'vcs:bookmark-update'], () => {
         setValue(editor.getAllBookmarks())
       }),
     ]
@@ -132,7 +129,22 @@ export const useHistory = (size: number) => {
   const creagenEditor = useCreagenEditor()
   const [history, setHistory] = useState<HistoryItem<CommitMetadata>[]>([])
   useEffect(() => {
+    // prevent fetching in parallel with multiple events triggered by having a cooldown
+    let cooldownId: ReturnType<typeof setTimeout> | null = null
+    let pendingUpdate = false
+
     const updateHistory = () => {
+      if (cooldownId !== null) {
+        pendingUpdate = true
+        return
+      }
+      cooldownId = setTimeout(() => {
+        cooldownId = null
+        if (pendingUpdate) {
+          pendingUpdate = false
+          updateHistory()
+        }
+      }, 50)
       creagenEditor
         .history(size)
         .then((historyResult) => {
@@ -147,12 +159,15 @@ export const useHistory = (size: number) => {
 
     updateHistory()
 
-    const destroy = [
-      editorEvents.on('vcs:commit', updateHistory),
-      editorEvents.on('vcs:checkout', updateHistory),
-      editorEvents.on('vcs:bookmark-update', updateHistory),
-    ]
-    return () => destroy.forEach((cb) => cb())
+    const unsubscribe = editorEvents.on(
+      ['vcs:commit', 'vcs:checkout', 'vcs:bookmark-update'],
+      updateHistory,
+    )
+
+    return () => {
+      if (cooldownId !== null) clearTimeout(cooldownId)
+      unsubscribe()
+    }
   }, [creagenEditor, setHistory, size])
 
   return history

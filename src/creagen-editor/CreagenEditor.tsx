@@ -534,19 +534,20 @@ export class CreagenEditor {
       return null
     }
 
-    // set url
+    const commitHash = commitResult.value.hash
+    // TODO(perf): Ensure commit and checkout don't make similar components rerender/refetch
+    editorEvents.emit('vcs:commit', { commit: commitHash, code })
+
     const mutator = new UrlMutator()
     if (this.vcs.head) mutator.setCommit(this.vcs.head.hash.toHex())
     mutator.pushState(null, this.activeBookmark.name)
 
-    const commitHash = commitResult.value.hash
     if (updateActiveBookmark) {
       const updateResult = await this.updateActiveBookmark(commitHash)
       if (updateResult.ok === false) {
         throw updateResult.error
       }
     }
-    editorEvents.emit('vcs:commit', { commit: commitHash, code })
     editorEvents.emit('vcs:checkout', { old, new: commitHash })
 
     return { code, libraries }
