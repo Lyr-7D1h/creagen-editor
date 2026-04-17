@@ -1,12 +1,16 @@
 import QrCodeIcon from '@mui/icons-material/QrCode'
-import type React from 'react';
+import type React from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { Export } from './Export'
 import { useCreagenEditor } from './CreagenContext'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import StopIcon from '@mui/icons-material/Stop'
 import ShareIcon from '@mui/icons-material/Share'
-import { MenuBook } from '@mui/icons-material'
+import {
+  Fullscreen as FullscreenIcon,
+  FullscreenExit as FullscreenExitIcon,
+  MenuBook,
+} from '@mui/icons-material'
 import { IconButton, useTheme } from '@mui/material'
 import {
   useForceUpdateOnEditorEvent,
@@ -17,6 +21,7 @@ import { editorEvents } from '../events/events'
 import { isMobile } from './isMobile'
 import { createContextLogger, log, Severity } from '../logs/logger'
 import { UrlMutator } from '../UrlMutator'
+import { KeybindHint } from '../shared/KeybindHint'
 
 const logger = createContextLogger('actions')
 
@@ -168,6 +173,39 @@ export function Actions({
             }}
           >
             <MenuBook style={{ fontSize: size }} />
+          </IconButton>
+        </HtmlTooltip>,
+      )
+    if (!isMobileDevice)
+      buttons.push(
+        <HtmlTooltip
+          key="fullscreen"
+          title={
+            <KeybindHint
+              label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+              keybind={creagenEditor.getKeybindKeyString(
+                'editor.toggleFullscreen',
+              )}
+              wrapInParens
+            />
+          }
+        >
+          <IconButton
+            size="small"
+            color={isFullscreen ? 'inherit' : 'primary'}
+            sx={fullscreenActionButtonSx}
+            onClick={() =>
+              creagenEditor.executeCommand('editor.toggleFullscreen')
+            }
+            style={{
+              cursor: 'pointer',
+            }}
+          >
+            {isFullscreen ? (
+              <FullscreenExitIcon style={{ fontSize: size }} />
+            ) : (
+              <FullscreenIcon style={{ fontSize: size }} />
+            )}
           </IconButton>
         </HtmlTooltip>,
       )
