@@ -1,5 +1,5 @@
 import { KeyCode, KeyMod } from 'monaco-editor'
-import type { Command} from './commands';
+import type { Command } from './commands'
 import { COMMANDS, commandSchema } from './commands'
 import type { CreagenEditor } from './CreagenEditor'
 import type { Editor } from '../editor/Editor'
@@ -93,22 +93,26 @@ export class Keybindings {
     this.browserHandlers = []
     this.handlers.clear()
 
-    const binds = groupBy(
+    const bindsByCommand = groupBy(
       defaultKeybindings.map((kb) => ({ ...kb, custom: false })),
       'command',
     )
 
     for (const bind of this.customKeybindings) {
+      // ensure that command without any default binds always have an array
+      if (typeof bindsByCommand[bind.command] === 'undefined')
+        bindsByCommand[bind.command] = []
+
       if (bind.remove) {
-        binds[bind.command] = binds[bind.command].filter(
+        bindsByCommand[bind.command] = bindsByCommand[bind.command].filter(
           (kb) => kb.key !== bind.key,
         )
         continue
       }
-      binds[bind.command].push({ ...bind, custom: true })
+      bindsByCommand[bind.command].push({ ...bind, custom: true })
     }
 
-    this.keybindings = Object.values(binds).flat()
+    this.keybindings = Object.values(bindsByCommand).flat()
     for (const kb of this.keybindings) {
       const command = kb.command
       const handler = () => COMMANDS[command].handler(this.editor)

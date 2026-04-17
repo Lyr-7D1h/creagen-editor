@@ -2,40 +2,19 @@ import { useState } from 'react'
 import { useCreagenEditor } from '../../creagen-editor/CreagenContext'
 import ReplayIcon from '@mui/icons-material/Replay'
 import DeleteIcon from '@mui/icons-material/Delete'
-import type { Command } from '../../creagen-editor/commands';
+import type { Command } from '../../creagen-editor/commands'
 import { COMMANDS } from '../../creagen-editor/commands'
 import type {
   ActiveKeybinding,
-  KeyInfo} from '../../creagen-editor/keybindings';
-import {
-  getDefaultKeybindingsForCommand,
+  KeyInfo,
 } from '../../creagen-editor/keybindings'
+import { getDefaultKeybindingsForCommand } from '../../creagen-editor/keybindings'
 import { KeyCaptureInput } from './KeyCaptureInput'
 import { Chip, IconButton } from '@mui/material'
-import type { ColumnDef} from '../../shared/Table';
+import type { ColumnDef } from '../../shared/Table'
 import { Table } from '../../shared/Table'
 import { logger } from '../../logs/logger'
-
-const formatKey = (key: string): string => {
-  return key
-    .split('+')
-    .map((part) => {
-      switch (part.toLowerCase()) {
-        case 'ctrl':
-          return 'Ctrl'
-        case 'shift':
-          return 'Shift'
-        case 'alt':
-          return 'Alt'
-        case 'meta':
-        case 'cmd':
-          return 'Cmd'
-        default:
-          return part.toUpperCase()
-      }
-    })
-    .join(' + ')
-}
+import { KeybindHint } from '../../shared/KeybindHint'
 
 interface KeybindingRow {
   command: Command
@@ -57,6 +36,7 @@ export function KeybindingsTab() {
     key: KeyInfo,
     oldKey?: KeyInfo,
   ) => {
+    console.log(command)
     if (oldKey != null)
       await creagen.keybindings.removeKeybinding(oldKey, command)
     if (key.length > 0) {
@@ -136,17 +116,17 @@ export function KeybindingsTab() {
                     setEditingCommand({ command, oldKey: kb.key })
                   }}
                 >
-                  <code
+                  <div
                     style={{
-                      backgroundColor: '#f1f3f4',
+                      backgroundColor: '#fafafa',
                       padding: '4px 8px',
                       borderRadius: '4px',
                       border: '1px solid #dadce0',
                       cursor: 'pointer',
                     }}
                   >
-                    {formatKey(kb.key)}
-                  </code>
+                    <KeybindHint keybind={kb.key} />
+                  </div>
                   <IconButton
                     onClick={(e) => {
                       e.stopPropagation()

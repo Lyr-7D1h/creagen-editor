@@ -33,9 +33,7 @@ export class Sandbox {
     return new Sandbox(iframe)
   }
 
-  private constructor(private readonly iframe: HTMLIFrameElement) {
-    this.setupMessageHandlers()
-  }
+  private constructor(private readonly iframe: HTMLIFrameElement) {}
 
   /** Wait for message handler connection if not already connected */
   ensureConnection(): Promise<SandboxMessageHandler> {
@@ -99,7 +97,7 @@ export class Sandbox {
     )
     editorEvents.emit('sandbox:connect', undefined)
     this.setupMessageHandlers()
-    logger.info('Message handler reconnected')
+    logger.info('Message handler (re)connected')
   }
 
   html() {

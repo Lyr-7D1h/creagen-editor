@@ -1,25 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-
-function formatKey(key: string): string {
-  return key
-    .split('+')
-    .map((part) => {
-      switch (part.toLowerCase()) {
-        case 'ctrl':
-          return 'Ctrl'
-        case 'shift':
-          return 'Shift'
-        case 'alt':
-          return 'Alt'
-        case 'meta':
-        case 'cmd':
-          return 'Cmd'
-        default:
-          return part.toUpperCase()
-      }
-    })
-    .join(' + ')
-}
+import { KeybindHint } from '../../shared/KeybindHint'
 
 interface KeyCaptureInputProps {
   value: string
@@ -94,7 +74,7 @@ export function KeyCaptureInput({
   if (isRecording) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <code
+        <div
           style={{
             backgroundColor: '#e3f2fd',
             padding: '4px 8px',
@@ -104,8 +84,8 @@ export function KeyCaptureInput({
             textAlign: 'center',
           }}
         >
-          {formatKey(capturedKey) || 'Press keys...'}
-        </code>
+          <KeybindHint keybind={capturedKey} emptyLabel="Press keys..." />
+        </div>
         <span style={{ fontSize: '12px', color: '#6c757d' }}>
           Press Enter to save, Esc to cancel, Delete to remove
         </span>

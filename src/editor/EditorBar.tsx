@@ -8,8 +8,10 @@ import { useHistory, useSettings } from '../events/useEditorEvents'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import { logger } from '../logs/logger'
 import { Actions } from '../creagen-editor/Actions'
+import { KeybindHint } from '../shared/KeybindHint'
 
 const BAR_HEIGHT = 18
+
 export function EditorBar({
   menu,
   toggleMenu,
@@ -82,9 +84,19 @@ export function EditorBar({
       >
         <HtmlTooltip
           title={
-            menu
-              ? 'Hide editor menu'
-              : `Show editor menu (${creagenEditor.getKeybindKeyString('editor.toggleMenu')})`
+            menu ? (
+              <KeybindHint
+                label="Hide editor menu"
+                keybind={creagenEditor.getKeybindKeyString('editor.toggleMenu')}
+                wrapInParens
+              />
+            ) : (
+              <KeybindHint
+                label="Show editor menu"
+                keybind={creagenEditor.getKeybindKeyString('editor.toggleMenu')}
+                wrapInParens
+              />
+            )
           }
           placement="right"
         >
@@ -108,7 +120,13 @@ export function EditorBar({
           </IconButton>
         </HtmlTooltip>
         <HtmlTooltip
-          title={`New sketch (${creagenEditor.getKeybindKeyString('new')})`}
+          title={
+            <KeybindHint
+              label="New sketch"
+              keybind={creagenEditor.getKeybindKeyString('new')}
+              wrapInParens
+            />
+          }
           placement="right"
         >
           <IconButton
