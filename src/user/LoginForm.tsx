@@ -56,6 +56,7 @@ export function LoginForm({
             <Alert severity="success">{successMessage}</Alert>
           )}
           <TextField
+            name="username"
             label="Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
@@ -75,6 +76,7 @@ export function LoginForm({
             }}
           />
           <TextField
+            name="password"
             label="Password"
             type="password"
             value={password}

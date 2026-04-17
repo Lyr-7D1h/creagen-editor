@@ -1,4 +1,4 @@
-import type React from 'react';
+import type React from 'react'
 import { useState } from 'react'
 import {
   Alert,
@@ -96,6 +96,7 @@ export function SignupForm({
             <Alert severity="success">{successMessage}</Alert>
           )}
           <TextField
+            name="username"
             label="Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
@@ -121,6 +122,7 @@ export function SignupForm({
             }}
           />
           <TextField
+            name="password"
             label="Password"
             type="password"
             value={password}
@@ -162,6 +164,7 @@ export function SignupForm({
             </Box>
           )}
           <TextField
+            name="password-repeat"
             label="Repeat password"
             type="password"
             value={repeatPassword}
