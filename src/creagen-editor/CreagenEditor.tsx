@@ -653,6 +653,7 @@ export class CreagenEditor {
     if (oldName === this.activeBookmark.name) {
       this.activeBookmark = { ...this.activeBookmark, name: newName }
     }
+    editorEvents.emit('vcs:bookmark-update', undefined)
     return result
   }
 
