@@ -1,7 +1,14 @@
 import { encode } from '@msgpack/msgpack'
 import { localStorage } from './LocalStorage'
 import type { CustomKeybinding } from '../creagen-editor/keybindings'
-import type { Storage, CommitHash, BlobHash, Bookmark, Commit } from 'versie'
+import type {
+  Storage,
+  CommitHash,
+  BlobHash,
+  Bookmark,
+  Commit,
+  DeltizedBlob,
+} from 'versie'
 import { IndexDBStorage, Sha256Hash } from 'versie'
 import type { CommitMetadata } from '../creagen-editor/CommitMetadata'
 import type { RemoteClient, StoredCommit, User } from '../remote/remoteClient'
@@ -72,7 +79,7 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
           }),
         )
         if (!(buffer instanceof ArrayBuffer)) return null
-        const data = new Uint8Array(buffer)
+        const data = new Uint8Array(buffer) as DeltizedBlob
 
         // store locally in background to promote faster lookup speeds
         indexdb
