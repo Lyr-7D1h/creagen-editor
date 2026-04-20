@@ -90,6 +90,7 @@ export function CreagenEditorViewSplit() {
                       <EditorView
                         menu={menu}
                         toggleMenu={() => setMenu(!menu)}
+                        active={!fullscreen}
                       />
                     </div>
                   </Allotment.Pane>
@@ -131,6 +132,7 @@ export function CreagenEditorViewSplit() {
                       <EditorView
                         menu={menu}
                         toggleMenu={() => setMenu(!menu)}
+                        active={fullscreen && !hideAll}
                       />
                     </div>
 

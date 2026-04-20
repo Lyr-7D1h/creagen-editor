@@ -9,9 +9,16 @@ export interface EditorProps {
   height?: string
   menu: boolean
   toggleMenu: () => void
+  active?: boolean
 }
 
-export function EditorView({ width, height, menu, toggleMenu }: EditorProps) {
+export function EditorView({
+  width,
+  height,
+  menu,
+  toggleMenu,
+  active = true,
+}: EditorProps) {
   const creagenEditor = useCreagenEditor()
   const hideAll = useSettings('hide_all')
   const vimEnabled = useSettings('editor.vim')
@@ -20,13 +27,21 @@ export function EditorView({ width, height, menu, toggleMenu }: EditorProps) {
   const theme = useTheme()
 
   useEffect(() => {
+    if (!active) {
+      return
+    }
+
     const editorContent = editorContentRef.current
-    if (editorContent?.children.length === 0) {
-      const htmlElement = creagenEditor.editor.html()
+    if (!editorContent) {
+      return
+    }
+
+    const htmlElement = creagenEditor.editor.html()
+    if (htmlElement.parentElement !== editorContent) {
       editorContent.appendChild(htmlElement)
       creagenEditor.editor.layout()
     }
-  }, [creagenEditor.editor])
+  }, [active, creagenEditor.editor])
 
   useEffect(() => {
     const vimStatus = vimStatusRef.current
