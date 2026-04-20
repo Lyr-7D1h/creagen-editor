@@ -52,7 +52,7 @@ export function DependenciesTab() {
           latestVersions[name] = versions[name][latestIndex]!
 
           if (name === 'creagen' && CREAGEN_DEV_VERSION) {
-            const devVersion = CREAGEN_DEV_VERSION.toString()
+            const devVersion = CREAGEN_DEV_VERSION
             versions[name].unshift(devVersion)
             latestVersions[name] = devVersion
           }

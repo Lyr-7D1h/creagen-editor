@@ -17,10 +17,14 @@ npm install
 # Run with local creagen build
 # `CREAGEN_DEV_PATH`  - path to creagen library folder (defaults to ../creagen)
 # The full path to the package will be `$CREAGEN_DEV_PATH/dist/creagen.js`
-CREAGEN_DEV_PATH=<path to local creagen version> npm run dev
+CREAGEN_DEV_PATH=<path to local creagen version> npm start
 
 # Run in standalone mode
 npm start
+
+# Run local build with remote storage
+# [!WARNING] if you are running a different build than what the remote was designed for it might corrupt your data
+CREAGEN_TURNSTILE_SITE_KEY=0x4AAAAAAC1B7j42DqgKtO_I CREAGEN_REMOTE_URL=https://storage.creagen.dev npm start
 ```
 
 ## Roadmap

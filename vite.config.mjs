@@ -113,7 +113,7 @@ function commitHash() {
   return null
 }
 
-let creagenDevPath = process.env.CREAGEN_DEV_PATH ?? path.resolve('../creagen')
+let creagenDevPath = process.env.CREAGEN_DEV_PATH
 if (!fs.existsSync(creagenDevPath)) {
   creagenDevPath = null
 }
@@ -121,26 +121,23 @@ export default defineConfig(async ({ mode }) => {
   const defines = {
     CREAGEN_MODE: JSON.stringify(mode),
     // if dev, get version from local creagen package.json
-    CREAGEN_DEV_VERSION: creagenDevPath
-      ? JSON.stringify(
-          JSON.parse(fs.readFileSync(`${creagenDevPath}/package.json`)).version,
-        )
-      : null,
+    CREAGEN_DEV_VERSION: JSON.stringify(
+      creagenDevPath
+        ? JSON.parse(fs.readFileSync(`${creagenDevPath}/package.json`)).version
+        : null,
+    ),
     CREAGEN_EDITOR_VERSION: JSON.stringify(process.env.npm_package_version),
     CREAGEN_EDITOR_COMMIT_HASH: JSON.stringify(commitHash()),
     CREAGEN_EDITOR_CONTROLLER_URL: JSON.stringify(
       process.env.CREAGEN_EDITOR_CONTROLLER_URL ?? null,
     ),
-    CREAGEN_EDITOR_SANDBOX_RUNTIME_URL: process.env
-      .CREAGEN_EDITOR_SANDBOX_RUNTIME_URL
-      ? JSON.stringify(process.env.CREAGEN_EDITOR_SANDBOX_RUNTIME_URL)
-      : JSON.stringify('/sandbox-runtime/'),
-    CREAGEN_LOG_LEVEL: process.env.CREAGEN_LOG_LEVEL
-      ? JSON.stringify(process.env.CREAGEN_LOG_LEVEL)
-      : '"0"',
+    CREAGEN_EDITOR_SANDBOX_RUNTIME_URL: JSON.stringify(
+      process.env.CREAGEN_EDITOR_SANDBOX_RUNTIME_URL ?? '/sandbox-runtime/',
+    ),
+    CREAGEN_LOG_LEVEL: JSON.stringify(process.env.CREAGEN_LOG_LEVEL ?? '0'),
     CREAGEN_REMOTE_URL: JSON.stringify(process.env.CREAGEN_REMOTE_URL ?? null),
     CREAGEN_TURNSTILE_SITE_KEY: JSON.stringify(
-      process.env.CREAGEN_TURNSTILE_SITE_KEY ?? '1x00000000000000000000AA', // default to test key
+      process.env.CREAGEN_TURNSTILE_SITE_KEY ?? '1x00000000000000000000AA', // default turnstile test key
     ),
   }
   return {
