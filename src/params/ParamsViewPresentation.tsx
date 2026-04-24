@@ -38,15 +38,20 @@ function StringInput({
     setLocalValue(value)
   }, [value])
 
+  const commit = () => {
+    if (localValue === value) return
+    onChange(localValue)
+  }
+
   return (
     <TextField
       fullWidth
       value={localValue}
       onChange={(e) => setLocalValue(e.target.value)}
-      onBlur={(e) => onChange(e.target.value)}
+      onBlur={commit}
       onKeyDown={(e) => {
         if (e.key === 'Enter') {
-          onChange((e.target as HTMLInputElement).value)
+          commit()
         }
       }}
       size="small"
@@ -67,6 +72,11 @@ function SeedInput({
     setLocalValue(value)
   }, [value])
 
+  const commit = () => {
+    if (localValue === value) return
+    onChange(localValue)
+  }
+
   const handleGenerateNew = () => {
     const newSeed = generateHumanReadableName()
     setLocalValue(newSeed)
@@ -79,10 +89,10 @@ function SeedInput({
         fullWidth
         value={localValue}
         onChange={(e) => setLocalValue(e.target.value)}
-        onBlur={(e) => onChange(e.target.value)}
+        onBlur={commit}
         onKeyDown={(e) => {
           if (e.key === 'Enter') {
-            onChange((e.target as HTMLInputElement).value)
+            commit()
           }
         }}
         size="small"
@@ -111,6 +121,7 @@ function ColorInput({
   }, [value])
 
   const handleChange = (newValue: string) => {
+    if (newValue === localValue) return
     setLocalValue(newValue)
     // Validate hex color format
     if (/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/.test(newValue)) {
@@ -203,6 +214,7 @@ function IntegerInput({
 
   const commit = () => {
     const val = parseInt(localValue, 10)
+    if (val === value) return
     const valid = !isNaN(val) && Params.isValidValue(config, val)
     setIsValid(valid)
     if (valid) {
@@ -302,6 +314,7 @@ function FloatInput({
 
   const commit = () => {
     const val = parseFloat(localValue)
+    if (val === value) return
     const valid = !isNaN(val) && Params.isValidValue(config, val)
     setIsValid(valid)
     if (valid) {
@@ -395,32 +408,38 @@ function RangeInput({
   const handleMinChange = (inputValue: string) => {
     setLocalMinValue(inputValue)
     const val = parseFloat(inputValue)
-    if (!isNaN(val)) {
-      const newMin = Math.min(val, value[1])
-      const newValue: [number, number] = [newMin, value[1]]
-      const valid = Params.isValidValue(config, newValue)
-      setIsMinValid(valid)
-      if (valid) {
-        onChange(newValue)
-      }
-    } else {
+    if (isNaN(val)) {
       setIsMinValid(false)
+      return
+    }
+    const newMin = Math.min(val, value[1])
+    if (newMin === value[0]) {
+      return
+    }
+    const newValue: [number, number] = [newMin, value[1]]
+    const valid = Params.isValidValue(config, newValue)
+    setIsMinValid(valid)
+    if (valid) {
+      onChange(newValue)
     }
   }
 
   const handleMaxChange = (inputValue: string) => {
     setLocalMaxValue(inputValue)
     const val = parseFloat(inputValue)
-    if (!isNaN(val)) {
-      const newMax = Math.max(val, value[0])
-      const newValue: [number, number] = [value[0], newMax]
-      const valid = Params.isValidValue(config, newValue)
-      setIsMaxValid(valid)
-      if (valid) {
-        onChange(newValue)
-      }
-    } else {
+    if (isNaN(val)) {
       setIsMaxValid(false)
+      return
+    }
+    if (val === value[1]) {
+      return
+    }
+    const newMax = Math.max(val, value[0])
+    const newValue: [number, number] = [value[0], newMax]
+    const valid = Params.isValidValue(config, newValue)
+    setIsMaxValid(valid)
+    if (valid) {
+      onChange(newValue)
     }
   }
 
@@ -490,32 +509,38 @@ function RangeSliderInput({
   const handleMinChange = (inputValue: string) => {
     setLocalMinValue(inputValue)
     const val = parseFloat(inputValue)
-    if (!isNaN(val)) {
-      const newMin = Math.min(val, value[1])
-      const newValue: [number, number] = [newMin, value[1]]
-      const valid = Params.isValidValue(config, newValue)
-      setIsMinValid(valid)
-      if (valid) {
-        onChange(newValue)
-      }
-    } else {
+    if (isNaN(val)) {
       setIsMinValid(false)
+      return
+    }
+    if (val === value[0]) {
+      return
+    }
+    const newMin = Math.min(val, value[1])
+    const newValue: [number, number] = [newMin, value[1]]
+    const valid = Params.isValidValue(config, newValue)
+    setIsMinValid(valid)
+    if (valid) {
+      onChange(newValue)
     }
   }
 
   const handleMaxChange = (inputValue: string) => {
     setLocalMaxValue(inputValue)
     const val = parseFloat(inputValue)
-    if (!isNaN(val)) {
-      const newMax = Math.max(val, value[0])
-      const newValue: [number, number] = [value[0], newMax]
-      const valid = Params.isValidValue(config, newValue)
-      setIsMaxValid(valid)
-      if (valid) {
-        onChange(newValue)
-      }
-    } else {
+    if (isNaN(val)) {
       setIsMaxValid(false)
+      return
+    }
+    const newMax = Math.max(val, value[0])
+    const newValue: [number, number] = [value[0], newMax]
+    if (newMax === value[1]) {
+      return
+    }
+    const valid = Params.isValidValue(config, newValue)
+    setIsMaxValid(valid)
+    if (valid) {
+      onChange(newValue)
     }
   }
 
