@@ -4,6 +4,7 @@ import {
   compressToEncodedURIComponent,
   decompressFromEncodedURIComponent,
 } from 'lz-string'
+import type { CommitHash } from 'versie'
 import { commitHashSchema } from 'versie'
 import { z } from 'zod'
 
@@ -116,6 +117,17 @@ function parseSharePayload(payload: string): SharableLinkData | Error {
   }
 }
 
+export type UrlVersion =
+  | {
+      type: 'bookmark'
+      username?: string
+      bookmark: string
+    }
+  | {
+      type: 'commit'
+      commit: CommitHash
+    }
+
 /** A standardized way to mutate the url for the creagen editor */
 export class UrlMutator {
   private readonly url: URL
@@ -175,12 +187,18 @@ export class UrlMutator {
     return this
   }
 
+  /** Set bookmark in url @username/bookmark */
+  setBookmark(bookmark: string, username?: string) {
+    this.url.pathname = username ? `/${username}/${bookmark}` : `/${bookmark}`
+    return this
+  }
+
   setCommit(commit?: string) {
     this.url.pathname = `/${commit ?? ''}`
     return this
   }
 
-  async getCommit() {
+  getVersion(): UrlVersion | null {
     const path = this.url.pathname.startsWith('/')
       ? this.url.pathname.slice(1)
       : this.url.pathname
@@ -189,12 +207,29 @@ export class UrlMutator {
       return null
     }
 
-    const commit = await commitHashSchema.safeParseAsync(path)
-    if (commit.error) {
-      return commit.error
-    }
+    const [x1, x2] = decodeURIComponent(path).split('/')
 
-    return commit.data
+    if (typeof x1 === 'undefined' || x1.length === 0) return null
+
+    const commit = commitHashSchema.safeParse(x1)
+    if (commit.success)
+      return {
+        type: 'commit',
+        commit: commit.data,
+      }
+
+    if (typeof x2 === 'string' && x2.length > 0) {
+      return {
+        type: 'bookmark',
+        username: x1,
+        bookmark: x2,
+      }
+    } else {
+      return {
+        type: 'bookmark',
+        bookmark: x1,
+      }
+    }
   }
 
   getSetting(key: string): unknown {
@@ -313,6 +348,7 @@ export class UrlMutator {
   }
 
   setWindowTitle(title: string) {
+    if (document.title === title) return this
     document.title = title
     return this
   }

@@ -1,16 +1,16 @@
 import { useEffect, useState } from 'react'
-import { editorEvents } from './events'
-import type { EditorEvent, EditorEventData } from './EditorEvent'
-import { useCreagenEditor } from '../creagen-editor/CreagenContext'
-import type { CommitMetadata } from '../creagen-editor/CommitMetadata'
-import type { ParamKey, ParamValue } from '../settings/SettingsConfig'
 import type { HistoryItem } from 'versie'
-import { logger } from '../logs/logger'
-import { useLocalStorage } from '../storage/useLocalStorage'
+import type { CommitMetadata } from '../creagen-editor/CommitMetadata'
+import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import type {
   ActiveBookmark,
   CreagenEditor,
 } from '../creagen-editor/CreagenEditor'
+import { logger } from '../logs/logger'
+import type { ParamKey, ParamValue } from '../settings/SettingsConfig'
+import { useLocalStorage } from '../storage/useLocalStorage'
+import type { EditorEvent, EditorEventData } from './EditorEvent'
+import { editorEvents } from './events'
 
 /**
  * Hook that subscribes to an event and triggers re-render when emitted
@@ -83,8 +83,8 @@ export const useHead = () => {
   const [value, setValue] = useState(() => editor.head?.hash)
 
   useEffect(() => {
-    return editorEvents.on('vcs:checkout', ({ new: n }) => {
-      setValue(n)
+    return editorEvents.on(['vcs:checkout', 'vcs:commit'], () => {
+      setValue(editor.head?.hash)
     })
   }, [editor.head])
 
@@ -99,9 +99,12 @@ export const useActiveBookmark = () => {
 
   useEffect(() => {
     const listeners = [
-      editorEvents.on(['vcs:checkout', 'vcs:bookmark-update'], () => {
-        setValue(editor.activeBookmark)
-      }),
+      editorEvents.on(
+        ['vcs:bookmark-update', 'vcs:active-bookmark-update'],
+        () => {
+          setValue(editor.activeBookmark)
+        },
+      ),
     ]
     return () => listeners.forEach((l) => l())
   }, [editor.activeBookmark])
@@ -115,9 +118,12 @@ export const useBookmarks = () => {
 
   useEffect(() => {
     const listeners = [
-      editorEvents.on(['vcs:checkout', 'vcs:bookmark-update'], () => {
-        setValue(editor.getAllBookmarks())
-      }),
+      editorEvents.on(
+        ['vcs:commit', 'vcs:bookmark-update', 'vcs:active-bookmark-update'],
+        () => {
+          setValue(editor.getAllBookmarks())
+        },
+      ),
     ]
     return () => listeners.forEach((l) => l())
   }, [editor])
@@ -160,7 +166,12 @@ export const useHistory = (size: number) => {
     updateHistory()
 
     const unsubscribe = editorEvents.on(
-      ['vcs:commit', 'vcs:checkout', 'vcs:bookmark-update'],
+      [
+        'vcs:commit',
+        'vcs:checkout',
+        'vcs:bookmark-update',
+        'vcs:active-bookmark-update',
+      ],
       updateHistory,
     )
 

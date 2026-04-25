@@ -1,16 +1,16 @@
-import { localStorage } from './LocalStorage'
-import type { CustomKeybinding } from '../creagen-editor/keybindings'
-import { IndexDBStorage } from 'versie'
 import type {
-  Storage,
-  CommitHash,
   BlobHash,
   Bookmark,
   Commit,
+  CommitHash,
   IndexdbImport,
+  Storage,
 } from 'versie'
+import { IndexDBStorage } from 'versie'
 import type { CommitMetadata } from '../creagen-editor/CommitMetadata'
+import type { CustomKeybinding } from '../creagen-editor/keybindings'
 import { logger } from '../logs/logger'
+import { localStorage } from './LocalStorage'
 
 /** Entry point for fetching all data */
 export class LocalClientStorage implements Storage<CommitMetadata> {
@@ -23,6 +23,9 @@ export class LocalClientStorage implements Storage<CommitMetadata> {
     return new LocalClientStorage(indexdb)
   }
 
+  readonly remote = false
+  /** Needed for interface compat with `RemoteClientStorage` */
+  readonly user = undefined
   constructor(readonly indexdb: IndexDBStorage<CommitMetadata>) {}
 
   setSettings(value: unknown) {
@@ -43,6 +46,9 @@ export class LocalClientStorage implements Storage<CommitMetadata> {
   }
   getCommitData(hash: BlobHash) {
     return this.indexdb.getCommitData(hash)
+  }
+  getBookmark(bookmarkName: string) {
+    return this.indexdb.getBookmark(bookmarkName)
   }
   setBookmark(bookmark: Bookmark) {
     return this.indexdb.setBookmark(bookmark)

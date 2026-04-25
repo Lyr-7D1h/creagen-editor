@@ -1,22 +1,22 @@
 import { Add, ChevronRight } from '@mui/icons-material'
 import {
-  IconButton,
-  Typography,
   Chip,
+  Divider,
+  IconButton,
   Menu,
   MenuItem,
-  Divider,
+  Typography,
 } from '@mui/material'
-import { useState, useRef } from 'react'
+import { useRef, useState } from 'react'
+import type { HistoryItem } from 'versie'
+import { Bookmark, bookmarkNameSchema } from 'versie'
+import type { CommitMetadata } from '../creagen-editor/CommitMetadata'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import type { ActiveBookmark } from '../creagen-editor/CreagenEditor'
 import { logger } from '../logs/logger'
-import { bookmarkNameSchema, Bookmark } from 'versie'
-import type { HistoryItem } from 'versie'
-import { TextInput } from './TextInput'
-import { HtmlTooltip } from './HtmlTooltip'
 import { CommitTooltip } from './CommitTooltip'
-import type { CommitMetadata } from '../creagen-editor/CommitMetadata'
+import { HtmlTooltip } from './HtmlTooltip'
+import { TextInput } from './TextInput'
 
 interface BookmarkMenuProps {
   bookmarks: Bookmark[]
@@ -179,10 +179,7 @@ export function HistoryItemChip({
         onClick={() => {
           if (isEditing === null) {
             creagenEditor
-              .checkout(commit.hash)
-              .then((result) => {
-                if (!result.ok) logger.error(result.error)
-              })
+              .setBookmarkCommit(creagenEditor.activeBookmark.name, commit.hash)
               .catch(logger.error)
           }
         }}
@@ -242,15 +239,7 @@ export function HistoryItemChip({
   }
 
   const handleBookmarkSelect = (bookmarkName: string) => {
-    const bookmark = creagenEditor.getBookmark(bookmarkName)
-    if (bookmark) {
-      creagenEditor
-        .checkout(bookmark)
-        .then((r) => {
-          if (!r.ok) logger.error(r.error)
-        })
-        .catch(logger.error)
-    }
+    creagenEditor.checkoutBookmark(bookmarkName).catch(logger.error)
     handleMenuClose()
   }
 

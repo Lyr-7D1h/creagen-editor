@@ -29,6 +29,8 @@ CREAGEN_TURNSTILE_SITE_KEY=0x4AAAAAAC1B7j42DqgKtO_I CREAGEN_REMOTE_URL=https://s
 
 ## Roadmap
 
+- Save version
+  - Save a specific commit with parameters configuration to be fetched later 
 - Use monaco command feature to add creagen editor specific commands like 'render'
 - Add docs
 - Add way to view and edit code on mobile

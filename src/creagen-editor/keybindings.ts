@@ -1,11 +1,11 @@
 import { KeyCode, KeyMod } from 'monaco-editor'
+import z from 'zod'
+import type { Editor } from '../editor/Editor'
+import { createContextLogger } from '../logs/logger'
+import { groupBy } from '../util'
 import type { Command } from './commands'
 import { COMMANDS, commandSchema } from './commands'
 import type { CreagenEditor } from './CreagenEditor'
-import type { Editor } from '../editor/Editor'
-import z from 'zod'
-import { groupBy } from '../util'
-import { createContextLogger } from '../logs/logger'
 
 export type KeyInfo = string
 
@@ -33,6 +33,10 @@ const defaultKeybindings: Keybinding[] = [
   {
     key: 'ctrl+alt+enter',
     command: 'editor.run',
+  },
+  {
+    key: 'ctrl+shift+alt+enter',
+    command: 'editor.freeze',
   },
   {
     key: 'ctrl+alt+f',

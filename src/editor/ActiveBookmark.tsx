@@ -1,10 +1,10 @@
-import { useMemo, useState } from 'react'
 import { Typography } from '@mui/material'
-import { logger } from '../logs/logger'
-import { useActiveBookmark, useIsDirty } from '../events/useEditorEvents'
-import { useCreagenEditor } from '../creagen-editor/CreagenContext'
-import { TextInput } from './TextInput'
+import { useMemo, useState } from 'react'
 import { bookmarkNameSchema } from 'versie'
+import { useCreagenEditor } from '../creagen-editor/CreagenContext'
+import { useActiveBookmark, useIsDirty } from '../events/useEditorEvents'
+import { logger } from '../logs/logger'
+import { TextInput } from './TextInput'
 
 export function ActiveBookmark({ color }: { color?: string }) {
   const creagenEditor = useCreagenEditor()
@@ -29,12 +29,12 @@ export function ActiveBookmark({ color }: { color?: string }) {
   const isUncommitted = activeBookmark.commit === null
   const uncommittedMarker = useMemo(
     () =>
-      isDirty || isUncommitted ? (
+      isDirty ? (
         <Typography component="span" sx={{ color: 'text.disabled' }}>
           *
         </Typography>
       ) : null,
-    [isUncommitted, isDirty],
+    [isDirty],
   )
 
   return (
@@ -44,6 +44,7 @@ export function ActiveBookmark({ color }: { color?: string }) {
         onClick={() => setIsEditing(true)}
         sx={{
           color: color ?? '#111',
+          opacity: isUncommitted ? 0.7 : 1,
           fontSize: '0.95rem',
           cursor: 'pointer',
           paddingLeft: 1,

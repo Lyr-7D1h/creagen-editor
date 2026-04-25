@@ -1,11 +1,16 @@
+import {
+  Bookmark,
+  BookmarkAlreadyExistsError,
+  BookmarkNotFoundError,
+  DeltizingError,
+  StorageError,
+} from 'versie'
 import { logger } from '../logs/logger'
 import { UrlMutator } from '../UrlMutator'
-import { generateHumanReadableName } from './generateHumanReadableName'
-import { Bookmark, BookmarkAlreadyExistsError, DeltizingError } from 'versie'
-import { StorageError } from 'versie'
 import { CommitMetadata } from './CommitMetadata'
 import type { CreagenEditor } from './CreagenEditor'
 import { creagenEditorVersionMismatch } from './creagenEditorVersionMatches'
+import { generateHumanReadableName } from './generateHumanReadableName'
 
 /** Update creagen state from url data */
 export async function updateFromUrl(editor: CreagenEditor) {
@@ -55,7 +60,7 @@ async function updateFromSharableLinkData(
     const retryWithNewName = bookmark
       .match()
       .when(BookmarkAlreadyExistsError, () => true)
-      .when(StorageError, DeltizingError, () => false)
+      .when(StorageError, DeltizingError, BookmarkNotFoundError, () => false)
       .run()
     if (!retryWithNewName) {
       return null
@@ -66,38 +71,45 @@ async function updateFromSharableLinkData(
     )
   }
 
-  const checkoutResult = await editor.checkout(bookmark.value)
-  if (!checkoutResult.ok) {
-    logger.error(checkoutResult.error)
+  try {
+    await editor.checkoutBookmark(bookmark.value.name)
+  } catch (e) {
+    logger.error(e)
     return null
   }
+
   return true
 }
 
 async function updateFromCommit(editor: CreagenEditor, mutator: UrlMutator) {
-  const commit = await mutator.getCommit()
-  if (commit === null) {
+  const version = mutator.getVersion()
+  if (version === null) {
     const res = await editor.new()
     if (!res.ok) logger.error(res.error)
     return
   }
-  if (commit instanceof Error) {
-    throw commit
+
+  if (version.type === 'bookmark') {
+    await editor
+      .checkoutBookmark(version.bookmark, version.username)
+      .catch((e) =>
+        logger.error(`Failed to checkout bookmark ${version.bookmark}: `, e),
+      )
+    return
   }
 
+  const commit = version.commit
   // if commit is part of bookmark just use that bookmark name
   const bookmarks = editor.bookmarkLookup(commit)
   if (bookmarks !== null && bookmarks.length > 0) {
     const mostRecent = bookmarks.sort(
       (a, b) => b.createdOn.getTime() - a.createdOn.getTime(),
     )[0]!
-    const res = await editor.checkout(mostRecent)
-    if (!res.ok) throw res.error
+    await editor.checkoutBookmark(mostRecent.name)
     return
   }
 
-  const checkoutResult = await editor.checkout(commit)
-  if (!checkoutResult.ok) throw checkoutResult.error
+  await editor.checkoutCommitHeadless(commit)
   return
 }
 

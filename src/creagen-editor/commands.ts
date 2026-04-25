@@ -1,9 +1,9 @@
 import z from 'zod'
-import type { MessageId} from '../logs/logger';
+import { editorEvents } from '../events/events'
+import type { MessageId } from '../logs/logger'
 import { createContextLogger, Severity } from '../logs/logger'
 import { localStorage } from '../storage/LocalStorage'
 import type { CreagenEditor } from './CreagenEditor'
-import { editorEvents } from '../events/events'
 
 export type CommandHandler = (editor: CreagenEditor) => void
 
@@ -73,14 +73,13 @@ export const COMMANDS = {
       localStorage.set('menu-view', !(localStorage.get('menu-view') ?? false))
     },
   },
-  'editor.toggleFreeze': {
-    description: 'Freeze/Unfreeze sandbox',
+  'editor.freeze': {
+    description: 'Freeze sandbox',
     handler: (editor: CreagenEditor) => {
       if (editor.sandbox.isFrozen) {
-        editor.sandbox.unfreeze().catch(logger.error)
-      } else {
-        editor.sandbox.freeze()
+        return
       }
+      editor.sandbox.freeze()
     },
   },
   'editor.toggleControlPanel': {

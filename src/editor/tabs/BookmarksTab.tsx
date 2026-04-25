@@ -4,7 +4,7 @@ import { Typography, IconButton } from '@mui/material'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { useBookmarks } from '../../events/useEditorEvents'
 import { dateString } from '../../util'
-import type { ColumnDef} from '../../shared/Table';
+import type { ColumnDef } from '../../shared/Table'
 import { Table } from '../../shared/Table'
 import type { Bookmark } from 'versie'
 import { logger } from '../../logs/logger'
@@ -97,11 +97,9 @@ export const BookmarksTab = () => {
           columns={columns}
           data={bookmarks}
           getRowKey={(bookmark) => bookmark.commit.toHex() + bookmark.name}
-          onRowClick={(bookmark) =>
-            void creagenEditor.checkout(bookmark).then((result) => {
-              if (!result.ok) logger.error(result.error)
-            })
-          }
+          onRowClick={(bookmark) => {
+            creagenEditor.checkoutBookmark(bookmark.name).catch(logger.error)
+          }}
         />
       )}
     </>

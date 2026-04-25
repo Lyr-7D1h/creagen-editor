@@ -1,23 +1,20 @@
 import {
   Box,
+  Checkbox,
+  Chip,
+  FormControlLabel,
   Stack,
   TextField,
-  Chip,
   Typography,
-  Button,
-  Menu,
-  MenuItem,
-  FormControlLabel,
-  Checkbox,
 } from '@mui/material'
-import type React from 'react'
-import { useState, useEffect, useRef } from 'react'
-import { useCreagenEditor } from '../../creagen-editor/CreagenContext'
-import type { Commit } from 'versie'
 import * as d3 from 'd3'
-import { logger } from '../../logs/logger'
-import { useForceUpdateOnEditorEvent } from '../../events/useEditorEvents'
+import { useEffect, useRef, useState } from 'react'
+import type { Commit } from 'versie'
 import type { CommitMetadata } from '../../creagen-editor/CommitMetadata'
+import { useCreagenEditor } from '../../creagen-editor/CreagenContext'
+import { useForceUpdateOnEditorEvent } from '../../events/useEditorEvents'
+import { logger } from '../../logs/logger'
+import { SelectedCommitPanel } from './SelectedCommitPanel'
 
 type CommitNode = {
   id: string
@@ -51,8 +48,6 @@ export function CommitsTab() {
   const [focusedCommitHash, setFocusedCommitHash] = useState<string | null>(
     () => creagenEditor.activeBookmark.commit?.toHex() ?? null,
   )
-  const [checkoutMenuAnchor, setCheckoutMenuAnchor] =
-    useState<null | HTMLElement>(null)
   const [minifyGraph, setMinifyGraph] = useState(true)
 
   useEffect(() => {
@@ -521,74 +516,17 @@ export function CommitsTab() {
     ),
   )
 
-  const handleCheckout = async (commit: Commit<CommitMetadata>) => {
-    const res = await creagenEditor.new(commit.hash)
-    if (!res.ok) {
-      logger.error(res.error)
-      return
-    }
-    logger.info('Successfully checked out commit', {
-      hash: commit.hash.toHex(),
-    })
-  }
-
-  const handleCheckoutBookmark = async (bookmark: string) => {
-    const bm = creagenEditor.getBookmark(bookmark)
-    if (bm) {
-      const result = await creagenEditor.checkout(bm)
-      if (!result.ok) {
-        logger.error(result.error)
-        return
-      }
-      logger.info('Successfully checked out bookmark', { bookmark })
-      // Set the focused commit to the bookmark's commit
-      setFocusedCommitHash(bm.commit.toHex())
-    }
-  }
-
-  const handleCheckoutCommitWithActiveBookmark = async (
-    commit: Commit<CommitMetadata>,
-  ) => {
-    const result = await creagenEditor.checkout(commit.hash)
-    if (!result.ok) {
-      logger.error(result.error)
-      return
-    }
-    logger.info('Successfully checked out commit with active bookmark', {
-      hash: commit.hash.toHex(),
-      bookmark: creagenEditor.activeBookmark.name,
-    })
-  }
-
-  const handleCheckoutCommitAsBookmark = async (
-    commit: Commit<CommitMetadata>,
-    bookmarkName: string,
-  ) => {
-    const bookmark = creagenEditor.getBookmark(bookmarkName)
-    if (bookmark) {
-      const result = await creagenEditor.checkout(bookmark)
-      if (!result.ok) {
-        logger.error(result.error)
-        setCheckoutMenuAnchor(null)
-        return
-      }
-      logger.info('Successfully checked out commit as bookmark', {
-        hash: commit.hash.toHex(),
+  const handleCheckoutBookmark = async (bookmarkName: string) => {
+    try {
+      const bm = await creagenEditor.checkoutBookmark(bookmarkName)
+      logger.info('Successfully checked out bookmark', {
         bookmark: bookmarkName,
       })
-      setFocusedCommitHash(commit.hash.toHex())
+      // Set the focused commit to the bookmark's commit
+      setFocusedCommitHash(bm.commit.toHex())
+    } catch (e) {
+      logger.error('Failed to checkout bookmark', e)
     }
-    setCheckoutMenuAnchor(null)
-  }
-
-  const handleOpenCheckoutMenu = (
-    event: React.MouseEvent<HTMLButtonElement>,
-  ) => {
-    setCheckoutMenuAnchor(event.currentTarget)
-  }
-
-  const handleCloseCheckoutMenu = () => {
-    setCheckoutMenuAnchor(null)
   }
 
   return (
@@ -679,155 +617,10 @@ export function CommitsTab() {
       )}
 
       {selectedCommit && (
-        <Box
-          sx={{
-            mt: 2,
-            p: 2,
-            bgcolor: 'background.paper',
-            border: '1px solid',
-            borderColor: 'divider',
-            borderRadius: 1,
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: 1,
-            }}
-          >
-            <Typography variant="subtitle2">Selected Commit</Typography>
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              {(() => {
-                const commitBookmarks = creagenEditor.bookmarkLookup(
-                  selectedCommit.hash,
-                )
-                if (commitBookmarks && commitBookmarks.length > 0) {
-                  return (
-                    <>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        onClick={handleOpenCheckoutMenu}
-                        disabled={
-                          creagenEditor.head?.hash.toHex() ===
-                          selectedCommit.hash.toHex()
-                        }
-                      >
-                        Checkout as...
-                      </Button>
-                      <Menu
-                        anchorEl={checkoutMenuAnchor}
-                        open={Boolean(checkoutMenuAnchor)}
-                        onClose={handleCloseCheckoutMenu}
-                      >
-                        <MenuItem
-                          onClick={() => {
-                            handleCheckoutCommitWithActiveBookmark(
-                              selectedCommit,
-                            ).catch(console.error)
-                            handleCloseCheckoutMenu()
-                          }}
-                        >
-                          {creagenEditor.activeBookmark.name} (active)
-                        </MenuItem>
-                        {commitBookmarks.map((bookmark) => (
-                          <MenuItem
-                            key={bookmark.name}
-                            onClick={() => {
-                              handleCheckoutCommitAsBookmark(
-                                selectedCommit,
-                                bookmark.name,
-                              ).catch(console.error)
-                            }}
-                          >
-                            {bookmark.name}
-                          </MenuItem>
-                        ))}
-                      </Menu>
-                    </>
-                  )
-                } else {
-                  return (
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => {
-                        handleCheckoutCommitWithActiveBookmark(
-                          selectedCommit,
-                        ).catch(console.error)
-                      }}
-                      disabled={
-                        creagenEditor.head?.hash.toHex() ===
-                        selectedCommit.hash.toHex()
-                      }
-                    >
-                      Checkout as {creagenEditor.activeBookmark.name}
-                    </Button>
-                  )
-                }
-              })()}
-              <Button
-                variant="contained"
-                size="small"
-                onClick={() => {
-                  handleCheckout(selectedCommit).catch(console.error)
-                }}
-                disabled={
-                  creagenEditor.head?.hash.toHex() ===
-                  selectedCommit.hash.toHex()
-                }
-              >
-                {creagenEditor.head?.hash.toHex() ===
-                selectedCommit.hash.toHex()
-                  ? 'Current'
-                  : 'Checkout'}
-              </Button>
-            </Box>
-          </Box>
-          <Typography variant="body2">
-            <strong>Hash:</strong> {selectedCommit.hash.toHex()}
-          </Typography>
-          <Typography variant="body2">
-            <strong>Blob Hash:</strong> {selectedCommit.blob.toHex()}
-          </Typography>
-          <Typography variant="body2">
-            <strong>Author:</strong> {selectedCommit.metadata.author ?? 'local'}
-          </Typography>
-          <Typography variant="body2">
-            <strong>Created:</strong>{' '}
-            {selectedCommit.createdOn.toLocaleString()}
-          </Typography>
-          <Typography variant="body2">
-            <strong>Editor Version:</strong>{' '}
-            {selectedCommit.metadata.editorVersion.toString()}
-          </Typography>
-          <Typography variant="body2">
-            <strong>Libraries:</strong>{' '}
-            {selectedCommit.metadata.libraries.map((l) => l.name).join(', ') ||
-              'None'}
-          </Typography>
-          {selectedCommit.parent && (
-            <Typography variant="body2">
-              <strong>Parent:</strong> {selectedCommit.parent.toHex()}
-            </Typography>
-          )}
-          {(() => {
-            const commitBookmarks = creagenEditor.bookmarkLookup(
-              selectedCommit.hash,
-            )
-            if (commitBookmarks && commitBookmarks.length > 0) {
-              return (
-                <Typography variant="body2">
-                  <strong>Bookmarks:</strong>{' '}
-                  {commitBookmarks.map((b) => b.name).join(', ')}
-                </Typography>
-              )
-            }
-            return null
-          })()}
-        </Box>
+        <SelectedCommitPanel
+          selectedCommit={selectedCommit}
+          onFocusCommit={setFocusedCommitHash}
+        />
       )}
     </Box>
   )

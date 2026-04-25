@@ -1,21 +1,24 @@
-import { encode } from '@msgpack/msgpack'
-import { localStorage } from './LocalStorage'
-import type { CustomKeybinding } from '../creagen-editor/keybindings'
+import { encode } from '@msgpack/msgpack';
 import type {
-  Storage,
-  CommitHash,
   BlobHash,
-  Bookmark,
   Commit,
+  CommitHash,
   DeltizedBlob,
-} from 'versie'
-import { IndexDBStorage, Sha256Hash } from 'versie'
-import type { CommitMetadata } from '../creagen-editor/CommitMetadata'
-import type { RemoteClient, StoredCommit, User } from '../remote/remoteClient'
-import { remoteClient } from '../remote/remoteClient'
-import { parseJwtPayload } from '../user/jwt'
-import { logger } from '../logs/logger'
-import { editorEvents } from '../events/events'
+  Storage
+} from 'versie';
+import {
+  Bookmark,
+  commitHashSchema,
+  IndexDBStorage, Sha256Hash
+} from 'versie';
+import type { CommitMetadata } from '../creagen-editor/CommitMetadata';
+import type { CustomKeybinding } from '../creagen-editor/keybindings';
+import { editorEvents } from '../events/events';
+import { logger } from '../logs/logger';
+import type { RemoteClient, StoredCommit, User } from '../remote/remoteClient';
+import { remoteClient } from '../remote/remoteClient';
+import { parseJwtPayload } from '../user/jwt';
+import { localStorage } from './LocalStorage';
 
 function authMiddleware(token: string) {
   return {
@@ -66,6 +69,8 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
       throw Error('No remote client configured')
     }
 
+    const auth = await resolveAuth(remoteClient)
+
     const indexdbStorageResult = await IndexDBStorage.create<CommitMetadata>({
       lookupDeltaBlob: async (indexdb, hash) => {
         const blob = await indexdb.get('blobs', hash)
@@ -83,7 +88,7 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
 
         // store locally in background to promote faster lookup speeds
         indexdb
-          .set('blobs', hash, data)
+          .add('blobs', hash, data)
           .catch((e) => logger.error('Failed to cache blob locally', e))
 
         return data
@@ -94,18 +99,19 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
       logger.warn('Local storage might not be persisted')
     const indexdb = indexdbStorageResult.value.indexdb
 
-    const auth = await resolveAuth(remoteClient)
-
     return new RemoteClientStorage(remoteClient, indexdb, auth.token, auth.user)
   }
 
+  readonly remote = true
   constructor(
     private readonly remoteClient: RemoteClient,
     readonly indexdb: IndexDBStorage<CommitMetadata>,
     private readonly token?: string,
     readonly user?: User,
   ) {
-    if (user) this.syncCommits().catch(logger.error)
+    if (user) {
+      this.syncCommits().catch(logger.error)
+    }
   }
 
   async syncCommits() {
@@ -121,7 +127,7 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
     if (res === null) return
     for (const remoteCommit of res.commits) {
       const commitHash = Sha256Hash.fromHex(remoteCommit.hash) as CommitHash
-      await this.indexdb.set('commits', commitHash, remoteCommit.commit)
+      await this.indexdb.add('commits', commitHash, remoteCommit.commit)
     }
     localStorage.set('commit-seq', res.nextSeq)
   }
@@ -226,7 +232,7 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
     const commit = res.commit
     // store locally non blocking
     this.indexdb
-      .set('commits', id, commit)
+      .add('commits', id, commit)
       .catch((e) => logger.error('Failed to set commit locally', e))
     return commit
   }
@@ -309,6 +315,21 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
       }),
     )
     return this.indexdb.removeBookmark(id)
+  }
+
+  async getBookmarkUser(username: string, bookmarkName: string) {
+    const res = unwrapDataResponse(
+      await this.remoteClient.GET('/api/bookmarks/{username}/{bookmarkName}', {
+        params: { path: { username, bookmarkName } },
+      }),
+    )
+    if (res === null) return null
+    const { name, createdOn, commit } = res.bookmark
+    return new Bookmark(
+      name,
+      commitHashSchema.parse(commit),
+      new Date(createdOn),
+    )
   }
 
   async getAllCommits() {

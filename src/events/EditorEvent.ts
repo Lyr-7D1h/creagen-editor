@@ -1,7 +1,7 @@
 import type { CommitHash } from 'versie'
-import type { LocalStorageKey, LocalStorageValue } from '../storage/StorageKey'
-import type { ParamKey } from '../settings/SettingsConfig'
 import type { AnalyzeContainerResult } from '../sandbox/SandboxMessageHandler'
+import type { ParamKey } from '../settings/SettingsConfig'
+import type { LocalStorageKey, LocalStorageValue } from '../storage/StorageKey'
 
 type EditorEvents = {
   'login-prompt': { message?: string }
@@ -18,13 +18,16 @@ type EditorEvents = {
   'params:value': void
 
   // VCS events
-  'vcs:commit': { commit: CommitHash; code: string }
+  'vcs:commit': { commit: CommitHash }
   /** Change active head */
   'vcs:checkout': {
     old?: CommitHash
     new?: CommitHash
   }
+  /** A bookmark got updated */
   'vcs:bookmark-update': void
+  /** Active bookmark got updated */
+  'vcs:active-bookmark-update': void
 
   // Settings events
   /** A single setting changed  */

@@ -1,8 +1,8 @@
+import { decompressFromEncodedURIComponent } from 'lz-string'
+import { SemVer } from 'semver'
+import { Sha256Hash } from 'versie'
 import { beforeEach, describe, expect, test } from 'vitest'
 import { UrlMutator } from './UrlMutator'
-import { SemVer } from 'semver'
-import type { Sha256Hash } from 'versie'
-import { decompressFromEncodedURIComponent } from 'lz-string'
 
 describe('UrlMutator query params', () => {
   test('iterates through current search params', () => {
@@ -215,31 +215,246 @@ describe('UrlMutator shareable link', () => {
 })
 
 describe('UrlMutator commit path', () => {
-  test('returns commit from commit-only path', async () => {
+  test('returns commit from commit-only path', () => {
     const url = new URL(
       'http://localhost/0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
     )
 
-    const commit = await new UrlMutator(url).getCommit()
+    const commit = new UrlMutator(url).getVersion()
 
-    expect((commit as Sha256Hash).toHex()).toBe(
+    if (commit?.type === 'bookmark') throw Error('Invalid commit')
+
+    expect((commit?.commit as unknown as Sha256Hash).toHex()).toBe(
       '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
     )
   })
 
-  test('returns null when path is empty', async () => {
+  test('returns null when path is empty', () => {
     const url = new URL('http://localhost/')
 
-    const commit = await new UrlMutator(url).getCommit()
+    const commit = new UrlMutator(url).getVersion()
 
     expect(commit).toBeNull()
   })
 
-  test('returns null for shareable payload path', async () => {
+  test('returns null for shareable payload path', () => {
     const url = new URL('http://localhost/~compressed-data')
 
-    const commit = await new UrlMutator(url).getCommit()
+    const commit = new UrlMutator(url).getVersion()
 
     expect(commit).toBeNull()
+  })
+})
+
+describe('UrlMutator getVersion bookmark path', () => {
+  test('returns null when path has only single segment', () => {
+    const url = new URL('http://localhost/my-bookmark')
+
+    const version = new UrlMutator(url).getVersion()
+
+    expect(version).toEqual({ type: 'bookmark', bookmark: 'my-bookmark' })
+  })
+
+  test('returns bookmark with username when path has two segments', () => {
+    const url = new URL('http://localhost/alice/her-bookmark')
+
+    const version = new UrlMutator(url).getVersion()
+
+    expect(version).toEqual({
+      type: 'bookmark',
+      username: 'alice',
+      bookmark: 'her-bookmark',
+    })
+  })
+
+  test('returns bookmark with username containing hyphens', () => {
+    const url = new URL('http://localhost/john-doe/cool-sketch')
+
+    const version = new UrlMutator(url).getVersion()
+
+    expect(version).toEqual({
+      type: 'bookmark',
+      username: 'john-doe',
+      bookmark: 'cool-sketch',
+    })
+  })
+
+  test('returns bookmark with special characters in name', () => {
+    const url = new URL('http://localhost/user123/my_bookmark_v2')
+
+    const version = new UrlMutator(url).getVersion()
+
+    expect(version).toEqual({
+      type: 'bookmark',
+      username: 'user123',
+      bookmark: 'my_bookmark_v2',
+    })
+  })
+
+  test('returns null with trailing slash on single segment', () => {
+    const url = new URL('http://localhost/my-bookmark/')
+
+    const version = new UrlMutator(url).getVersion()
+
+    expect(version).toEqual({ type: 'bookmark', bookmark: 'my-bookmark' })
+  })
+
+  test('ignores trailing slash with two segments', () => {
+    const url = new URL('http://localhost/alice/her-bookmark/')
+
+    const version = new UrlMutator(url).getVersion()
+
+    expect(version).toEqual({
+      type: 'bookmark',
+      username: 'alice',
+      bookmark: 'her-bookmark',
+    })
+  })
+
+  test('returns null when first segment is empty', () => {
+    const url = new URL('http://localhost//')
+
+    const version = new UrlMutator(url).getVersion()
+
+    expect(version).toBeNull()
+  })
+
+  test('returns null when second segment is empty', () => {
+    const url = new URL('http://localhost/alice/')
+
+    const version = new UrlMutator(url).getVersion()
+
+    expect(version).toEqual({ type: 'bookmark', bookmark: 'alice' })
+  })
+
+  test('ignores segments beyond the first two', () => {
+    const url = new URL('http://localhost/alice/bookmark/extra')
+
+    const version = new UrlMutator(url).getVersion()
+
+    expect(version).toEqual({
+      type: 'bookmark',
+      username: 'alice',
+      bookmark: 'bookmark',
+    })
+  })
+
+  test('returns bookmark even if username looks like hex', () => {
+    const url = new URL('http://localhost/abcdef123456/bookmark')
+
+    const version = new UrlMutator(url).getVersion()
+
+    expect(version).toEqual({
+      type: 'bookmark',
+      username: 'abcdef123456',
+      bookmark: 'bookmark',
+    })
+  })
+})
+
+describe('UrlMutator getVersion edge cases', () => {
+  test('returns commit for single segment valid commit hash', () => {
+    const url = new URL(
+      'http://localhost/0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+    )
+
+    const version = new UrlMutator(url).getVersion()
+
+    expect(version).toEqual({
+      type: 'commit',
+      commit: Sha256Hash.fromHex(
+        '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+      ),
+    })
+  })
+
+  test('returns commit when valid 64-char hex with username segment', () => {
+    const url = new URL(
+      'http://localhost/0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef/ignored',
+    )
+
+    const version = new UrlMutator(url).getVersion()
+
+    expect(version?.type).toBe('commit')
+  })
+
+  test('returns null when path is only slash', () => {
+    const url = new URL('http://localhost/')
+
+    const version = new UrlMutator(url).getVersion()
+
+    expect(version).toBeNull()
+  })
+
+  test('returns null for single segment bookmark', () => {
+    const url = new URL('http://localhost/my-bookmark')
+
+    const version = new UrlMutator(url).getVersion()
+
+    expect(version).toEqual({ type: 'bookmark', bookmark: 'my-bookmark' })
+  })
+
+  test('returns null for path with shareable link prefix', () => {
+    const url = new URL('http://localhost/~abc123')
+
+    const version = new UrlMutator(url).getVersion()
+
+    expect(version).toBeNull()
+  })
+
+  test('preserves case in bookmark names with username', () => {
+    const url = new URL('http://localhost/John/MyBookmark')
+
+    const version = new UrlMutator(url).getVersion()
+
+    expect(version).toEqual({
+      type: 'bookmark',
+      username: 'John',
+      bookmark: 'MyBookmark',
+    })
+  })
+
+  test('handles URL-encoded segments in pathname', () => {
+    const url = new URL('http://localhost/alice/my%20bookmark')
+
+    const version = new UrlMutator(url).getVersion()
+
+    expect(version).toEqual({
+      type: 'bookmark',
+      username: 'alice',
+      bookmark: 'my bookmark',
+    })
+  })
+
+  test('returns null when second segment is empty', () => {
+    const url = new URL('http://localhost/alice//')
+
+    const version = new UrlMutator(url).getVersion()
+
+    expect(version).toEqual({ type: 'bookmark', bookmark: 'alice' })
+  })
+
+  test('treats non-commit first segment as username', () => {
+    const url = new URL('http://localhost/user-name/sketch-name')
+
+    const version = new UrlMutator(url).getVersion()
+
+    expect(version).toEqual({
+      type: 'bookmark',
+      username: 'user-name',
+      bookmark: 'sketch-name',
+    })
+  })
+
+  test('handles numbers and underscores in bookmark path', () => {
+    const url = new URL('http://localhost/user123/my_sketch_v2')
+
+    const version = new UrlMutator(url).getVersion()
+
+    expect(version).toEqual({
+      type: 'bookmark',
+      username: 'user123',
+      bookmark: 'my_sketch_v2',
+    })
   })
 })

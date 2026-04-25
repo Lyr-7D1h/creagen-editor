@@ -38,6 +38,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/bookmarks/{username}/{bookmarkName}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get bookmark by name */
+        get: operations["get_BookmarkFetch"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/commits/{commitHash}": {
         parameters: {
             query?: never;
@@ -169,7 +186,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get bookmark by name */
-        get: operations["get_BookmarkFetch"];
+        get: operations["get_BookmarkUserFetch"];
         put?: never;
         post?: never;
         /** Delete bookmark */
@@ -311,6 +328,53 @@ export interface operations {
             };
             /** @description Invalid credentials */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success: boolean;
+                        error: {
+                            code: string;
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    get_BookmarkFetch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Username */
+                username: string;
+                /** @description Bookmark name */
+                bookmarkName: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Bookmark */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success: boolean;
+                        bookmark: {
+                            name: string;
+                            commit: string;
+                            createdOn: number;
+                        };
+                    };
+                };
+            };
+            /** @description Bookmark not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -939,7 +1003,7 @@ export interface operations {
             };
         };
     };
-    get_BookmarkFetch: {
+    get_BookmarkUserFetch: {
         parameters: {
             query?: never;
             header?: never;

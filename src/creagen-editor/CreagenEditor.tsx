@@ -1,43 +1,42 @@
-import { Editor } from '../editor/Editor'
-import { log, logger, Severity } from '../logs/logger'
-import { Sandbox } from '../sandbox/Sandbox'
-import { Settings } from '../settings/Settings'
-import type {
-  CommitHash,
-  DeltizingError,
-  IndexdbImport,
-  VersieStorageError,
-} from 'versie'
-import { LIBRARY_CONFIGS } from './libraryConfigs'
-import { parseCode } from './parseCode'
-import type { Library, SettingsParam } from '../settings/SettingsConfig'
-import { DEFAULT_SETTINGS_CONFIG } from '../settings/SettingsConfig'
-import type { CustomKeybinding } from './keybindings'
-import { Keybindings } from './keybindings'
-import type { LibraryImport } from '../importer'
-import { Importer } from '../importer'
-import type { BlobNotFoundError, Commit, CommitNotFoundError } from 'versie'
-import { Versie } from 'versie'
-import { LocalClientStorage } from '../storage/LocalClientStorage'
-import { editorEvents } from '../events/events'
-import type { BookmarkAlreadyExistsError, BookmarkNotFoundError } from 'versie'
-import { Bookmark } from 'versie'
-import type { Command } from './commands'
-import { COMMANDS } from './commands'
-import { ResourceMonitor } from './ResourceMonitor'
-import { Params } from '../params/Params'
-import { Controller } from '../controller/Controller'
-import { UrlMutator } from '../UrlMutator'
-import { updateFromUrl } from './updateFromUrl'
-import { creagenEditorVersionMismatch as creagenEditorVersionMismatchWarning } from './creagenEditorVersionMatches'
-import { CommitMetadata } from './CommitMetadata'
 import { SemVer } from 'semver'
-import { generateHumanReadableName } from './generateHumanReadableName'
 import type { AsyncResult } from 'typescript-result'
 import { Result } from 'typescript-result'
-import type { ParseError, StorageError } from 'versie'
+import type {
+  BookmarkAlreadyExistsError,
+  BookmarkNotFoundError,
+  Commit,
+  CommitHash,
+  IndexdbImport,
+  ParseError,
+  VersieStorageError,
+} from 'versie'
+import { Bookmark, Versie } from 'versie'
 import z from 'zod'
+import { Controller } from '../controller/Controller'
+import { Editor } from '../editor/Editor'
+import { editorEvents } from '../events/events'
+import type { LibraryImport } from '../importer'
+import { Importer } from '../importer'
+import { log, logger, Severity } from '../logs/logger'
+import { Params } from '../params/Params'
+import { Sandbox } from '../sandbox/Sandbox'
+import { Settings } from '../settings/Settings'
+import type { Library, SettingsParam } from '../settings/SettingsConfig'
+import { DEFAULT_SETTINGS_CONFIG } from '../settings/SettingsConfig'
+import { LocalClientStorage } from '../storage/LocalClientStorage'
 import { RemoteClientStorage } from '../storage/RemoteClientStorage'
+import { UrlMutator } from '../UrlMutator'
+import type { Command } from './commands'
+import { COMMANDS } from './commands'
+import { CommitMetadata } from './CommitMetadata'
+import { creagenEditorVersionMismatch as creagenEditorVersionMismatchWarning } from './creagenEditorVersionMatches'
+import { generateHumanReadableName } from './generateHumanReadableName'
+import type { CustomKeybinding } from './keybindings'
+import { Keybindings } from './keybindings'
+import { LIBRARY_CONFIGS } from './libraryConfigs'
+import { parseCode } from './parseCode'
+import { ResourceMonitor } from './ResourceMonitor'
+import { updateFromUrl } from './updateFromUrl'
 
 function generateUncommittedBookmark() {
   return {
@@ -185,36 +184,44 @@ export class CreagenEditor {
     await updateFromUrl(this)
   }
 
+  private setActiveBookmark(bookmark: ActiveBookmark) {
+    this.activeBookmark = bookmark
+    editorEvents.emit('vcs:active-bookmark-update', undefined)
+  }
+
   /**
    * Update current active bookmark to this commit, storing it if it wasn't pointing to anything
    */
-  private updateActiveBookmark(
+  private updateActiveBookmarkToCommit(
     commit: CommitHash,
   ): AsyncResult<
     void,
-    BookmarkNotFoundError | VersieStorageError | BookmarkAlreadyExistsError
+    | BookmarkNotFoundError
+    | VersieStorageError
+    | BookmarkAlreadyExistsError
+    | ParseError
   > {
     return Result.fromAsync(async () => {
       if (this.activeBookmark.commit === null) {
-        // commit uncommitted bookmark
-        const result = await this.vcs.addBookmark(
-          new Bookmark(
-            this.activeBookmark.name,
-            commit,
-            this.activeBookmark.createdOn,
-          ),
-        )
-        if (!result.ok) return result
-        this.activeBookmark = result.value
-      } else {
-        // update currently active to this commit
-        const result = await this.vcs.setBookmarkCommit(
+        const bookmark = new Bookmark(
           this.activeBookmark.name,
           commit,
+          this.activeBookmark.createdOn,
         )
+        // commit uncommitted bookmark
+        const result = await this.vcs.addBookmark(bookmark)
         if (!result.ok) return result
-        this.activeBookmark = result.value
+        this.setActiveBookmark(result.value)
+        return Result.ok()
       }
+
+      // update currently active to this commit
+      const result = await this.vcs.setBookmarkCommit(
+        this.activeBookmark.name,
+        commit,
+      )
+      if (!result.ok) return result
+      this.setActiveBookmark(result.value)
       return Result.ok()
     })
   }
@@ -266,95 +273,29 @@ export class CreagenEditor {
   }
 
   /** Create new sketch on an optional base commit */
-  async new(base?: CommitHash) {
+  async new() {
     return Result.fromAsyncCatching(async () => {
       const old = this.vcs.head?.hash
-      this.activeBookmark = generateUncommittedBookmark()
-      if (base) {
-        // checkout base
-        await this.checkout(base)
-      } else {
-        const res = await this.vcs.setHead(null)
-        if (!res.ok) return res
-        // clear everything
-        this.editor.setValue('')
-        await this.loadLibraries([])
-        new UrlMutator().setCommit().pushState(null, this.activeBookmark.name)
-        editorEvents.emit('vcs:checkout', { old })
-      }
+      const res = await this.vcs.setHead(null)
+      if (!res.ok) return res
+      // clear everything
+      this.editor.setValue('')
+      await this.loadLibraries([])
+      new UrlMutator().setCommit().pushState(null, this.activeBookmark.name)
+      this.setActiveBookmark(generateUncommittedBookmark())
+      editorEvents.emit('vcs:checkout', { old })
       return Result.ok()
     })
   }
-
-  /**
-   * Checkout a sketch by commit or bookmark
-   *
-   * Checking out by commit will set active bookmark to this commit
-   *
-   * Checking out by bookmark will set active bookmark to the bookmark given and checkout the commit this bookmark is pointing to
-   */
-  checkout(
-    hash: CommitHash,
-  ): Promise<
-    Result<
-      void,
-      | CommitNotFoundError
-      | BookmarkNotFoundError
-      | StorageError
-      | BookmarkAlreadyExistsError
-      | ParseError
-      | BlobNotFoundError
-    >
-  >
-  checkout(
-    bookmark: Bookmark,
-  ): Promise<
-    Result<
-      void,
-      | CommitNotFoundError
-      | BookmarkNotFoundError
-      | StorageError
-      | BookmarkAlreadyExistsError
-      | ParseError
-      | BlobNotFoundError
-    >
-  >
-  async checkout(
-    id: CommitHash | Bookmark,
-  ): Promise<
-    Result<
-      void,
-      | CommitNotFoundError
-      | BookmarkNotFoundError
-      | StorageError
-      | BookmarkAlreadyExistsError
-      | ParseError
-      | BlobNotFoundError
-      | DeltizingError
-    >
-  > {
+  /** Load a commit into editor */
+  private async loadCommit(hash: CommitHash) {
     const old = this.vcs.head?.hash
-    let bookmark
-    if (Bookmark.isBookmark(id)) {
-      bookmark = id
-      id = id.commit
-    }
 
-    const checkoutResult = await this.vcs.checkout(id)
+    const checkoutResult = await this.vcs.checkout(hash)
     if (!checkoutResult.ok) {
       return checkoutResult
     }
     const checkout = checkoutResult.value
-
-    if (bookmark) {
-      this.activeBookmark = bookmark
-    } else if (this.activeBookmark.commit !== null) {
-      // set current active bookmark to this commit unless the bookmark is uncommitted
-      const updateResult = await this.updateActiveBookmark(id)
-      if (!updateResult.ok) {
-        return updateResult
-      }
-    }
 
     const {
       commit: {
@@ -364,17 +305,56 @@ export class CreagenEditor {
     } = checkout
     creagenEditorVersionMismatchWarning(editorVersion)
 
-    // set url
-    const mutator = new UrlMutator()
-    if (this.vcs.head) mutator.setCommit(this.vcs.head.hash.toHex())
-    mutator.pushState(null, this.activeBookmark.name)
-
     // update libraries from commit
     await this.loadLibraries(libraries)
 
     this.editor.setValue(data)
     editorEvents.emit('vcs:checkout', { old, new: checkout.commit.hash })
     return Result.ok()
+  }
+
+  async checkoutBookmark(bookmarkName: string, username?: string) {
+    let bookmark: Bookmark | null
+    if (
+      username &&
+      this.storage.remote &&
+      this.storage.user &&
+      this.storage.user.username !== username
+    ) {
+      // if checkout out a specific other user bookmark always fetch from remote
+      bookmark = await this.storage.getBookmarkUser(username, bookmarkName)
+    } else {
+      // get through traditional vcs route
+      bookmark = this.vcs.getBookmark(bookmarkName)
+    }
+
+    if (bookmark === null)
+      throw new Error(
+        `Bookmark ${bookmarkName} ${username ? 'from ' + username : ''} not found`,
+      )
+
+    await this.loadCommit(bookmark.commit)
+    this.setActiveBookmark(bookmark)
+    // set url
+    const mutator = new UrlMutator()
+    if (this.vcs.head) mutator.setBookmark(bookmark.name, this.storage.user?.username)
+    mutator.pushState(null, this.activeBookmark.name)
+
+    return bookmark
+  }
+
+  /**
+   * Checkout a sketch by commit
+   */
+  async checkoutCommitHeadless(hash: CommitHash): Promise<void> {
+    await this.loadCommit(hash)
+
+    // set url
+    const mutator = new UrlMutator()
+    if (this.vcs.head) mutator.setCommit(this.vcs.head.hash.toHex())
+    mutator.pushState(null, this.activeBookmark.name)
+
+    this.setActiveBookmark(generateUncommittedBookmark())
   }
 
   /** Reset all editor typings */
@@ -505,11 +485,7 @@ export class CreagenEditor {
   /**
    * Commit code and library changes if editor is not empty
    */
-  async commit(
-    /** Update active bookmark to this commit */
-    updateActiveBookmark: boolean = true,
-  ) {
-    const old = this.vcs.head?.hash
+  async commit() {
     const code = this.editor.getValue()
     if (code.length === 0) return null
 
@@ -536,19 +512,17 @@ export class CreagenEditor {
 
     const commitHash = commitResult.value.hash
     // TODO(perf): Ensure commit and checkout don't make similar components rerender/refetch
-    editorEvents.emit('vcs:commit', { commit: commitHash, code })
 
-    const mutator = new UrlMutator()
-    if (this.vcs.head) mutator.setCommit(this.vcs.head.hash.toHex())
-    mutator.pushState(null, this.activeBookmark.name)
-
-    if (updateActiveBookmark) {
-      const updateResult = await this.updateActiveBookmark(commitHash)
-      if (updateResult.ok === false) {
-        throw updateResult.error
-      }
+    const updateResult = await this.updateActiveBookmarkToCommit(commitHash)
+    if (updateResult.ok === false) {
+      throw updateResult.error
     }
-    editorEvents.emit('vcs:checkout', { old, new: commitHash })
+
+    new UrlMutator()
+      .setBookmark(this.activeBookmark.name, this.storage.user?.username)
+      .pushState(null, this.activeBookmark.name)
+
+    editorEvents.emit('vcs:commit', { commit: commitHash })
 
     return { code, libraries }
   }
@@ -618,6 +592,36 @@ export class CreagenEditor {
     return this.vcs.getBookmark(name)
   }
 
+  /**
+   * Set the commit of a bookmark
+   *
+   * if this bookmark is active it will load in the commit
+   */
+  async setBookmarkCommit(bookmarkName: string, commit: CommitHash) {
+    // if in headless mode (active uncomitted bookmark) set the url to the commit
+    if (
+      bookmarkName === this.activeBookmark.name &&
+      this.activeBookmark.commit === null
+    ) {
+      const res = await this.loadCommit(commit)
+      if (!res.ok) throw res.error
+      new UrlMutator()
+        .setCommit(commit.toHex())
+        .pushState(undefined, this.activeBookmark.name)
+      return this.activeBookmark
+    }
+
+    const res = await this.vcs.setBookmarkCommit(bookmarkName, commit)
+    if (!res.ok) throw res.error
+    const bookmark = res.value
+
+    if (bookmarkName === this.activeBookmark.name) {
+      await this.loadCommit(commit)
+      this.setActiveBookmark(bookmark)
+    }
+    return bookmark
+  }
+
   addBookmark(bookmark: Bookmark) {
     return this.vcs.addBookmark(bookmark)
   }
@@ -632,7 +636,7 @@ export class CreagenEditor {
     if (!result.ok) throw result.error
     // If removing the current active bookmark, generate a new one
     if (this.activeBookmark.name === name) {
-      this.activeBookmark = generateUncommittedBookmark()
+      this.setActiveBookmark(generateUncommittedBookmark())
     }
     editorEvents.emit('vcs:bookmark-update', undefined)
     return result
@@ -644,14 +648,14 @@ export class CreagenEditor {
       this.activeBookmark.commit === null &&
       oldName === this.activeBookmark.name
     ) {
-      this.activeBookmark = { ...this.activeBookmark, name: newName }
+      this.setActiveBookmark({ ...this.activeBookmark, name: newName })
       editorEvents.emit('vcs:bookmark-update', undefined)
       return
     }
     const result = await this.vcs.renameBookmark(oldName, newName)
     if (!result.ok) throw result.error
     if (oldName === this.activeBookmark.name) {
-      this.activeBookmark = { ...this.activeBookmark, name: newName }
+      this.setActiveBookmark({ ...this.activeBookmark, name: newName })
     }
     editorEvents.emit('vcs:bookmark-update', undefined)
     return result

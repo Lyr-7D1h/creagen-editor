@@ -1,27 +1,27 @@
-import QrCodeIcon from '@mui/icons-material/QrCode'
-import type React from 'react'
-import { useEffect, useMemo, useState } from 'react'
-import { Export } from './Export'
-import { useCreagenEditor } from './CreagenContext'
-import PlayArrowIcon from '@mui/icons-material/PlayArrow'
-import StopIcon from '@mui/icons-material/Stop'
-import ShareIcon from '@mui/icons-material/Share'
 import {
-  Fullscreen as FullscreenIcon,
   FullscreenExit as FullscreenExitIcon,
+  Fullscreen as FullscreenIcon,
   MenuBook,
 } from '@mui/icons-material'
+import PlayArrowIcon from '@mui/icons-material/PlayArrow'
+import QrCodeIcon from '@mui/icons-material/QrCode'
+import ShareIcon from '@mui/icons-material/Share'
+import StopIcon from '@mui/icons-material/Stop'
 import { IconButton, useTheme } from '@mui/material'
+import type React from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { HtmlTooltip } from '../editor/HtmlTooltip'
+import { editorEvents } from '../events/events'
 import {
   useForceUpdateOnEditorEvent,
   useSettings,
 } from '../events/useEditorEvents'
-import { HtmlTooltip } from '../editor/HtmlTooltip'
-import { editorEvents } from '../events/events'
-import { isMobile } from './isMobile'
 import { createContextLogger, log, Severity } from '../logs/logger'
-import { UrlMutator } from '../UrlMutator'
 import { KeybindHint } from '../shared/KeybindHint'
+import { UrlMutator } from '../UrlMutator'
+import { useCreagenEditor } from './CreagenContext'
+import { Export } from './Export'
+import { isMobile } from './isMobile'
 
 const logger = createContextLogger('actions')
 
@@ -217,7 +217,7 @@ export function Actions({
             color={isFullscreen ? 'inherit' : 'primary'}
             sx={fullscreenActionButtonSx}
             onClick={() => {
-              creagenEditor.executeCommand('editor.toggleFreeze')
+              creagenEditor.executeCommand('editor.freeze')
             }}
             style={{
               cursor: 'pointer',
@@ -229,7 +229,16 @@ export function Actions({
       )
     }
     buttons.push(
-      <HtmlTooltip key="run" title="Run Code">
+      <HtmlTooltip
+        key="run"
+        title={
+          <KeybindHint
+            label="Run code"
+            keybind={creagenEditor.getKeybindKeyString('editor.run')}
+            wrapInParens
+          />
+        }
+      >
         <IconButton
           size="small"
           color={isFullscreen ? 'inherit' : 'primary'}
