@@ -28,7 +28,7 @@ function draw() {
   },
 
   creagen: {
-    template: `import { Canvas, vec, load, color, Random } from "creagen";
+    template: `import { Canvas, vec, load, color } from "creagen";
 
 const canvas = Canvas.create({ width: 400, height: 400 })
 canvas.background(color(220))
