@@ -15,7 +15,3 @@ Its goal is to make creating and sharing creative projects as easy as it possibl
 - Supports local builds (See [Usage](https://creagen.dev/docs/development/usage))
 - Download generated images and svgs
 - Fullscreen mode for a more live-coding like setup
-
-## Documentation
-
-Go to [creagen.dev/docs](https://creagen.dev/docs)
