@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://creagen.dev/docs/sitemap.xml

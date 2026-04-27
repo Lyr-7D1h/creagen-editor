@@ -1,0 +1,22 @@
+# Roadmap
+
+- Add benchmarking
+    - vitest
+    - reliable hardware https://codspeed.io/ 
+- Treat svg paths as vertex (https://baku89.github.io/pave/guide.html) and allow linear operations on it
+- Audio 
+    - Generation
+    - Modification
+        - Panning/gain https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Using_Web_Audio_API
+    - Realtime analysis
+        - Common Audio Features: https://meyda.js.org/
+        - Bpm: https://www.npmjs.com/package/realtime-bpm-analyzer
+- Gcode support
+- Webassembly for cpu heavy stuff
+- 3d Graphics
+    - glTF format support (format for 3d models and skeleton animations)
+- GPU accelerated tensors (https://www.tensorflow.org/js/guide/platform_environment)
+  - When webgpu is supported on all major devices (https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API)
+  - WebGPU has compute shaders which WebGL does not have 
+  - https://github.com/tensorflow/tfjs/tree/master/tfjs-backend-webgpu
+  - Comment on fast geometry in browser: https://www.reddit.com/r/webdev/comments/1ddpr9p/comment/l87gk60/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button

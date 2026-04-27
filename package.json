@@ -7,6 +7,9 @@
     "start:prod": "vite -m production",
     "build": "vite build -m production",
     "build:sandbox": "VITE_ENTRYPOINT=sandbox vite build -m production && mv dist/sandbox-runtime/index.html dist/index.html && rm -r dist/sandbox-runtime",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs",
     "format": "prettier -w src/",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
@@ -37,6 +40,7 @@
     "openapi-typescript": "^7.13.0",
     "prettier": "3.8.1",
     "typescript-eslint": "^8.58.1",
+    "vitepress": "^1.6.4",
     "vite": "^7.3.2",
     "vitest": "^4.1.3"
   },
