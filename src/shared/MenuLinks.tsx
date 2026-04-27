@@ -13,7 +13,7 @@ export function MenuLinks() {
         <IconButton
           size="small"
           component="a"
-          href="https://creagen.dev/docs/editor"
+          href="https://creagen.dev/docs/"
           target="_blank"
           sx={{ padding: '5px' }}
           rel="noopener noreferrer"
