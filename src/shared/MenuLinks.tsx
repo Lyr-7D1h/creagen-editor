@@ -3,21 +3,22 @@ import { IconButton } from '@mui/material'
 import BugReportIcon from '@mui/icons-material/BugReport'
 import { HtmlTooltip } from '../editor/HtmlTooltip'
 import { DiscordIcon } from '../editor/DiscordIcon'
-import { useCreagenEditor } from '../creagen-editor/CreagenContext'
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
+import ArticleIcon from '@mui/icons-material/Article'
 import { LoginButton } from '../user/LoginButton'
 
 export function MenuLinks() {
-  const creagenEditor = useCreagenEditor()
   return (
     <div>
-      <HtmlTooltip title="Help">
+      <HtmlTooltip title="Documentation">
         <IconButton
           size="small"
+          component="a"
+          href="https://creagen.dev/docs/editor"
+          target="_blank"
           sx={{ padding: '5px' }}
-          onClick={() => creagenEditor.executeCommand('welcome')}
+          rel="noopener noreferrer"
         >
-          <HelpOutlineIcon style={{ fontSize: '1.3rem' }} />
+          <ArticleIcon style={{ fontSize: '1.3rem' }} />
         </IconButton>
       </HtmlTooltip>
       <HtmlTooltip title="Join our discord">
