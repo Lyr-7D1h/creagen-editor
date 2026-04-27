@@ -28,11 +28,13 @@ function draw() {
   },
 
   creagen: {
-    template: `import { Canvas, vec, load, color } from "creagen";
+    template: `import { Canvas, vec, load, color, Random } from "creagen";
 
 const canvas = Canvas.create({ width: 400, height: 400 })
 canvas.background(color(220))
-canvas.line(vec(0, 0), vec(50, 50))
+canvas.path()
+  .add(vec(0, 0))
+  .add(vec(50, 50))
 
 load(canvas)`,
   },
