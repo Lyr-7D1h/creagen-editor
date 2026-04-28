@@ -318,8 +318,7 @@ export class CreagenEditor {
     if (
       username &&
       this.storage.remote &&
-      this.storage.user &&
-      this.storage.user.username !== username
+      this.storage.user?.username !== username
     ) {
       // if checkout out a specific other user bookmark always fetch from remote
       bookmark = await this.storage.getBookmarkUser(username, bookmarkName)
@@ -337,7 +336,11 @@ export class CreagenEditor {
     this.setActiveBookmark(bookmark)
     // set url
     const mutator = new UrlMutator()
-    if (this.vcs.head) mutator.setBookmark(bookmark.name, this.storage.user?.username)
+    if (this.vcs.head)
+      mutator.setBookmark(
+        bookmark.name,
+        username ?? this.storage.user?.username,
+      )
     mutator.pushState(null, this.activeBookmark.name)
 
     return bookmark

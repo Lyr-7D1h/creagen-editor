@@ -24,6 +24,7 @@ export async function updateFromUrl(editor: CreagenEditor) {
   await updateFromCommit(editor, mutator)
 }
 
+// TODO: make it work with remote enabled build, currently can't make commits when remote is enabled
 async function updateFromSharableLinkData(
   editor: CreagenEditor,
   mutator: UrlMutator,
