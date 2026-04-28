@@ -1,9 +1,9 @@
 import type { SemVer } from 'semver'
+import type { CommitMetadataInterface } from 'versie'
+import z from 'zod'
 import type { Library } from '../settings/SettingsConfig'
 import { librarySchema } from '../settings/SettingsConfig'
-import z from 'zod'
 import { semverSchema } from './schemaUtils'
-import type { CommitMetadataInterface } from 'versie'
 
 const commitMetadataSchema = z.object({
   editorVersion: semverSchema,
@@ -11,11 +11,13 @@ const commitMetadataSchema = z.object({
   author: z.string().optional(),
 })
 
-export type CommitMetadataJson = {
-  editorVersion: string
-  libraries: { name: string; version: string }[]
-  author?: string
-}
+export const commitMetadataJsonSchema = z.object({
+  editorVersion: z.string(),
+  libraries: z.array(z.object({ name: z.string(), version: z.string() })),
+  author: z.string().optional(),
+})
+
+export type CommitMetadataJson = z.infer<typeof commitMetadataJsonSchema>
 export class CommitMetadata implements CommitMetadataInterface<CommitMetadataJson> {
   static parse(data: CommitMetadataJson) {
     const { editorVersion, libraries, author } =

@@ -1,24 +1,46 @@
-import { encode } from '@msgpack/msgpack';
+import { decode, encode } from '@msgpack/msgpack'
 import type {
   BlobHash,
   Commit,
   CommitHash,
   DeltizedBlob,
-  Storage
-} from 'versie';
+  Storage,
+} from 'versie'
 import {
   Bookmark,
+  IndexDBStorage,
+  Sha256Hash,
+  blobHashSchema,
+  bookmarkNameSchema,
   commitHashSchema,
-  IndexDBStorage, Sha256Hash
-} from 'versie';
-import type { CommitMetadata } from '../creagen-editor/CommitMetadata';
-import type { CustomKeybinding } from '../creagen-editor/keybindings';
-import { editorEvents } from '../events/events';
-import { logger } from '../logs/logger';
-import type { RemoteClient, StoredCommit, User } from '../remote/remoteClient';
-import { remoteClient } from '../remote/remoteClient';
-import { parseJwtPayload } from '../user/jwt';
-import { localStorage } from './LocalStorage';
+} from 'versie'
+import z from 'zod'
+import type { CommitMetadata } from '../creagen-editor/CommitMetadata'
+import { commitMetadataJsonSchema } from '../creagen-editor/CommitMetadata'
+import type { CustomKeybinding } from '../creagen-editor/keybindings'
+import { editorEvents } from '../events/events'
+import { logger } from '../logs/logger'
+import type { RemoteClient, StoredCommit, User } from '../remote/remoteClient'
+import { remoteClient } from '../remote/remoteClient'
+import { parseJwtPayload } from '../user/jwt'
+import { localStorage } from './LocalStorage'
+
+const bookmarkCheckoutResponseSchema = z.object({
+  bookmark: z.object({
+    name: bookmarkNameSchema,
+    commit: z.string(),
+    createdOn: z.number().int(),
+  }),
+  blobHash: blobHashSchema,
+  commitHash: commitHashSchema,
+  commit: z.object({
+    blob: z.string(),
+    createdOn: z.number().int(),
+    parent: z.string().optional(),
+    metadata: commitMetadataJsonSchema,
+  }),
+  blob: z.custom<DeltizedBlob>((val) => val instanceof Uint8Array),
+})
 
 function authMiddleware(token: string) {
   return {
@@ -317,18 +339,33 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
     return this.indexdb.removeBookmark(id)
   }
 
-  async getBookmarkUser(username: string, bookmarkName: string) {
-    const res = unwrapDataResponse(
-      await this.remoteClient.GET('/api/bookmarks/{username}/{bookmarkName}', {
-        params: { path: { username, bookmarkName } },
-      }),
+  /** Load a bookmark from a user into the vcs storage and return the bookmark */
+  async loadUserBookmark(
+    username: string,
+    bookmarkName: string,
+  ): Promise<Bookmark | null> {
+    const buffer = unwrapDataResponse(
+      await this.remoteClient.GET(
+        '/api/checkout/bookmarks/{username}/{bookmarkName}',
+        {
+          params: { path: { username, bookmarkName } },
+          parseAs: 'arrayBuffer',
+        },
+      ),
     )
-    if (res === null) return null
-    const { name, createdOn, commit } = res.bookmark
+    if (!(buffer instanceof ArrayBuffer)) return null
+    const decoded = bookmarkCheckoutResponseSchema.parse(
+      decode(new Uint8Array(buffer)),
+    )
+    await Promise.all([
+      this.indexdb.add('commits', decoded.commitHash, decoded.commit),
+      this.indexdb.add('blobs', decoded.blobHash, decoded.blob),
+    ])
+
     return new Bookmark(
-      name,
-      commitHashSchema.parse(commit),
-      new Date(createdOn),
+      decoded.bookmark.name,
+      decoded.commitHash,
+      new Date(decoded.bookmark.createdOn),
     )
   }
 

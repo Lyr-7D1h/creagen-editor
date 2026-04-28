@@ -52,6 +52,11 @@ export type ActiveBookmark = {
   createdOn: Date
   /** If set it means that the ref is stored otherwise it is an uncommitted bookmark */
   commit: CommitHash | null
+  /**
+   * The username for which this bookmark belongs to
+   * set in case the bookmark is from someone else
+   */
+  username?: string
 }
 
 export type ClientStorage = LocalClientStorage | RemoteClientStorage
@@ -314,16 +319,17 @@ export class CreagenEditor {
   }
 
   async checkoutBookmark(bookmarkName: string, username?: string) {
-    let bookmark: Bookmark | null
+    let bookmark: (ActiveBookmark & { commit: CommitHash }) | null
     if (
       username &&
       this.storage.remote &&
       this.storage.user?.username !== username
     ) {
       // if checkout out a specific other user bookmark always fetch from remote
-      bookmark = await this.storage.getBookmarkUser(username, bookmarkName)
+      bookmark = await this.storage.loadUserBookmark(username, bookmarkName)
+      if (bookmark) bookmark = { ...bookmark, username }
     } else {
-      // get through traditional vcs route
+      // get bookmark from local db traditional vcs route
       bookmark = this.vcs.getBookmark(bookmarkName)
     }
 

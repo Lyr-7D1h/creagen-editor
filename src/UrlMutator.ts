@@ -1,12 +1,12 @@
-import { SemVer } from 'semver'
-import type { Library } from './settings/SettingsConfig'
 import {
   compressToEncodedURIComponent,
   decompressFromEncodedURIComponent,
 } from 'lz-string'
+import { SemVer } from 'semver'
 import type { CommitHash } from 'versie'
 import { commitHashSchema } from 'versie'
 import { z } from 'zod'
+import type { Library } from './settings/SettingsConfig'
 
 export interface SharableLinkData {
   code: string

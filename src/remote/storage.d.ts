@@ -38,7 +38,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/bookmarks/{username}/{bookmarkName}": {
+    "/api/checkout/bookmarks/{username}/{bookmarkName}": {
         parameters: {
             query?: never;
             header?: never;
@@ -46,7 +46,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get bookmark by name */
-        get: operations["get_BookmarkFetch"];
+        get: operations["get_BookmarkCheckout"];
         put?: never;
         post?: never;
         delete?: never;
@@ -343,7 +343,7 @@ export interface operations {
             };
         };
     };
-    get_BookmarkFetch: {
+    get_BookmarkCheckout: {
         parameters: {
             query?: never;
             header?: never;
@@ -357,23 +357,16 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Bookmark */
+            /** @description Bookmark checkout data (msgpack) */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        success: boolean;
-                        bookmark: {
-                            name: string;
-                            commit: string;
-                            createdOn: number;
-                        };
-                    };
+                    "application/octet-stream": string;
                 };
             };
-            /** @description Bookmark not found */
+            /** @description Bookmark, commit, or blob not found */
             404: {
                 headers: {
                     [name: string]: unknown;

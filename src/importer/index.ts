@@ -1,11 +1,11 @@
-import { fetch } from '../fetch'
 import { SemVer } from 'semver'
 import { z } from 'zod'
-import { getTypings } from './typings'
 import { semverSchema } from '../creagen-editor/schemaUtils'
+import { fetch } from '../fetch'
 import type { Library } from '../settings/SettingsConfig'
-import type { ExportsField} from './exportMapResolver';
+import type { ExportsField } from './exportMapResolver'
 import { buildImportPaths } from './exportMapResolver'
+import { getTypings } from './typings'
 
 export type ImportPath = {
   /**
@@ -110,7 +110,9 @@ async function getLibraryFromSource(
       version: new SemVer(CREAGEN_DEV_VERSION),
       importMap: [['creagen', `http://${window.location.host}/creagen.js`]],
       typings: async () => {
-        const res = await fetch('./creagen.d.ts', { timeout: 2000 })
+        const res = await fetch(`http://${window.location.host}/creagen.d.ts`, {
+          timeout: 2000,
+        })
         const typings = await res.text()
         return `declare module '${packageName}' {${typings}}`
       },

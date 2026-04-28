@@ -11,6 +11,7 @@ export function ActiveBookmark({ color }: { color?: string }) {
   const activeBookmark = useActiveBookmark()
   const isDirty = useIsDirty(creagenEditor)
   const [isEditing, setIsEditing] = useState(false)
+  const hasUsername = Boolean(activeBookmark.username)
 
   function onSave(value: string) {
     const data = bookmarkNameSchema.safeParse(value)
@@ -41,26 +42,34 @@ export function ActiveBookmark({ color }: { color?: string }) {
     <>
       <Typography
         variant="body2"
-        onClick={() => setIsEditing(true)}
+        onClick={hasUsername ? undefined : () => setIsEditing(true)}
         sx={{
           color: color ?? '#111',
           opacity: isUncommitted ? 0.7 : 1,
           fontSize: '0.95rem',
-          cursor: 'pointer',
+          cursor: hasUsername ? 'default' : 'pointer',
           paddingLeft: 1,
           paddingRight: 1,
           whiteSpace: 'nowrap',
           overflow: 'hidden',
-          ...(isEditing
-            ? {}
-            : {
+          ...(!hasUsername && !isEditing
+            ? {
                 '&:hover': {
                   backgroundColor: 'action.hover',
                   borderRadius: 1,
                 },
-              }),
+              }
+            : {}),
         }}
       >
+        {hasUsername && (
+          <Typography
+            component="span"
+            sx={{ color: 'text.disabled', fontSize: 'inherit' }}
+          >
+            {activeBookmark.username}/
+          </Typography>
+        )}
         {isEditing ? (
           <TextInput
             onSave={onSave}
