@@ -21,6 +21,18 @@ async function init() {
     messageHandler.send({ type: 'error', error })
   }
 
+  // Capture errors thrown inside <script type="module"> tags — they execute
+  // asynchronously and are invisible to the surrounding Promise chain.
+  window.addEventListener('error', (event) => {
+    sendError(
+      event.error instanceof Error ? event.error : new Error(event.message),
+    )
+  })
+  window.addEventListener('unhandledrejection', (event) => {
+    const reason = event.reason as unknown
+    sendError(reason instanceof Error ? reason : new Error(String(reason)))
+  })
+
   const eventListenerTracker = createWindowEventListenerTracker()
   const scheduledTaskController = createScheduledTaskController(sendError)
 

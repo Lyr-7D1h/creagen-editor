@@ -448,7 +448,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Raw compressed delta blob bytes */
+            /** @description Blob bytes */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -467,6 +467,22 @@ export interface operations {
                         success: boolean;
                         error: {
                             code: string;
+                            message: string;
+                        };
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: false;
+                        error: {
+                            code: "UNAUTHORIZED" | "INVALID_USER_ID";
                             message: string;
                         };
                     };

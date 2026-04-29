@@ -1,11 +1,13 @@
-import type React from 'react'
 import { Box } from '@mui/material'
-import { Rnd } from 'react-rnd'
+import type React from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ParamsView } from '../params/ParamsView'
-import { useLocalStorage } from '../storage/useLocalStorage'
+import { Rnd } from 'react-rnd'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import { useForceUpdateOnEditorEvent } from '../events/useEditorEvents'
+import { ParamsView } from '../params/ParamsView'
+import { useLocalStorage } from '../storage/useLocalStorage'
+import { ConsoleView } from './ConsoleView'
 import { TopBar } from './TopBar'
 
 interface TabPanelProps {
@@ -21,12 +23,11 @@ function TabPanel(props: TabPanelProps) {
     <div
       role="tabpanel"
       hidden={value !== index}
-      id={`contorl-panel-tabpanel-${index}`}
-      aria-labelledby={`contorl-panel-tab-${index}`}
+      aria-labelledby={`control-panel-tab-${index}`}
       style={{ height: '100%', overflow: 'hidden' }}
       {...other}
     >
-      {value === index && <Box sx={{ height: '100%' }}>{children}</Box>}
+      <Box sx={{ height: '100%' }}>{children}</Box>
     </div>
   )
 }
@@ -35,13 +36,17 @@ function TabContent({ validActiveTab }: { validActiveTab: number }) {
   return (
     <Box sx={{ flex: 1, overflow: 'hidden' }}>
       <TabPanel value={validActiveTab} index={0}>
+        <ConsoleView />
+      </TabPanel>
+      <TabPanel value={validActiveTab} index={1}>
         <ParamsView />
       </TabPanel>
-      <TabPanel value={validActiveTab} index={1}></TabPanel>
     </Box>
   )
 }
 
+/** Don't update unread console above this point */
+const UNREAD_CONSOLE_MAX_SIZE = 100
 export function ControlPanel({
   onClose,
   onMaximizeToggle,
@@ -62,12 +67,34 @@ export function ControlPanel({
 
   // Get parameter count
   const paramCount = creagenEditor.params.length
+  const [unreadConsole, setUnreadConsole] = useState(0)
+
+  useEffect(() => {
+    return creagenEditor.sandbox.log.onUpdate((count) => {
+      if (activeTab !== 0) {
+        setUnreadConsole((prev) =>
+          Math.min(prev + count, UNREAD_CONSOLE_MAX_SIZE),
+        )
+      }
+    })
+  }, [activeTab, creagenEditor.sandbox.log])
 
   // Tabs configuration - metadata can be dynamically updated
   const tabs = [
     {
-      label: 'Parameters',
+      label: 'Console',
       index: 0,
+      metadata:
+        unreadConsole === 0
+          ? ''
+          : unreadConsole >= UNREAD_CONSOLE_MAX_SIZE
+            ? `(>${UNREAD_CONSOLE_MAX_SIZE})`
+            : `(${unreadConsole})`,
+      disabled: false,
+    },
+    {
+      label: 'Parameters',
+      index: 1,
       metadata: paramCount > 0 ? `(${paramCount})` : '',
       disabled: false,
     },
@@ -76,9 +103,15 @@ export function ControlPanel({
   // Ensure activeTab is a valid number (0 or 1)
   const validActiveTab = typeof activeTab === 'number' ? activeTab : 0
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue)
-  }
+  const handleTabChange = useCallback(
+    (_event: React.SyntheticEvent, newValue: number) => {
+      setActiveTab(newValue)
+      if (newValue === 0) {
+        setUnreadConsole(0)
+      }
+    },
+    [setActiveTab],
+  )
 
   // Floating window state
   const [position, setPosition] = useLocalStorage('control-panel-position', {

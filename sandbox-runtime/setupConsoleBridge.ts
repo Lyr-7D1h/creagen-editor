@@ -1,7 +1,9 @@
 import type { SandboxMessageHandler } from '../src/sandbox/SandboxMessageHandler'
 import { serializeForPostMessage } from './serializeForPostMessage'
 
-export function setupConsoleBridge(messageHandler: SandboxMessageHandler): void {
+export function setupConsoleBridge(
+  messageHandler: SandboxMessageHandler,
+): void {
   const sendLog = (
     level: 'debug' | 'info' | 'warn' | 'error',
     args: unknown[],

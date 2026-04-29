@@ -262,7 +262,11 @@ export class UrlMutator {
     return UrlMutator.paramsFromHash(window.location.hash)
   }
 
-  setParams(store: Map<string, unknown>) {
+  setParams(store?: Map<string, unknown>) {
+    if (typeof store === 'undefined') {
+      this.url.hash = ''
+      return this
+    }
     const hash = Array.from(store.entries())
       .map(
         ([key, value]) =>

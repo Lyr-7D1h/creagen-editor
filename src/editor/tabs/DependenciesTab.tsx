@@ -1,10 +1,10 @@
 import {
-  ToggleButtonGroup,
-  ToggleButton,
-  Select,
   MenuItem,
+  Select,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material'
-import { useState, useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { SemVer } from 'semver'
 import { useCreagenEditor } from '../../creagen-editor/CreagenContext'
 import { useLibraries } from '../../events/useEditorEvents'
@@ -14,6 +14,7 @@ import { logger } from '../../logs/logger'
 const supportedLibraries = [
   { name: 'creagen' },
   { name: 'p5' },
+  { name: 'q5' },
   { name: 'three' },
 ] as { name: string; disabled?: boolean }[]
 
@@ -94,6 +95,7 @@ export function DependenciesTab() {
             display: 'flex',
             justifyContent: 'space-between',
             width: '100%',
+            textTransform: 'none',
           }}
           selected={libraryNames.includes(lib.name)}
           onChange={(_, libName: string) => {

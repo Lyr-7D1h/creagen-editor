@@ -1,23 +1,23 @@
 import {
-  Refresh as RefreshIcon,
-  Shuffle as ShuffleIcon,
-  RestartAlt as RestartAltIcon,
   HelpOutline as HelpOutlineIcon,
+  Refresh as RefreshIcon,
+  RestartAlt as RestartAltIcon,
+  Shuffle as ShuffleIcon,
 } from '@mui/icons-material'
 import type { SelectChangeEvent } from '@mui/material'
 import {
-  TextField,
-  Stack,
-  Tooltip,
-  IconButton,
-  Slider,
-  Switch,
   Box,
-  Typography,
-  Select,
-  MenuItem,
-  FormControlLabel,
   Checkbox,
+  FormControlLabel,
+  IconButton,
+  MenuItem,
+  Select,
+  Slider,
+  Stack,
+  Switch,
+  TextField,
+  Tooltip,
+  Typography,
 } from '@mui/material'
 import React from 'react'
 import { generateHumanReadableName } from '../creagen-editor/generateHumanReadableName'
@@ -841,9 +841,11 @@ function ParamItem({
         py: 0.5,
         px: 1,
         bgcolor: (theme) =>
-          theme.palette.mode === 'light'
-            ? theme.palette.grey[50]
-            : theme.palette.background.paper,
+          !compact
+            ? null
+            : theme.palette.mode === 'light'
+              ? theme.palette.grey[50]
+              : theme.palette.background.paper,
         borderRadius: 1,
         minWidth: compact ? 'fit-content' : 'unset',
         display: 'flex',

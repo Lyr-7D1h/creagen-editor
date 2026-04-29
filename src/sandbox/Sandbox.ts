@@ -1,7 +1,8 @@
+import type { CommitHash } from 'versie'
 import { editorEvents } from '../events/events'
 import type { LibraryImport } from '../importer'
 import { createContextLogger } from '../logs/logger'
-import type { CommitHash } from 'versie'
+import { SandboxLog } from './SandboxLog'
 import {
   SANDBOX_MESSAGE_HANDLER_HANDSHAKE_TIMEOUT_MS,
   SandboxMessageHandler,
@@ -9,12 +10,12 @@ import {
 } from './SandboxMessageHandler'
 
 const logger = createContextLogger('sandbox')
-const loggerRuntime = createContextLogger('sandbox-runtime')
 
 export class Sandbox {
   private parent: HTMLElement | null = null
   private nextSibling: Node | null = null
   private messageHandler?: SandboxMessageHandler
+  readonly log: SandboxLog = new SandboxLog()
   isFrozen = false
 
   static create() {
@@ -72,18 +73,16 @@ export class Sandbox {
     this.messageHandler.on('analysisResult', (event) =>
       editorEvents.emit('sandbox:analysis-complete', event),
     )
-    this.messageHandler.on('error', (event) =>
-      editorEvents.emit('sandbox:error', event),
-    )
+    this.messageHandler.on('error', (event) => {
+      event.error.name = 'Uncaught error'
+      this.log.addLog('uncaught', event.error)
+      editorEvents.emit('sandbox:error', event)
+    })
     this.messageHandler.on('log', (event) => {
       const args: unknown[] = Array.isArray(event.data)
         ? event.data
         : [event.data]
-      if (event.level === 'error') {
-        loggerRuntime.error(...args)
-        return
-      }
-      loggerRuntime[event.level](...args)
+      this.log.addLog(event.level, ...args)
     })
     this.messageHandler.on('renderComplete', () => {
       editorEvents.emit('sandbox:render-complete', undefined)
@@ -108,6 +107,7 @@ export class Sandbox {
     // wait for sandbox to be connected before sending anything
     const messageHandler = await this.ensureConnection()
 
+    this.log.reset()
     editorEvents.emit('sandbox:render', undefined)
     if (this.isFrozen) await this.unfreeze()
     messageHandler.send({

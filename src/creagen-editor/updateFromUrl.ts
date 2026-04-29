@@ -73,7 +73,7 @@ async function updateFromSharableLinkData(
   }
 
   try {
-    await editor.checkoutBookmark(bookmark.value.name)
+    await editor.checkoutBookmark(bookmark.value.name, undefined, false)
   } catch (e) {
     logger.error(e)
     return null
@@ -92,7 +92,7 @@ async function updateFromCommit(editor: CreagenEditor, mutator: UrlMutator) {
 
   if (version.type === 'bookmark') {
     await editor
-      .checkoutBookmark(version.bookmark, version.username)
+      .checkoutBookmark(version.bookmark, version.username, false)
       .catch((e) =>
         logger.error(`Failed to checkout bookmark ${version.bookmark}: `, e),
       )

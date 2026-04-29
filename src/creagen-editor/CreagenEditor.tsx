@@ -318,7 +318,11 @@ export class CreagenEditor {
     return Result.ok()
   }
 
-  async checkoutBookmark(bookmarkName: string, username?: string) {
+  async checkoutBookmark(
+    bookmarkName: string,
+    username?: string,
+    resetParams: boolean = true,
+  ) {
     let bookmark: (ActiveBookmark & { commit: CommitHash }) | null
     if (
       username &&
@@ -347,6 +351,7 @@ export class CreagenEditor {
         bookmark.name,
         username ?? this.storage.user?.username,
       )
+    if (resetParams) mutator.setParams()
     mutator.pushState(null, this.activeBookmark.name)
 
     return bookmark
