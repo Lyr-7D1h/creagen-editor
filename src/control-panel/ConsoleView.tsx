@@ -91,10 +91,6 @@ const ZERO_COUNTS = {
   error: 0,
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────────────────────
-
 /** Maximum number of visual lines rendered inside a single row.
  * Keeping this bounded prevents extreme row heights that break dynamic-height
  * scroll estimation in react-window. Very long output beyond this limit is
@@ -106,7 +102,7 @@ function formatArg(a: unknown): string {
   if (typeof a === 'string') return a
   if (a instanceof Error) return `${a.name}: ${a.message}`
   try {
-    return JSON.stringify(a, null, 2)
+    return JSON.stringify(a, null)
   } catch {
     return String(a)
   }
@@ -163,10 +159,6 @@ function getLogAt(
   const result = log.view(offset, 1).next()
   return result.done ? undefined : (result.value as Log | undefined)
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Row
-// ─────────────────────────────────────────────────────────────────────────────
 
 type RowProps = {
   log: SandboxLog
