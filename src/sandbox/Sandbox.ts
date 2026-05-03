@@ -75,6 +75,7 @@ export class Sandbox {
     )
     this.messageHandler.on('error', (event) => {
       event.error.name = 'Uncaught error'
+      console.error(event.error)
       this.log.addLog('uncaught', event.error)
       editorEvents.emit('sandbox:error', event)
     })
