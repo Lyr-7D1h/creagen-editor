@@ -1,8 +1,8 @@
 import { z } from 'zod'
-import { generateHumanReadableName } from '../creagen-editor/generateHumanReadableName'
 import type { Controller, ControllerMessage } from '../controller/Controller'
-import { deepEqual } from '../util'
+import { generateHumanReadableName } from '../creagen-editor/generateHumanReadableName'
 import { UrlMutator } from '../UrlMutator'
+import { deepEqual } from '../util'
 
 const baseConfigSchema = z.object({
   title: z.string().optional(),
@@ -97,31 +97,39 @@ export const paramConfigSchema = z.discriminatedUnion('type', [
     .extend({
       type: z.literal('range'),
       default: z.tuple([z.number(), z.number()]).optional(),
-      min: z.number().optional().default(0),
-      max: z.number().optional().default(10),
+      min: z.number().optional(),
+      max: z.number().optional(),
       step: z.number().optional().default(1),
     })
-    .refine((data) => data.min <= data.max, {
-      message: 'min cannot be greater than max',
-    })
+    .refine(
+      (data) =>
+        typeof data.min === 'undefined' ||
+        typeof data.max === 'undefined' ||
+        data.min <= data.max,
+      { message: 'min cannot be greater than max' },
+    )
     .transform((data) => ({
       ...data,
-      default: data.default ?? [data.min, data.max],
+      default: data.default ?? [data.min ?? 0, data.max ?? 10],
     })),
   baseConfigSchema
     .extend({
       type: z.literal('range-slider'),
       default: z.tuple([z.number(), z.number()]).optional(),
-      min: z.number().optional().default(0),
-      max: z.number().optional().default(10),
+      min: z.number().optional(),
+      max: z.number().optional(),
       step: z.number().optional().default(1),
     })
-    .refine((data) => data.min <= data.max, {
-      message: 'min cannot be greater than max',
-    })
+    .refine(
+      (data) =>
+        typeof data.min === 'undefined' ||
+        typeof data.max === 'undefined' ||
+        data.min <= data.max,
+      { message: 'min cannot be greater than max' },
+    )
     .transform((data) => ({
       ...data,
-      default: data.default ?? [data.min, data.max],
+      default: data.default ?? [data.min ?? 0, data.max ?? 10],
     })),
   baseConfigSchema.extend({
     type: z.literal('seed'),
@@ -232,9 +240,9 @@ type ParamConfig = { title?: string; description?: string } & (
       max?: number
       step?: number
     }
-  | { 
+  | {
       type: 'text'
-      default?: string 
+      default?: string
     }
   | {
       type: 'range'
@@ -360,8 +368,10 @@ declare function useParam(type: 'color', options: Omit<Extract<ParamConfig, { ty
         ) {
           return false
         }
-        // Check constraints: values must be within bounds and min <= max
-        return min >= config.min && max <= config.max && min <= max
+        // Check constraints: values must be within bounds (when defined) and min <= max
+        if (typeof config.min !== 'undefined' && min < config.min) return false
+        if (typeof config.max !== 'undefined' && max > config.max) return false
+        return min <= max
       }
 
       case 'seed':
