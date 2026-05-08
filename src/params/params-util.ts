@@ -33,8 +33,8 @@ export function generateRandomValue(config: ParamConfig): unknown {
 
     case 'range':
     case 'range-slider': {
-      const min = config.min
-      const max = config.max
+      const min = config.min ?? 0
+      const max = config.max ?? 10
 
       // No step specified, generate random values with 2 decimal places
       const val1 = min + Math.random() * (max - min)
