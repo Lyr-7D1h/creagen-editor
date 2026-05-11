@@ -1,18 +1,18 @@
-import { localStorage } from '../storage/LocalStorage'
-import * as monaco from 'monaco-editor'
 import type * as m from 'monaco-editor'
+import * as monaco from 'monaco-editor'
+import { localStorage } from '../storage/LocalStorage'
 
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
-import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
 import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
 import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker'
+import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
 
 import './editor.css'
 
 import { initVimMode } from 'monaco-vim'
-import type { Settings } from '../settings/Settings'
 import { editorEvents } from '../events/events'
 import { createContextLogger } from '../logs/logger'
+import type { Settings } from '../settings/Settings'
 import { registerCompletionProvider } from './registerCompletionProvider'
 
 const logger = createContextLogger('editor')
@@ -131,7 +131,7 @@ export class Editor {
   ) {
     this._html = html
     this.editor = editor
-    registerCompletionProvider().catch(logger.error)
+    registerCompletionProvider()
     this.vimMode = null
     this.fullscreendecorators = null
     this.cleanAlternativeVersionId = this.getAlternativeVersionId()

@@ -1,8 +1,8 @@
 import * as monaco from 'monaco-editor'
-import { LruCache, recordToCacheKey } from '../shared/LruCache'
-import type { CompletionEntryData, CompletionInfo } from 'typescript'
+import type { CompletionEntryData } from 'typescript'
 import { type CompletionEntryDetails } from 'typescript'
-import { wait } from '../util'
+import { LruCache, recordToCacheKey } from '../shared/LruCache'
+import { getTypeScriptWorker } from '../workers/getTypeScriptWorker'
 
 function normalizeUriPath(value: string) {
   try {
@@ -90,101 +90,22 @@ function buildAutoImportDetailsCacheKey(
   ].join(CACHE_KEY_SEPARATOR)
 }
 
-interface TsWrapperWorker {
-  getCompletionsWithImportsAtPosition(
-    file: string,
-    position: number,
-  ): Promise<CompletionInfo | undefined>
-  getCompletionEntryDetailsWithImports(
-    file: string,
-    position: number,
-    entryName: string,
-    source?: string,
-    data?: CompletionEntryData,
-  ): Promise<CompletionEntryDetails | undefined>
-}
-
-const TYPESCRIPT_REGISTRATION_ERROR = 'TypeScript not registered!'
-const MAX_WORKER_INIT_RETRIES = 20
-const INITIAL_WORKER_INIT_RETRY_DELAY_MS = 25
-const MAX_WORKER_INIT_RETRY_DELAY_MS = 500
-const LANGUAGE_ACTIVATION_TIMEOUT_MS = 5000
-
-function isTypeScriptRegistrationError(error: unknown) {
-  if (typeof error === 'string') {
-    return error.includes(TYPESCRIPT_REGISTRATION_ERROR)
-  }
-  if (error instanceof Error) {
-    return error.message.includes(TYPESCRIPT_REGISTRATION_ERROR)
-  }
-  if (
-    typeof error === 'object' &&
-    error !== null &&
-    'message' in error &&
-    typeof error.message === 'string'
-  ) {
-    return error.message.includes(TYPESCRIPT_REGISTRATION_ERROR)
-  }
-  return false
-}
-
-/** Due to editor initialization typescript worker might still not exist after typescript language has been attached */
-async function getTypeScriptWorkerWithRetry() {
-  let delayMs = INITIAL_WORKER_INIT_RETRY_DELAY_MS
-  for (let attempt = 0; attempt < MAX_WORKER_INIT_RETRIES; attempt++) {
-    try {
-      const getWorker = await monaco.typescript.getTypeScriptWorker()
-      return (await getWorker()) as unknown as TsWrapperWorker
-    } catch (error) {
-      if (!isTypeScriptRegistrationError(error)) throw error
-      if (attempt === MAX_WORKER_INIT_RETRIES - 1) throw error
-      await wait(delayMs)
-      delayMs = Math.min(delayMs * 2, MAX_WORKER_INIT_RETRY_DELAY_MS)
-    }
-  }
-
-  // Unreachable, but satisfies control flow analysis.
-  throw new Error('Unable to initialize TypeScript worker')
-}
-
-function hasTypeScriptModel() {
-  return monaco.editor
-    .getModels()
-    .some((model) => model.getLanguageId() === 'typescript')
-}
-
-async function waitForTypeScriptLanguageActivation() {
-  if (hasTypeScriptModel()) return
-
-  await new Promise<void>((resolve, reject) => {
-    const timeoutId = setTimeout(() => {
-      disposable?.dispose()
-      reject(new Error('Timed out waiting for TypeScript language activation'))
-    }, LANGUAGE_ACTIVATION_TIMEOUT_MS)
-
-    const disposable = monaco.languages.onLanguage('typescript', () => {
-      clearTimeout(timeoutId)
-      disposable?.dispose()
-      resolve()
-    })
-  })
-}
-
-export async function registerCompletionProvider() {
-  await waitForTypeScriptLanguageActivation()
-  const autoImportWorker = await getTypeScriptWorkerWithRetry()
-
+export function registerCompletionProvider() {
   const detailsCache = new LruCache<
     string,
     Promise<CompletionEntryDetails | undefined>
   >(DETAILS_CACHE_MAX_ENTRIES)
 
-  const getDetails = (meta: AutoImportCompletionMeta) => {
+  const getDetails = async (meta: AutoImportCompletionMeta) => {
     const cacheKey = buildAutoImportDetailsCacheKey(meta)
     const cached = detailsCache.get(cacheKey)
     if (cached != null) return cached
 
-    const request = autoImportWorker.getCompletionEntryDetailsWithImports(
+    // Get worker for the specific file URI
+    const typescriptWorker = await getTypeScriptWorker(
+      monaco.Uri.parse(meta.file),
+    )
+    const request = typescriptWorker.getCompletionEntryDetailsWithImports(
       meta.file,
       meta.offset,
       meta.entryName,
@@ -201,8 +122,10 @@ export async function registerCompletionProvider() {
       const file = model.uri.toString()
       const offset = model.getOffsetAt(position)
 
+      // Get worker for this specific model
+      const typescriptWorker = await getTypeScriptWorker(model.uri)
       const completions =
-        await autoImportWorker.getCompletionsWithImportsAtPosition(file, offset)
+        await typescriptWorker.getCompletionsWithImportsAtPosition(file, offset)
 
       const wordAtPosition = model.getWordAtPosition(position)
       const baseRange = wordAtPosition
