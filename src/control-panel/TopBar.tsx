@@ -2,7 +2,7 @@ import {
   FullscreenExit as FullscreenExitIcon,
   Fullscreen as FullscreenIcon,
 } from '@mui/icons-material'
-import { Box, Tabs, Tab, Tooltip, IconButton } from '@mui/material'
+import { Box, IconButton, Tab, Tabs, Tooltip } from '@mui/material'
 import type React from 'react'
 import { CloseButton } from './CloseButton'
 
@@ -119,7 +119,7 @@ export function TopBar({
             size="small"
             sx={{
               p: 0.5,
-              color: 'text.secondary',
+              color: 'text.primary',
               '&:hover': {
                 backgroundColor: 'action.hover',
               },

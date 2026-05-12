@@ -753,7 +753,7 @@ function ParamControl({
 
     default:
       control = (
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" sx={{ color: 'text.primary' }}>
           Unknown parameter type
         </Typography>
       )
@@ -791,7 +791,7 @@ function ParamItem({
         variant="caption"
         component="div"
         noWrap={compact}
-        sx={{ fontWeight: 500 }}
+        sx={{ fontWeight: 500, color: 'text.primary' }}
       >
         {paramKey}
         {compact &&
@@ -802,7 +802,7 @@ function ParamItem({
             <Typography
               component="span"
               variant="caption"
-              sx={{ ml: 1, color: 'text.secondary', fontWeight: 400 }}
+              sx={{ ml: 1, color: 'text.primary', fontWeight: 400 }}
             >
               {config.type === 'range' || config.type === 'range-slider'
                 ? `[${(value as [number, number])[0]}, ${(value as [number, number])[1]}]`
@@ -817,7 +817,7 @@ function ParamItem({
           config.type === 'range-slider') && (
           <Typography
             variant="caption"
-            sx={{ color: 'text.secondary', fontWeight: 400 }}
+            sx={{ color: 'text.primary', fontWeight: 400 }}
           >
             {config.type === 'range' || config.type === 'range-slider'
               ? `[${(value as [number, number])[0]}, ${(value as [number, number])[1]}]`
@@ -964,7 +964,7 @@ export function ParamsViewPresentation({
             />
           }
           label={
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" sx={{ color: 'text.primary' }}>
               Compact
             </Typography>
           }
@@ -980,7 +980,7 @@ export function ParamsViewPresentation({
               />
             }
             label={
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{ color: 'text.primary' }}>
                 Auto render
               </Typography>
             }
@@ -1036,7 +1036,7 @@ export function ParamsViewPresentation({
         }}
       >
         {configs.size === 0 ? (
-          <Typography variant="body2" color="text.secondary" sx={{ p: 1 }}>
+          <Typography variant="body2" sx={{ color: 'text.primary', p: 1 }}>
             No parameters defined
           </Typography>
         ) : (

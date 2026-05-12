@@ -8,7 +8,6 @@ export function CloseButton({ onClose }: { onClose: () => void }) {
       size="small"
       sx={{
         p: 0.5,
-        ml: 0.5,
       }}
       title="Close"
     >

@@ -1,14 +1,14 @@
 import { Add, ChevronRight } from '@mui/icons-material'
-import { IconButton } from '@mui/material'
-import { History } from './History'
+import { Box, IconButton } from '@mui/material'
 import { useEffect, useRef, useState } from 'react'
-import { ActiveBookmark } from './ActiveBookmark'
-import { HtmlTooltip } from './HtmlTooltip'
-import { useHistory, useSettings } from '../events/useEditorEvents'
-import { useCreagenEditor } from '../creagen-editor/CreagenContext'
-import { logger } from '../logs/logger'
 import { Actions } from '../creagen-editor/Actions'
+import { useCreagenEditor } from '../creagen-editor/CreagenContext'
+import { useHistory, useSettings } from '../events/useEditorEvents'
+import { logger } from '../logs/logger'
 import { KeybindHint } from '../shared/KeybindHint'
+import { ActiveBookmark } from './ActiveBookmark'
+import { History } from './History'
+import { HtmlTooltip } from './HtmlTooltip'
 
 const BAR_HEIGHT = 18
 
@@ -56,19 +56,21 @@ export function EditorBar({
   }, [historyVisible, isFullscreen])
 
   return (
-    <div
+    <Box
       ref={rootRef}
-      style={{
+      sx={{
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'stretch',
-        padding: 2,
+        padding: 0.25,
         position: 'relative',
         height: compactSingleRow ? BAR_HEIGHT : 'auto',
         minHeight: BAR_HEIGHT,
-        gap: hasSecondHistoryRow ? 2 : 0,
-        backgroundColor: isFullscreen ? 'rgba(0, 0, 0, 0.8)' : 'transparent',
-        color: isFullscreen ? '#fff' : 'grey',
+        gap: hasSecondHistoryRow ? 0.25 : 0,
+        backgroundColor: isFullscreen
+          ? 'rgba(0, 0, 0, 0.8)'
+          : 'background.paper',
+        color: isFullscreen ? '#fff' : 'text.secondary',
       }}
     >
       <div
@@ -195,6 +197,6 @@ export function EditorBar({
           </div>
         </div>
       )}
-    </div>
+    </Box>
   )
 }

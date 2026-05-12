@@ -49,6 +49,12 @@ const creagenLightTheme: monaco.editor.IStandaloneThemeData = {
   colors: {},
   rules: [],
 }
+const creagenDarkTheme: monaco.editor.IStandaloneThemeData = {
+  base: 'vs-dark',
+  inherit: true,
+  colors: {},
+  rules: [],
+}
 const creagenFullscreenTheme: monaco.editor.IStandaloneThemeData = {
   base: 'hc-black',
   inherit: true,
@@ -59,6 +65,7 @@ const creagenFullscreenTheme: monaco.editor.IStandaloneThemeData = {
   },
   rules: [],
 }
+export type EditorTheme = 'creagen' | 'creagen-dark'
 
 export const typescriptCompilerOptions = {
   target: monaco.typescript.ScriptTarget.ESNext,
@@ -83,11 +90,13 @@ function handleBeforeMount(monaco: Monaco) {
     typescriptCompilerOptions,
   )
   monaco.editor.defineTheme('creagen', creagenLightTheme)
+  monaco.editor.defineTheme('creagen-dark', creagenDarkTheme)
   monaco.editor.defineTheme('creagen-fullscreen', creagenFullscreenTheme)
 }
 
 /** The actual code editor, responsible for text modification */
 export class Editor {
+  private theme: EditorTheme = 'creagen'
   private readonly editor: m.editor.IStandaloneCodeEditor
   private vimMode: m.editor.IStandaloneCodeEditor | null
   private vimRef?: HTMLElement
@@ -228,6 +237,11 @@ export class Editor {
     }
   }
 
+  setTheme(theme: 'creagen' | 'creagen-dark') {
+    monaco.editor.setTheme(theme)
+    this.theme = theme
+  }
+
   /** set background transparent and make code highly visable */
   setFullscreenMode(value: boolean) {
     if (value) {
@@ -244,7 +258,7 @@ export class Editor {
     } else {
       if (this.fullscreendecorators) this.fullscreendecorators.clear()
       this.fullscreendecorators = null
-      monaco.editor.setTheme('creagen')
+      this.setTheme(this.theme)
     }
   }
 

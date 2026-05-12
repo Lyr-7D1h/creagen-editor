@@ -1,8 +1,9 @@
+import { useColorScheme, useTheme } from '@mui/material'
 import { useEffect, useRef } from 'react'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import { useSettings } from '../events/useEditorEvents'
+import type { EditorTheme } from './Editor'
 import { EditorBar } from './EditorBar'
-import { useTheme } from '@mui/material'
 
 export interface EditorProps {
   width?: string
@@ -19,6 +20,7 @@ export function EditorView({
   toggleMenu,
   active = true,
 }: EditorProps) {
+  const { mode, systemMode } = useColorScheme()
   const creagenEditor = useCreagenEditor()
   const hideAll = useSettings('hide_all')
   const vimEnabled = useSettings('editor.vim')
@@ -49,6 +51,19 @@ export function EditorView({
       creagenEditor.editor.setVimStatusElement(vimStatus)
     }
   }, [vimEnabled, creagenEditor])
+
+  useEffect(() => {
+    let _mode = mode
+    if (_mode === 'system') {
+      _mode = systemMode
+    }
+
+    let theme: EditorTheme = 'creagen'
+    if (_mode === 'dark') {
+      theme = 'creagen-dark'
+    }
+    creagenEditor.editor.setTheme(theme)
+  }, [creagenEditor.editor, mode, systemMode])
 
   return (
     <div

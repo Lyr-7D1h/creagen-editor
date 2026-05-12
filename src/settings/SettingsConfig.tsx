@@ -1,7 +1,7 @@
 import type React from 'react'
 import { z } from 'zod'
-import { semverSchema } from '../creagen-editor/schemaUtils'
 import { isMobile } from '../creagen-editor/isMobile'
+import { semverSchema } from '../creagen-editor/schemaUtils'
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const librarySchema = z.object({

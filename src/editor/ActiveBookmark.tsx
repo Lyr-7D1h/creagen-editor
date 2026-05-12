@@ -44,7 +44,7 @@ export function ActiveBookmark({ color }: { color?: string }) {
         variant="body2"
         onClick={hasUsername ? undefined : () => setIsEditing(true)}
         sx={{
-          color: color ?? '#111',
+          color: color ?? 'text.primary',
           opacity: isUncommitted ? 0.7 : 1,
           fontSize: '0.95rem',
           cursor: hasUsername ? 'default' : 'pointer',

@@ -4,7 +4,7 @@ import {
   FilterList as FilterListIcon,
   WarningAmber as WarnIcon,
 } from '@mui/icons-material'
-import type { SvgIconProps } from '@mui/material'
+import type { SvgIconProps, Theme } from '@mui/material'
 import {
   Box,
   Checkbox,
@@ -15,6 +15,7 @@ import {
   MenuItem,
   Tooltip,
   Typography,
+  useTheme,
 } from '@mui/material'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
@@ -41,48 +42,66 @@ interface LevelConfig {
   filterLabel: string | null
 }
 
-const LEVEL_CONFIG: Record<LogLevel, LevelConfig> = {
+const getLevelConfig = (theme: Theme): Record<LogLevel, LevelConfig> => ({
   uncaught: {
-    rowBg: 'rgba(198, 40, 40, 0.07)',
-    rowHoverBg: 'rgba(198, 40, 40, 0.13)',
-    textColor: '#c62828',
+    rowBg:
+      theme.palette.mode === 'dark'
+        ? 'rgba(244, 67, 54, 0.1)'
+        : 'rgba(198, 40, 40, 0.07)',
+    rowHoverBg:
+      theme.palette.mode === 'dark'
+        ? 'rgba(244, 67, 54, 0.15)'
+        : 'rgba(198, 40, 40, 0.13)',
+    textColor: theme.palette.error.main,
     Icon: ErrorIcon,
-    iconColor: '#c62828',
+    iconColor: theme.palette.error.main,
     filterLabel: null,
   },
   error: {
-    rowBg: 'rgba(198, 40, 40, 0.07)',
-    rowHoverBg: 'rgba(198, 40, 40, 0.13)',
-    textColor: '#c62828',
+    rowBg:
+      theme.palette.mode === 'dark'
+        ? 'rgba(244, 67, 54, 0.1)'
+        : 'rgba(198, 40, 40, 0.07)',
+    rowHoverBg:
+      theme.palette.mode === 'dark'
+        ? 'rgba(244, 67, 54, 0.15)'
+        : 'rgba(198, 40, 40, 0.13)',
+    textColor: theme.palette.error.main,
     Icon: ErrorIcon,
-    iconColor: '#c62828',
+    iconColor: theme.palette.error.main,
     filterLabel: 'Errors',
   },
   warn: {
-    rowBg: 'rgba(230, 81, 0, 0.06)',
-    rowHoverBg: 'rgba(230, 81, 0, 0.12)',
-    textColor: '#7a4700',
+    rowBg:
+      theme.palette.mode === 'dark'
+        ? 'rgba(255, 152, 0, 0.1)'
+        : 'rgba(230, 81, 0, 0.06)',
+    rowHoverBg:
+      theme.palette.mode === 'dark'
+        ? 'rgba(255, 152, 0, 0.15)'
+        : 'rgba(230, 81, 0, 0.12)',
+    textColor: theme.palette.warning.main,
     Icon: WarnIcon,
-    iconColor: '#e65100',
+    iconColor: theme.palette.warning.main,
     filterLabel: 'Warnings',
   },
   info: {
     rowBg: 'transparent',
-    rowHoverBg: 'rgba(0, 0, 0, 0.04)',
-    textColor: 'inherit',
+    rowHoverBg: theme.palette.action.hover,
+    textColor: theme.palette.text.primary,
     Icon: null,
-    iconColor: '#1565c0',
+    iconColor: theme.palette.info.main,
     filterLabel: 'Info',
   },
   debug: {
     rowBg: 'transparent',
-    rowHoverBg: 'rgba(0, 0, 0, 0.04)',
-    textColor: '#9e9e9e',
+    rowHoverBg: theme.palette.action.hover,
+    textColor: theme.palette.text.secondary,
     Icon: null,
-    iconColor: '#9e9e9e',
+    iconColor: theme.palette.text.secondary,
     filterLabel: 'Debug',
   },
-}
+})
 
 const ALL_LEVEL_FILTERS: LogLevel[] = ['error', 'warn', 'info', 'debug']
 
@@ -175,6 +194,9 @@ function Row({
   logSize,
   indexMap,
 }: RowComponentProps<RowProps>) {
+  const theme = useTheme()
+  const LEVEL_CONFIG = getLevelConfig(theme)
+
   const actualIndex = indexMap != null ? indexMap[index] : index
   if (actualIndex == null) return null
   const entry = getLogAt(log, logSize, actualIndex)
@@ -268,6 +290,9 @@ function LevelFilterDropdown({
   levelCounts: typeof ZERO_COUNTS
   onToggle: (level: LogLevel) => void
 }) {
+  const theme = useTheme()
+  const LEVEL_CONFIG = getLevelConfig(theme)
+
   const [anchor, setAnchor] = useState<HTMLElement | null>(null)
   const open = Boolean(anchor)
   const hiddenCount = hiddenLevels.size
@@ -410,6 +435,9 @@ function LevelFilterDropdown({
 }
 
 export function ConsoleView() {
+  const theme = useTheme()
+  const LEVEL_CONFIG = getLevelConfig(theme)
+
   const {
     sandbox: { log },
   } = useCreagenEditor()

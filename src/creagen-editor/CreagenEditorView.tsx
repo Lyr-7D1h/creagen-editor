@@ -1,17 +1,18 @@
-import { useEffect, useState } from 'react'
-import {
-  CreagenEditorViewSplit,
-  CreagenEditorViewContentMobile,
-} from './CreagenEditorViewSplit'
-import { logger } from '../logs/logger'
-import { CreagenEditor } from './CreagenEditor'
-import { Messages } from '../logs/Messages'
 import { Box, CircularProgress } from '@mui/material'
-import { WelcomeScreen } from './WelcomeScreen'
+import { useEffect, useState } from 'react'
+import { logger } from '../logs/logger'
+import { Messages } from '../logs/Messages'
+import { LoginPromptHandler } from '../user/LoginPromptHandler'
+import { CreagenEditorContext } from './CreagenContext'
+import { CreagenEditor } from './CreagenEditor'
+import {
+  CreagenEditorViewContentMobile,
+  CreagenEditorViewSplit,
+} from './CreagenEditorViewSplit'
 import { ErrorBoundary } from './ErrorBoundary'
 import { isMobile } from './isMobile'
-import { CreagenEditorContext } from './CreagenContext'
-import { LoginPromptHandler } from '../user/LoginPromptHandler'
+import { Theme } from './Theme'
+import { WelcomeScreen } from './WelcomeScreen'
 
 declare global {
   interface Window {
@@ -64,19 +65,19 @@ export function CreagenEditorView() {
   }
 
   return (
-    // <ThemeProvider theme={theme}>
-    <CreagenEditorContext.Provider value={creagenEditor}>
-      <ErrorBoundary>
-        <WelcomeScreen />
-        {CREAGEN_REMOTE_URL != null && <LoginPromptHandler />}
-        {mobile ? (
-          <CreagenEditorViewContentMobile />
-        ) : (
-          <CreagenEditorViewSplit />
-        )}
-      </ErrorBoundary>
-      <Messages />
-    </CreagenEditorContext.Provider>
-    // </ThemeProvider>
+    <Theme>
+      <CreagenEditorContext.Provider value={creagenEditor}>
+        <ErrorBoundary>
+          <WelcomeScreen />
+          {CREAGEN_REMOTE_URL != null && <LoginPromptHandler />}
+          {mobile ? (
+            <CreagenEditorViewContentMobile />
+          ) : (
+            <CreagenEditorViewSplit />
+          )}
+        </ErrorBoundary>
+        <Messages />
+      </CreagenEditorContext.Provider>
+    </Theme>
   )
 }

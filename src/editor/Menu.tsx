@@ -1,23 +1,23 @@
-import PublishIcon from '@mui/icons-material/Publish'
-import type { RefAttributes} from 'react';
-import type React from 'react';
-import { useEffect } from 'react'
-import { Box, Button, ButtonGroup, Typography } from '@mui/material'
-import KeyboardIcon from '@mui/icons-material/Keyboard'
 import { AccountTree, Settings } from '@mui/icons-material'
-import { BookmarksTab } from './tabs/BookmarksTab'
-import { SettingsTab } from './tabs/SettingsTab'
-import { KeybindingsTab } from './tabs/KeybindingsTab'
-import { useLocalStorage } from '../storage/useLocalStorage'
 import AutoStoriesIcon from '@mui/icons-material/AutoStories'
-import { DependenciesTab } from './tabs/DependenciesTab'
-import { StorageBar } from './StorageBar'
-import { MenuLinks } from '../shared/MenuLinks'
-import { CommitsTab } from './tabs/CommitsTab'
 import BookmarkIcon from '@mui/icons-material/Bookmark'
 import CommitIcon from '@mui/icons-material/Commit'
-import { ImportTab } from './tabs/ImportTab'
+import KeyboardIcon from '@mui/icons-material/Keyboard'
+import PublishIcon from '@mui/icons-material/Publish'
+import { Box, Button, ButtonGroup, Typography } from '@mui/material'
+import type React from 'react'
+import type { RefAttributes } from 'react'
+import { useEffect } from 'react'
+import { MenuLinks } from '../shared/MenuLinks'
 import { localStorage } from '../storage/LocalStorage'
+import { useLocalStorage } from '../storage/useLocalStorage'
+import { StorageBar } from './StorageBar'
+import { BookmarksTab } from './tabs/BookmarksTab'
+import { CommitsTab } from './tabs/CommitsTab'
+import { DependenciesTab } from './tabs/DependenciesTab'
+import { ImportTab } from './tabs/ImportTab'
+import { KeybindingsTab } from './tabs/KeybindingsTab'
+import { SettingsTab } from './tabs/SettingsTab'
 
 export type MenuProps = {
   width?: string
@@ -115,7 +115,8 @@ export function Menu<T>({ ref, width }: MenuProps & RefAttributes<T>) {
         display: 'flex',
         flexDirection: 'column',
         overflow: 'scroll',
-        backgroundColor: 'white',
+        backgroundColor: 'background.paper',
+        color: 'text.primary',
       }}
     >
       <Box
@@ -136,7 +137,9 @@ export function Menu<T>({ ref, width }: MenuProps & RefAttributes<T>) {
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
-            <Typography sx={{ fontWeight: 'bold' }}>Creagen Editor</Typography>
+            <Typography sx={{ fontWeight: 'bold' }} color="text.primary">
+              Creagen Editor
+            </Typography>
             <Typography variant="caption" color="text.secondary">
               {CREAGEN_EDITOR_VERSION}{' '}
               {CREAGEN_EDITOR_COMMIT_HASH != null &&
