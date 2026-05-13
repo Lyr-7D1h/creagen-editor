@@ -1,13 +1,13 @@
-import type React from 'react'
-import { useCreagenEditor } from '../../creagen-editor/CreagenContext'
-import { Typography, IconButton } from '@mui/material'
 import DeleteIcon from '@mui/icons-material/Delete'
+import { IconButton, Typography } from '@mui/material'
+import type React from 'react'
+import type { Bookmark } from 'versie'
+import { useCreagenEditor } from '../../creagen-editor/CreagenContext'
 import { useBookmarks } from '../../events/useEditorEvents'
-import { dateString } from '../../util'
+import { logger } from '../../logs/logger'
 import type { ColumnDef } from '../../shared/Table'
 import { Table } from '../../shared/Table'
-import type { Bookmark } from 'versie'
-import { logger } from '../../logs/logger'
+import { dateString } from '../../util'
 
 export const BookmarksTab = () => {
   const creagenEditor = useCreagenEditor()
@@ -55,7 +55,7 @@ export const BookmarksTab = () => {
           sx={{
             fontFamily: 'monospace',
             color: 'text.secondary',
-            backgroundColor: 'grey.100',
+            backgroundColor: 'background.paper',
             padding: '2px 6px',
             borderRadius: '4px',
           }}

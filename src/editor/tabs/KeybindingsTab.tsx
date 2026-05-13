@@ -1,20 +1,20 @@
-import { useState } from 'react'
-import { useCreagenEditor } from '../../creagen-editor/CreagenContext'
-import ReplayIcon from '@mui/icons-material/Replay'
 import DeleteIcon from '@mui/icons-material/Delete'
+import ReplayIcon from '@mui/icons-material/Replay'
+import { Chip, IconButton } from '@mui/material'
+import { useState } from 'react'
 import type { Command } from '../../creagen-editor/commands'
 import { COMMANDS } from '../../creagen-editor/commands'
+import { useCreagenEditor } from '../../creagen-editor/CreagenContext'
 import type {
   ActiveKeybinding,
   KeyInfo,
 } from '../../creagen-editor/keybindings'
 import { getDefaultKeybindingsForCommand } from '../../creagen-editor/keybindings'
-import { KeyCaptureInput } from './KeyCaptureInput'
-import { Chip, IconButton } from '@mui/material'
-import type { ColumnDef } from '../../shared/Table'
-import { Table } from '../../shared/Table'
 import { logger } from '../../logs/logger'
 import { KeybindHint } from '../../shared/KeybindHint'
+import type { ColumnDef } from '../../shared/Table'
+import { Table } from '../../shared/Table'
+import { KeyCaptureInput } from './KeyCaptureInput'
 
 interface KeybindingRow {
   command: Command
@@ -149,7 +149,7 @@ export function KeybindingsTab() {
                 setEditingCommand({ command })
               }}
               style={{
-                backgroundColor: '#fff',
+                backgroundColor: 'background.paper',
                 padding: '4px 8px',
                 borderRadius: '4px',
                 border: '1px dashed #cfd8dc',
