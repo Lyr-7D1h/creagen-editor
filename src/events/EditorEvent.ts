@@ -36,6 +36,12 @@ type EditorEvents = {
     value: unknown
     oldValue?: unknown
   }
+  /** A setting config was deleted */
+  'settings:deleted': { key: string }
+  /** A setting config was changed */
+  'settings:config-changed': { key: string; config: unknown }
+  /** A setting config was added */
+  'settings:config-added': { key: string; config: unknown }
 
   // Sandbox events
   'sandbox:analysis-complete': { result: AnalyzeContainerResult }
