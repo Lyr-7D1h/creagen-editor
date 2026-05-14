@@ -1,19 +1,19 @@
-import { useEffect } from 'react'
 import { Allotment } from 'allotment'
 import 'allotment/dist/style.css'
+import { useEffect } from 'react'
+import { ControlPanel } from '../control-panel/ControlPanel'
 import { EditorView } from '../editor/EditorView'
-import { SandboxView } from '../sandbox/SandboxView'
 import { Menu } from '../editor/Menu'
 import {
   useForceUpdateOnEditorEvent,
   useSettings,
 } from '../events/useEditorEvents'
+import { ParamsView } from '../params/ParamsView'
+import { SandboxView } from '../sandbox/SandboxView'
 import { useLocalStorage } from '../storage/useLocalStorage'
 import { Actions } from './Actions'
 import { useCreagenEditor } from './CreagenContext'
 import { PerformanceMonitor } from './PerformanceMonitor'
-import { ControlPanel } from '../control-panel/ControlPanel'
-import { ParamsView } from '../params/ParamsView'
 import { QR } from './QR'
 
 const MIN_WINDOW_SIZE = 200
@@ -83,8 +83,6 @@ export function CreagenEditorViewSplit() {
                       style={{
                         width: '100%',
                         height: '100%',
-                        // needed to show allotment border in between editor and params
-                        marginLeft: 1,
                       }}
                     >
                       <EditorView
