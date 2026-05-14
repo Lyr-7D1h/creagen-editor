@@ -1,56 +1,40 @@
-import type React from 'react'
 import { z } from 'zod'
 import { isMobile } from '../creagen-editor/isMobile'
-import { semverSchema } from '../creagen-editor/schemaUtils'
 
-// eslint-disable-next-line react-refresh/only-export-components
-export const librarySchema = z.object({
-  name: z.string(),
-  version: semverSchema,
-})
-export type Library = z.infer<typeof librarySchema>
-
-const DEFAULT_CONFIG_VALUE = {
+export const SETTINGS_CONFIG = {
   // state settings (not stored)
   hide_all: {
-    type: 'param',
-    hidden: true,
+    type: 'param-query' as const,
     // Used for parsing query search string to the value and defining that it is also stored in url query param
     fromQueryParam: (value: string) => {
       return value === 'true'
     },
-    value: false,
+    default: false as boolean,
   },
   show_control_panel: {
-    type: 'param',
-    hidden: true,
+    type: 'param-query' as const,
     fromQueryParam: (value: string) => {
       return value === 'true'
     },
-    value: false,
+    default: false as boolean,
   },
   show_qr: {
-    type: 'param',
-    hidden: true,
+    type: 'param-query' as const,
     fromQueryParam: (value: string) => {
       return value === 'true'
     },
-    value: false,
+    default: false as boolean,
   },
 
-  editor: {
-    type: 'folder',
-    title: 'Editor',
-  },
   'editor.format_on_render': {
-    type: 'param',
+    type: 'param' as const,
     label: 'Format on render',
-    value: false,
+    default: false as boolean,
   },
   'editor.fullscreen': {
-    type: 'param',
+    type: 'param' as const,
     label: 'Fullscreen',
-    value: false,
+    default: false as boolean,
     validate: (value: boolean) => {
       if (value === false && isMobile()) {
         return "Can't set fullscreen off when width is too small"
@@ -59,166 +43,132 @@ const DEFAULT_CONFIG_VALUE = {
     },
   },
   'editor.vim': {
-    type: 'param',
+    type: 'param' as const,
     label: 'Vim',
     details: "Very experimental, don't expect all vim features",
-    value: false,
+    default: false as boolean,
   },
   'editor.relative_lines': {
-    type: 'param',
+    type: 'param' as const,
     label: 'Relative Lines',
-    value: false,
+    default: false as boolean,
   },
   'editor.folding': {
-    type: 'param',
+    type: 'param' as const,
     label: 'Code Folding',
-    value: true,
+    default: true as boolean,
   },
   'editor.show_history': {
-    type: 'param',
+    type: 'param' as const,
     label: 'Show file history in toolbar',
-    value: true,
+    default: true as boolean,
   },
   'editor.show_active_bookmark': {
-    type: 'param',
+    type: 'param' as const,
     label: 'Show active bookmark in the top bar of the editor',
-    value: true,
+    default: true as boolean,
   },
   'editor.history_buffer_size': {
-    type: 'param',
+    type: 'param' as const,
     label: 'History Buffer Size',
     validate: (v: number) => {
       const d = z.number().min(1).max(50).safeParse(v)
       if (d.success === false) return z.prettifyError(d.error)
       return null
     },
-    value: 10,
+    default: 10 as number,
   },
   'editor.init_render': {
-    type: 'param',
+    type: 'param' as const,
     label: 'Render code on start up',
-    value: true,
+    default: true as boolean,
   },
 
-  controller: {
-    type: 'folder',
-    title: 'Controller',
-  },
   'controller.enabled': {
-    type: 'param',
+    type: 'param' as const,
     label: 'Enable controller',
-    value: true,
+    default: true as boolean,
   },
   'controller.qr_size': {
-    type: 'param',
+    type: 'param' as const,
     label: 'QR Size',
-    value: 100,
+    validate: (v) => {
+      const d = z.number().min(1).max(1000).safeParse(v)
+      if (!d.success) return z.prettifyError(d.error)
+      return null
+    },
+    default: 100 as number,
   },
 
-  actions: {
-    type: 'folder',
-    title: 'Actions',
-  },
   'actions.export_enabled': {
-    type: 'param',
+    type: 'param' as const,
     label: 'Enable svg export action',
-    value: true,
+    default: true as boolean,
   },
   'actions.export_optimize': {
-    type: 'param',
+    type: 'param' as const,
     label: 'Optimize svg export',
-    value: true,
+    default: true as boolean,
   },
 
+  'sandbox.resource_monitor': {
+    type: 'param' as const,
+    label: 'View resource usage in the top right of the sandbox',
+    default: false as boolean,
+  },
+
+  'parameters.auto_render': {
+    type: 'param' as const,
+    label: 'Auto render on parameter change',
+    default: true as boolean,
+  },
+  'parameters.compact_layout': {
+    type: 'param' as const,
+    label: 'Compact layout',
+    default: false as boolean,
+  },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+} as const satisfies Record<string, SettingsEntry<any>>
+
+export const FOLDERS = {
+  editor: {
+    title: 'Editor',
+  },
+  controller: {
+    title: 'Controller',
+  },
+  actions: {
+    title: 'Actions',
+  },
   sandbox: {
-    type: 'folder',
     title: 'Sandbox',
   },
-  'sandbox.resource_monitor': {
-    type: 'param',
-    label: 'View resource usage in the top right of the sandbox',
-    value: false,
-  },
-
-  params: {
-    type: 'folder',
+  parameters: {
     title: 'Parameters',
   },
-  'params.auto_render': {
-    type: 'param',
-    label: 'Auto render on parameter change',
-    value: true,
-  },
-  'params.compact_layout': {
-    type: 'param',
-    label: 'Compact layout',
-    value: false,
-  },
-}
-export const DEFAULT_SETTINGS_CONFIG = DEFAULT_CONFIG_VALUE as Record<
-  ParamKey,
-  Entry
->
-
-type Generic<T> = {
-  [K in keyof T]: K extends 'type' ? string : T[K]
-}
-type GenericSettingsConfig = Record<
-  string,
-  Generic<SettingsParam> | Generic<Folder> | Generic<Button>
->
-type SettingsConfig<T extends GenericSettingsConfig> = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [K in keyof T]: T[K] extends { value: any }
-    ? SettingsParam<T[K]['value']>
-    : // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      T[K] extends { onClick: any }
-      ? Button
-      : Folder
-}
-export type DefaultSettingsConfig = SettingsConfig<typeof DEFAULT_CONFIG_VALUE>
-
-type GenericParams<T extends SettingsConfig<T>> = {
-  [K in keyof T]: T[K] extends SettingsParam ? K : never
-}[keyof T]
-export type ParamKey = GenericParams<DefaultSettingsConfig>
-export type ParamValue<P extends ParamKey> =
-  (typeof DEFAULT_CONFIG_VALUE)[P]['value']
-
-type GenericFolders<T extends SettingsConfig<T>> = {
-  [K in keyof T]: T[K] extends Folder ? K : never
-}[keyof T]
-export type Folders = GenericFolders<DefaultSettingsConfig>
-
-type GenericButtons<T extends SettingsConfig<T>> = {
-  [K in keyof T]: T[K] extends Button ? K : never
-}[keyof T]
-export type Buttons = GenericButtons<DefaultSettingsConfig>
-
-export interface Folder {
-  type: 'folder'
-  title: string
-  hidden?: boolean
 }
 
-export interface Button {
-  type: 'button'
-  title: string
-  onClick: () => void
+export function isSettingsConfigKey(key: string): key is SettingsConfigKey {
+  return key in SETTINGS_CONFIG
 }
+export type SettingsConfigKey = keyof typeof SETTINGS_CONFIG
+export type SettingsEntryType<K extends SettingsConfigKey> =
+  (typeof SETTINGS_CONFIG)[K]['default']
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface SettingsParam<T = any> {
+export type SettingsEntry<T = unknown> =
+  | ParamSetting<T>
+  | {
+      type: 'param-query'
+      default: T
+      fromQueryParam: (value: string) => T
+    }
+export type ParamSetting<T = unknown> = {
   type: 'param'
-  value: T
+  default: T
   label?: string
   /** return null in case its valid, otherwise string explaining the error */
   validate?: (value: T) => null | string
   details?: string
-  fromQueryParam?: (value: string) => T
-  hidden?: boolean
-  render?: (value: T, set?: (value: T) => void) => React.ReactNode
   readonly?: boolean
+  render?: (value: T) => React.ReactNode
 }
-
-export type Entry = Folder | Button | SettingsParam

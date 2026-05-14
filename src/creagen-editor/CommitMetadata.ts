@@ -1,9 +1,13 @@
 import type { SemVer } from 'semver'
 import type { CommitMetadataInterface } from 'versie'
 import z from 'zod'
-import type { Library } from '../settings/SettingsConfig'
-import { librarySchema } from '../settings/SettingsConfig'
 import { semverSchema } from './schemaUtils'
+
+export const librarySchema = z.object({
+  name: z.string(),
+  version: semverSchema,
+})
+export type Library = z.infer<typeof librarySchema>
 
 const commitMetadataSchema = z.object({
   editorVersion: semverSchema,

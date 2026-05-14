@@ -1,15 +1,13 @@
-import type {
-  DefaultSettingsConfig,
-  Entry,
-  SettingsParam,
-  ParamKey,
-  ParamValue} from './SettingsConfig';
-import {
-  DEFAULT_SETTINGS_CONFIG
-} from './SettingsConfig'
+import type { ClientStorage } from '../creagen-editor/CreagenEditor'
+import type { EditorEventData } from '../events/EditorEvent'
 import { editorEvents } from '../events/events'
 import { createContextLogger } from '../logs/logger'
-import type { ClientStorage } from '../creagen-editor/CreagenEditor'
+import type {
+  SettingsConfigKey,
+  SettingsEntry,
+  SettingsEntryType,
+} from './SettingsConfig'
+import { isSettingsConfigKey, SETTINGS_CONFIG } from './SettingsConfig'
 
 export const logger = createContextLogger('settings')
 
@@ -17,141 +15,121 @@ export function parentKey(key: string) {
   return key.split('.').slice(0, -1).join('.')
 }
 
-async function getStoredSettings(
+type SettingsStore = {
+  [K in SettingsConfigKey]: SettingsEntryType<K>
+}
+async function getSettingsStore(
   storage: ClientStorage,
-): Promise<Record<ParamKey, Entry>> {
-  // Initialize with deep cloned default settings
-  const config = (
-    Object.entries(DEFAULT_SETTINGS_CONFIG) as Array<[ParamKey, Entry]>
-  ).reduce(
-    (acc, [key, entry]) => {
-      acc[key] = {
-        ...entry,
-      }
-      return acc
-    },
-    {} as Record<ParamKey, Entry>,
-  )
-
-  // Load stored settings from localStorage
+): Promise<SettingsStore> {
+  // Load stored settings
   const storedSettings = await storage.getSettings()
 
+  // return only default values
   if (typeof storedSettings !== 'object' || storedSettings === null)
-    return config
+    return Object.fromEntries(
+      Object.entries(SETTINGS_CONFIG).map(([k, v]) => [k, v.default]),
+    ) as SettingsStore
 
-  for (const [key, value] of Object.entries(storedSettings)) {
-    if (!(key in config)) continue
+  const res = {} as Record<SettingsConfigKey, unknown>
+  for (const [key, entry] of Object.entries(SETTINGS_CONFIG)) {
+    const defaultValue = entry.default
+    if (!isSettingsConfigKey(key)) continue
+    if (
+      key in storedSettings &&
+      typeof storedSettings[key] === typeof defaultValue
+    ) {
+      // check validation
+      if ('validate' in entry) {
+        const validation = entry.validate(storedSettings[key] as never)
+        if (typeof validation === 'string') {
+          logger.warn(`Failed to validate stored setting ${key}: ${validation}`)
+          res[key] = defaultValue
+          continue
+        }
+      }
 
-    const entry = config[key as ParamKey]
-    if (entry.type !== 'param' || typeof entry.value !== typeof value) continue
-
-    if (typeof value === 'boolean' || typeof value === 'number') {
-      entry.value = value
+      res[key] = storedSettings[key]
+    } else {
+      res[key] = defaultValue
     }
   }
 
-  return config
+  return res as SettingsStore
 }
 
 export interface SettingsContextType {
   /** Do not change unknown of these values use `set()` and `add()` */
-  values: Record<ParamKey, unknown>
-  /** Do not change unknown of these values use `set()` and `add()` */
-  config: DefaultSettingsConfig
-  set: (key: ParamKey, value: unknown) => void
-  add: (key: string, entry: Entry) => void
+  readonly store: SettingsStore
+  set: (key: SettingsConfigKey, value: unknown) => void
+  add: (key: string, entry: SettingsEntry) => void
   /** Remove all values under this key */
   remove: (key: string) => void
 }
 
 // Core Settings class to handle the settings logic
 export class Settings {
-  config: DefaultSettingsConfig
-
-  private readonly storage: ClientStorage
-
-  private constructor(storage: ClientStorage, config: DefaultSettingsConfig) {
-    this.storage = storage
-    this.config = config
-  }
+  private constructor(
+    private readonly storage: ClientStorage,
+    private store: SettingsStore,
+  ) {}
 
   static async create(storage: ClientStorage) {
-    const config = await getStoredSettings(storage)
+    const store = await getSettingsStore(storage)
 
-    return new Settings(storage, config as DefaultSettingsConfig)
+    return new Settings(storage, store)
   }
 
-  get values(): Record<ParamKey, unknown> {
-    return Object.fromEntries(
-      (Object.entries(this.config) as Array<[ParamKey, Entry]>).flatMap(
-        ([key, entry]) =>
-          entry.type === 'param' ? [[key, entry.value] as const] : [],
-      ),
-    ) as Record<ParamKey, unknown>
+  get values(): SettingsStore {
+    return this.store
   }
 
-  isParam(key: string): key is ParamKey {
-    if (key in this.config) {
-      const entry = this.config[key as keyof DefaultSettingsConfig]
-      return entry.type === 'param'
-    }
-    return false
+  isSettingsKey(key: string): key is SettingsConfigKey {
+    return isSettingsConfigKey(key)
   }
 
-  getEntry(key: string): Readonly<Entry> | null {
-    const entry = this.config[key as keyof DefaultSettingsConfig]
-    if (typeof entry === 'undefined') return null
-    return entry as Entry
+  getConfig<K extends SettingsConfigKey>(
+    key: K,
+  ): Readonly<(typeof SETTINGS_CONFIG)[K]> {
+    return SETTINGS_CONFIG[key]
   }
 
-  get<P extends ParamKey>(key: P): ParamValue<P> {
-    return (this.config[key] as SettingsParam).value as ParamValue<P>
+  get<K extends SettingsConfigKey>(key: K): SettingsEntryType<K> {
+    return this.store[key]
   }
 
   // Set a value
-  set(key: ParamKey, value: unknown): void {
-    const entry = this.config[key]
-    if (typeof entry === 'undefined') throw Error(`Key ${key} does not exist`)
-    if (typeof entry.validate !== 'undefined') {
-      const e = entry.validate(value as never)
+  set<K extends SettingsConfigKey>(key: K, value: SettingsEntryType<K>): void {
+    const configEntry = SETTINGS_CONFIG[key]
+    if (typeof configEntry === 'undefined')
+      throw Error(`Key ${key} does not exist`)
+
+    if ('validate' in configEntry) {
+      const e = configEntry.validate(value as never)
       if (typeof e === 'string') {
         logger.error(e)
         return
       }
     }
-    if (typeof value !== 'object' && entry.value === value) return
-    logger.trace(`setting ${key} to ${JSON.stringify(value)}`)
-    const oldValue = entry.value
-    entry.value = value as typeof entry.value
-    this.saveAndNotify(key, value, oldValue)
-  }
 
-  // Remove an entry and its children
-  remove(key: ParamKey): void {
-    if (
-      typeof (DEFAULT_SETTINGS_CONFIG as DefaultSettingsConfig)[
-        key as keyof DefaultSettingsConfig
-      ] !== 'undefined'
-    )
-      throw Error(`You can't remove ${key} as this is a system setting`)
-    const newSettings: Record<string, unknown> = { ...this.config }
-    for (const k in newSettings) {
-      if (k.startsWith(key)) {
-        delete newSettings[k]
-      }
-    }
-    this.config = newSettings as DefaultSettingsConfig
-    this.saveAndNotify(key, null)
+    const stored = this.store[key]
+    if (typeof value !== 'object' && stored === value) return
+    logger.trace(`setting ${key} to ${JSON.stringify(value)}`)
+    ;(this.store as Record<K, SettingsEntryType<K>>)[key] = value
+    this.saveAndNotify(key, value, stored)
   }
 
   // Save settings to localStorage and notify listeners
-  private saveAndNotify(
-    key: ParamKey,
-    value: unknown,
-    oldValue?: unknown,
+  private saveAndNotify<K extends SettingsConfigKey>(
+    key: K,
+    value: SettingsEntryType<K>,
+    oldValue?: SettingsEntryType<K>,
   ): void {
     this.storage.setSettings(this.values).catch(logger.error)
     // Emit settings changed event
-    editorEvents.emit('settings:changed', { key, value, oldValue })
+    editorEvents.emit('settings:changed', {
+      key,
+      value,
+      oldValue,
+    } as EditorEventData<'settings:changed'>)
   }
 }

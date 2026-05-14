@@ -21,7 +21,7 @@ If there are no sketch params, no QR is shown.
 
 ### Steps
 
-1. Open the editor and load a sketch with params.
+1. Open the editor and load a sketch with parameters.
 2. In settings, enable Controller.
 3. In settings, enable Show QR. Or use the top bar in the editor where you can see a small qr icon which allows you to enable/disable the QR.
 4. Scan the QR shown in the bottom-right of the editor.

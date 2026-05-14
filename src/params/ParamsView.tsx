@@ -15,8 +15,8 @@ export function ParamsView() {
   useForceUpdateOnEditorEvent(['params:value', 'params:config'])
 
   const [, forceUpdate] = React.useReducer((x) => x + 1, 0)
-  const autoRender = useSettings('params.auto_render')
-  const compactLayout = useSettings('params.compact_layout')
+  const autoRender = useSettings('parameters.auto_render')
+  const compactLayout = useSettings('parameters.compact_layout')
 
   const handleValueChange = (key: string, newValue: unknown) => {
     creagenEditor.params.setValue(key, newValue)
@@ -81,10 +81,10 @@ export function ParamsView() {
       onResetToDefaults={handleResetToDefaults}
       onRegenIntervalChange={(int) => params.setRegenInterval(int)}
       onCompactLayoutChange={(compact) =>
-        creagenEditor.settings.set('params.compact_layout', compact)
+        creagenEditor.settings.set('parameters.compact_layout', compact)
       }
       onAutoRenderChange={(autoRender) =>
-        creagenEditor.settings.set('params.auto_render', autoRender)
+        creagenEditor.settings.set('parameters.auto_render', autoRender)
       }
     />
   )

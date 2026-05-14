@@ -1,73 +1,67 @@
-import type { Entry, Folder, ParamKey } from '../../settings/SettingsConfig'
+import { ExpandMore, InfoOutline } from '@mui/icons-material'
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
   Checkbox,
-  Typography,
-  TextField,
-  Button,
+  Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableRow,
-  Paper,
+  TextField,
+  Typography,
 } from '@mui/material'
-import { ExpandMore, InfoOutline } from '@mui/icons-material'
-import { useSettingsAll } from '../../events/useEditorEvents'
 import { useCreagenEditor } from '../../creagen-editor/CreagenContext'
+import { useForceUpdateOnEditorEvent } from '../../events/useEditorEvents'
+import { logger } from '../../logs/logger'
+import type { ParamSetting } from '../../settings/SettingsConfig'
+import {
+  FOLDERS,
+  SETTINGS_CONFIG,
+  type SettingsConfigKey,
+  type SettingsEntryType,
+} from '../../settings/SettingsConfig'
 import { useLocalStorage } from '../../storage/useLocalStorage'
 import { HtmlTooltip } from '../HtmlTooltip'
-import { logger } from '../../logs/logger'
 
-type NonFolderEntry = Exclude<Entry, Folder>
-type ConfigEntry = [string, Entry]
-type FolderConfigEntry = [string, Folder]
+const SECTIONS = Object.values(
+  Object.entries(SETTINGS_CONFIG).reduce(
+    (acc, [key, entry]) => {
+      if (entry.type !== 'param') return acc
+      const folder = key.split('.')[0]! as keyof typeof FOLDERS
+      if (!(folder in acc)) {
+        const folderEntry = FOLDERS[folder]
+        if (!folderEntry) return acc
+        acc[folder] = {
+          folderKey: folder,
+          folderEntry,
+          entries: [],
+        }
+      }
+      acc[folder]!.entries.push([key, entry as ParamSetting])
+      return acc
+    },
+    {} as Record<
+      string,
+      {
+        folderKey: string
+        folderEntry: { title: string }
+        entries: [string, ParamSetting][]
+      }
+    >,
+  ),
+)
 
 export function SettingsTab() {
   const settings = useCreagenEditor().settings
-  const values = useSettingsAll()
+  useForceUpdateOnEditorEvent('settings:changed')
   const [hidden, setHidden] = useLocalStorage('menu-settings-hidden', [])
-
-  const configEntries = Object.keys(settings.config)
-    .map((key): [string, Entry | null] => [key, settings.getEntry(key)])
-    .filter((entry): entry is ConfigEntry => entry[1] !== null)
-
-  const folders = configEntries
-    .filter((entry): entry is FolderConfigEntry => entry[1].type === 'folder')
-    .reduce<Record<string, [string, NonFolderEntry][]>>((acc, [key]) => {
-      acc[key] = []
-      return acc
-    }, {})
-
-  for (const [key, entry] of configEntries) {
-    switch (entry.type) {
-      case 'folder':
-        continue
-      case 'param':
-        if (entry.hidden ?? false) continue
-        break
-      case 'button':
-        break
-    }
-
-    const folderKey = key.split('.').slice(0, -1).join('.')
-    folders[folderKey]?.push([key, entry])
-  }
-
-  const sections = Object.entries(folders).flatMap(([folderKey, entries]) => {
-    const folderEntry = settings.getEntry(folderKey)
-    if (folderEntry?.type !== 'folder' || (folderEntry.hidden ?? false)) {
-      return []
-    }
-
-    return [{ folderKey, folderEntry, entries }]
-  })
 
   return (
     <>
-      {sections.map(({ folderKey, folderEntry, entries }) => (
+      {SECTIONS.map(({ folderKey, folderEntry, entries }) => (
         <Accordion
           key={folderKey}
           expanded={!hidden.includes(folderKey)}
@@ -87,29 +81,8 @@ export function SettingsTab() {
               <Table size="small">
                 <TableBody>
                   {entries.map(([paramKey, entry]) => {
-                    if (entry.type === 'button') {
-                      return (
-                        <TableRow key={paramKey}>
-                          <TableCell sx={{ border: 0, paddingLeft: 2 }}>
-                            <Typography variant="body2">
-                              {entry.title}
-                            </Typography>
-                          </TableCell>
-                          <TableCell sx={{ border: 0, paddingRight: 2 }}>
-                            <Button
-                              variant="contained"
-                              size="small"
-                              onClick={() => entry.onClick()}
-                            >
-                              {entry.title}
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      )
-                    }
-
-                    const settingsKey = paramKey as ParamKey
-                    const value = values[settingsKey]
+                    const settingsKey = paramKey as SettingsConfigKey
+                    const value = settings.get(settingsKey)
 
                     if (entry.render) {
                       return (
@@ -190,6 +163,12 @@ export function SettingsTab() {
 
                                 if (typeof value === 'number') {
                                   v = Number(e.target.value)
+                                  if (Number.isNaN(v)) {
+                                    logger.error(
+                                      `Invalid number given: ${e.target.value}`,
+                                    )
+                                    return
+                                  }
                                 } else {
                                   v = e.target.value
                                 }
@@ -202,7 +181,10 @@ export function SettingsTab() {
                                   }
                                 }
 
-                                settings.set(settingsKey, v)
+                                settings.set(
+                                  settingsKey,
+                                  v as SettingsEntryType<typeof settingsKey>,
+                                )
                               }}
                             />
                           )}

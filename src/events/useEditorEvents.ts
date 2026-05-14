@@ -7,7 +7,10 @@ import type {
   CreagenEditor,
 } from '../creagen-editor/CreagenEditor'
 import { logger } from '../logs/logger'
-import type { ParamKey, ParamValue } from '../settings/SettingsConfig'
+import type {
+  SettingsConfigKey,
+  SettingsEntryType,
+} from '../settings/SettingsConfig'
 import { useLocalStorage } from '../storage/useLocalStorage'
 import type { EditorEvent, EditorEventData } from './EditorEvent'
 import { editorEvents } from './events'
@@ -43,25 +46,13 @@ export function useForceUpdateOnEditorEvent<K extends EditorEvent>(
   return hook
 }
 
-export const useSettingsAll = () => {
+export const useSettings = <K extends SettingsConfigKey>(
+  key: K,
+): SettingsEntryType<K> => {
   const editor = useCreagenEditor()
 
-  const [value, setValue] = useState(() => editor.settings.values)
-
-  useEffect(() => {
-    return editorEvents.on('settings:changed', () => {
-      setValue(editor.settings.values)
-    })
-  }, [editor.settings])
-
-  return value
-}
-
-export const useSettings = <P extends ParamKey>(key: P): ParamValue<P> => {
-  const editor = useCreagenEditor()
-
-  const [value, setValue] = useState<ParamValue<P>>(
-    () => editor.settings.values[key] as ParamValue<P>,
+  const [value, setValue] = useState<SettingsEntryType<K>>(() =>
+    editor.settings.get(key),
   )
 
   useEffect(() => {
@@ -69,7 +60,7 @@ export const useSettings = <P extends ParamKey>(key: P): ParamValue<P> => {
       'settings:changed',
       ({ key: changedKey, value: newValue }) => {
         if (changedKey === key) {
-          setValue(newValue as ParamValue<P>)
+          setValue(newValue)
         }
       },
     )

@@ -120,16 +120,16 @@ function updateSettingsFromQueryParams(
   mutator: UrlMutator,
 ) {
   mutator.forEachQueryParam((value, key) => {
-    if (!editor.settings.isParam(key)) {
+    if (!editor.settings.isSettingsKey(key)) {
       return
     }
 
-    const parser = editor.settings.config[key].fromQueryParam
-    if (typeof parser === 'undefined') {
+    const config = editor.settings.getConfig(key)
+    if (!('fromQueryParam' in config)) {
       return
     }
 
-    const paramValue = parser(value)
+    const paramValue = config.fromQueryParam(value)
     editor.settings.set(key, paramValue)
   })
 }

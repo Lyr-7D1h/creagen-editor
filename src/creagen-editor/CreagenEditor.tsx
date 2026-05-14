@@ -21,13 +21,12 @@ import { log, logger, Severity } from '../logs/logger'
 import { Params } from '../params/Params'
 import { Sandbox } from '../sandbox/Sandbox'
 import { Settings } from '../settings/Settings'
-import type { Library, SettingsParam } from '../settings/SettingsConfig'
-import { DEFAULT_SETTINGS_CONFIG } from '../settings/SettingsConfig'
 import { LocalClientStorage } from '../storage/LocalClientStorage'
 import { RemoteClientStorage } from '../storage/RemoteClientStorage'
 import { UrlMutator } from '../UrlMutator'
 import type { Command } from './commands'
 import { COMMANDS } from './commands'
+import type { Library } from './CommitMetadata'
 import { CommitMetadata } from './CommitMetadata'
 import { creagenEditorVersionMismatch as creagenEditorVersionMismatchWarning } from './creagenEditorVersionMatches'
 import { generateHumanReadableName } from './generateHumanReadableName'
@@ -131,7 +130,7 @@ export class CreagenEditor {
       .then(() => {
         if (this.settings.get('editor.init_render')) {
           this.render().catch(logger.error)
-        } else if (this.settings.get('params.auto_render')) {
+        } else if (this.settings.get('parameters.auto_render')) {
           const code = this.editor.getValue()
           this.parseCode(code)
         }
@@ -151,7 +150,7 @@ export class CreagenEditor {
     // Listen to setting changes
     editorEvents.on('settings:changed', ({ key, value }) => {
       if (this.controller && key === 'controller.enabled') {
-        if (value as boolean) {
+        if (value) {
           this.setupController().catch(logger.error)
         } else {
           this.controller.disconnect()
@@ -159,21 +158,21 @@ export class CreagenEditor {
       }
 
       if (key === 'sandbox.resource_monitor') {
-        if (value as boolean) {
+        if (value) {
           this.resourceMonitor.listen()
         } else {
           this.resourceMonitor.stopListening()
         }
       }
 
-      if (this.settings.isParam(key)) {
-        const config = this.settings.config[key] as SettingsParam
-        if (typeof config.fromQueryParam !== 'undefined') {
+      if (this.settings.isSettingsKey(key)) {
+        const config = this.settings.getConfig(key)
+        if ('fromQueryParam' in config) {
           const url = new UrlMutator()
           if (value === null || url.getSetting(key) === value) return
 
           // remove query param if it is also the default behavior
-          if ((DEFAULT_SETTINGS_CONFIG[key] as SettingsParam).value === value) {
+          if (config.default === value) {
             url.removeSetting(key)
           } else {
             url.setSetting(key, value)
@@ -251,7 +250,7 @@ export class CreagenEditor {
         case 'client:param-value': {
           this.params.setValue(msg.key, msg.value)
           editorEvents.emit('params:value', undefined)
-          if (this.settings.get('params.auto_render')) {
+          if (this.settings.get('parameters.auto_render')) {
             this.render().catch(logger.error)
           }
           return

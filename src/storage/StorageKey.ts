@@ -41,7 +41,7 @@ type LocalStorageKeyValueMap = {
   'control-panel-size': { width: number; height: number }
   'custom-keybindings': CustomKeybinding[]
   blob: string
-  settings: unknown
+  settings: Record<string, unknown>
 }
 export type LocalStorageValue<K extends LocalStorageKey> =
   K extends keyof LocalStorageKeyValueMap ? LocalStorageKeyValueMap[K] : never

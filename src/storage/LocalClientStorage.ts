@@ -28,7 +28,7 @@ export class LocalClientStorage implements Storage<CommitMetadata> {
   readonly user = undefined
   constructor(readonly indexdb: IndexDBStorage<CommitMetadata>) {}
 
-  setSettings(value: unknown) {
+  setSettings(value: Record<string, unknown>) {
     return Promise.resolve(localStorage.set('settings', value))
   }
   getSettings() {

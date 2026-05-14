@@ -6,7 +6,7 @@ import { SemVer } from 'semver'
 import type { CommitHash } from 'versie'
 import { commitHashSchema } from 'versie'
 import { z } from 'zod'
-import type { Library } from './settings/SettingsConfig'
+import type { Library } from './creagen-editor/CommitMetadata'
 
 export interface SharableLinkData {
   code: string

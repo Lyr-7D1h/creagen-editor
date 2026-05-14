@@ -200,13 +200,13 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
   // CREAGEN EDITOR TYPES using localstorage in case not logged in
   //
 
-  async setSettings(value: unknown) {
+  async setSettings(value: Record<string, unknown>) {
     if (typeof this.token === 'undefined' || typeof this.user === 'undefined') {
       return localStorage.set('settings', value)
     }
     unwrapResponse(
       await this.remoteClient.POST('/api/user/settings', {
-        body: value as Record<string, unknown>,
+        body: value,
       }),
     )
   }
