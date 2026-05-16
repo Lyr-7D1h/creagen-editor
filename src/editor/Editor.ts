@@ -253,6 +253,7 @@ export class Editor {
   }
 
   setTheme(theme: EditorTheme) {
+    if (this.fullscreendecorators) return
     if (this.theme === theme) return
     monaco.editor.setTheme(theme)
     this.theme = theme

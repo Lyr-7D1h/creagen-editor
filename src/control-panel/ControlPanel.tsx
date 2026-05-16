@@ -1,4 +1,4 @@
-import { Box } from '@mui/material'
+import { Box, useTheme } from '@mui/material'
 import type React from 'react'
 import { useCallback, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -59,6 +59,7 @@ export function ControlPanel({
   isMaximized?: boolean
   floating?: boolean
 }) {
+  const theme = useTheme()
   const creagenEditor = useCreagenEditor()
   // Force update when params change
   useForceUpdateOnEditorEvent('render')
@@ -171,7 +172,7 @@ export function ControlPanel({
         flexDirection: 'column',
         overflow: 'hidden',
         pointerEvents: 'auto',
-        backgroundColor: 'background.paper',
+        backgroundColor: theme.palette.background.paper,
         boxShadow:
           '0px 3px 5px -1px rgba(0,0,0,0.2), 0px 5px 8px 0px rgba(0,0,0,0.14), 0px 1px 14px 0px rgba(0,0,0,0.12)',
         borderRadius: '4px',
