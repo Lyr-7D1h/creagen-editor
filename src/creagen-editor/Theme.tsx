@@ -1,7 +1,9 @@
-import { createTheme, ThemeProvider } from '@mui/material'
+import { createTheme, ThemeProvider, useColorScheme } from '@mui/material'
 import type React from 'react'
+import { useEffect } from 'react'
+import { useSettings } from '../events/useEditorEvents'
 
-const theme = createTheme({
+const muiTheme = createTheme({
   colorSchemes: {
     light: {
       palette: {
@@ -42,9 +44,28 @@ const theme = createTheme({
   },
 })
 
+// Inner component that uses useColorScheme hook
+function ThemeSync() {
+  const { setColorScheme } = useColorScheme()
+  const themeSetting = useSettings('editor.theme')
+
+  useEffect(() => {
+    // Set to null for system mode (follows OS preference)
+    // or explicitly set 'light' or 'dark'
+    if (themeSetting === 'system') {
+      setColorScheme(null)
+    } else if (themeSetting === 'light' || themeSetting === 'dark') {
+      setColorScheme(themeSetting)
+    }
+  }, [setColorScheme, themeSetting])
+
+  return null
+}
+
 export function Theme({ children }: React.PropsWithChildren) {
   return (
-    <ThemeProvider theme={theme} disableTransitionOnChange>
+    <ThemeProvider theme={muiTheme} disableTransitionOnChange>
+      <ThemeSync />
       {children}
     </ThemeProvider>
   )

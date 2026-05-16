@@ -1,6 +1,8 @@
+import { MenuItem, Select, type SelectChangeEvent } from '@mui/material'
 import { z } from 'zod'
 import { isMobile } from '../creagen-editor/isMobile'
 
+export type ThemeValue = 'system' | 'light' | 'dark'
 export const SETTINGS_CONFIG = {
   // state settings (not stored)
   hide_all: {
@@ -26,6 +28,41 @@ export const SETTINGS_CONFIG = {
     default: false as boolean,
   },
 
+  'editor.theme': {
+    type: 'param',
+    label: 'Theme',
+    render: (value, onChangeFn) => {
+      const handleChange = (e: SelectChangeEvent<ThemeValue>) => {
+        const newValue = e.target.value
+        if (
+          newValue === 'system' ||
+          newValue === 'light' ||
+          newValue === 'dark'
+        ) {
+          onChangeFn?.(newValue)
+        }
+      }
+      return (
+        <Select<ThemeValue>
+          value={value as ThemeValue}
+          onChange={handleChange}
+          size="small"
+          fullWidth
+          variant="outlined"
+        >
+          <MenuItem value="system">System</MenuItem>
+          <MenuItem value="light">Light</MenuItem>
+          <MenuItem value="dark">Dark</MenuItem>
+        </Select>
+      )
+    },
+    validate: (value) => {
+      if (value !== 'system' && value !== 'light' && value !== 'dark')
+        return 'Theme must be of value light, dark or system'
+      return null
+    },
+    default: 'system' as ThemeValue,
+  },
   'editor.format_on_render': {
     type: 'param' as const,
     label: 'Format on render',
@@ -170,5 +207,5 @@ export type ParamSetting<T = unknown> = {
   validate?: (value: T) => null | string
   details?: string
   readonly?: boolean
-  render?: (value: T) => React.ReactNode
+  render?: (value: T, onChange?: (newValue: T) => void) => React.ReactNode
 }

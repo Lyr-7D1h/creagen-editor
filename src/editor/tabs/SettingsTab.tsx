@@ -107,7 +107,14 @@ export function SettingsTab() {
                             </Typography>
                           </TableCell>
                           <TableCell sx={{ border: 0, paddingRight: 2 }}>
-                            {entry.render(value)}
+                            {entry.render(value, (newValue) => {
+                              settings.set(
+                                settingsKey,
+                                newValue as SettingsEntryType<
+                                  typeof settingsKey
+                                >,
+                              )
+                            })}
                           </TableCell>
                         </TableRow>
                       )

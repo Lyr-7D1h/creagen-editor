@@ -119,7 +119,6 @@ export function TopBar({
             size="small"
             sx={{
               p: 0.5,
-              color: 'text.primary',
               '&:hover': {
                 backgroundColor: 'action.hover',
               },

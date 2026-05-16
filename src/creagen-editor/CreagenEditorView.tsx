@@ -65,8 +65,8 @@ export function CreagenEditorView() {
   }
 
   return (
-    <Theme>
-      <CreagenEditorContext.Provider value={creagenEditor}>
+    <CreagenEditorContext.Provider value={creagenEditor}>
+      <Theme>
         <ErrorBoundary>
           <WelcomeScreen />
           {CREAGEN_REMOTE_URL != null && <LoginPromptHandler />}
@@ -77,7 +77,7 @@ export function CreagenEditorView() {
           )}
         </ErrorBoundary>
         <Messages />
-      </CreagenEditorContext.Provider>
-    </Theme>
+      </Theme>
+    </CreagenEditorContext.Provider>
   )
 }

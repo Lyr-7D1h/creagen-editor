@@ -13,6 +13,7 @@ import { initVimMode } from 'monaco-vim'
 import { editorEvents } from '../events/events'
 import { createContextLogger } from '../logs/logger'
 import type { Settings } from '../settings/Settings'
+import type { ThemeValue } from '../settings/SettingsConfig'
 import { registerCompletionProvider } from './registerCompletionProvider'
 
 const logger = createContextLogger('editor')
@@ -65,7 +66,7 @@ const creagenFullscreenTheme: monaco.editor.IStandaloneThemeData = {
   },
   rules: [],
 }
-export type EditorTheme = 'creagen' | 'creagen-dark'
+export type EditorTheme = 'creagen-light' | 'creagen-dark'
 
 export const typescriptCompilerOptions = {
   target: monaco.typescript.ScriptTarget.ESNext,
@@ -89,14 +90,27 @@ function handleBeforeMount(monaco: Monaco) {
   monaco.typescript.typescriptDefaults.setCompilerOptions(
     typescriptCompilerOptions,
   )
-  monaco.editor.defineTheme('creagen', creagenLightTheme)
+  monaco.editor.defineTheme('creagen-light', creagenLightTheme)
   monaco.editor.defineTheme('creagen-dark', creagenDarkTheme)
   monaco.editor.defineTheme('creagen-fullscreen', creagenFullscreenTheme)
 }
 
+export function getTheme(theme: ThemeValue): EditorTheme {
+  if (theme === 'system') {
+    // Check OS preference
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'creagen-dark'
+        : 'creagen-light'
+    }
+    return 'creagen-light'
+  }
+  return theme === 'light' ? 'creagen-light' : 'creagen-dark'
+}
+
 /** The actual code editor, responsible for text modification */
 export class Editor {
-  private theme: EditorTheme = 'creagen'
+  private theme!: EditorTheme // NOTE: set by updateFromSettings
   private readonly editor: m.editor.IStandaloneCodeEditor
   private vimMode: m.editor.IStandaloneCodeEditor | null
   private vimRef?: HTMLElement
@@ -177,6 +191,7 @@ export class Editor {
     this.setFullscreenMode(settings.get('editor.fullscreen'))
     this.setVimMode(settings.get('editor.vim'))
     this.setFolding(settings.get('editor.folding'))
+    this.setTheme(getTheme(settings.get('editor.theme')))
   }
 
   html() {
@@ -237,7 +252,8 @@ export class Editor {
     }
   }
 
-  setTheme(theme: 'creagen' | 'creagen-dark') {
+  setTheme(theme: EditorTheme) {
+    if (this.theme === theme) return
     monaco.editor.setTheme(theme)
     this.theme = theme
   }
