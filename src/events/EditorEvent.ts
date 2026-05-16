@@ -1,18 +1,6 @@
 import type { CommitHash } from 'versie'
 import type { AnalyzeContainerResult } from '../sandbox/SandboxMessageHandler'
-import type {
-  SettingsConfigKey,
-  SettingsEntryType,
-} from '../settings/SettingsConfig'
 import type { LocalStorageKey, LocalStorageValue } from '../storage/StorageKey'
-
-type SettingsChangedEvent = {
-  [K in SettingsConfigKey]: {
-    key: K
-    value: SettingsEntryType<K>
-    oldValue?: SettingsEntryType<K>
-  }
-}[SettingsConfigKey]
 
 type EditorEvents = {
   'login-prompt': { message?: string }
@@ -39,10 +27,6 @@ type EditorEvents = {
   'vcs:bookmark-update': void
   /** Active bookmark got updated */
   'vcs:active-bookmark-update': void
-
-  // Settings events
-  /** A single setting changed  */
-  'settings:changed': SettingsChangedEvent
 
   // Sandbox events
   'sandbox:analysis-complete': { result: AnalyzeContainerResult }

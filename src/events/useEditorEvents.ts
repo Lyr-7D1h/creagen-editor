@@ -56,15 +56,10 @@ export const useSettings = <K extends SettingsConfigKey>(
   )
 
   useEffect(() => {
-    return editorEvents.on(
-      'settings:changed',
-      ({ key: changedKey, value: newValue }) => {
-        if (changedKey === key) {
-          setValue(newValue)
-        }
-      },
-    )
-  }, [key])
+    return editor.settings.on(key, (newValue) => {
+      setValue(newValue)
+    })
+  }, [key, editor.settings])
 
   return value
 }

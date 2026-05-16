@@ -147,24 +147,27 @@ export class CreagenEditor {
       this.updateFromUrl().catch(logger.error)
     })
 
-    // Listen to setting changes
-    editorEvents.on('settings:changed', ({ key, value }) => {
-      if (this.controller && key === 'controller.enabled') {
-        if (value) {
-          this.setupController().catch(logger.error)
-        } else {
-          this.controller.disconnect()
-        }
+    // Listen to controller.enabled setting
+    this.settings.on('controller.enabled', (value) => {
+      if (!this.controller) return
+      if (value) {
+        this.setupController().catch(logger.error)
+      } else {
+        this.controller.disconnect()
       }
+    })
 
-      if (key === 'sandbox.resource_monitor') {
-        if (value) {
-          this.resourceMonitor.listen()
-        } else {
-          this.resourceMonitor.stopListening()
-        }
+    // Listen to sandbox.resource_monitor setting
+    this.settings.on('sandbox.resource_monitor', (value) => {
+      if (value) {
+        this.resourceMonitor.listen()
+      } else {
+        this.resourceMonitor.stopListening()
       }
+    })
 
+    // Listen to any setting change for URL query param sync
+    this.settings.onAny(({ key, value }) => {
       if (this.settings.isSettingsKey(key)) {
         const config = this.settings.getConfig(key)
         if ('fromQueryParam' in config) {

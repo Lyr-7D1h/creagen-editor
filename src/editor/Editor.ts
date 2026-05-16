@@ -145,7 +145,7 @@ export class Editor {
     this.fullscreendecorators = null
     this.cleanAlternativeVersionId = this.getAlternativeVersionId()
 
-    editorEvents.on('settings:changed', ({ key }) => {
+    settings.onAny(({ key }) => {
       if (key.startsWith('editor')) this.updateFromSettings(settings)
     })
 

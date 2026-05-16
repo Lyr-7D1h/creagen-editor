@@ -13,8 +13,8 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
+import { useEffect, useState } from 'react'
 import { useCreagenEditor } from '../../creagen-editor/CreagenContext'
-import { useForceUpdateOnEditorEvent } from '../../events/useEditorEvents'
 import { logger } from '../../logs/logger'
 import type { ParamSetting } from '../../settings/SettingsConfig'
 import {
@@ -54,9 +54,23 @@ const SECTIONS = Object.values(
   ),
 )
 
+/**
+ * Hook that forces re-render whenever any setting changes
+ */
+function useForceUpdateOnSettingsChange() {
+  const settings = useCreagenEditor().settings
+  const [, forceUpdate] = useState({})
+
+  useEffect(() => {
+    return settings.onAny(() => {
+      forceUpdate({})
+    })
+  }, [settings])
+}
+
 export function SettingsTab() {
   const settings = useCreagenEditor().settings
-  useForceUpdateOnEditorEvent('settings:changed')
+  useForceUpdateOnSettingsChange()
   const [hidden, setHidden] = useLocalStorage('menu-settings-hidden', [])
 
   return (
