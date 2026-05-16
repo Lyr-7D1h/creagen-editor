@@ -15,6 +15,7 @@ import {
 } from '@mui/material'
 import { useEffect, useState } from 'react'
 import { useCreagenEditor } from '../../creagen-editor/CreagenContext'
+import { HtmlTooltip } from '../../editor/HtmlTooltip'
 import { logger } from '../../logs/logger'
 import type { ParamSetting } from '../../settings/SettingsConfig'
 import {
@@ -24,7 +25,6 @@ import {
   type SettingsEntryType,
 } from '../../settings/SettingsConfig'
 import { useLocalStorage } from '../../storage/useLocalStorage'
-import { HtmlTooltip } from '../HtmlTooltip'
 
 const SECTIONS = Object.values(
   Object.entries(SETTINGS_CONFIG).reduce(

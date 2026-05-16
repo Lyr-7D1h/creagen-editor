@@ -1,9 +1,9 @@
+import ArticleIcon from '@mui/icons-material/Article'
+import BugReportIcon from '@mui/icons-material/BugReport'
 import GitHubIcon from '@mui/icons-material/GitHub'
 import { IconButton } from '@mui/material'
-import BugReportIcon from '@mui/icons-material/BugReport'
 import { HtmlTooltip } from '../editor/HtmlTooltip'
-import { DiscordIcon } from '../editor/DiscordIcon'
-import ArticleIcon from '@mui/icons-material/Article'
+import { DiscordIcon } from '../menu/DiscordIcon'
 import { LoginButton } from '../user/LoginButton'
 
 export function MenuLinks() {

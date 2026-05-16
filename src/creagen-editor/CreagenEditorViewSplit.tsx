@@ -3,11 +3,11 @@ import 'allotment/dist/style.css'
 import { useEffect } from 'react'
 import { ControlPanel } from '../control-panel/ControlPanel'
 import { EditorView } from '../editor/EditorView'
-import { Menu } from '../editor/Menu'
 import {
   useForceUpdateOnEditorEvent,
   useSettings,
 } from '../events/useEditorEvents'
+import { Menu } from '../menu/Menu'
 import { ParamsView } from '../params/ParamsView'
 import { SandboxView } from '../sandbox/SandboxView'
 import { useLocalStorage } from '../storage/useLocalStorage'
