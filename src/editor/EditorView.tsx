@@ -53,6 +53,8 @@ export function EditorView({
 
     const htmlElement = creagenEditor.editor.html()
     if (htmlElement.parentElement !== editorContent) {
+      // Ensure there is always a single editor in the editorContent, mostly useful for hot reloading where it will rerender the editor component
+      editorContent.innerHTML = ''
       editorContent.appendChild(htmlElement)
       creagenEditor.editor.layout()
     }
