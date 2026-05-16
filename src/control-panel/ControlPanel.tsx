@@ -144,6 +144,7 @@ export function ControlPanel({
           onClose={onClose}
           onMaximizeToggle={onMaximizeToggle}
           isMaximized={isMaximized}
+          floating={false}
         />
         <TabContent validActiveTab={validActiveTab} />
       </Box>
@@ -187,6 +188,7 @@ export function ControlPanel({
           onTabChange={handleTabChange}
           onClose={onClose}
           draggable
+          floating={true}
         />
       </div>
       <TabContent validActiveTab={validActiveTab} />

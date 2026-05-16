@@ -1,3 +1,8 @@
+import {
+  ExpandLess as ExpandLessIcon,
+  Settings as SettingsIcon,
+} from '@mui/icons-material'
+import { IconButton, Tooltip } from '@mui/material'
 import { Allotment } from 'allotment'
 import 'allotment/dist/style.css'
 import { useEffect } from 'react'
@@ -83,6 +88,7 @@ export function CreagenEditorViewSplit() {
                       style={{
                         width: '100%',
                         height: '100%',
+                        position: 'relative',
                       }}
                     >
                       <EditorView
@@ -90,6 +96,27 @@ export function CreagenEditorViewSplit() {
                         toggleMenu={() => setMenu(!menu)}
                         active={!fullscreen}
                       />
+                      {!controlOpen && !fullscreen && (
+                        <Tooltip title="Open Control Panel" placement="left">
+                          <IconButton
+                            size="small"
+                            onClick={() => setControlOpen(true)}
+                            sx={{
+                              position: 'absolute',
+                              right: 15,
+                              bottom: 10,
+                              backgroundColor: 'background.paper',
+                              boxShadow: 1,
+                              '&:hover': {
+                                backgroundColor: 'action.hover',
+                                boxShadow: 2,
+                              },
+                            }}
+                          >
+                            <ExpandLessIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
                     </div>
                   </Allotment.Pane>
                 )}
@@ -132,6 +159,27 @@ export function CreagenEditorViewSplit() {
                         toggleMenu={() => setMenu(!menu)}
                         active={fullscreen && !hideAll}
                       />
+                      {!controlOpen && (
+                        <Tooltip title="Open Control Panel" placement="left">
+                          <IconButton
+                            size="small"
+                            onClick={() => setControlOpen(true)}
+                            sx={{
+                              position: 'absolute',
+                              bottom: 8,
+                              right: 8,
+                              backgroundColor: 'background.paper',
+                              boxShadow: 1,
+                              '&:hover': {
+                                backgroundColor: 'action.hover',
+                                boxShadow: 2,
+                              },
+                            }}
+                          >
+                            <SettingsIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
                     </div>
 
                     {controlOpen && (

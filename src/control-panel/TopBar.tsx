@@ -1,4 +1,5 @@
 import {
+  ExpandMore as ExpandMoreIcon,
   FullscreenExit as FullscreenExitIcon,
   Fullscreen as FullscreenIcon,
 } from '@mui/icons-material'
@@ -19,6 +20,7 @@ interface TopBarProps {
   draggable?: boolean
   onMaximizeToggle?: () => void
   isMaximized?: boolean
+  floating?: boolean
 }
 
 export function TopBar({
@@ -29,6 +31,7 @@ export function TopBar({
   draggable,
   onMaximizeToggle,
   isMaximized,
+  floating = false,
 }: TopBarProps) {
   return (
     <Box
@@ -132,7 +135,23 @@ export function TopBar({
           </IconButton>
         </Tooltip>
       )}
-      {onClose && <CloseButton onClose={onClose} />}
+      {onClose && !floating && (
+        <Tooltip title="Collapse">
+          <IconButton
+            onClick={onClose}
+            size="small"
+            sx={{
+              p: 0.5,
+              '&:hover': {
+                backgroundColor: 'action.hover',
+              },
+            }}
+          >
+            <ExpandMoreIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
+      {onClose && floating && <CloseButton onClose={onClose} />}
     </Box>
   )
 }
