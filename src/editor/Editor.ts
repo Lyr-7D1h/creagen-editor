@@ -273,9 +273,10 @@ export class Editor {
         },
       ])
     } else {
+      // restore previous theme
       if (this.fullscreendecorators) this.fullscreendecorators.clear()
       this.fullscreendecorators = null
-      this.setTheme(this.theme)
+      monaco.editor.setTheme(this.theme)
     }
   }
 
