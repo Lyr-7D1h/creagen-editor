@@ -3,7 +3,7 @@ export type Log = [LogLevel, unknown[]]
 
 export class SandboxLog {
   readonly target = new EventTarget()
-  private readonly maxSize: number
+  private maxSize: number
   /** Don't send update after this size */
   private buffer: Log[]
   /** The current amount of logs in buffer. Goes from 0-maxSize*/
@@ -16,7 +16,7 @@ export class SandboxLog {
   private flushSize = 0
   private rafId: number | null = null
 
-  constructor(maxSize: number = 1000) {
+  constructor(maxSize: number) {
     this.maxSize = maxSize
     this.buffer = new Array<Log>(maxSize)
   }
@@ -74,6 +74,12 @@ export class SandboxLog {
     this.levelCounts.warn = 0
     this.levelCounts.error = 0
     this.target.dispatchEvent(new CustomEvent('reset'))
+  }
+
+  resize(newMaxSize: number) {
+    this.buffer = new Array<Log>(newMaxSize)
+    this.maxSize = newMaxSize
+    this.reset()
   }
 
   private flush() {

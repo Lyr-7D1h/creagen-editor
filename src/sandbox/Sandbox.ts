@@ -2,6 +2,7 @@ import type { CommitHash } from 'versie'
 import { editorEvents } from '../events/events'
 import type { LibraryImport } from '../importer'
 import { createContextLogger } from '../logs/logger'
+import type { Settings } from '../settings/Settings'
 import { SandboxLog } from './SandboxLog'
 import {
   SANDBOX_MESSAGE_HANDLER_HANDSHAKE_TIMEOUT_MS,
@@ -15,10 +16,10 @@ export class Sandbox {
   private parent: HTMLElement | null = null
   private nextSibling: Node | null = null
   private messageHandler?: SandboxMessageHandler
-  readonly log: SandboxLog = new SandboxLog()
+  log: SandboxLog
   isFrozen = false
 
-  static create() {
+  static create(settings: Settings) {
     const iframe = document.createElement('iframe')
     iframe.title = ''
     iframe.style.display = 'block'
@@ -31,10 +32,18 @@ export class Sandbox {
     // Use the separate sandbox URL
     iframe.src = CREAGEN_EDITOR_SANDBOX_RUNTIME_URL
 
-    return new Sandbox(iframe)
+    return new Sandbox(settings, iframe)
   }
 
-  private constructor(private readonly iframe: HTMLIFrameElement) {}
+  private constructor(
+    settings: Settings,
+    private readonly iframe: HTMLIFrameElement,
+  ) {
+    this.log = new SandboxLog(settings.get('console.buffer_size'))
+    settings.on('console.buffer_size', (size) => {
+      this.log.resize(size)
+    })
+  }
 
   /** Wait for message handler connection if not already connected */
   ensureConnection(): Promise<SandboxMessageHandler> {

@@ -78,12 +78,12 @@ export class CreagenEditor {
   libraryImports: Map<string, LibraryImport> = new Map()
 
   static async create() {
-    const sandbox = Sandbox.create()
     const storage =
       CREAGEN_REMOTE_URL != null
         ? await RemoteClientStorage.create()
         : await LocalClientStorage.create()
     const settings = await Settings.create(storage)
+    const sandbox = Sandbox.create(settings)
     const editor = Editor.create(settings)
 
     const vcsResult = await Versie.create(storage, (raw) => {

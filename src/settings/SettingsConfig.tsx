@@ -137,6 +137,17 @@ export const SETTINGS_CONFIG = {
     default: 100 as number,
   },
 
+  'console.buffer_size': {
+    type: 'param',
+    label: 'Buffer size',
+    validate: (v) => {
+      const d = z.number().min(1).max(10000).safeParse(v)
+      if (!d.success) return z.prettifyError(d.error)
+      return null
+    },
+    default: 500 as number,
+  },
+
   'actions.export_enabled': {
     type: 'param' as const,
     label: 'Enable svg export action',
@@ -173,6 +184,9 @@ export const FOLDERS = {
   },
   controller: {
     title: 'Controller',
+  },
+  console: {
+    title: 'Console',
   },
   actions: {
     title: 'Actions',
