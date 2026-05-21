@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef } from 'react'
+import { useSettings } from '../events/useEditorEvents'
 
 declare global {
   interface Window {
@@ -27,7 +28,6 @@ interface TurnstileProps {
   onSuccess: (token: string) => void
   onError?: () => void
   onExpire?: () => void
-  theme?: 'auto' | 'light' | 'dark'
 }
 
 export function Turnstile({
@@ -35,8 +35,8 @@ export function Turnstile({
   onSuccess,
   onError,
   onExpire,
-  theme = 'light',
 }: TurnstileProps) {
+  const theme = useSettings('editor.theme')
   const containerRef = useRef<HTMLDivElement>(null)
   // Use refs so the effect doesn't re-run when callbacks change
   const onSuccessRef = useRef(onSuccess)
@@ -59,7 +59,7 @@ export function Turnstile({
         callback: (token) => onSuccessRef.current(token),
         'error-callback': () => onErrorRef.current?.(),
         'expired-callback': () => onExpireRef.current?.(),
-        theme,
+        theme: theme === 'system' ? 'auto' : theme,
       })
     }
 

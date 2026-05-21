@@ -108,6 +108,7 @@ export function DependenciesTab() {
                   name: libName,
                   version: new SemVer(mergedSelectedVersion[libName]!),
                 })
+                // FIXME: no commits
                 .then(() => editor.commit())
                 .catch(logger.error)
             }
