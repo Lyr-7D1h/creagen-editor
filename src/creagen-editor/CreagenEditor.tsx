@@ -2,13 +2,13 @@ import { SemVer } from 'semver'
 import type { AsyncResult } from 'typescript-result'
 import { Result } from 'typescript-result'
 import type {
-    BookmarkAlreadyExistsError,
-    BookmarkNotFoundError,
-    Commit,
-    CommitHash,
-    IndexdbImport,
-    ParseError,
-    VersieStorageError,
+  BookmarkAlreadyExistsError,
+  BookmarkNotFoundError,
+  Commit,
+  CommitHash,
+  IndexdbImport,
+  ParseError,
+  VersieStorageError,
 } from 'versie'
 import { Bookmark, Versie } from 'versie'
 import z from 'zod'
@@ -638,8 +638,10 @@ export class CreagenEditor {
     return bookmark
   }
 
-  addBookmark(bookmark: Bookmark) {
-    return this.vcs.addBookmark(bookmark)
+  async addBookmark(bookmark: Bookmark) {
+    const res = await this.vcs.addBookmark(bookmark)
+    if (res.ok) editorEvents.emit('vcs:bookmark-update', undefined)
+    return res
   }
 
   bookmarkLookup(commit: CommitHash) {
