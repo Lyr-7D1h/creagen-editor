@@ -53,6 +53,7 @@ export class CommitMetadata implements CommitMetadataInterface<CommitMetadataJso
       // if one of the commits is local (this.author=undefined) ignore author check
       (this.author && meta.author ? this.author === meta.author : true) &&
       this.editorVersion.compare(meta.editorVersion) === 0 &&
+      this.libraries.length === meta.libraries.length &&
       this.libraries.every(
         (lib) =>
           meta.libraries.findIndex(
