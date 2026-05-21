@@ -2,13 +2,13 @@ import { SemVer } from 'semver'
 import type { AsyncResult } from 'typescript-result'
 import { Result } from 'typescript-result'
 import type {
-  BookmarkAlreadyExistsError,
-  BookmarkNotFoundError,
-  Commit,
-  CommitHash,
-  IndexdbImport,
-  ParseError,
-  VersieStorageError,
+    BookmarkAlreadyExistsError,
+    BookmarkNotFoundError,
+    Commit,
+    CommitHash,
+    IndexdbImport,
+    ParseError,
+    VersieStorageError,
 } from 'versie'
 import { Bookmark, Versie } from 'versie'
 import z from 'zod'
@@ -288,8 +288,8 @@ export class CreagenEditor {
       // clear everything
       this.editor.setValue('')
       await this.loadLibraries([])
-      new UrlMutator().setCommit().pushState(null, this.activeBookmark.name)
       this.setActiveBookmark(generateUncommittedBookmark())
+      new UrlMutator().setCommit().pushState(null, this.activeBookmark.name) // use name of just set active bookmark
       editorEvents.emit('vcs:checkout', { old })
       return Result.ok()
     })
