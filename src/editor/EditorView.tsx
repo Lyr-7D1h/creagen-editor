@@ -21,6 +21,7 @@ export function EditorView({
   active = true,
 }: EditorProps) {
   const creagenEditor = useCreagenEditor()
+  const fullscreen = useSettings('editor.fullscreen')
   const hideAll = useSettings('hide_all')
   const vimEnabled = useSettings('editor.vim')
   const themeSetting = useSettings('editor.theme')
@@ -65,7 +66,7 @@ export function EditorView({
     if (vimEnabled && vimStatus) {
       creagenEditor.editor.setVimStatusElement(vimStatus)
     }
-  }, [vimEnabled, creagenEditor])
+  }, [vimEnabled, creagenEditor, fullscreen])
 
   return (
     <div
@@ -86,10 +87,15 @@ export function EditorView({
         <div
           ref={vimStatusRef}
           style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
             textAlign: 'center',
             fontSize: '0.875rem',
-            color: theme.palette.text.secondary,
+            color: fullscreen ? 'black' : theme.palette.text.primary,
             fontFamily: 'monospace',
+            pointerEvents: 'none',
           }}
         />
       )}
