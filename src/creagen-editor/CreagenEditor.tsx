@@ -2,15 +2,17 @@ import { SemVer } from 'semver'
 import type { AsyncResult } from 'typescript-result'
 import { Result } from 'typescript-result'
 import type {
+  Bookmark,
   BookmarkAlreadyExistsError,
   BookmarkNotFoundError,
   Commit,
   CommitHash,
   IndexdbImport,
+  InvalidBookmarkNameError,
   ParseError,
   VersieStorageError,
 } from 'versie'
-import { Bookmark, Versie } from 'versie'
+import { Versie } from 'versie'
 import z from 'zod'
 import { Controller } from '../controller/Controller'
 import { Editor } from '../editor/Editor'
@@ -191,9 +193,29 @@ export class CreagenEditor {
     await updateFromUrl(this)
   }
 
-  private setActiveBookmark(bookmark: ActiveBookmark) {
+  private setActiveBookmark(bookmark: ActiveBookmark, preserveParams = false) {
     this.activeBookmark = bookmark
     editorEvents.emit('vcs:active-bookmark-update', undefined)
+
+    const mutator = new UrlMutator()
+    if (this.activeBookmark.commit === null) {
+      // Uncommitted bookmark - show commit or empty
+      if (this.vcs.head) {
+        mutator.setCommit(this.vcs.head.hash.toHex())
+      } else {
+        mutator.setCommit()
+      }
+    } else {
+      // Committed bookmark - show bookmark name with optional username
+      mutator.setBookmark(
+        this.activeBookmark.name,
+        this.activeBookmark.username ?? this.storage.user?.username,
+      )
+    }
+    if (!preserveParams) {
+      mutator.setParams()
+    }
+    mutator.pushState(null, this.activeBookmark.name)
   }
 
   /**
@@ -206,17 +228,17 @@ export class CreagenEditor {
     | BookmarkNotFoundError
     | VersieStorageError
     | BookmarkAlreadyExistsError
+    | InvalidBookmarkNameError
     | ParseError
   > {
     return Result.fromAsync(async () => {
       if (this.activeBookmark.commit === null) {
-        const bookmark = new Bookmark(
+        // commit uncommitted bookmark
+        const result = await this.vcs.addBookmark(
           this.activeBookmark.name,
           commit,
           this.activeBookmark.createdOn,
         )
-        // commit uncommitted bookmark
-        const result = await this.vcs.addBookmark(bookmark)
         if (!result.ok) return result
         this.setActiveBookmark(result.value)
         return Result.ok()
@@ -288,8 +310,7 @@ export class CreagenEditor {
       // clear everything
       this.editor.setValue('')
       await this.loadLibraries([])
-      this.setActiveBookmark(generateUncommittedBookmark())
-      new UrlMutator().setCommit().pushState(null, this.activeBookmark.name) // use name of just set active bookmark
+      this.setActiveBookmark(generateUncommittedBookmark(), false)
       editorEvents.emit('vcs:checkout', { old })
       return Result.ok()
     })
@@ -323,7 +344,8 @@ export class CreagenEditor {
   async checkoutBookmark(
     bookmarkName: string,
     username?: string,
-    resetParams: boolean = true,
+    /** Preserve parameters, usually an user action */
+    preserveParams: boolean = false,
   ) {
     let bookmark: (ActiveBookmark & { commit: CommitHash }) | null
     if (
@@ -345,16 +367,7 @@ export class CreagenEditor {
       )
 
     await this.loadCommit(bookmark.commit)
-    this.setActiveBookmark(bookmark)
-    // set url
-    const mutator = new UrlMutator()
-    if (this.vcs.head)
-      mutator.setBookmark(
-        bookmark.name,
-        username ?? this.storage.user?.username,
-      )
-    if (resetParams) mutator.setParams()
-    mutator.pushState(null, this.activeBookmark.name)
+    this.setActiveBookmark(bookmark, preserveParams)
 
     return bookmark
   }
@@ -364,11 +377,6 @@ export class CreagenEditor {
    */
   async checkoutCommitHeadless(hash: CommitHash): Promise<void> {
     await this.loadCommit(hash)
-
-    // set url
-    const mutator = new UrlMutator()
-    if (this.vcs.head) mutator.setCommit(this.vcs.head.hash.toHex())
-    mutator.pushState(null, this.activeBookmark.name)
 
     this.setActiveBookmark(generateUncommittedBookmark())
   }
@@ -633,15 +641,22 @@ export class CreagenEditor {
 
     if (bookmarkName === this.activeBookmark.name) {
       await this.loadCommit(commit)
-      this.setActiveBookmark(bookmark)
+      this.setActiveBookmark({
+        ...bookmark,
+        username: this.activeBookmark.username,
+      })
     }
     return bookmark
   }
 
-  async addBookmark(bookmark: Bookmark) {
-    const res = await this.vcs.addBookmark(bookmark)
-    if (res.ok) editorEvents.emit('vcs:bookmark-update', undefined)
-    return res
+  async addBookmark(name: string, commit: CommitHash, createdOn: Date) {
+    const res = await this.vcs.addBookmark(name, commit, createdOn)
+    if (!res.ok) throw res.error
+    if (name === this.activeBookmark.name) {
+      this.setActiveBookmark(res.value)
+    }
+    editorEvents.emit('vcs:bookmark-update', undefined)
+    return res.value
   }
 
   bookmarkLookup(commit: CommitHash) {
@@ -654,13 +669,16 @@ export class CreagenEditor {
     if (!result.ok) throw result.error
     // If removing the current active bookmark, generate a new one
     if (this.activeBookmark.name === name) {
-      this.setActiveBookmark(generateUncommittedBookmark())
+      this.setActiveBookmark(generateUncommittedBookmark(), false)
     }
     editorEvents.emit('vcs:bookmark-update', undefined)
     return result
   }
 
-  async renameBookmark(oldName: string, newName: string) {
+  async renameBookmark(
+    oldName: string,
+    newName: string,
+  ): Promise<Bookmark | undefined> {
     // if changing active bookmark and uncommited, only change in memory
     if (
       this.activeBookmark.commit === null &&
@@ -670,13 +688,14 @@ export class CreagenEditor {
       editorEvents.emit('vcs:bookmark-update', undefined)
       return
     }
+
     const result = await this.vcs.renameBookmark(oldName, newName)
     if (!result.ok) throw result.error
     if (oldName === this.activeBookmark.name) {
       this.setActiveBookmark({ ...this.activeBookmark, name: newName })
     }
     editorEvents.emit('vcs:bookmark-update', undefined)
-    return result
+    return result.value
   }
 
   /** Low-level commit used when building a commit from external data (e.g. a sharable link) */

@@ -1,9 +1,9 @@
 import { Typography } from '@mui/material'
 import { useMemo, useState } from 'react'
-import { bookmarkNameSchema } from 'versie'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import { useActiveBookmark, useIsDirty } from '../events/useEditorEvents'
 import { logger } from '../logs/logger'
+import { AddBookmarkButton } from './AddBookmarkButton'
 import { TextInput } from './TextInput'
 
 export function ActiveBookmark({ color }: { color?: string }) {
@@ -11,14 +11,10 @@ export function ActiveBookmark({ color }: { color?: string }) {
   const activeBookmark = useActiveBookmark()
   const isDirty = useIsDirty(creagenEditor)
   const [isEditing, setIsEditing] = useState(false)
+  const [isAddingBookmark, setIsAddingBookmark] = useState(false)
   const hasUsername = Boolean(activeBookmark.username)
 
   function onSave(value: string) {
-    const data = bookmarkNameSchema.safeParse(value)
-    if (data.success === false) {
-      logger.error(data.error)
-      return
-    }
     creagenEditor
       .renameBookmark(activeBookmark.name, value)
       .then(() => {
@@ -38,8 +34,27 @@ export function ActiveBookmark({ color }: { color?: string }) {
     [isDirty],
   )
 
+  function handleAddBookmark() {
+    if (creagenEditor.head && !isAddingBookmark) {
+      setIsAddingBookmark(true)
+      creagenEditor
+        .addBookmark(
+          creagenEditor.activeBookmark.name,
+          creagenEditor.head.hash,
+          new Date(),
+        )
+        .then(() => {
+          setIsAddingBookmark(false)
+        })
+        .catch((error) => {
+          logger.error(error)
+          setIsAddingBookmark(false)
+        })
+    }
+  }
+
   return (
-    <>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0px' }}>
       <Typography
         variant="body2"
         onClick={hasUsername ? undefined : () => setIsEditing(true)}
@@ -89,6 +104,12 @@ export function ActiveBookmark({ color }: { color?: string }) {
           </>
         )}
       </Typography>
-    </>
+      {isUncommitted && !isEditing && (
+        <AddBookmarkButton
+          onClick={handleAddBookmark}
+          disabled={isAddingBookmark}
+        />
+      )}
+    </div>
   )
 }

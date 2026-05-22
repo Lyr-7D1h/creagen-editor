@@ -9,13 +9,13 @@ import {
 } from '@mui/material'
 import { useRef, useState } from 'react'
 import type { HistoryItem } from 'versie'
-import { Bookmark, bookmarkNameSchema } from 'versie'
+import type { Bookmark } from 'versie'
 import type { CommitMetadata } from '../creagen-editor/CommitMetadata'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import type { ActiveBookmark } from '../creagen-editor/CreagenEditor'
 import { logger } from '../logs/logger'
+import { AddBookmarkButton } from './AddBookmarkButton'
 import { CommitTooltip } from './CommitTooltip'
-import { HtmlTooltip } from './HtmlTooltip'
 import { TextInput } from './TextInput'
 
 interface BookmarkMenuProps {
@@ -75,29 +75,6 @@ function BookmarkMenu({
         New bookmark
       </MenuItem>
     </Menu>
-  )
-}
-
-function AddBookmarkButton({ onClick }: { onClick: () => void }) {
-  return (
-    <HtmlTooltip title="Add bookmark">
-      <IconButton
-        onClick={onClick}
-        sx={{
-          padding: '1px',
-          margin: 0,
-          color: 'inherit',
-          width: '16px',
-          height: '16px',
-          '&:hover': {
-            backgroundColor: 'darkgray',
-          },
-        }}
-        size="small"
-      >
-        <Add sx={{ fontSize: '12px' }} />
-      </IconButton>
-    </HtmlTooltip>
   )
 }
 
@@ -188,24 +165,12 @@ export function HistoryItemChip({
           <TextInput
             onClose={() => setIsEditing(null)}
             onSave={(name) => {
-              const data = bookmarkNameSchema.safeParse(name)
-              if (data.success === false) {
-                logger.error(data.error)
-                return
-              }
-              if (creagenEditor.getBookmark(name) !== null) {
-                logger.error('Bookmark already exists')
-                return
-              }
               creagenEditor
-                .addBookmark(new Bookmark(name, commit.hash, new Date()))
-                .then((result) => {
-                  if (!result.ok) {
-                    logger.error(result.error)
-                  }
+                .addBookmark(name, commit.hash, new Date())
+                .then(() => {
+                  setIsEditing(null)
                 })
                 .catch(logger.error)
-              setIsEditing(null)
             }}
             initialValue={isEditing}
           />

@@ -1,10 +1,3 @@
-import {
-  Bookmark,
-  BookmarkAlreadyExistsError,
-  BookmarkNotFoundError,
-  DeltizingError,
-  StorageError,
-} from 'versie'
 import { logger } from '../logs/logger'
 import { UrlMutator } from '../UrlMutator'
 import { CommitMetadata } from './CommitMetadata'
@@ -50,30 +43,24 @@ async function updateFromSharableLinkData(
   if (commit === null) return null
 
   let bookmarkName = sharableDataLink.bookmarkName
-  let bookmark: Awaited<ReturnType<typeof editor.addBookmark>>
   // try and add bookmark, with different names if failed
   // We only retry on collisions; all other errors should stop processing.
-  while (
-    !(bookmark = await editor.addBookmark(
-      new Bookmark(bookmarkName, commit.hash, new Date()),
-    )).ok
-  ) {
-    const retryWithNewName = bookmark
-      .match()
-      .when(BookmarkAlreadyExistsError, () => true)
-      .when(StorageError, DeltizingError, BookmarkNotFoundError, () => false)
-      .run()
-    if (!retryWithNewName) {
-      return null
-    }
+  while (editor.getBookmark(bookmarkName) !== null) {
     bookmarkName = generateHumanReadableName()
     logger.warn(
-      `Failed to update bookmark from data: ${bookmark.error.message}`,
+      `Failed to update bookmark from data: ${bookmarkName} already exists`,
     )
   }
 
   try {
-    await editor.checkoutBookmark(bookmark.value.name, undefined, false)
+    await editor.addBookmark(bookmarkName, commit.hash, new Date())
+  } catch (e) {
+    logger.error(e)
+    return null
+  }
+
+  try {
+    await editor.checkoutBookmark(bookmarkName, undefined, true)
   } catch (e) {
     logger.error(e)
     return null
@@ -92,7 +79,7 @@ async function updateFromCommit(editor: CreagenEditor, mutator: UrlMutator) {
 
   if (version.type === 'bookmark') {
     await editor
-      .checkoutBookmark(version.bookmark, version.username, false)
+      .checkoutBookmark(version.bookmark, version.username, true)
       .catch((e) =>
         logger.error(`Failed to checkout bookmark ${version.bookmark}: `, e),
       )
@@ -106,7 +93,7 @@ async function updateFromCommit(editor: CreagenEditor, mutator: UrlMutator) {
     const mostRecent = bookmarks.sort(
       (a, b) => b.createdOn.getTime() - a.createdOn.getTime(),
     )[0]!
-    await editor.checkoutBookmark(mostRecent.name)
+    await editor.checkoutBookmark(mostRecent.name, undefined, true)
     return
   }
 

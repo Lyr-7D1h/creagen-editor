@@ -362,11 +362,13 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
       this.indexdb.add('blobs', decoded.blobHash, decoded.blob),
     ])
 
-    return new Bookmark(
+    const res = Bookmark.create(
       decoded.bookmark.name,
       decoded.commitHash,
       new Date(decoded.bookmark.createdOn),
     )
+    if (!res.ok) throw res.error
+    return res.value
   }
 
   async getAllCommits() {
