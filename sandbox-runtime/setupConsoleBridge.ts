@@ -37,6 +37,15 @@ export function setupConsoleBridge(
       info: (...args) => sendLog('info', args),
       log: (...args) => sendLog('info', args),
       error: (...args) => sendLog('error', args),
+      assert: (condition?: boolean, ...args: unknown[]) => {
+        if (!condition) {
+          // When assertion fails, send as error with "Assertion failed" prefix
+          // This mimics the browser's native console.assert behavior
+          const prefix = 'Assertion failed:'
+          const message = args.length > 0 ? [prefix, ...args] : [prefix]
+          sendLog('error', message)
+        }
+      },
     }
   } catch (error) {
     messageHandler.send({ type: 'error', error: error as Error })
