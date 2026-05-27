@@ -92,6 +92,7 @@ export class Sandbox {
       const args: unknown[] = Array.isArray(event.data)
         ? event.data
         : [event.data]
+      if (CREAGEN_MODE === 'dev') console.debug(...args)
       this.log.addLog(event.level, ...args)
     })
     this.messageHandler.on('renderComplete', () => {

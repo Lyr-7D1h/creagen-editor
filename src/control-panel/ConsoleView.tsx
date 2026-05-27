@@ -120,9 +120,25 @@ const MAX_DISPLAY_LINES = 30
 function formatArg(a: unknown): string {
   if (typeof a === 'string') return a
   if (a instanceof Error) return `${a.name}: ${a.message}`
+
+  // Handle special numeric values
+  if (typeof a === 'number') {
+    if (Number.isNaN(a)) return 'NaN'
+    if (a === Infinity) return 'Infinity'
+    if (a === -Infinity) return '-Infinity'
+  }
+
+  // Handle undefined explicitly
+  if (a === undefined) return 'undefined'
+
+  // Handle null
+  if (a === null) return 'null'
+
   try {
     return JSON.stringify(a, null)
   } catch {
+    // Fallback for circular references or objects that can't be stringified
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
     return String(a)
   }
 }
