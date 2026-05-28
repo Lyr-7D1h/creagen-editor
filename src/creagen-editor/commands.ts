@@ -82,13 +82,33 @@ export const COMMANDS = {
       editor.sandbox.freeze()
     },
   },
-  'editor.toggleControlPanel': {
+  'control.toggleView': {
     description: 'Toggle control panel',
     handler: () => {
       localStorage.set(
         'control-panel-open',
         !(localStorage.get('control-panel-open') ?? true),
       )
+    },
+  },
+  'control.toggleConsoleView': {
+    description: 'Toggle control panel on console view',
+    handler: () => {
+      const open = localStorage.get('control-panel-open') ?? true
+      const tab = localStorage.get('control-panel-tab') ?? 0
+      if (open && tab == 0) return localStorage.set('control-panel-open', false)
+      localStorage.set('control-panel-open', true)
+      if (tab != 0) localStorage.set('control-panel-tab', 0)
+    },
+  },
+  'control.toggleParameterView': {
+    description: 'Toggle control panel on parameter view',
+    handler: () => {
+      const open = localStorage.get('control-panel-open') ?? true
+      const tab = localStorage.get('control-panel-tab') ?? 0
+      if (open && tab == 1) return localStorage.set('control-panel-open', false)
+      localStorage.set('control-panel-open', true)
+      if (tab != 1) localStorage.set('control-panel-tab', 1)
     },
   },
   'sandbox.toggleQR': {

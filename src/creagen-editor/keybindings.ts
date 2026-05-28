@@ -53,7 +53,15 @@ const defaultKeybindings: Keybinding[] = [
   },
   {
     key: 'ctrl+alt+j',
-    command: 'editor.toggleControlPanel',
+    command: 'control.toggleView',
+  },
+  {
+    key: 'ctrl+alt+p',
+    command: 'control.toggleParameterView',
+  },
+  {
+    key: 'ctrl+alt+l',
+    command: 'control.toggleConsoleView',
   },
   {
     key: 'ctrl+alt+n',
