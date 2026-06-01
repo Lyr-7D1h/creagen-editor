@@ -79,7 +79,10 @@ export function ParamsView() {
       onValueChange={handleValueChange}
       onRandomizeAll={handleRandomizeAll}
       onResetToDefaults={handleResetToDefaults}
-      onRegenIntervalChange={(int) => params.setRegenInterval(int)}
+      onRegenIntervalChange={(int) => {
+        params.setRegenInterval(int)
+        forceUpdate()
+      }}
       onCompactLayoutChange={(compact) =>
         creagenEditor.settings.set('parameters.compact_layout', compact)
       }
