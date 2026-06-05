@@ -1,5 +1,19 @@
 # Roadmap
 
+- Canvas
+  - Draw directly to screen instead of saving geometric objects in memory (more like p5) 
+  - Optimize draw loop, rerendering and creating geometric objects with each render is very inefficient
+  - Use builder pattern for all geometric objects
+  - Add clone, for cloning and modifying geometric objects
+  - WebGPU support
+- Add interpolation functions
+    - Smoothstep
+    - Step
+    - https://www.flong.com/archive/texts/code/shapers_exp/
+    - https://www.flong.com/archive/texts/code/shapers_poly/
+    - https://www.flong.com/archive/texts/code/shapers_circ/
+    - https://www.flong.com/archive/texts/code/shapers_bez/
+    - https://iquilezles.org/articles/functions/
 - Add benchmarking
     - vitest
     - reliable hardware https://codspeed.io/ 
