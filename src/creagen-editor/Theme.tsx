@@ -62,10 +62,20 @@ function ThemeSync() {
   return null
 }
 
-export function Theme({ children }: React.PropsWithChildren) {
+export function Theme({
+  children,
+  colorScheme,
+}: React.PropsWithChildren & {
+  sync?: boolean
+  colorScheme?: 'light' | 'dark'
+}) {
   return (
-    <ThemeProvider theme={muiTheme} disableTransitionOnChange>
-      <ThemeSync />
+    <ThemeProvider
+      theme={muiTheme}
+      defaultMode={colorScheme}
+      disableTransitionOnChange
+    >
+      {!colorScheme && <ThemeSync />}
       {children}
     </ThemeProvider>
   )

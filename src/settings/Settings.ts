@@ -40,7 +40,9 @@ async function getSettingsStore(
       if ('validate' in entry) {
         const validation = entry.validate(storedSettings[key] as never)
         if (typeof validation === 'string') {
-          logger.warn(`Failed to validate stored setting ${key}: ${validation}`)
+          logger.warn(
+            `Failed to validate stored setting '${key}' using default value '${defaultValue}': ${validation}`,
+          )
           res[key] = defaultValue
           continue
         }

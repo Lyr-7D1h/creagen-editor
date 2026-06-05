@@ -1,6 +1,5 @@
 import { MenuItem, Select, type SelectChangeEvent } from '@mui/material'
 import { z } from 'zod'
-import { isMobile } from '../creagen-editor/isMobile'
 
 export type ThemeValue = 'system' | 'light' | 'dark'
 export const SETTINGS_CONFIG = {
@@ -72,12 +71,6 @@ export const SETTINGS_CONFIG = {
     type: 'param' as const,
     label: 'Fullscreen',
     default: false as boolean,
-    validate: (value: boolean) => {
-      if (value === false && isMobile()) {
-        return "Can't set fullscreen off when width is too small"
-      }
-      return null
-    },
   },
   'editor.vim': {
     type: 'param' as const,

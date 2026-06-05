@@ -142,7 +142,9 @@ export class CreagenEditor {
     if (this.settings.get('sandbox.resource_monitor'))
       this.resourceMonitor.listen()
     if (this.controller && this.settings.get('controller.enabled'))
-      this.setupController().catch(logger.error)
+      this.setupController().catch((e) =>
+        logger.error(`Failed to setup controller: ${e}`),
+      )
 
     // Setup listener for updating code from history
     window.addEventListener('popstate', () => {

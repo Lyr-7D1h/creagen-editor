@@ -1,26 +1,15 @@
+import { Box, CircularProgress, CssBaseline } from '@mui/material'
 import { useEffect, useState } from 'react'
 import ReactDOM from 'react-dom/client'
-import {
-  ThemeProvider,
-  createTheme,
-  CssBaseline,
-  Box,
-  CircularProgress,
-} from '@mui/material'
+import { Controller } from '../src/controller/Controller'
+import { ErrorBoundary } from '../src/creagen-editor/ErrorBoundary'
+import { Theme } from '../src/creagen-editor/Theme'
 import { logger } from '../src/logs/logger'
 import { Messages } from '../src/logs/Messages'
-import { ParamsViewPresentation } from '../src/params/ParamsViewPresentation'
 import type { ParamConfig } from '../src/params/Params'
-import { ErrorBoundary } from '../src/creagen-editor/ErrorBoundary'
-import { Controller } from '../src/controller/Controller'
 import { generateRandomValue } from '../src/params/params-util'
+import { ParamsViewPresentation } from '../src/params/ParamsViewPresentation'
 import { UrlMutator } from '../src/UrlMutator'
-
-const darkTheme = createTheme({
-  palette: {
-    mode: 'dark',
-  },
-})
 
 let initialized = false
 
@@ -163,11 +152,11 @@ export function ControllerApp() {
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <ThemeProvider theme={darkTheme}>
+  <Theme colorScheme="dark">
     <CssBaseline />
     <ErrorBoundary>
       <ControllerApp />
     </ErrorBoundary>
     <Messages />
-  </ThemeProvider>,
+  </Theme>,
 )
