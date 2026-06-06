@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import type { Controller, ControllerMessage } from '../controller/Controller'
 import { generateHumanReadableName } from '../creagen-editor/generateHumanReadableName'
+import type { Settings } from '../settings/Settings'
 import { UrlMutator } from '../UrlMutator'
 import { deepEqual } from '../util'
 
@@ -300,13 +301,23 @@ declare function useParam(type: 'color', options: Omit<Extract<ParamConfig, { ty
   private previousConfigs: Map<string, ParamConfig> = new Map()
   readonly store: Map<string, unknown> = UrlMutator.params()
   readonly configs: Map<string, ParamConfig> = new Map()
-  regenInterval = 0
   private regenTimerId: number | undefined
 
   constructor(
-    readonly controller?: Controller,
+    readonly controller: Controller | undefined,
+    private readonly settings: Settings,
     private readonly onRegenTick?: () => void,
-  ) {}
+  ) {
+    this.settings.on('parameters.regen_interval', (value) => {
+      this.restartRegenerationTimer()
+      this.sendToController({
+        type: 'editor:param-regen-interval',
+        value,
+      })
+    })
+
+    this.restartRegenerationTimer()
+  }
 
   sendToController(msg: ControllerMessage) {
     if (!this.controller) return
@@ -316,6 +327,10 @@ declare function useParam(type: 'color', options: Omit<Extract<ParamConfig, { ty
 
   get length(): number {
     return this.store.size
+  }
+
+  get regenInterval(): number {
+    return this.settings.get('parameters.regen_interval')
   }
 
   /**
@@ -408,14 +423,15 @@ declare function useParam(type: 'color', options: Omit<Extract<ParamConfig, { ty
   }
 
   setRegenInterval(interval: number) {
-    if (this.regenInterval === interval) return
+    if (!Number.isFinite(interval)) {
+      this.settings.set('parameters.regen_interval', 0)
+      return
+    }
 
-    this.regenInterval = interval
-    this.sendToController({
-      type: 'editor:param-regen-interval',
-      value: interval,
-    })
-    this.restartRegenerationTimer()
+    this.settings.set(
+      'parameters.regen_interval',
+      Math.max(0, Math.floor(interval)),
+    )
   }
 
   randomizeAll() {
@@ -576,7 +592,7 @@ declare function useParam(type: 'color', options: Omit<Extract<ParamConfig, { ty
     }, this.regenInterval) as unknown as number
   }
 
-  private static generateRandomValue(config: ParamConfig): unknown {
+  static generateRandomValue(config: ParamConfig): unknown {
     switch (config.type) {
       case 'boolean':
         return Math.random() > 0.5

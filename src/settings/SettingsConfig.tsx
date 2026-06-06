@@ -26,6 +26,15 @@ export const SETTINGS_CONFIG = {
     },
     default: false as boolean,
   },
+  'parameters.regen_interval': {
+    type: 'param-query' as const,
+    fromQueryParam: (value: string) => {
+      const parsed = Number(value)
+      if (!Number.isFinite(parsed)) return 0
+      return Math.max(0, Math.floor(parsed))
+    },
+    default: 0 as number,
+  },
 
   'editor.theme': {
     type: 'param',

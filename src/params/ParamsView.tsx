@@ -13,6 +13,7 @@ export function ParamsView() {
 
   useForceUpdateOnEditorEvent(['params:value', 'params:config'])
 
+  const regenInterval = useSettings('parameters.regen_interval')
   const autoRender = useSettings('parameters.auto_render')
   const compactLayout = useSettings('parameters.compact_layout')
 
@@ -46,7 +47,7 @@ export function ParamsView() {
       values={params.store}
       compactLayout={Boolean(compactLayout)}
       autoRender={autoRender}
-      regenIntervalMs={params.regenInterval}
+      regenIntervalMs={regenInterval}
       onValueChange={handleValueChange}
       onRandomizeAll={handleRandomizeAll}
       onResetToDefaults={handleResetToDefaults}

@@ -123,12 +123,16 @@ export class CreagenEditor {
       CREAGEN_EDITOR_CONTROLLER_URL != null
         ? new Controller(CREAGEN_EDITOR_CONTROLLER_URL)
         : null
-    this.params = new Params(this.controller ?? undefined, () => {
-      editorEvents.emit('params:value', undefined)
-      if (this.settings.get('parameters.auto_render')) {
-        this.render().catch(logger.error)
-      }
-    })
+    this.params = new Params(
+      this.controller ?? undefined,
+      this.settings,
+      () => {
+        editorEvents.emit('params:value', undefined)
+        if (this.settings.get('parameters.auto_render')) {
+          this.render().catch(logger.error)
+        }
+      },
+    )
 
     // add creagen types
     this.editor.addTypings(Params.TYPINGS, 'creagen-editor')

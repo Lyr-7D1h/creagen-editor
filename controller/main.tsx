@@ -7,7 +7,7 @@ import { Theme } from '../src/creagen-editor/Theme'
 import { logger } from '../src/logs/logger'
 import { Messages } from '../src/logs/Messages'
 import type { ParamConfig } from '../src/params/Params'
-import { generateRandomValue } from '../src/params/params-util'
+import { Params } from '../src/params/Params'
 import { ParamsViewPresentation } from '../src/params/ParamsViewPresentation'
 import { UrlMutator } from '../src/UrlMutator'
 
@@ -123,7 +123,7 @@ export function ControllerApp() {
         }}
         onRandomizeAll={function (): void {
           configs.forEach((config, key) => {
-            const value = generateRandomValue(config)
+            const value = Params.generateRandomValue(config)
             controller.send({ type: 'client:param-value', key, value })
           })
         }}
