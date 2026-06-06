@@ -1,4 +1,4 @@
-import { Box, CircularProgress } from '@mui/material'
+import { Box } from '@mui/material'
 import { useEffect, useState } from 'react'
 import { logger } from '../logs/logger'
 import { Messages } from '../logs/Messages'
@@ -58,7 +58,7 @@ export function CreagenEditorView() {
           height: '100vh',
         }}
       >
-        <CircularProgress />
+        <Box component="img" src="/loading.webp" alt="Loading" />
         <Messages />
       </Box>
     )

@@ -32,6 +32,7 @@ export default defineConfig({
     hostname: SITE_URL,
   },
   head: [
+    ['link', { rel: 'icon', href: '/favicon.ico' }],
     ['meta', { name: 'robots', content: 'index,follow' }],
     ['meta', { property: 'og:site_name', content: SITE_TITLE }],
     ['meta', { name: 'twitter:card', content: 'summary' }],
@@ -52,6 +53,8 @@ export default defineConfig({
     ]
   },
   themeConfig: {
+    logo: '/creagen-icon.png',
+    siteTitle: SITE_TITLE,
     nav: [
       {
         text: 'Editor',
