@@ -157,6 +157,11 @@ export const SETTINGS_CONFIG = {
     label: 'View resource usage in the top right of the sandbox',
     default: false as boolean,
   },
+  'sandbox.coordinates': {
+    type: 'param' as const,
+    label: 'View cursor coordinates in the sandbox',
+    default: false as boolean,
+  },
 
   'parameters.auto_render': {
     type: 'param' as const,

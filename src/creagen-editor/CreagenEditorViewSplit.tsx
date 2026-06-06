@@ -13,12 +13,12 @@ import {
   useSettings,
 } from '../events/useEditorEvents'
 import { Menu } from '../menu/Menu'
+import { Monitor } from '../monitor/Monitor'
 import { ParamsView } from '../params/ParamsView'
 import { SandboxView } from '../sandbox/SandboxView'
 import { useLocalStorage } from '../storage/useLocalStorage'
 import { Actions } from './Actions'
 import { useCreagenEditor } from './CreagenContext'
-import { PerformanceMonitor } from './PerformanceMonitor'
 import { QR } from './QR'
 
 const MIN_WINDOW_SIZE = 200
@@ -33,7 +33,6 @@ export function CreagenEditorViewSplit() {
   useForceUpdateOnEditorEvent('render')
   let fullscreen = useSettings('editor.fullscreen')
   const hideAll = useSettings('hide_all')
-  const resourceMonitorEnabled = useSettings('sandbox.resource_monitor')
   fullscreen = hideAll ? true : fullscreen
 
   const [menu, setMenu] = useLocalStorage('menu-view', false)
@@ -141,7 +140,7 @@ export function CreagenEditorViewSplit() {
               >
                 {/* NOTE: sandbox view should always be mounted to prevent disconnection with iframe */}
                 <SandboxView />
-                {resourceMonitorEnabled && <PerformanceMonitor />}
+                <Monitor />
                 <QR />
 
                 {/* Show fullscreen editor overlay */}

@@ -39,6 +39,20 @@ type SandboxMessageDefinitions =
       }
     }
   | { type: 'renderComplete' }
+  | {
+      type: 'mouseMove'
+      msg: {
+        x: number
+        y: number
+      }
+    }
+  /** Sent by Parent to enable/disable mouse coordinate forwarding */
+  | {
+      type: 'setMouseTracking'
+      msg: {
+        enabled: boolean
+      }
+    }
   /** Sent by Sandbox */
   | {
       type: 'svgExportRequest'
@@ -203,7 +217,10 @@ export class SandboxMessageHandler {
       Set<(msg: SandboxMessage) => void>
     > = new Map(),
   ) {
-    this.port.onmessage = (msg: MessageEvent) => {
+    // Use addEventListener so the port does not auto-start; call
+    // `setupListeners()` to register handlers before messages are delivered.
+    // using addEventListener will queue up all messages sent until port is started
+    this.port.addEventListener('message', (msg: MessageEvent) => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const data = msg.data
       if (isSandboxMessage(data)) {
@@ -212,7 +229,16 @@ export class SandboxMessageHandler {
           handlers.forEach((handler) => handler(data))
         }
       }
-    }
+    })
+  }
+
+  /**
+   * Register all listeners via `fn`, then start the port.
+   * This guarantees every listener is in place before any message is delivered.
+   */
+  setupListeners(fn: (handler: this) => void): void {
+    fn(this)
+    this.port.start()
   }
 
   /**

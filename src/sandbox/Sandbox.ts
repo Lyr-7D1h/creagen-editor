@@ -36,12 +36,15 @@ export class Sandbox {
   }
 
   private constructor(
-    settings: Settings,
+    private readonly settings: Settings,
     private readonly iframe: HTMLIFrameElement,
   ) {
     this.log = new SandboxLog(settings.get('console.buffer_size'))
     settings.on('console.buffer_size', (size) => {
       this.log.resize(size)
+    })
+    settings.on('sandbox.coordinates', (enabled) => {
+      this.messageHandler?.send({ type: 'setMouseTracking', enabled })
     })
   }
 
@@ -79,24 +82,29 @@ export class Sandbox {
    */
   private setupMessageHandlers() {
     if (!this.messageHandler) return
-    this.messageHandler.on('analysisResult', (event) =>
-      editorEvents.emit('sandbox:analysis-complete', event),
-    )
-    this.messageHandler.on('error', (event) => {
-      event.error.name = 'Uncaught error'
-      console.error(event.error)
-      this.log.addLog('uncaught', event.error)
-      editorEvents.emit('sandbox:error', event)
-    })
-    this.messageHandler.on('log', (event) => {
-      const args: unknown[] = Array.isArray(event.data)
-        ? event.data
-        : [event.data]
-      if (CREAGEN_MODE === 'dev') console.debug(...args)
-      this.log.addLog(event.level, ...args)
-    })
-    this.messageHandler.on('renderComplete', () => {
-      editorEvents.emit('sandbox:render-complete', undefined)
+    this.messageHandler.setupListeners((handler) => {
+      handler.on('analysisResult', (event) =>
+        editorEvents.emit('sandbox:analysis-complete', event),
+      )
+      handler.on('error', (event) => {
+        event.error.name = 'Uncaught error'
+        console.error(event.error)
+        this.log.addLog('uncaught', event.error)
+        editorEvents.emit('sandbox:error', event)
+      })
+      handler.on('log', (event) => {
+        const args: unknown[] = Array.isArray(event.data)
+          ? event.data
+          : [event.data]
+        if (CREAGEN_MODE === 'dev') console.debug(...args)
+        this.log.addLog(event.level, ...args)
+      })
+      handler.on('renderComplete', () => {
+        editorEvents.emit('sandbox:render-complete', undefined)
+      })
+      handler.on('mouseMove', (event) => {
+        editorEvents.emit('sandbox:mouse-move', { x: event.x, y: event.y })
+      })
     })
   }
 
@@ -107,6 +115,11 @@ export class Sandbox {
     )
     editorEvents.emit('sandbox:connect', undefined)
     this.setupMessageHandlers()
+    // Sync current tracking preference on (re)connect
+    this.messageHandler.send({
+      type: 'setMouseTracking',
+      enabled: this.settings.get('sandbox.coordinates'),
+    })
     logger.info('Message handler (re)connected')
   }
 

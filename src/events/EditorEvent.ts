@@ -37,6 +37,7 @@ type EditorEvents = {
   'sandbox:connect': void
   'sandbox:freeze': void
   'sandbox:unfreeze': void
+  'sandbox:mouse-move': { x: number; y: number }
 
   // Editor events
   'editor:code-dirty': void
