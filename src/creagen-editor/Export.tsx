@@ -1,25 +1,26 @@
-import { useState } from 'react'
-import { useCreagenEditor } from './CreagenContext'
 import { Download, ExpandMore } from '@mui/icons-material'
 import {
+  Box,
   CircularProgress,
-  IconButton,
-  useTheme,
   Collapse,
+  IconButton,
   List,
   ListItem,
   ListItemButton,
   ListItemText,
-  Box,
+  useTheme,
 } from '@mui/material'
-import { logger } from '../logs/logger'
+import JSZip from 'jszip'
+import { useState } from 'react'
+import { HtmlTooltip } from '../editor/HtmlTooltip'
 import {
   useActiveBookmark,
   useEditorEvent,
   useHead,
   useSettings,
 } from '../events/useEditorEvents'
-import { HtmlTooltip } from '../editor/HtmlTooltip'
+import { logger } from '../logs/logger'
+import { useCreagenEditor } from './CreagenContext'
 
 export function Export({
   color,
@@ -38,34 +39,68 @@ export function Export({
   const activeBookmark = useActiveBookmark()
 
   const [downloading, setDownloading] = useState<boolean>(false)
-  const [selectedIndex, setSelectedIndex] = useState<number>(0)
+  const [selectedIndex, setSelectedIndex] = useState<number | 'all'>(0)
   const [expanded, setExpanded] = useState<boolean>(false)
 
   async function download() {
     if (downloading) return
     setDownloading(true)
-    const blob = await creagenEditor.sandbox.svgExport(
-      selectedIndex,
-      optimizeExport,
-      head,
-    )
-    if (blob === null) {
-      logger.error('No svg found')
-      setDownloading(false)
-      return
+
+    function triggerDownload(blob: Blob, filename: string) {
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.setAttribute('download', filename)
+      a.setAttribute('href', url)
+      a.style.display = 'none'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
     }
 
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.setAttribute('download', `${activeBookmark.name}.svg`)
-    a.setAttribute('href', url)
-    a.style.display = 'none'
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    URL.revokeObjectURL(url)
+    try {
+      let index = selectedIndex
+      const svgCount = analysisResult?.result.svgs.length ?? 0
+      if (index === 'all' && svgCount <= 1) index = 0
+      if (index === 'all') {
+        const zip = new JSZip()
 
-    setDownloading(false)
+        for (let index = 0; index < svgCount; index += 1) {
+          const blob = await creagenEditor.sandbox.svgExport(
+            index,
+            optimizeExport,
+            head,
+          )
+
+          if (blob === null) {
+            logger.error(`No svg found at index ${index}`)
+            continue
+          }
+
+          zip.file(`${activeBookmark.name}-${index + 1}.svg`, blob)
+        }
+
+        const zipBlob = await zip.generateAsync({ type: 'blob' })
+        triggerDownload(zipBlob, `${activeBookmark.name}.zip`)
+
+        return
+      }
+
+      const blob = await creagenEditor.sandbox.svgExport(
+        index,
+        optimizeExport,
+        head,
+      )
+
+      if (blob === null) {
+        logger.error('No svg found')
+        return
+      }
+
+      triggerDownload(blob, `${activeBookmark.name}.svg`)
+    } finally {
+      setDownloading(false)
+    }
   }
 
   if (analysisResult === null) return ''
@@ -132,9 +167,31 @@ export function Export({
                 borderColor: 'divider',
                 borderRadius: 1,
                 minWidth: 120,
+                maxHeight: 220,
+                overflowY: 'auto',
                 boxShadow: 2,
               }}
             >
+              <ListItem disablePadding>
+                <ListItemButton
+                  selected={selectedIndex === 'all'}
+                  onClick={() => {
+                    setSelectedIndex('all')
+                    setExpanded(false)
+                  }}
+                  sx={{ py: 0.5, px: 1 }}
+                >
+                  <ListItemText
+                    primary="All SVGs"
+                    slotProps={{
+                      primary: {
+                        variant: 'body2',
+                      },
+                    }}
+                  />
+                </ListItemButton>
+              </ListItem>
+
               {analysisResult.result.svgs.map((_, index) => (
                 <ListItem key={index} disablePadding>
                   <ListItemButton
