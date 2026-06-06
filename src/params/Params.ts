@@ -469,7 +469,11 @@ declare function useParam(type: 'color', options: Omit<Extract<ParamConfig, { ty
         this.sendToController({ type: 'editor:param-delete', key })
         continue
       }
-      if (!deepEqual(config, previousConfig)) {
+      if (
+        // NOTE: Ignoring seed configs since default is always randomily generated
+        !(config.type === 'seed' && previousConfig.type === 'seed') &&
+        !deepEqual(config, previousConfig)
+      ) {
         this.sendToController({ type: 'editor:param-delete', key })
         this.sendToController({ type: 'editor:param-add', key, config })
       }
@@ -581,10 +585,6 @@ declare function useParam(type: 'color', options: Omit<Extract<ParamConfig, { ty
     }
 
     if (this.regenInterval <= 0) return
-
-    // Run immediately, then continue on interval
-    this.randomizeAll()
-    this.onRegenTick?.()
 
     this.regenTimerId = window.setInterval(() => {
       this.randomizeAll()
