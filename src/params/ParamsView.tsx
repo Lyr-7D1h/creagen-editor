@@ -1,11 +1,10 @@
-import React from 'react'
+import { useCallback } from 'react'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import {
   useForceUpdateOnEditorEvent,
   useSettings,
 } from '../events/useEditorEvents'
 import { ParamsViewPresentation } from './ParamsViewPresentation'
-import { generateRandomValue } from './params-util'
 
 /** Container component - handles state and logic */
 export function ParamsView() {
@@ -14,60 +13,32 @@ export function ParamsView() {
 
   useForceUpdateOnEditorEvent(['params:value', 'params:config'])
 
-  const [, forceUpdate] = React.useReducer((x) => x + 1, 0)
   const autoRender = useSettings('parameters.auto_render')
   const compactLayout = useSettings('parameters.compact_layout')
 
   const handleValueChange = (key: string, newValue: unknown) => {
     creagenEditor.params.setValue(key, newValue)
-    forceUpdate()
 
     if (autoRender) {
       void creagenEditor.render()
     }
   }
 
-  const handleRandomizeAll = React.useCallback(() => {
-    params.configs.forEach((config, key) => {
-      const randomValue = generateRandomValue(config)
-      creagenEditor.params.setValue(key, randomValue)
-    })
-    forceUpdate()
+  const handleRandomizeAll = useCallback(() => {
+    params.randomizeAll()
 
     if (autoRender) {
       void creagenEditor.render()
     }
-  }, [creagenEditor, params.configs, autoRender, forceUpdate])
+  }, [params, creagenEditor, autoRender])
 
   const handleResetToDefaults = () => {
-    params.configs.forEach((config, key) => {
-      let defaultValue: unknown = config.default
-      if (typeof config.default === 'function') {
-        defaultValue = (config.default as () => unknown)()
-      }
-      creagenEditor.params.setValue(key, defaultValue)
-    })
-    forceUpdate()
+    params.resetToDefaults()
 
     if (autoRender) {
       void creagenEditor.render()
     }
   }
-
-  // Manage automatic regeneration interval. Placed after handlers so it can call them.
-  React.useEffect(() => {
-    let id: number | undefined
-    if (params.regenInterval > 0) {
-      // run an immediate randomization, then schedule recurring
-      handleRandomizeAll()
-      id = window.setInterval(() => {
-        handleRandomizeAll()
-      }, params.regenInterval) as unknown as number
-    }
-    return () => {
-      if (id != null) window.clearInterval(id as unknown as number)
-    }
-  }, [handleRandomizeAll, params.regenInterval])
 
   return (
     <ParamsViewPresentation
@@ -81,7 +52,6 @@ export function ParamsView() {
       onResetToDefaults={handleResetToDefaults}
       onRegenIntervalChange={(int) => {
         params.setRegenInterval(int)
-        forceUpdate()
       }}
       onCompactLayoutChange={(compact) =>
         creagenEditor.settings.set('parameters.compact_layout', compact)

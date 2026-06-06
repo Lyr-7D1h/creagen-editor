@@ -123,7 +123,12 @@ export class CreagenEditor {
       CREAGEN_EDITOR_CONTROLLER_URL != null
         ? new Controller(CREAGEN_EDITOR_CONTROLLER_URL)
         : null
-    this.params = new Params(this.controller ?? undefined)
+    this.params = new Params(this.controller ?? undefined, () => {
+      editorEvents.emit('params:value', undefined)
+      if (this.settings.get('parameters.auto_render')) {
+        this.render().catch(logger.error)
+      }
+    })
 
     // add creagen types
     this.editor.addTypings(Params.TYPINGS, 'creagen-editor')
@@ -292,7 +297,6 @@ export class CreagenEditor {
           return
         case 'client:param-regen-interval':
           this.params.setRegenInterval(msg.interval)
-          editorEvents.emit('params:value', undefined)
           return
         case 'connection':
         case 'disconnection':

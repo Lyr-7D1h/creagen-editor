@@ -301,8 +301,12 @@ declare function useParam(type: 'color', options: Omit<Extract<ParamConfig, { ty
   readonly store: Map<string, unknown> = UrlMutator.params()
   readonly configs: Map<string, ParamConfig> = new Map()
   regenInterval = 0
+  private regenTimerId: number | undefined
 
-  constructor(readonly controller?: Controller) {}
+  constructor(
+    readonly controller?: Controller,
+    private readonly onRegenTick?: () => void,
+  ) {}
 
   sendToController(msg: ControllerMessage) {
     if (!this.controller) return
@@ -404,10 +408,29 @@ declare function useParam(type: 'color', options: Omit<Extract<ParamConfig, { ty
   }
 
   setRegenInterval(interval: number) {
+    if (this.regenInterval === interval) return
+
     this.regenInterval = interval
     this.sendToController({
       type: 'editor:param-regen-interval',
       value: interval,
+    })
+    this.restartRegenerationTimer()
+  }
+
+  randomizeAll() {
+    this.configs.forEach((config, key) => {
+      this.setValue(key, Params.generateRandomValue(config))
+    })
+  }
+
+  resetToDefaults() {
+    this.configs.forEach((config, key) => {
+      let defaultValue: unknown = config.default
+      if (typeof config.default === 'function') {
+        defaultValue = (config.default as () => unknown)()
+      }
+      this.setValue(key, defaultValue)
     })
   }
 
@@ -531,6 +554,90 @@ declare function useParam(type: 'color', options: Omit<Extract<ParamConfig, { ty
 
         // Default: return as hex string
         return JSON.stringify(colorStr)
+      }
+    }
+  }
+
+  private restartRegenerationTimer() {
+    if (this.regenTimerId != null) {
+      window.clearInterval(this.regenTimerId)
+      this.regenTimerId = undefined
+    }
+
+    if (this.regenInterval <= 0) return
+
+    // Run immediately, then continue on interval
+    this.randomizeAll()
+    this.onRegenTick?.()
+
+    this.regenTimerId = window.setInterval(() => {
+      this.randomizeAll()
+      this.onRegenTick?.()
+    }, this.regenInterval) as unknown as number
+  }
+
+  private static generateRandomValue(config: ParamConfig): unknown {
+    switch (config.type) {
+      case 'boolean':
+        return Math.random() > 0.5
+
+      case 'integer': {
+        const min = config.min ?? 0
+        const max = config.max ?? 10000000
+        return Math.floor(Math.random() * (max - min + 1)) + min
+      }
+
+      case 'float': {
+        const min = config.min ?? 0
+        const max = config.max ?? 10000000
+        const step = config.step ?? 0.1
+
+        // Generate value aligned to step
+        const steps = Math.floor((max - min) / step)
+        const randomValue = min + Math.floor(Math.random() * (steps + 1)) * step
+        // Ensure value is within bounds and round to appropriate precision
+        const clampedValue = Math.min(max, Math.max(min, randomValue))
+        // Determine decimal places based on step
+        const decimalPlaces = step < 0.01 ? 4 : step < 1 ? 2 : 0
+        return Number(clampedValue.toFixed(decimalPlaces))
+      }
+
+      case 'text':
+        // For text, just generate a random short string
+        return Math.random().toString(36).substring(2, 8)
+
+      case 'range':
+      case 'range-slider': {
+        const min = config.min ?? 0
+        const max = config.max ?? 10
+
+        // No step specified, generate random values with 2 decimal places
+        const val1 = min + Math.random() * (max - min)
+        const val2 = min + Math.random() * (max - min)
+        const clampedVal1 = Number(
+          Math.min(max, Math.max(min, val1)).toFixed(2),
+        )
+        const clampedVal2 = Number(
+          Math.min(max, Math.max(min, val2)).toFixed(2),
+        )
+
+        return clampedVal1 <= clampedVal2
+          ? [clampedVal1, clampedVal2]
+          : [clampedVal2, clampedVal1]
+      }
+
+      case 'seed':
+        return generateHumanReadableName()
+
+      case 'radio': {
+        const values = Object.values(config.items)
+        return values[Math.floor(Math.random() * values.length)]
+      }
+
+      case 'color': {
+        return `#${Math.floor(Math.random() * 0x1000000)
+          .toString(16)
+          .padStart(6, '0')}`
       }
     }
   }
