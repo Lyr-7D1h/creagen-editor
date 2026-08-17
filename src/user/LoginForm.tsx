@@ -11,6 +11,7 @@ import {
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import { Turnstile } from './Turnstile'
+import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 
 interface LoginFormProps {
   error: string | null
@@ -29,6 +30,7 @@ export function LoginForm({
   onClose,
   onSubmit,
 }: LoginFormProps) {
+  const turnstileSiteKey = useCreagenEditor().config.turnstileSiteKey
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
@@ -95,12 +97,16 @@ export function LoginForm({
               },
             }}
           />
-          <Turnstile
-            siteKey={CREAGEN_TURNSTILE_SITE_KEY}
-            onSuccess={setTurnstileToken}
-            onExpire={() => setTurnstileToken(null)}
-            onError={() => setTurnstileToken(null)}
-          />
+          {
+            turnstileSiteKey && (
+              <Turnstile
+                siteKey={turnstileSiteKey}
+                onSuccess={setTurnstileToken}
+                onExpire={() => setTurnstileToken(null)}
+                onError={() => setTurnstileToken(null)}
+              />
+            )
+          }
         </Box>
       </DialogContent>
       <DialogActions>

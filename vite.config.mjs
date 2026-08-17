@@ -117,6 +117,7 @@ let creagenDevPath = process.env.CREAGEN_DEV_PATH
 if (!fs.existsSync(creagenDevPath)) {
   creagenDevPath = null
 }
+
 export default defineConfig(async ({ mode }) => {
   const defines = {
     CREAGEN_MODE: JSON.stringify(mode),

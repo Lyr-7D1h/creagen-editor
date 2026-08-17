@@ -1,5 +1,11 @@
 import type * as m from 'monaco-editor'
 import * as monaco from 'monaco-editor'
+import {
+  typescriptDefaults,
+  ScriptTarget,
+  ModuleKind,
+  ModuleResolutionKind,
+} from 'monaco-editor/esm/vs/language/typescript/monaco.contribution'
 import { localStorage } from '../storage/LocalStorage'
 
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
@@ -68,26 +74,26 @@ const creagenFullscreenTheme: monaco.editor.IStandaloneThemeData = {
 }
 export type EditorTheme = 'creagen-light' | 'creagen-dark'
 
-export const typescriptCompilerOptions = {
-  target: monaco.typescript.ScriptTarget.ESNext,
+export const typescriptCompilerOptions: m.typescript.CompilerOptions = {
+  target: ScriptTarget.ESNext,
   allowNonTsExtensions: true,
-  moduleResolution: monaco.typescript.ModuleResolutionKind.NodeJs,
+  moduleResolution: ModuleResolutionKind.NodeJs as unknown as m.typescript.ModuleResolutionKind,
   esModuleInterop: true,
-  module: monaco.typescript.ModuleKind.ESNext,
+  module: ModuleKind.ESNext,
   noEmit: true,
-}
+} as const
 export interface EditorSettings {
   value?: string
 }
 
 function handleBeforeMount(monaco: Monaco) {
-  monaco.typescript.typescriptDefaults.setDiagnosticsOptions({
+  typescriptDefaults.setDiagnosticsOptions({
     noSemanticValidation: false,
     noSyntaxValidation: false,
     // 1378,1375: allow await on top level
     diagnosticCodesToIgnore: [1375, 1378],
   })
-  monaco.typescript.typescriptDefaults.setCompilerOptions(
+  typescriptDefaults.setCompilerOptions(
     typescriptCompilerOptions,
   )
   monaco.editor.defineTheme('creagen-light', creagenLightTheme)
@@ -289,7 +295,7 @@ export class Editor {
     // Clear the typings map
     this.typings.clear()
     // Also clear all extra libs as a fallback
-    monaco.typescript.typescriptDefaults.setExtraLibs([])
+    typescriptDefaults.setExtraLibs([])
   }
 
   typingsExist(uri: string) {
@@ -299,7 +305,7 @@ export class Editor {
   addTypings(typings: string, uri: string) {
     if (this.typingsExist(uri)) return
     logger.info(`Adding typings for ${uri}`)
-    const disposable = monaco.typescript.typescriptDefaults.addExtraLib(
+    const disposable = typescriptDefaults.addExtraLib(
       typings,
       uri,
     )

@@ -19,7 +19,7 @@ export class Sandbox {
   log: SandboxLog
   isFrozen = false
 
-  static create(settings: Settings) {
+  static create(url: string, settings: Settings) {
     const iframe = document.createElement('iframe')
     iframe.title = ''
     iframe.style.display = 'block'
@@ -30,7 +30,7 @@ export class Sandbox {
     iframe.sandbox = `allow-scripts ${CREAGEN_MODE === 'dev' ? 'allow-same-origin' : ''}`
 
     // Use the separate sandbox URL
-    iframe.src = CREAGEN_EDITOR_SANDBOX_RUNTIME_URL
+    iframe.src = url
 
     return new Sandbox(settings, iframe)
   }
@@ -96,6 +96,7 @@ export class Sandbox {
         const args: unknown[] = Array.isArray(event.data)
           ? event.data
           : [event.data]
+        // eslint-disable-next-line no-console
         if (CREAGEN_MODE === 'dev') console.debug(...args)
         this.log.addLog(event.level, ...args)
       })

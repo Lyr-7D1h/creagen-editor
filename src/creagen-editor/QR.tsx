@@ -20,8 +20,9 @@ export function QR() {
     activeId != null ? `${window.location.origin}/controller/${activeId}` : null
 
   if (
+    typeof activeId !== "string" ||
     !controllerEnabled ||
-    CREAGEN_EDITOR_CONTROLLER_URL == null ||
+    creagenEditor.controller?.open() ||
     !showQR ||
     creagenEditor.params.length === 0
   )

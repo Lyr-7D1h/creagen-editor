@@ -14,6 +14,7 @@ import {
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import { Turnstile } from './Turnstile'
+import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 
 interface PasswordStrength {
   score: number
@@ -48,6 +49,7 @@ export function SignupForm({
   onClose,
   onSubmit,
 }: SignupFormProps) {
+  const turnstileSiteKey = useCreagenEditor().config.turnstileSiteKey ?? undefined
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [repeatPassword, setRepeatPassword] = useState('')
@@ -185,12 +187,16 @@ export function SignupForm({
               },
             }}
           />
-          <Turnstile
-            siteKey={CREAGEN_TURNSTILE_SITE_KEY}
-            onSuccess={setTurnstileToken}
-            onExpire={() => setTurnstileToken(null)}
-            onError={() => setTurnstileToken(null)}
-          />
+          {
+            turnstileSiteKey && (
+              <Turnstile
+                siteKey={turnstileSiteKey}
+                onSuccess={setTurnstileToken}
+                onExpire={() => setTurnstileToken(null)}
+                onError={() => setTurnstileToken(null)}
+              />
+            )
+          }
         </Box>
       </DialogContent>
       <DialogActions>

@@ -1,18 +1,19 @@
 import { Box } from '@mui/material'
 import { useEffect, useState } from 'react'
-import { logger } from '../logs/logger'
-import { Messages } from '../logs/Messages'
-import { LoginPromptHandler } from '../user/LoginPromptHandler'
-import { CreagenEditorContext } from './CreagenContext'
-import { CreagenEditor } from './CreagenEditor'
+import { logger } from './logs/logger'
+import { Messages } from './logs/Messages'
+import { LoginPromptHandler } from './user/LoginPromptHandler'
+import { CreagenEditorContext } from './creagen-editor/CreagenContext'
+import type { CreagenEditorConfig } from './creagen-editor/CreagenEditor';
+import { CreagenEditor } from './creagen-editor/CreagenEditor'
 import {
   CreagenEditorViewContentMobile,
   CreagenEditorViewSplit,
-} from './CreagenEditorViewSplit'
-import { ErrorBoundary } from './ErrorBoundary'
-import { isMobile } from './isMobile'
-import { Theme } from './Theme'
-import { WelcomeScreen } from './WelcomeScreen'
+} from './creagen-editor/CreagenEditorViewSplit'
+import { ErrorBoundary } from './creagen-editor/ErrorBoundary'
+import { isMobile } from './creagen-editor/isMobile'
+import { Theme } from './creagen-editor/Theme'
+import { WelcomeScreen } from './creagen-editor/WelcomeScreen'
 
 declare global {
   interface Window {
@@ -20,18 +21,23 @@ declare global {
   }
 }
 
-export function CreagenEditorView() {
+
+export function CreagenEditorView({ config }: {
+  /** Initial config used for setting up the creagen editor */
+  config: CreagenEditorConfig
+}) {
   const [creagenEditor, setCreagenEditor] = useState<CreagenEditor | null>(null)
 
   const [mobile, setMobile] = useState(isMobile())
 
   useEffect(() => {
-    CreagenEditor.create()
+    CreagenEditor.create(config)
       .then((creagenEditor) => {
         setCreagenEditor(creagenEditor)
         window.creagen = creagenEditor
       })
       .catch((e) => logger.error(e))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // on window resize check to enable mobile version or not
@@ -69,7 +75,7 @@ export function CreagenEditorView() {
       <Theme>
         <ErrorBoundary>
           <WelcomeScreen />
-          {CREAGEN_REMOTE_URL != null && <LoginPromptHandler />}
+          {creagenEditor.storage.remote && <LoginPromptHandler />}
           {mobile ? (
             <CreagenEditorViewContentMobile />
           ) : (

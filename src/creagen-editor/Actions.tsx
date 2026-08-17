@@ -81,7 +81,7 @@ export function Actions({
     if (
       !isMobileDevice &&
       controllerEnabled &&
-      CREAGEN_EDITOR_CONTROLLER_URL != null &&
+      creagenEditor.controller?.open() &&
       creagenEditor.params.length > 0
     ) {
       buttons.push(

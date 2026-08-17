@@ -1,5 +1,6 @@
 import * as monaco from 'monaco-editor'
 import type * as ts from 'typescript'
+import { getTypeScriptWorker as getMonacoTypeScriptWorker } from 'monaco-editor/esm/vs/language/typescript/monaco.contribution'
 import { wait } from '../util'
 
 export interface TsWrapperWorker {
@@ -91,7 +92,7 @@ export async function getTypeScriptWorker(
       try {
         // Monaco's TypeScript API is not properly typed
         workerGetter =
-          (await monaco.typescript.getTypeScriptWorker()) as MonacoWorkerGetter
+          (await getMonacoTypeScriptWorker()) as MonacoWorkerGetter
         break
       } catch (error) {
         if (!isTypeScriptRegistrationError(error)) throw error

@@ -62,15 +62,17 @@ export type ActiveBookmark = {
 
 export type ClientStorage = LocalClientStorage | RemoteClientStorage
 
+export interface CreagenEditorConfig {
+  remoteUrl?: string
+  sandboxRuntimeUrl: string
+  controllerUrl?: string
+  turnstileSiteKey?: string
+}
+
 export class CreagenEditor {
   resourceMonitor = new ResourceMonitor()
   params: Params
-  storage: ClientStorage
-  settings: Settings
-  editor: Editor
-  sandbox: Sandbox
 
-  private readonly vcs: Versie<CommitMetadata>
   activeBookmark: ActiveBookmark = generateUncommittedBookmark()
 
   keybindings: Keybindings
@@ -79,13 +81,13 @@ export class CreagenEditor {
   // private commands: Map<string, (editor: CreagenEditor) => void> = new Map()
   libraryImports: Map<string, LibraryImport> = new Map()
 
-  static async create() {
+  static async create(config: CreagenEditorConfig) {
     const storage =
-      CREAGEN_REMOTE_URL != null
+      config.remoteUrl
         ? await RemoteClientStorage.create()
         : await LocalClientStorage.create()
     const settings = await Settings.create(storage)
-    const sandbox = Sandbox.create(settings)
+    const sandbox = Sandbox.create(config.sandboxRuntimeUrl, settings)
     const editor = Editor.create(settings)
 
     const vcsResult = await Versie.create(storage, (raw) => {
@@ -96,6 +98,7 @@ export class CreagenEditor {
     const customKeybindings = (await storage.getCustomKeybindings()) ?? []
 
     return new CreagenEditor(
+      config,
       sandbox,
       editor,
       settings,
@@ -106,22 +109,18 @@ export class CreagenEditor {
   }
 
   private constructor(
-    sandbox: Sandbox,
-    editor: Editor,
-    settings: Settings,
-    storage: ClientStorage,
-    versie: Versie<CommitMetadata>,
+    public config: CreagenEditorConfig,
+    public sandbox: Sandbox,
+    public editor: Editor,
+    public settings: Settings,
+    public storage: ClientStorage,
+    private versie: Versie<CommitMetadata>,
     customKeybindings: CustomKeybinding[],
   ) {
-    this.sandbox = sandbox
-    this.editor = editor
-    this.settings = settings
-    this.storage = storage
-    this.vcs = versie
     this.keybindings = new Keybindings(customKeybindings, this)
     this.controller =
-      CREAGEN_EDITOR_CONTROLLER_URL != null
-        ? new Controller(CREAGEN_EDITOR_CONTROLLER_URL)
+      config.controllerUrl
+        ? new Controller(config.controllerUrl)
         : null
     this.params = new Params(
       this.controller ?? undefined,
@@ -211,8 +210,8 @@ export class CreagenEditor {
     const mutator = new UrlMutator()
     if (this.activeBookmark.commit === null) {
       // Uncommitted bookmark - show commit or empty
-      if (this.vcs.head) {
-        mutator.setCommit(this.vcs.head.hash.toHex())
+      if (this.versie.head) {
+        mutator.setCommit(this.versie.head.hash.toHex())
       } else {
         mutator.setCommit()
       }
@@ -245,7 +244,7 @@ export class CreagenEditor {
     return Result.fromAsync(async () => {
       if (this.activeBookmark.commit === null) {
         // commit uncommitted bookmark
-        const result = await this.vcs.addBookmark(
+        const result = await this.versie.addBookmark(
           this.activeBookmark.name,
           commit,
           this.activeBookmark.createdOn,
@@ -256,7 +255,7 @@ export class CreagenEditor {
       }
 
       // update currently active to this commit
-      const result = await this.vcs.setBookmarkCommit(
+      const result = await this.versie.setBookmarkCommit(
         this.activeBookmark.name,
         commit,
       )
@@ -314,8 +313,8 @@ export class CreagenEditor {
   /** Create new sketch on an optional base commit */
   async new() {
     return Result.fromAsyncCatching(async () => {
-      const old = this.vcs.head?.hash
-      const res = await this.vcs.setHead(null)
+      const old = this.versie.head?.hash
+      const res = await this.versie.setHead(null)
       if (!res.ok) return res
       // clear everything
       this.editor.setValue('')
@@ -327,9 +326,9 @@ export class CreagenEditor {
   }
   /** Load a commit into editor */
   private async loadCommit(hash: CommitHash) {
-    const old = this.vcs.head?.hash
+    const old = this.versie.head?.hash
 
-    const checkoutResult = await this.vcs.checkout(hash)
+    const checkoutResult = await this.versie.checkout(hash)
     if (!checkoutResult.ok) {
       return checkoutResult
     }
@@ -368,7 +367,7 @@ export class CreagenEditor {
       if (bookmark) bookmark = { ...bookmark, username }
     } else {
       // get bookmark from local db traditional vcs route
-      bookmark = this.vcs.getBookmark(bookmarkName)
+      bookmark = this.versie.getBookmark(bookmarkName)
     }
 
     if (bookmark === null)
@@ -532,7 +531,7 @@ export class CreagenEditor {
         : undefined,
     )
     // store code
-    const commitResult = await this.vcs.commit(code, metadata)
+    const commitResult = await this.versie.commit(code, metadata)
     if (!commitResult.ok) {
       throw new Error(`Failed to commit code: ${commitResult.error.message}`)
     }
@@ -607,23 +606,23 @@ export class CreagenEditor {
   }
 
   get head() {
-    return this.vcs.head
+    return this.versie.head
   }
 
   getAllBookmarks() {
-    return this.vcs.getAllBookmarks()
+    return this.versie.getAllBookmarks()
   }
 
   getAllCommits() {
-    return this.vcs.getAllCommits()
+    return this.versie.getAllCommits()
   }
 
   history(n: number, start?: Commit<CommitMetadata>) {
-    return this.vcs.history(n, start)
+    return this.versie.history(n, start)
   }
 
   getBookmark(name: string) {
-    return this.vcs.getBookmark(name)
+    return this.versie.getBookmark(name)
   }
 
   /**
@@ -645,7 +644,7 @@ export class CreagenEditor {
       return this.activeBookmark
     }
 
-    const res = await this.vcs.setBookmarkCommit(bookmarkName, commit)
+    const res = await this.versie.setBookmarkCommit(bookmarkName, commit)
     if (!res.ok) throw res.error
     const bookmark = res.value
 
@@ -660,7 +659,7 @@ export class CreagenEditor {
   }
 
   async addBookmark(name: string, commit: CommitHash, createdOn: Date) {
-    const res = await this.vcs.addBookmark(name, commit, createdOn)
+    const res = await this.versie.addBookmark(name, commit, createdOn)
     if (!res.ok) throw res.error
     if (name === this.activeBookmark.name) {
       this.setActiveBookmark(res.value)
@@ -670,11 +669,11 @@ export class CreagenEditor {
   }
 
   bookmarkLookup(commit: CommitHash) {
-    return this.vcs.bookmarkLookup(commit)
+    return this.versie.bookmarkLookup(commit)
   }
 
   async removeBookmark(name: string) {
-    const result = await this.vcs.removeBookmark(name)
+    const result = await this.versie.removeBookmark(name)
 
     if (!result.ok) throw result.error
     // If removing the current active bookmark, generate a new one
@@ -699,7 +698,7 @@ export class CreagenEditor {
       return
     }
 
-    const result = await this.vcs.renameBookmark(oldName, newName)
+    const result = await this.versie.renameBookmark(oldName, newName)
     if (!result.ok) throw result.error
     if (oldName === this.activeBookmark.name) {
       this.setActiveBookmark({ ...this.activeBookmark, name: newName })
@@ -710,7 +709,7 @@ export class CreagenEditor {
 
   /** Low-level commit used when building a commit from external data (e.g. a sharable link) */
   createCommit(code: string, metadata: CommitMetadata) {
-    return this.vcs.commit(code, metadata)
+    return this.versie.commit(code, metadata)
   }
 }
 
