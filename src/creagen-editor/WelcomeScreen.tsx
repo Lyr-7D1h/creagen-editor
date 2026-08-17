@@ -66,8 +66,7 @@ export function WelcomeScreen() {
                 <span style={{ color: 'grey', fontSize: '0.9rem' }}>
                   (Sideways arrow in the top left corner)
                 </span>
-                : Add dependencies, Look at saved changes, Change keybindings,
-                change settings and more
+                : Add dependencies, Manage sketch versions, Manage settings, Change keybindings and more
               </li>
             </ol>
           )}
