@@ -1,6 +1,5 @@
 import { Box, Button, Typography, Alert, Stack } from '@mui/material'
-import DownloadIcon from '@mui/icons-material/Download'
-import UploadIcon from '@mui/icons-material/Upload'
+import { Download, Upload } from 'lucide-react'
 import type React from 'react';
 import { useState, useRef } from 'react'
 import { useCreagenEditor } from '../../creagen-editor/CreagenContext'
@@ -108,7 +107,7 @@ export function ImportTab() {
       <Stack spacing={2}>
         <Button
           variant="contained"
-          startIcon={<DownloadIcon />}
+          startIcon={<Download  />}
           onClick={handleExport}
           disabled={isExporting || isImporting}
           fullWidth
@@ -118,7 +117,7 @@ export function ImportTab() {
 
         <Button
           variant="outlined"
-          startIcon={<UploadIcon />}
+          startIcon={<Upload  />}
           onClick={handleImportClick}
           disabled={isExporting || isImporting}
           fullWidth

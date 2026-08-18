@@ -3,6 +3,7 @@ import { defineConfig } from 'vite'
 import path from 'path'
 import fs from 'fs'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 
 /** Serve local build of creagen library */
 function localLibraryOnHttp(mode) {
@@ -177,6 +178,7 @@ export default defineConfig(async ({ mode }) => {
     plugins: [
       ...(creagenDevPath ? [localLibraryOnHttp(mode), watchExternal()] : []),
       // sandboxJs(mode),
+      tailwindcss(),
       redirectController(),
       injectAnalytics(mode),
       react(),

@@ -1,12 +1,12 @@
 import {
-  FullscreenExit as FullscreenExitIcon,
-  Fullscreen as FullscreenIcon,
-  MenuBook,
-} from '@mui/icons-material'
-import PlayArrowIcon from '@mui/icons-material/PlayArrow'
-import QrCodeIcon from '@mui/icons-material/QrCode'
-import ShareIcon from '@mui/icons-material/Share'
-import StopIcon from '@mui/icons-material/Stop'
+  Minimize2,
+  Maximize2,
+  BookOpen,
+  Play,
+  QrCode,
+  Share2,
+  Square,
+} from 'lucide-react'
 import { IconButton, useTheme } from '@mui/material'
 import type React from 'react'
 import { useEffect, useMemo, useState } from 'react'
@@ -22,6 +22,7 @@ import { UrlMutator } from '../UrlMutator'
 import { useCreagenEditor } from './CreagenContext'
 import { Export } from './Export'
 import { isMobile } from './isMobile'
+import { BAR_HEIGHT } from '../editor/EditorBar'
 
 const logger = createContextLogger('actions')
 
@@ -60,7 +61,7 @@ export function Actions({
     })
   }, [])
 
-  const size = sizeVariant === 'compact' ? '16px' : isMobile() ? '60px' : '50px'
+  const size = sizeVariant === 'compact' ? BAR_HEIGHT - 6 + 'px' : isMobile() ? '60px' : '50px'
   const isMobileDevice = isMobile()
 
   const fullscreenActionButtonSx = useMemo(
@@ -98,7 +99,7 @@ export function Actions({
               cursor: 'pointer',
             }}
           >
-            <QrCodeIcon style={{ fontSize: size }} />
+            <QrCode size={size}  />
           </IconButton>
         </HtmlTooltip>,
       )
@@ -155,7 +156,7 @@ export function Actions({
               cursor: 'pointer',
             }}
           >
-            <ShareIcon style={{ fontSize: size }} />
+            <Share2 size={size}  />
           </IconButton>
         </HtmlTooltip>,
       )
@@ -172,7 +173,7 @@ export function Actions({
               cursor: 'pointer',
             }}
           >
-            <MenuBook style={{ fontSize: size }} />
+            <BookOpen size={size}  />
           </IconButton>
         </HtmlTooltip>,
       )
@@ -202,9 +203,9 @@ export function Actions({
             }}
           >
             {isFullscreen ? (
-              <FullscreenExitIcon style={{ fontSize: size }} />
+              <Minimize2 size={size} />
             ) : (
-              <FullscreenIcon style={{ fontSize: size }} />
+              <Maximize2 size={size} />
             )}
           </IconButton>
         </HtmlTooltip>,
@@ -223,7 +224,7 @@ export function Actions({
               cursor: 'pointer',
             }}
           >
-            <StopIcon style={{ fontSize: size }} />
+            <Square size={size} />
           </IconButton>
         </HtmlTooltip>,
       )
@@ -240,7 +241,6 @@ export function Actions({
         }
       >
         <IconButton
-          size="small"
           color={isFullscreen ? 'inherit' : 'primary'}
           sx={fullscreenActionButtonSx}
           onClick={() => creagenEditor.executeCommand('editor.run')}
@@ -248,7 +248,7 @@ export function Actions({
             cursor: 'pointer',
           }}
         >
-          <PlayArrowIcon style={{ fontSize: size }} />
+            <Play size={size}  />
         </IconButton>
       </HtmlTooltip>,
     )

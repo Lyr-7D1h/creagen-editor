@@ -8,8 +8,7 @@ import {
   InputAdornment,
   TextField,
 } from '@mui/material'
-import PersonOutlineIcon from '@mui/icons-material/PersonOutline'
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
+import { User, Lock } from 'lucide-react'
 import { Turnstile } from './Turnstile'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 
@@ -71,7 +70,7 @@ export function LoginForm({
               input: {
                 startAdornment: (
                   <InputAdornment position="start">
-                    <PersonOutlineIcon fontSize="small" />
+                    <User size={16}  />
                   </InputAdornment>
                 ),
               },
@@ -91,7 +90,7 @@ export function LoginForm({
               input: {
                 startAdornment: (
                   <InputAdornment position="start">
-                    <LockOutlinedIcon fontSize="small" />
+                    <Lock size={16}  />
                   </InputAdornment>
                 ),
               },

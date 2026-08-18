@@ -1,4 +1,7 @@
-import { ExpandMore, InfoOutline } from '@mui/icons-material'
+import {
+  ChevronDown,
+  Info,
+} from 'lucide-react'
 import {
   Accordion,
   AccordionDetails,
@@ -87,7 +90,7 @@ export function SettingsTab() {
             }
           }}
         >
-          <AccordionSummary expandIcon={<ExpandMore />}>
+          <AccordionSummary expandIcon={<ChevronDown size={20}  />}>
             <Typography>{folderEntry.title}</Typography>
           </AccordionSummary>
           <AccordionDetails sx={{ padding: 0 }}>
@@ -145,11 +148,12 @@ export function SettingsTab() {
                             >
                               {entry.label}
                               {(entry.details?.length ?? 0) > 0 ? (
-                                <InfoOutline
-                                  sx={{
-                                    fontSize: 16,
+                                <Info
+                                  size={16}
+                                  style={{
                                     color: 'text.secondary',
                                   }}
+
                                 />
                               ) : null}
                             </Typography>

@@ -1,4 +1,3 @@
-import { Box, CircularProgress, CssBaseline } from '@mui/material'
 import { useEffect, useState } from 'react'
 import ReactDOM from 'react-dom/client'
 import { Controller } from '../src/controller/Controller'
@@ -12,6 +11,14 @@ import { ParamsViewPresentation } from '../src/params/ParamsViewPresentation'
 import { UrlMutator } from '../src/UrlMutator'
 
 let initialized = false
+
+function CircularProgress() {
+  return (
+    <div
+      className="w-12 h-12 rounded-full border-4 border-(--color-border) border-t-(--color-primary) animate-spin"
+    />
+  )
+}
 
 export function ControllerApp() {
   const [controller, setController] = useState<Controller | null>(null)
@@ -98,21 +105,14 @@ export function ControllerApp() {
 
   if (controller === null) {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh',
-        }}
-      >
+      <div className="flex justify-center items-center h-screen">
         <CircularProgress />
-      </Box>
+      </div>
     )
   }
 
   return (
-    <div style={{ padding: '20px', height: '100vh', overflow: 'auto' }}>
+    <div className="p-5 h-screen overflow-auto">
       <ParamsViewPresentation
         configs={configs}
         values={values}
@@ -153,7 +153,6 @@ export function ControllerApp() {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <Theme colorScheme="dark">
-    <CssBaseline />
     <ErrorBoundary>
       <ControllerApp />
     </ErrorBoundary>

@@ -1,9 +1,4 @@
-import { AccountTree, Settings } from '@mui/icons-material'
-import AutoStoriesIcon from '@mui/icons-material/AutoStories'
-import BookmarkIcon from '@mui/icons-material/Bookmark'
-import CommitIcon from '@mui/icons-material/Commit'
-import KeyboardIcon from '@mui/icons-material/Keyboard'
-import PublishIcon from '@mui/icons-material/Publish'
+import { GitBranch, Settings, BookOpen, Bookmark, GitCommitHorizontal, Keyboard, Upload } from 'lucide-react'
 import { Box, Button, ButtonGroup, Typography } from '@mui/material'
 import type React from 'react'
 import type { RefAttributes } from 'react'
@@ -33,19 +28,19 @@ interface TabConfig {
 
 const tabs: Record<string, TabConfig> = {
   vcs: {
-    icon: <AccountTree />,
+    icon: <GitBranch  />,
     title: 'Version Control',
   },
   'vcs-bookmarks': {
     title: 'Bookmarks',
     content: <BookmarksTab />,
-    icon: <BookmarkIcon />,
+    icon: <Bookmark  />,
     parent: 'vcs',
   },
   'vcs-commits': {
     title: 'Commits',
     content: <CommitsTab />,
-    icon: <CommitIcon />,
+    icon: <GitCommitHorizontal  />,
     parent: 'vcs',
   },
   // TODO: add support for remote
@@ -54,23 +49,23 @@ const tabs: Record<string, TabConfig> = {
         'vcs-actions': {
           title: 'Import/Export',
           content: <ImportTab />,
-          icon: <PublishIcon />,
+          icon: <Upload  />,
           parent: 'vcs',
         },
       }
     : {}),
   dependencies: {
-    icon: <AutoStoriesIcon />,
+    icon: <BookOpen  />,
     title: 'Dependencies',
     content: <DependenciesTab />,
   },
   keybinds: {
-    icon: <KeyboardIcon />,
+    icon: <Keyboard  />,
     title: 'Keybindings',
     content: <KeybindingsTab />,
   },
   settings: {
-    icon: <Settings />,
+    icon: <Settings  />,
     title: 'Settings',
     content: <SettingsTab />,
   },

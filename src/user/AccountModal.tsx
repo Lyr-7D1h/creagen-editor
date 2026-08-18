@@ -9,7 +9,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material'
-import AccountCircleIcon from '@mui/icons-material/AccountCircle'
+import { CircleUser } from 'lucide-react'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import type { RemoteClientStorage } from '../storage/RemoteClientStorage'
 
@@ -46,7 +46,7 @@ export function AccountModal({
       <DialogContent>
         <Stack spacing={1.5} sx={{ py: 2, alignItems: 'center' }}>
           <Avatar sx={{ width: 56, height: 56, bgcolor: 'primary.main' }}>
-            <AccountCircleIcon sx={{ fontSize: 40 }} />
+            <CircleUser size={40}  />
           </Avatar>
           <Typography variant="h6">{username}</Typography>
         </Stack>

@@ -1,9 +1,9 @@
 import {
-  HelpOutline as HelpOutlineIcon,
-  Refresh as RefreshIcon,
-  RestartAlt as RestartAltIcon,
-  Shuffle as ShuffleIcon,
-} from '@mui/icons-material'
+  HelpCircle,
+  RefreshCw,
+  RotateCcw,
+  Shuffle,
+} from 'lucide-react'
 import type { SelectChangeEvent } from '@mui/material'
 import {
   Box,
@@ -100,7 +100,7 @@ function SeedInput({
       />
       <Tooltip title="Generate new seed">
         <IconButton onClick={handleGenerateNew} size="small" sx={{ p: 0.5 }}>
-          <RefreshIcon fontSize="small" />
+          <RefreshCw size={16}  />
         </IconButton>
       </Tooltip>
     </Stack>
@@ -921,7 +921,7 @@ export function ParamsViewPresentation({
               sx={{ p: 0.5 }}
               disabled={configs.size === 0}
             >
-              <RestartAltIcon fontSize="small" />
+              <RotateCcw size={16}  />
             </IconButton>
           </span>
         </Tooltip>
@@ -934,7 +934,7 @@ export function ParamsViewPresentation({
               disabled={configs.size === 0}
               color={regenIntervalMs > 0 ? 'primary' : 'default'}
             >
-              <ShuffleIcon fontSize="small" />
+              <Shuffle size={16}  />
             </IconButton>
           </span>
         </Tooltip>
@@ -1016,7 +1016,7 @@ export function ParamsViewPresentation({
             }
           >
             <IconButton size="small" sx={{ p: 0.5 }}>
-              <HelpOutlineIcon fontSize="small" />
+              <HelpCircle size={16}  />
             </IconButton>
           </HtmlTooltip>
         </Box>

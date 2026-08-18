@@ -1,4 +1,4 @@
-import { Download, ExpandMore } from '@mui/icons-material'
+import { Download, ChevronDown } from 'lucide-react'
 import {
   Box,
   CircularProgress,
@@ -127,7 +127,7 @@ export function Export({
           {downloading ? (
             <CircularProgress size={size} />
           ) : (
-            <Download style={{ fontSize: size }} />
+            <Download size={size}  />
           )}
         </IconButton>
       </HtmlTooltip>
@@ -152,7 +152,7 @@ export function Export({
               onClick={() => setExpanded(!expanded)}
               size="small"
             >
-              <ExpandMore style={{ fontSize: size }} />
+              <ChevronDown size={size}  />
             </IconButton>
           </HtmlTooltip>
 

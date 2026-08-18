@@ -1,7 +1,7 @@
 import {
-  ExpandLess as ExpandLessIcon,
-  Settings as SettingsIcon,
-} from '@mui/icons-material'
+  ChevronUp,
+  Settings,
+} from 'lucide-react'
 import { IconButton, Tooltip } from '@mui/material'
 import { Allotment } from 'allotment'
 import 'allotment/dist/style.css'
@@ -112,7 +112,7 @@ export function CreagenEditorViewSplit() {
                               },
                             }}
                           >
-                            <ExpandLessIcon fontSize="small" />
+                            <ChevronUp size={16}  />
                           </IconButton>
                         </Tooltip>
                       )}
@@ -175,7 +175,7 @@ export function CreagenEditorViewSplit() {
                               },
                             }}
                           >
-                            <SettingsIcon fontSize="small" />
+                            <Settings size={16}  />
                           </IconButton>
                         </Tooltip>
                       )}

@@ -1,4 +1,4 @@
-import DeleteIcon from '@mui/icons-material/Delete'
+import { Trash2 } from 'lucide-react'
 import { IconButton, Typography } from '@mui/material'
 import type React from 'react'
 import type { Bookmark } from 'versie'
@@ -80,7 +80,7 @@ export const BookmarksTab = () => {
             },
           }}
         >
-          <DeleteIcon fontSize="small" />
+          <Trash2 size={16}  />
         </IconButton>
       ),
     },

@@ -41,5 +41,6 @@
     "allowJs": false,
     "allowUnreachableCode": false,
     "allowUnusedLabels": false
-  }
+  },
+  "exclude": ["dist"]
 }

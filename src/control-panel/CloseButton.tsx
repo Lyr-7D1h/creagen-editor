@@ -1,4 +1,4 @@
-import { Close as CloseIcon } from '@mui/icons-material'
+import { X } from 'lucide-react'
 import { IconButton } from '@mui/material'
 
 export function CloseButton({ onClose }: { onClose: () => void }) {
@@ -11,7 +11,7 @@ export function CloseButton({ onClose }: { onClose: () => void }) {
       }}
       title="Close"
     >
-      <CloseIcon fontSize="small" />
+      <X size={16} />
     </IconButton>
   )
 }

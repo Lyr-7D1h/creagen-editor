@@ -64,7 +64,7 @@ export function ActiveBookmark({ color }: { color?: string }) {
           fontSize: '0.95rem',
           cursor: hasUsername ? 'default' : 'pointer',
           paddingLeft: 1,
-          paddingRight: 1,
+          paddingRight: .4,
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           ...(!hasUsername && !isEditing
@@ -104,7 +104,7 @@ export function ActiveBookmark({ color }: { color?: string }) {
           </>
         )}
       </Typography>
-      {isUncommitted && !isEditing && (
+      {isUncommitted && activeBookmark.commit !== null && !isEditing && (
         <AddBookmarkButton
           onClick={handleAddBookmark}
           disabled={isAddingBookmark}

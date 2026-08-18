@@ -1,4 +1,4 @@
-import { Add, ChevronRight } from '@mui/icons-material'
+import { Plus, ChevronRight } from 'lucide-react'
 import {
   Chip,
   Divider,
@@ -71,7 +71,7 @@ function BookmarkMenu({
         onClick={onCreateBookmark}
         sx={{ fontSize: '0.75rem', padding: '4px 8px' }}
       >
-        <Add sx={{ fontSize: '12px', marginRight: '4px' }} />
+        <Plus size={12} style={{ marginRight: '4px' }}  />
         New bookmark
       </MenuItem>
     </Menu>
@@ -101,8 +101,8 @@ function CollapsibleButton({
       size="small"
     >
       <ChevronRight
-        sx={{
-          fontSize: '12px',
+        style={{
+          fontSize: 12,
           transform: open ? 'rotate(270deg)' : 'rotate(90deg)',
           transition: 'transform 0.3s',
         }}

@@ -1,4 +1,4 @@
-import { ExpandLess, ExpandMore } from '@mui/icons-material'
+import { ChevronUp, ChevronDown } from 'lucide-react'
 import { Box, Collapse, IconButton, Stack, Typography } from '@mui/material'
 import { useEffect, useState } from 'react'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
@@ -98,9 +98,9 @@ export function MonitorPerformanceSection() {
         )}
         <IconButton size="small" sx={{ p: 0, width: 20, height: 20 }}>
           {isExpanded ? (
-            <ExpandLess sx={{ fontSize: 16 }} />
+            <ChevronUp size={16}  />
           ) : (
-            <ExpandMore sx={{ fontSize: 16 }} />
+            <ChevronDown size={16}  />
           )}
         </IconButton>
       </Box>

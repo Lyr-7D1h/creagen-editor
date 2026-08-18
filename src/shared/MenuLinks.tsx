@@ -1,6 +1,4 @@
-import ArticleIcon from '@mui/icons-material/Article'
-import BugReportIcon from '@mui/icons-material/BugReport'
-import GitHubIcon from '@mui/icons-material/GitHub'
+import { FileText, Bug, GitFork } from 'lucide-react'
 import { IconButton } from '@mui/material'
 import { HtmlTooltip } from '../editor/HtmlTooltip'
 import { DiscordIcon } from '../menu/DiscordIcon'
@@ -18,7 +16,7 @@ export function MenuLinks() {
           sx={{ padding: '5px' }}
           rel="noopener noreferrer"
         >
-          <ArticleIcon style={{ fontSize: '1.3rem' }} />
+          <FileText size={20}  />
         </IconButton>
       </HtmlTooltip>
       <HtmlTooltip title="Join our discord">
@@ -42,7 +40,7 @@ export function MenuLinks() {
           sx={{ padding: '5px' }}
           rel="noopener noreferrer"
         >
-          <GitHubIcon style={{ fontSize: '1.3rem' }} />
+          <GitFork size={20}  />
         </IconButton>
       </HtmlTooltip>
       <HtmlTooltip title="Report a bug">
@@ -54,7 +52,7 @@ export function MenuLinks() {
           sx={{ padding: '5px' }}
           rel="noopener noreferrer"
         >
-          <BugReportIcon style={{ fontSize: '1.3rem' }} />
+          <Bug size={20}  />
         </IconButton>
       </HtmlTooltip>
       {CREAGEN_REMOTE_URL != null && <LoginButton />}

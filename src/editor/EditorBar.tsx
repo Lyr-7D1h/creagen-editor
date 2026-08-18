@@ -1,4 +1,4 @@
-import { Add, ChevronRight } from '@mui/icons-material'
+import { Plus, ChevronRight } from 'lucide-react'
 import { Box, IconButton } from '@mui/material'
 import { useEffect, useRef, useState } from 'react'
 import { Actions } from '../creagen-editor/Actions'
@@ -10,7 +10,7 @@ import { ActiveBookmark } from './ActiveBookmark'
 import { History } from './History'
 import { HtmlTooltip } from './HtmlTooltip'
 
-const BAR_HEIGHT = 18
+export const BAR_HEIGHT = 18
 
 export function EditorBar({
   menu,
@@ -114,7 +114,7 @@ export function EditorBar({
             size="small"
           >
             <ChevronRight
-              sx={{
+              style={{
                 transform: menu ? 'rotate(180deg)' : 'none',
                 transition: 'transform 0.3s',
               }}
@@ -147,7 +147,7 @@ export function EditorBar({
             }}
             size="small"
           >
-            <Add />
+            <Plus size={16}  />
           </IconButton>
         </HtmlTooltip>
         {showActiveBookmark ? (

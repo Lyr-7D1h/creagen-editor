@@ -1,6 +1,5 @@
 import { Button } from '@mui/material'
-import AccountCircleIcon from '@mui/icons-material/AccountCircle'
-import PersonAddIcon from '@mui/icons-material/PersonAdd'
+import { CircleUser, UserPlus } from 'lucide-react'
 import { useState } from 'react'
 import { LoginModal } from './LoginModal'
 import { AccountModal } from './AccountModal'
@@ -35,7 +34,7 @@ export function LoginButton() {
         color="primary"
         onClick={() => (user ? setOpen(true) : openWithMode('login'))}
         sx={{ fontSize: '0.7rem', py: 0.25, px: 1, mr: 0.25 }}
-        startIcon={<AccountCircleIcon sx={{ fontSize: '1rem !important' }} />}
+        startIcon={<CircleUser size={16}  />}
       >
         {user?.username ?? 'Login'}
       </Button>
@@ -46,7 +45,7 @@ export function LoginButton() {
           color="inherit"
           onClick={() => openWithMode('signup')}
           sx={{ fontSize: '0.7rem', py: 0.25, px: 1 }}
-          startIcon={<PersonAddIcon sx={{ fontSize: '1rem !important' }} />}
+          startIcon={<UserPlus size={16}  />}
         >
           Sign up
         </Button>

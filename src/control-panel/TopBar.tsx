@@ -1,8 +1,8 @@
 import {
-  ExpandMore as ExpandMoreIcon,
-  FullscreenExit as FullscreenExitIcon,
-  Fullscreen as FullscreenIcon,
-} from '@mui/icons-material'
+  ChevronDown,
+  Minimize2,
+  Maximize2,
+} from 'lucide-react'
 import { Box, IconButton, Tab, Tabs, Tooltip } from '@mui/material'
 import type React from 'react'
 import { CloseButton } from './CloseButton'
@@ -128,9 +128,9 @@ export function TopBar({
             }}
           >
             {isMaximized === true ? (
-              <FullscreenExitIcon fontSize="small" />
+              <Minimize2 size={16}  />
             ) : (
-              <FullscreenIcon fontSize="small" />
+              <Maximize2 size={16}  />
             )}
           </IconButton>
         </Tooltip>
@@ -147,7 +147,7 @@ export function TopBar({
               },
             }}
           >
-            <ExpandMoreIcon fontSize="small" />
+            <ChevronDown size={16}  />
           </IconButton>
         </Tooltip>
       )}

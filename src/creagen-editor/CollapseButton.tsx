@@ -1,7 +1,7 @@
 import {
-  ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon,
-} from '@mui/icons-material'
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react'
 import { IconButton } from '@mui/material'
 
 export function CollapseButton({
@@ -22,9 +22,9 @@ export function CollapseButton({
       title={collapsed ? 'Expand' : 'Collapse'}
     >
       {collapsed ? (
-        <ExpandLessIcon fontSize="small" />
+        <ChevronUp size={16}  />
       ) : (
-        <ExpandMoreIcon fontSize="small" />
+        <ChevronDown size={16}  />
       )}
     </IconButton>
   )

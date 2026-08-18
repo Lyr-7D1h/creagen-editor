@@ -1,5 +1,4 @@
-import DeleteIcon from '@mui/icons-material/Delete'
-import ReplayIcon from '@mui/icons-material/Replay'
+import { Trash2, RotateCcw } from 'lucide-react'
 import { Chip, IconButton } from '@mui/material'
 import { useState } from 'react'
 import type { Command } from '../../creagen-editor/commands'
@@ -134,7 +133,7 @@ export function KeybindingsTab() {
                     size="small"
                     title="Remove binding"
                   >
-                    <DeleteIcon sx={{ fontSize: 16 }} />
+                    <Trash2 size={16}  />
                   </IconButton>
                 </div>
               ))
@@ -169,7 +168,7 @@ export function KeybindingsTab() {
                 size="small"
                 title="Reset to default bindings"
               >
-                <ReplayIcon sx={{ fontSize: 16 }} />
+                <RotateCcw size={16}  />
               </IconButton>
             )}
           </div>

@@ -2,9 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import React from 'react'
 import Box from '@mui/material/Box'
 import { IconButton, Collapse, Stack } from '@mui/material'
-import ArrowLeft from '@mui/icons-material/ArrowLeft'
-import ExpandLessIcon from '@mui/icons-material/ExpandLess'
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import {  ChevronUp, ChevronDown, Triangle } from 'lucide-react'
 import { useActiveBookmark, useSettings } from '../events/useEditorEvents'
 import { HistoryItemChip } from './HistoryItemChip'
 import type { HistoryItem } from 'versie'
@@ -34,10 +32,13 @@ function HistoryLink({
         activeBookmark={activeBookmark}
       />
       {!last && (
-        <ArrowLeft
-          sx={{ color: fullscreen ? '#bbb' : undefined }}
-          fontSize="small"
-          color="action"
+        <Triangle
+
+          style={{
+            color: fullscreen ? '#bbb' :'#868686',
+            transform: 'rotate(-90deg)',
+          }}
+          size={7}
         />
       )}
     </>
@@ -133,9 +134,9 @@ export function History({
           }}
         >
           {expanded ? (
-            <ExpandLessIcon fontSize="small" />
+            <ChevronUp size={16}  />
           ) : (
-            <ExpandMoreIcon fontSize="small" />
+            <ChevronDown size={16}  />
           )}
         </IconButton>
       )}

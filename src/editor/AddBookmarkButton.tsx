@@ -1,4 +1,4 @@
-import { Add } from '@mui/icons-material'
+import { Plus } from 'lucide-react'
 import { IconButton } from '@mui/material'
 import { HtmlTooltip } from './HtmlTooltip'
 
@@ -17,6 +17,7 @@ export function AddBookmarkButton({
         sx={{
           padding: '1px',
           margin: 0,
+          marginLeft: '-2px',
           color: 'inherit',
           width: '16px',
           height: '16px',
@@ -26,7 +27,7 @@ export function AddBookmarkButton({
         }}
         size="small"
       >
-        <Add sx={{ fontSize: '12px' }} />
+        <Plus size={12}  />
       </IconButton>
     </HtmlTooltip>
   )

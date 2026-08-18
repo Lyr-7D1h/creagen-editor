@@ -1,10 +1,5 @@
-import {
-  Delete as DeleteIcon,
-  ErrorOutline as ErrorIcon,
-  FilterList as FilterListIcon,
-  WarningAmber as WarnIcon,
-} from '@mui/icons-material'
-import type { SvgIconProps, Theme } from '@mui/material'
+import { Trash2, AlertCircle,  AlertTriangle, type LucideProps, ListFilter } from 'lucide-react'
+import type { Theme } from '@mui/material'
 import {
   Box,
   Checkbox,
@@ -36,7 +31,7 @@ interface LevelConfig {
   /** Text colour for the message */
   textColor: string
   /** Icon shown at the start of each row (null = no icon) */
-  Icon: React.ComponentType<SvgIconProps> | null
+  Icon: React.ComponentType<LucideProps> | null
   iconColor: string
   /** Label shown in the filter button */
   filterLabel: string | null
@@ -53,7 +48,7 @@ const getLevelConfig = (theme: Theme): Record<LogLevel, LevelConfig> => ({
         ? 'rgba(244, 67, 54, 0.15)'
         : 'rgba(198, 40, 40, 0.13)',
     textColor: theme.palette.error.main,
-    Icon: ErrorIcon,
+    Icon: AlertCircle,
     iconColor: theme.palette.error.main,
     filterLabel: null,
   },
@@ -67,7 +62,7 @@ const getLevelConfig = (theme: Theme): Record<LogLevel, LevelConfig> => ({
         ? 'rgba(244, 67, 54, 0.15)'
         : 'rgba(198, 40, 40, 0.13)',
     textColor: theme.palette.error.main,
-    Icon: ErrorIcon,
+    Icon: AlertCircle,
     iconColor: theme.palette.error.main,
     filterLabel: 'Errors',
   },
@@ -81,7 +76,7 @@ const getLevelConfig = (theme: Theme): Record<LogLevel, LevelConfig> => ({
         ? 'rgba(255, 152, 0, 0.15)'
         : 'rgba(230, 81, 0, 0.12)',
     textColor: theme.palette.warning.main,
-    Icon: WarnIcon,
+    Icon: AlertTriangle,
     iconColor: theme.palette.warning.main,
     filterLabel: 'Warnings',
   },
@@ -259,7 +254,7 @@ function Row({
       >
         {Icon != null && (
           <Icon
-            sx={{ fontSize: '13px', color: cfg.iconColor, display: 'block' }}
+          style={{ fontSize: '13px', color: cfg.iconColor, display: 'block' }}
           />
         )}
       </Box>
@@ -338,7 +333,7 @@ function LevelFilterDropdown({
             '&:hover': { backgroundColor: 'action.hover' },
           }}
         >
-          <FilterListIcon sx={{ fontSize: '14px', display: 'block' }} />
+          <ListFilter size={14} style={{ display: 'block' }}  />
           <Typography
             component="span"
             sx={{ fontSize: '0.65rem', fontWeight: 600, lineHeight: 1 }}
@@ -403,7 +398,7 @@ function LevelFilterDropdown({
                 }}
               >
                 {Icon != null ? (
-                  <Icon sx={{ fontSize: '13px', display: 'block' }} />
+                  <Icon style={{ fontSize: '13px', display: 'block', fill: 'currentColor' }} />
                 ) : (
                   <Box
                     sx={{
@@ -588,7 +583,7 @@ export function ConsoleView() {
                 }}
               >
                 {Icon != null && (
-                  <Icon sx={{ fontSize: '13px', display: 'block' }} />
+                  <Icon style={{ fontSize: '13px', display: 'block', fill: 'currentColor' }} />
                 )}
                 <Typography
                   component="span"
@@ -615,7 +610,7 @@ export function ConsoleView() {
               disabled={noOutput}
               sx={{ p: '2px' }}
             >
-              <DeleteIcon sx={{ fontSize: 14 }} />
+              <Trash2 size={14}  />
             </IconButton>
           </span>
         </Tooltip>
