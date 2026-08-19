@@ -20,14 +20,14 @@ export default defineConfig({
     lib: {
       entry: path.resolve(import.meta.dirname, 'src/index.ts'),
       name: 'CreagenEditor',
-      formats: ['es', 'cjs'],
+      formats: ['es'],
       fileName: (format) =>
         `creagen-editor.${format === 'es' ? 'mjs' : 'cjs'}`,
     },
     sourcemap: true,
     cssCodeSplit: false,
     emptyOutDir: true,
-    minify: 'esbuild',
+    minify: 'oxc',
     rollupOptions: {
       external: [
         'react',
