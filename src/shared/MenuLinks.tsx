@@ -16,7 +16,7 @@ export function MenuLinks() {
           sx={{ padding: '5px' }}
           rel="noopener noreferrer"
         >
-          <FileText size={20}  />
+          <FileText size={18}  />
         </IconButton>
       </HtmlTooltip>
       <HtmlTooltip title="Join our discord">
@@ -28,7 +28,7 @@ export function MenuLinks() {
           sx={{ padding: '5px' }}
           rel="noopener noreferrer"
         >
-          <DiscordIcon style={{ fontSize: '1.3rem' }} />
+          <DiscordIcon style={{ fontSize: '1.1rem' }} />
         </IconButton>
       </HtmlTooltip>
       <HtmlTooltip title="Its open-source!">
@@ -40,7 +40,7 @@ export function MenuLinks() {
           sx={{ padding: '5px' }}
           rel="noopener noreferrer"
         >
-          <GitFork size={20}  />
+          <GitFork size={18}  />
         </IconButton>
       </HtmlTooltip>
       <HtmlTooltip title="Report a bug">
@@ -52,7 +52,7 @@ export function MenuLinks() {
           sx={{ padding: '5px' }}
           rel="noopener noreferrer"
         >
-          <Bug size={20}  />
+          <Bug size={18}  />
         </IconButton>
       </HtmlTooltip>
       {CREAGEN_REMOTE_URL != null && <LoginButton />}

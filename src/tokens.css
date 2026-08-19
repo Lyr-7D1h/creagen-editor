@@ -14,7 +14,7 @@
   --color-text-disabled: #a1a1aa;
 }
 
-.dark {
+[data-theme='dark'] {
   --color-icon-error: #f44336;
   --color-icon-warn: #ff9800;
   --color-icon-info: #e4e4e7;

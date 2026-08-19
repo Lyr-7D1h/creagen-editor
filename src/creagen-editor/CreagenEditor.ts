@@ -82,10 +82,9 @@ export class CreagenEditor {
   libraryImports: Map<string, LibraryImport> = new Map()
 
   static async create(config: CreagenEditorConfig) {
-    const storage =
-      config.remoteUrl
-        ? await RemoteClientStorage.create()
-        : await LocalClientStorage.create()
+    const storage = config.remoteUrl
+      ? await RemoteClientStorage.create()
+      : await LocalClientStorage.create()
     const settings = await Settings.create(storage)
     const sandbox = Sandbox.create(config.sandboxRuntimeUrl, settings)
     const editor = Editor.create(settings)
@@ -118,10 +117,9 @@ export class CreagenEditor {
     customKeybindings: CustomKeybinding[],
   ) {
     this.keybindings = new Keybindings(customKeybindings, this)
-    this.controller =
-      config.controllerUrl
-        ? new Controller(config.controllerUrl)
-        : null
+    this.controller = config.controllerUrl
+      ? new Controller(config.controllerUrl)
+      : null
     this.params = new Params(
       this.controller ?? undefined,
       this.settings,

@@ -50,19 +50,40 @@ function ThemeSync() {
   const themeSetting = useSettings('editor.theme')
 
   useEffect(() => {
-    // Set to null for system mode (follows OS preference)
-    // or explicitly set 'light' or 'dark'
-    if (themeSetting === 'system') {
-      setColorScheme(null)
-    } else if (themeSetting === 'light' || themeSetting === 'dark') {
+    // Set explicit themes directly; everything else (null, 'system')
+    // maps to null so MUI follows the OS.
+    if (themeSetting === 'light' || themeSetting === 'dark') {
       setColorScheme(themeSetting)
+    } else {
+      setColorScheme(null)
     }
   }, [setColorScheme, themeSetting])
 
-  // Sync with Tailwind CSS via data-theme attribute
+  // Sync with Tailwind CSS via data-theme attribute.
+  // We rely on `themeSetting` and a media query listener directly,
+  // avoiding MUI's `mode` value which appears to expose 'system' as a
+  // string instead of the resolved preference.
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', mode ?? 'system')
-  }, [mode])
+    if (typeof window === 'undefined') return
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+
+    const apply = () => {
+      if (themeSetting === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark')
+      } else if (themeSetting === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light')
+      } else {
+        document.documentElement.setAttribute(
+          'data-theme',
+          mq.matches ? 'dark' : 'light'
+        )
+      }
+    }
+
+    apply()
+    mq.addEventListener('change', apply)
+    return () => mq.removeEventListener('change', apply)
+  }, [themeSetting])
 
   return null
 }
