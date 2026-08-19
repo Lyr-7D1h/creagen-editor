@@ -162,10 +162,10 @@ export default defineConfig(async ({ mode }) => {
       rollupOptions: {
         input: {
           ...(process.env.VITE_ENTRYPOINT === 'sandbox'
-            ? { sandbox: path.resolve(__dirname, 'sandbox-runtime/index.html') }
+            ? { sandbox: path.resolve(import.meta.dirname, 'sandbox-runtime/index.html') }
             : {
-                main: path.resolve(__dirname, 'index.html'),
-                controller: path.resolve(__dirname, 'controller/index.html'),
+                main: path.resolve(import.meta.dirname, 'index.html'),
+                controller: path.resolve(import.meta.dirname, 'controller/index.html'),
               }),
         },
       },

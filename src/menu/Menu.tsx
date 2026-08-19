@@ -173,6 +173,10 @@ export function Menu<T>({ ref, width }: MenuProps & RefAttributes<T>) {
                   '& .MuiButton-startIcon': {
                     marginRight: 0.5,
                     marginLeft: -0.5,
+                    '& svg': {
+                      width: 16,
+                      height: 16,
+                    },
                     '@container (max-width: 480px)': {
                       marginRight: 0,
                       marginLeft: 0,
@@ -224,6 +228,10 @@ export function Menu<T>({ ref, width }: MenuProps & RefAttributes<T>) {
                     '& .MuiButton-startIcon': {
                       marginRight: 0.5,
                       marginLeft: -0.5,
+                      '& svg': {
+                        width: 16,
+                        height: 16,
+                      },
                       '@container (max-width: 480px)': {
                         marginRight: 0,
                         marginLeft: 0,
