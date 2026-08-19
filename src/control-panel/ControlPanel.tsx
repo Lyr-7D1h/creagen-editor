@@ -7,7 +7,7 @@ import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import { useForceUpdateOnEditorEvent } from '../events/useEditorEvents'
 import { ParamsView } from '../params/ParamsView'
 import { useLocalStorage } from '../storage/useLocalStorage'
-import { ConsoleView } from './ConsoleView'
+import { ConsoleView } from './ConsoleView/ConsoleView'
 import { TopBar } from './TopBar'
 
 interface TabPanelProps {

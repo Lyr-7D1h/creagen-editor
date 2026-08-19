@@ -1,4 +1,5 @@
 import { createRoot } from 'react-dom/client'
+import './styles.css'
 import { CreagenEditorView } from './CreagenEditorView'
 
 const root = createRoot(document.getElementById('root')!)

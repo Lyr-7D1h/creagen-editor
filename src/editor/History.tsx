@@ -33,7 +33,7 @@ function HistoryLink({
       />
       {!last && (
         <Triangle
-
+        fill='currentColor'
           style={{
             color: fullscreen ? '#bbb' :'#868686',
             transform: 'rotate(-90deg)',

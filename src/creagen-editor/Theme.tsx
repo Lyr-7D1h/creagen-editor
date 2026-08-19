@@ -46,7 +46,7 @@ const muiTheme = createTheme({
 
 // Inner component that uses useColorScheme hook
 function ThemeSync() {
-  const { setColorScheme } = useColorScheme()
+  const { mode, setColorScheme } = useColorScheme()
   const themeSetting = useSettings('editor.theme')
 
   useEffect(() => {
@@ -58,6 +58,11 @@ function ThemeSync() {
       setColorScheme(themeSetting)
     }
   }, [setColorScheme, themeSetting])
+
+  // Sync with Tailwind CSS via data-theme attribute
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', mode ?? 'system')
+  }, [mode])
 
   return null
 }
