@@ -1,3 +1,8 @@
+---
+title: What is the creagen library?
+description: Learn about the creagen creative coding library
+---
+
 # About
 
 Creagen is a general purpose library meant for creative coding.

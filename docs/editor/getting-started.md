@@ -1,3 +1,8 @@
+---
+title: Getting Started
+description: Get started with Creagen Editor, a creative coding web editor
+---
+
 # Getting Started
 
 Welcome to Creagen Editor, a creative coding web editor focused on being minimal, customizable, fast, and powerful.

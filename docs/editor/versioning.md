@@ -1,3 +1,8 @@
+---
+title: Versioning
+description: How commit-based versioning and bookmarks work in Creagen Editor
+---
+
 # Versioning
 
 Creagen Editor uses a commit-based version model designed for quick sketch iteration.

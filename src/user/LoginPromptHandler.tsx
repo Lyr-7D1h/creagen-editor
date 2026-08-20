@@ -1,13 +1,13 @@
 import React, { useState } from 'react'
 import { LoginModal } from './LoginModal'
-import { useCreagenEditor } from '../creagen-editor/CreagenContext'
-import type { RemoteClientStorage } from '../storage/RemoteClientStorage'
 import { editorEvents } from '../events/events'
+import { useCreagenEditor } from '../creagen-editor/CreagenContext'
+
 
 export function LoginPromptHandler() {
   const [open, setOpen] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
-  const storage = useCreagenEditor().storage as RemoteClientStorage
+  const storage = useCreagenEditor().storage
 
   React.useEffect(() => {
     return editorEvents.on('login-prompt', (data) => {

@@ -1,3 +1,8 @@
+---
+title: Roadmap
+description: Planned features and improvements for the creagen library
+---
+
 # Roadmap
 
 - Canvas

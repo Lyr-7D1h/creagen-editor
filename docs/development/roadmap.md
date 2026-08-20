@@ -1,3 +1,8 @@
+---
+title: Editor Roadmap
+description: Planned features and improvements for Creagen Editor
+---
+
 # Roadmap
 
 - Save specific version of a sketch

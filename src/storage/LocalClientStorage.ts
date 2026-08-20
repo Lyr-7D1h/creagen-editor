@@ -1,32 +1,54 @@
-import type {
-  BlobHash,
-  Bookmark,
-  Commit,
-  CommitHash,
-  IndexdbImport,
-  Storage,
-} from 'versie'
-import { IndexDBStorage } from 'versie'
-import type { CommitMetadata } from '../creagen-editor/CommitMetadata'
+import type { Bookmark, IndexdbImport } from 'versie'
+import { IndexDBStorage, Versie } from 'versie'
+import { CommitMetadata } from '../creagen-editor/CommitMetadata'
 import type { CustomKeybinding } from '../creagen-editor/keybindings'
 import { logger } from '../logs/logger'
+import type { JwtPayload } from '../user/jwt'
+import type { ClientStorage } from './ClientStorage'
 import { localStorage } from './LocalStorage'
 
 /** Entry point for fetching all data */
-export class LocalClientStorage implements Storage<CommitMetadata> {
+export class LocalClientStorage implements ClientStorage {
   static async create() {
     const indexdbStorageResult = await IndexDBStorage.create<CommitMetadata>()
     if (!indexdbStorageResult.ok) throw indexdbStorageResult.error
     if (!indexdbStorageResult.value.persisted)
       logger.warn('Local storage might not be persisted')
     const indexdb = indexdbStorageResult.value.indexdb
-    return new LocalClientStorage(indexdb)
+
+    const vcsResult = await Versie.create(indexdb, (raw) => {
+      return CommitMetadata.parse(raw)
+    })
+    if (!vcsResult.ok) throw vcsResult.error
+    const versie = vcsResult.value
+
+    return new LocalClientStorage(versie, indexdb)
   }
 
   readonly remote = false
   /** Needed for interface compat with `RemoteClientStorage` */
   readonly user = undefined
-  constructor(readonly indexdb: IndexDBStorage<CommitMetadata>) {}
+  constructor(
+    readonly versie: Versie<CommitMetadata>,
+    readonly indexdb: IndexDBStorage<CommitMetadata>,
+  ) {}
+
+  login(
+    _username: string,
+    _password: string,
+    _turnstileToken: string,
+  ): Promise<string | true> {
+    throw new Error('Method not implemented.')
+  }
+  register(): Promise<string | true> {
+    throw new Error('Method not implemented.')
+  }
+  session(): JwtPayload {
+    throw new Error('Method not implemented.')
+  }
+  logout(): void {
+    throw new Error('Method not implemented.')
+  }
 
   setSettings(value: Record<string, unknown>) {
     return Promise.resolve(localStorage.set('settings', value))
@@ -40,30 +62,15 @@ export class LocalClientStorage implements Storage<CommitMetadata> {
   getCustomKeybindings() {
     return Promise.resolve(localStorage.get('custom-keybindings'))
   }
+  getUserBookmark(
+    bookmarkName: string,
+    _user?: string,
+  ): Promise<Bookmark | null> {
+    return Promise.resolve(this.versie.getBookmark(bookmarkName))
+  }
 
-  getCommit(id: CommitHash) {
-    return this.indexdb.getCommit(id)
-  }
-  getCommitData(hash: BlobHash) {
-    return this.indexdb.getCommitData(hash)
-  }
-  getBookmark(bookmarkName: string) {
-    return this.indexdb.getBookmark(bookmarkName)
-  }
-  setBookmark(bookmark: Bookmark) {
-    return this.indexdb.setBookmark(bookmark)
-  }
-  setCommit(commit: Commit<CommitMetadata>, data: string) {
-    return this.indexdb.setCommit(commit, data)
-  }
-  removeBookmark(id: string) {
-    return this.indexdb.removeBookmark(id)
-  }
-  getAllCommits() {
-    return this.indexdb.getAllCommits()
-  }
-  getAllBookmarks() {
-    return this.indexdb.getAllBookmarks()
+  estimateUsage() {
+    return navigator.storage.estimate()
   }
 
   import(data: IndexdbImport) {
@@ -71,9 +78,5 @@ export class LocalClientStorage implements Storage<CommitMetadata> {
   }
   export() {
     return this.indexdb.export()
-  }
-
-  estimateUsage() {
-    return navigator.storage.estimate()
   }
 }

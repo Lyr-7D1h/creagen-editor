@@ -1,5 +1,7 @@
-# Creagen Editor
-
+---
+title: What is creagen?
+description: Learn about what creagen is
+---
 Creagen Editor is an open source creative coding web editor focused on being minimal, customizable, fast, and powerful.
 
 Its goal is to make creating and sharing creative projects as easy as it possibly can be.

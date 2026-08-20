@@ -1,5 +1,5 @@
-import type { ClientStorage } from '../creagen-editor/CreagenEditor'
 import { createContextLogger } from '../logs/logger'
+import type { ClientStorage } from '../storage/ClientStorage'
 import type {
   SettingsConfigKey,
   SettingsEntry,

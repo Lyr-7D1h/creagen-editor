@@ -1,3 +1,8 @@
+---
+title: Dependencies
+description: How dependency versions are pinned in Creagen Editor
+---
+
 # Dependencies
 
 Creagen Editor dependencies are version pinned.

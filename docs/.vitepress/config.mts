@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitepress'
+import { sidebar } from './sidebar'
 
 const SITE_URL = 'https://creagen.dev/docs'
 const SITE_TITLE = 'Creagen Docs'
@@ -10,7 +11,7 @@ function toCanonicalUrl(relativePath: string): string {
     .replace(/\.md$/, '')
   const pathname = normalizedPath ? `/${normalizedPath}` : '/'
 
-  return new URL(pathname, `${SITE_URL}/`).toString()
+  return `${SITE_URL}${pathname}`
 }
 
 function pageTitle(frontmatterTitle?: string): string {
@@ -61,33 +62,7 @@ export default defineConfig({
         link: 'https://creagen.dev',
       },
     ],
-    sidebar: [
-      {
-        text: 'Editor',
-        items: [
-          { text: 'Getting Started', link: '/editor/getting-started' },
-          { text: 'Parameters', link: '/editor/parameters' },
-          { text: 'Versioning', link: '/editor/versioning' },
-          { text: 'Dependencies', link: '/editor/dependencies' },
-          { text: 'Controller', link: '/editor/controller' },
-          { text: 'Useful Links', link: '/editor/useful-links' },
-        ],
-      },
-      {
-        text: 'Creagen Library',
-        items: [
-          { text: 'About', link: '/creagen' },
-          { text: 'Roadmap', link: '/creagen/roadmap' },
-        ],
-      },
-      {
-        text: 'Development',
-        items: [
-          { text: 'Usage', link: '/development/usage' },
-          { text: 'Roadmap', link: '/development/roadmap' },
-        ],
-      },
-    ],
+    sidebar,
     socialLinks: [
       { icon: 'github', link: 'https://github.com/lyr-7d1h/creagen-editor' },
     ],

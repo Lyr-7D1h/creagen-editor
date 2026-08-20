@@ -1,3 +1,8 @@
+---
+title: Usage
+description: How to install and run Creagen Editor locally, including build-time variables
+---
+
 # Usage
 
 You can run Creagen Editor completely locally so you don't need any connection to the outside world while writing sketches or change the editor to your desire while still allowing for storing commits remotely.

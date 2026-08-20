@@ -1,3 +1,8 @@
+---
+title: Parameters
+description: Learn about interactive parameter controls for your sketch
+---
+
 # Parameters
 
 Parameters are interactive controls for your sketch.

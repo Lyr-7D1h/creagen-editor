@@ -2,17 +2,16 @@ import { SemVer } from 'semver'
 import type { AsyncResult } from 'typescript-result'
 import { Result } from 'typescript-result'
 import type {
-  Bookmark,
-  BookmarkAlreadyExistsError,
-  BookmarkNotFoundError,
-  Commit,
-  CommitHash,
-  IndexdbImport,
-  InvalidBookmarkNameError,
-  ParseError,
-  VersieStorageError,
+    Bookmark,
+    BookmarkAlreadyExistsError,
+    BookmarkNotFoundError,
+    Commit,
+    CommitHash,
+    IndexdbImport,
+    InvalidBookmarkNameError,
+    ParseError,
+    VersieStorageError,
 } from 'versie'
-import { Versie } from 'versie'
 import z from 'zod'
 import { Controller } from '../controller/Controller'
 import { Editor } from '../editor/Editor'
@@ -23,8 +22,8 @@ import { log, logger, Severity } from '../logs/logger'
 import { Params } from '../params/Params'
 import { Sandbox } from '../sandbox/Sandbox'
 import { Settings } from '../settings/Settings'
+import type { ClientStorage } from '../storage/ClientStorage'
 import { LocalClientStorage } from '../storage/LocalClientStorage'
-import { RemoteClientStorage } from '../storage/RemoteClientStorage'
 import { UrlMutator } from '../UrlMutator'
 import type { Command } from './commands'
 import { COMMANDS } from './commands'
@@ -60,10 +59,10 @@ export type ActiveBookmark = {
   username?: string
 }
 
-export type ClientStorage = LocalClientStorage | RemoteClientStorage
-
 export interface CreagenEditorConfig {
-  remoteUrl?: string
+  /** Is this component rendered under a different base path? */
+  basePath?: string
+  clientStorage?: ClientStorage
   sandboxRuntimeUrl: string
   controllerUrl?: string
   turnstileSiteKey?: string
@@ -82,18 +81,13 @@ export class CreagenEditor {
   libraryImports: Map<string, LibraryImport> = new Map()
 
   static async create(config: CreagenEditorConfig) {
-    const storage = config.remoteUrl
-      ? await RemoteClientStorage.create()
+    const storage = config.clientStorage
+      ? config.clientStorage
       : await LocalClientStorage.create()
     const settings = await Settings.create(storage)
     const sandbox = Sandbox.create(config.sandboxRuntimeUrl, settings)
     const editor = Editor.create(settings)
 
-    const vcsResult = await Versie.create(storage, (raw) => {
-      return CommitMetadata.parse(raw)
-    })
-    if (!vcsResult.ok) throw vcsResult.error
-    const vcs = vcsResult.value
     const customKeybindings = (await storage.getCustomKeybindings()) ?? []
 
     return new CreagenEditor(
@@ -102,7 +96,6 @@ export class CreagenEditor {
       editor,
       settings,
       storage,
-      vcs,
       customKeybindings,
     )
   }
@@ -113,7 +106,6 @@ export class CreagenEditor {
     public editor: Editor,
     public settings: Settings,
     public storage: ClientStorage,
-    private versie: Versie<CommitMetadata>,
     customKeybindings: CustomKeybinding[],
   ) {
     this.keybindings = new Keybindings(customKeybindings, this)
@@ -208,8 +200,8 @@ export class CreagenEditor {
     const mutator = new UrlMutator()
     if (this.activeBookmark.commit === null) {
       // Uncommitted bookmark - show commit or empty
-      if (this.versie.head) {
-        mutator.setCommit(this.versie.head.hash.toHex())
+      if (this.storage.versie.head) {
+        mutator.setCommit(this.storage.versie.head.hash.toHex())
       } else {
         mutator.setCommit()
       }
@@ -242,7 +234,7 @@ export class CreagenEditor {
     return Result.fromAsync(async () => {
       if (this.activeBookmark.commit === null) {
         // commit uncommitted bookmark
-        const result = await this.versie.addBookmark(
+        const result = await this.storage.versie.addBookmark(
           this.activeBookmark.name,
           commit,
           this.activeBookmark.createdOn,
@@ -253,7 +245,7 @@ export class CreagenEditor {
       }
 
       // update currently active to this commit
-      const result = await this.versie.setBookmarkCommit(
+      const result = await this.storage.versie.setBookmarkCommit(
         this.activeBookmark.name,
         commit,
       )
@@ -311,8 +303,8 @@ export class CreagenEditor {
   /** Create new sketch on an optional base commit */
   async new() {
     return Result.fromAsyncCatching(async () => {
-      const old = this.versie.head?.hash
-      const res = await this.versie.setHead(null)
+      const old = this.storage.versie.head?.hash
+      const res = await this.storage.versie.setHead(null)
       if (!res.ok) return res
       // clear everything
       this.editor.setValue('')
@@ -324,9 +316,9 @@ export class CreagenEditor {
   }
   /** Load a commit into editor */
   private async loadCommit(hash: CommitHash) {
-    const old = this.versie.head?.hash
+    const old = this.storage.versie.head?.hash
 
-    const checkoutResult = await this.versie.checkout(hash)
+    const checkoutResult = await this.storage.versie.checkout(hash)
     if (!checkoutResult.ok) {
       return checkoutResult
     }
@@ -350,23 +342,16 @@ export class CreagenEditor {
 
   async checkoutBookmark(
     bookmarkName: string,
+    /** Checkout a bookmark of a specific user */
     username?: string,
     /** Preserve parameters, usually an user action */
     preserveParams: boolean = false,
   ) {
-    let bookmark: (ActiveBookmark & { commit: CommitHash }) | null
-    if (
-      username &&
-      this.storage.remote &&
-      this.storage.user?.username !== username
-    ) {
-      // if checkout out a specific other user bookmark always fetch from remote
-      bookmark = await this.storage.loadUserBookmark(username, bookmarkName)
-      if (bookmark) bookmark = { ...bookmark, username }
-    } else {
-      // get bookmark from local db traditional vcs route
-      bookmark = this.versie.getBookmark(bookmarkName)
-    }
+    let bookmark = (await this.storage.getUserBookmark(
+      bookmarkName,
+      username,
+    )) as (ActiveBookmark & { commit: CommitHash }) | null
+    if (bookmark) bookmark = { ...bookmark, username }
 
     if (bookmark === null)
       throw new Error(
@@ -524,12 +509,10 @@ export class CreagenEditor {
     const metadata = new CommitMetadata(
       new SemVer(CREAGEN_EDITOR_VERSION),
       libraries,
-      this.storage instanceof RemoteClientStorage
-        ? this.storage.user?.username
-        : undefined,
+      this.storage.user?.username,
     )
     // store code
-    const commitResult = await this.versie.commit(code, metadata)
+    const commitResult = await this.storage.versie.commit(code, metadata)
     if (!commitResult.ok) {
       throw new Error(`Failed to commit code: ${commitResult.error.message}`)
     }
@@ -592,35 +575,32 @@ export class CreagenEditor {
   }
 
   import(data: unknown) {
-    const validated = indexDbSchema.parse(data)
-    if (this.storage instanceof LocalClientStorage)
-      return this.storage.import(validated as IndexdbImport)
-    throw Error('import unsupported')
+    const validated = indexDbSchema.parse(data) as IndexdbImport
+    return this.storage.import(validated)
   }
 
   export() {
-    if (this.storage instanceof LocalClientStorage) return this.storage.export()
-    throw Error('export unsupported')
+    return this.storage.export()
   }
 
   get head() {
-    return this.versie.head
+    return this.storage.versie.head
   }
 
   getAllBookmarks() {
-    return this.versie.getAllBookmarks()
+    return this.storage.versie.getAllBookmarks()
   }
 
   getAllCommits() {
-    return this.versie.getAllCommits()
+    return this.storage.versie.getAllCommits()
   }
 
   history(n: number, start?: Commit<CommitMetadata>) {
-    return this.versie.history(n, start)
+    return this.storage.versie.history(n, start)
   }
 
   getBookmark(name: string) {
-    return this.versie.getBookmark(name)
+    return this.storage.versie.getBookmark(name)
   }
 
   /**
@@ -642,7 +622,10 @@ export class CreagenEditor {
       return this.activeBookmark
     }
 
-    const res = await this.versie.setBookmarkCommit(bookmarkName, commit)
+    const res = await this.storage.versie.setBookmarkCommit(
+      bookmarkName,
+      commit,
+    )
     if (!res.ok) throw res.error
     const bookmark = res.value
 
@@ -657,7 +640,7 @@ export class CreagenEditor {
   }
 
   async addBookmark(name: string, commit: CommitHash, createdOn: Date) {
-    const res = await this.versie.addBookmark(name, commit, createdOn)
+    const res = await this.storage.versie.addBookmark(name, commit, createdOn)
     if (!res.ok) throw res.error
     if (name === this.activeBookmark.name) {
       this.setActiveBookmark(res.value)
@@ -667,11 +650,11 @@ export class CreagenEditor {
   }
 
   bookmarkLookup(commit: CommitHash) {
-    return this.versie.bookmarkLookup(commit)
+    return this.storage.versie.bookmarkLookup(commit)
   }
 
   async removeBookmark(name: string) {
-    const result = await this.versie.removeBookmark(name)
+    const result = await this.storage.versie.removeBookmark(name)
 
     if (!result.ok) throw result.error
     // If removing the current active bookmark, generate a new one
@@ -696,7 +679,7 @@ export class CreagenEditor {
       return
     }
 
-    const result = await this.versie.renameBookmark(oldName, newName)
+    const result = await this.storage.versie.renameBookmark(oldName, newName)
     if (!result.ok) throw result.error
     if (oldName === this.activeBookmark.name) {
       this.setActiveBookmark({ ...this.activeBookmark, name: newName })
@@ -707,7 +690,7 @@ export class CreagenEditor {
 
   /** Low-level commit used when building a commit from external data (e.g. a sharable link) */
   createCommit(code: string, metadata: CommitMetadata) {
-    return this.versie.commit(code, metadata)
+    return this.storage.versie.commit(code, metadata)
   }
 }
 

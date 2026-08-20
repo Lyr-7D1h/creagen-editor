@@ -1,29 +1,36 @@
-import { decode, encode } from '@msgpack/msgpack'
+import { decode } from '@msgpack/msgpack'
 import type {
-  BlobHash,
-  Commit,
   CommitHash,
   DeltizedBlob,
-  Storage,
+  IndexdbImport,
+  IndexDBStorage,
 } from 'versie'
 import {
-  Bookmark,
-  IndexDBStorage,
-  Sha256Hash,
   blobHashSchema,
+  Bookmark,
   bookmarkNameSchema,
   commitHashSchema,
+  Sha256Hash,
+  Versie,
 } from 'versie'
 import z from 'zod'
-import type { CommitMetadata } from '../creagen-editor/CommitMetadata'
-import { commitMetadataJsonSchema } from '../creagen-editor/CommitMetadata'
+import {
+  CommitMetadata,
+  commitMetadataJsonSchema,
+} from '../creagen-editor/CommitMetadata'
 import type { CustomKeybinding } from '../creagen-editor/keybindings'
-import { editorEvents } from '../events/events'
 import { logger } from '../logs/logger'
-import type { RemoteClient, StoredCommit, User } from '../remote/remoteClient'
-import { remoteClient } from '../remote/remoteClient'
+import {
+  unwrapDataResponse,
+  unwrapResponse,
+  type RemoteClient,
+  type User,
+} from '../remote/remoteClient'
 import { parseJwtPayload } from '../user/jwt'
+import { promptLogin } from '../user/promptLogin'
+import type { ClientStorage } from './ClientStorage'
 import { localStorage } from './LocalStorage'
+import { RemoteVersieStorage } from './RemoteVersieStorage'
 
 const bookmarkCheckoutResponseSchema = z.object({
   bookmark: z.object({
@@ -50,95 +57,79 @@ function authMiddleware(token: string) {
   }
 }
 
-async function resolveAuth(
-  remoteClient: RemoteClient,
-): Promise<{ token?: string | undefined; user?: User | undefined }> {
+export interface Auth {
+  token: string
+  user: User
+}
+
+async function resolveAuth(remoteClient: RemoteClient): Promise<Auth | null> {
   const token = localStorage.get('creagen-auth-token') ?? undefined
-  let user: User | undefined
-  if (token != null) {
-    const payload = parseJwtPayload(token)
-    if (payload === null) {
-      localStorage.remove('creagen-auth-token')
-      return {}
-    }
-    if (payload.exp < Date.now() / 1000) {
-      localStorage.remove('creagen-auth-token')
-      return {}
-    }
-    const auth = authMiddleware(token)
-    remoteClient.use(auth)
-    const res = await remoteClient.GET('/api/user')
-    const status = res.response.status
-    if (status === 401 || status === 404) {
-      localStorage.remove('creagen-auth-token')
-      remoteClient.eject(auth)
-      logger.error('User is unauthorized')
-      return {}
-    }
-    if (res.error) {
-      logger.error(`Failed to fetch user: ${res.error.error.message}`)
-      return {}
-    }
-    user = res.data.user
+  if (token == null) {
+    return null
   }
-  return { token, user }
+  const payload = parseJwtPayload(token)
+  if (payload === null) {
+    localStorage.remove('creagen-auth-token')
+    return null
+  }
+  if (payload.exp < Date.now() / 1000) {
+    localStorage.remove('creagen-auth-token')
+    return null
+  }
+  const auth = authMiddleware(token)
+  remoteClient.use(auth)
+  const res = await remoteClient.GET('/api/user')
+  const status = res.response.status
+  if (status === 401 || status === 404) {
+    localStorage.remove('creagen-auth-token')
+    remoteClient.eject(auth)
+    logger.error('User is unauthorized')
+    return null
+  }
+  if (res.error) {
+    logger.error(`Failed to fetch user: ${res.error.error.message}`)
+    return null
+  }
+  return { token, user: res.data.user }
 }
 
 /** Entry point for fetching all data */
-export class RemoteClientStorage implements Storage<CommitMetadata> {
-  static async create() {
-    if (remoteClient === null) {
-      throw Error('No remote client configured')
-    }
-
+export class RemoteClientStorage implements ClientStorage {
+  static async create(remoteClient: RemoteClient) {
     const auth = await resolveAuth(remoteClient)
 
-    const indexdbStorageResult = await IndexDBStorage.create<CommitMetadata>({
-      lookupDeltaBlob: async (indexdb, hash) => {
-        const blob = await indexdb.get('blobs', hash)
-        if (blob != null) return blob
-
-        // TODO(perf): fetch all missing delta blobs needed to reconstruct a blob in one go, save all locally
-        const buffer = unwrapDataResponse(
-          await remoteClient!.GET('/api/commits/data/{blobHash}', {
-            params: { path: { blobHash: hash.toHex() } },
-            parseAs: 'arrayBuffer',
-          }),
-        )
-        if (!(buffer instanceof ArrayBuffer)) return null
-        const data = new Uint8Array(buffer) as DeltizedBlob
-
-        // store locally in background to promote faster lookup speeds
-        indexdb
-          .add('blobs', hash, data)
-          .catch((e) => logger.error('Failed to cache blob locally', e))
-
-        return data
-      },
+    const versieStorage = await RemoteVersieStorage.create(auth, remoteClient)
+    const vcsResult = await Versie.create(versieStorage, (raw) => {
+      return CommitMetadata.parse(raw)
     })
-    if (!indexdbStorageResult.ok) throw indexdbStorageResult.error
-    if (!indexdbStorageResult.value.persisted)
-      logger.warn('Local storage might not be persisted')
-    const indexdb = indexdbStorageResult.value.indexdb
+    if (!vcsResult.ok) throw vcsResult.error
+    const versie = vcsResult.value
 
-    return new RemoteClientStorage(remoteClient, indexdb, auth.token, auth.user)
+    return new RemoteClientStorage(
+      remoteClient,
+      versie,
+      versieStorage.indexdb,
+      auth,
+    )
   }
 
   readonly remote = true
+  readonly user?: User
   constructor(
     private readonly remoteClient: RemoteClient,
+    readonly versie: Versie<CommitMetadata>,
     readonly indexdb: IndexDBStorage<CommitMetadata>,
-    private readonly token?: string,
-    readonly user?: User,
+    readonly auth: Auth | null,
   ) {
-    if (user) {
+    if (auth) {
+      this.user = auth.user
       this.syncCommits().catch(logger.error)
     }
   }
 
   async syncCommits() {
-    if (!this.user) {
-      this.promptLogin('Log in to sync your commits from the cloud.')
+    if (!this.auth) {
+      return promptLogin('Log in to sync your commits from the cloud.')
     }
     const lastSeq = localStorage.get('commit-seq') ?? 0
     const res = unwrapDataResponse(
@@ -155,13 +146,8 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
   }
 
   session() {
-    if (this.token == null) return null
-    return parseJwtPayload(this.token)
-  }
-
-  promptLogin(message?: string): never {
-    editorEvents.emit('login-prompt', message == null ? {} : { message })
-    throw new Error(message ?? 'Login required')
+    if (!this.auth) return null
+    return parseJwtPayload(this.auth.token)
   }
 
   async login(username: string, password: string, turnstileToken: string) {
@@ -172,10 +158,32 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
         }),
       )
       localStorage.set('creagen-auth-token', token)
+      // TODO: load user without reload of page
       window.location.reload()
       return true
     } catch (e) {
       return e instanceof Error ? e.message : 'Login failed'
+    }
+  }
+
+  async register(
+    username: string,
+    password: string,
+    turnstileToken: string,
+  ): Promise<string | true> {
+    try {
+      unwrapResponse(
+        await this.remoteClient.POST('/api/register', {
+          body: {
+            username,
+            password,
+            turnstileToken,
+          },
+        }),
+      )
+      return true
+    } catch (e) {
+      return e instanceof Error ? e.message : 'Registeration failed'
     }
   }
 
@@ -185,23 +193,19 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
   }
 
   estimateUsage(): Promise<StorageEstimate> {
-    if (!this.user)
+    if (!this.auth)
       return Promise.resolve({
         quota: 1,
         usage: 0,
       })
     return Promise.resolve({
-      quota: this.user.quotaBytesLimit,
-      usage: this.user.quotaBytesUsed,
+      quota: this.auth.user.quotaBytesLimit,
+      usage: this.auth.user.quotaBytesUsed,
     })
   }
 
-  //
-  // CREAGEN EDITOR TYPES using localstorage in case not logged in
-  //
-
   async setSettings(value: Record<string, unknown>) {
-    if (typeof this.token === 'undefined' || typeof this.user === 'undefined') {
+    if (!this.auth) {
       return localStorage.set('settings', value)
     }
     unwrapResponse(
@@ -211,7 +215,7 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
     )
   }
   async getSettings() {
-    if (typeof this.token === 'undefined' || typeof this.user === 'undefined') {
+    if (!this.auth) {
       return localStorage.get('settings')
     }
     const res = unwrapDataResponse(
@@ -221,7 +225,7 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
     return res.settings
   }
   async setCustomKeybindings(keybindings: CustomKeybinding[]) {
-    if (typeof this.token === 'undefined' || typeof this.user === 'undefined') {
+    if (!this.auth) {
       return localStorage.set('custom-keybindings', keybindings)
     }
     unwrapResponse(
@@ -231,7 +235,7 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
     )
   }
   async getCustomKeybindings() {
-    if (typeof this.token === 'undefined' || typeof this.user === 'undefined') {
+    if (!this.auth) {
       return localStorage.get('custom-keybindings')
     }
     const res = unwrapDataResponse(
@@ -241,109 +245,15 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
     return res.keybindings as CustomKeybinding[]
   }
 
-  async getCommit(id: CommitHash) {
-    const local = await this.indexdb.getCommit(id)
-    if (local !== null) return local
-
-    const res = unwrapDataResponse(
-      await this.remoteClient.GET('/api/commits/{commitHash}', {
-        params: { path: { commitHash: id.toHex() } },
-      }),
-    )
-    if (res == null) return null
-    const commit = res.commit
-    // store locally non blocking
-    this.indexdb
-      .add('commits', id, commit)
-      .catch((e) => logger.error('Failed to set commit locally', e))
-    return commit
-  }
-
-  async getCommitData(hash: BlobHash) {
-    // uses deltizer.reconstruct internally, meaning it will also lookup from remote using our custom `lookupDeltaBlob`
-    return this.indexdb.getCommitData(hash)
-  }
-
-  async setCommit(commit: Commit<CommitMetadata>, data: string) {
-    if (typeof this.token === 'undefined' || typeof this.user === 'undefined') {
-      this.promptLogin('Log in to save commits across sessions.')
-    }
-
-    const compressedData = new Uint8Array(
-      await new Response(
-        new Blob([new TextEncoder().encode(data)])
-          .stream()
-          .pipeThrough(new CompressionStream('deflate')),
-      ).arrayBuffer(),
-    )
-
-    const metadata = commit.metadata.toJson()
-    if (!('author' in metadata))
-      throw new Error('Trying to commit without author defined')
-    if (metadata.author !== this.user.username) {
-      throw new Error('Trying to commit for a different user')
-    }
-    const storedCommit: StoredCommit = {
-      blob: commit.blob.toHex(),
-      createdOn: commit.createdOn.getTime(),
-      parent: commit.parent?.toHex(),
-      metadata: {
-        editorVersion: metadata.editorVersion,
-        libraries: metadata.libraries,
-        author: metadata.author,
-      },
-    }
-    const body = encode(
-      {
-        commit: storedCommit,
-        data: compressedData,
-      },
-      { ignoreUndefined: true },
-    )
-    const res = unwrapResponse(
-      await this.remoteClient.POST('/api/user/commits', {
-        body: body as unknown as string,
-        bodySerializer: (b) => b,
-        headers: { 'Content-Type': 'application/octet-stream' },
-      }),
-    )
-    if (typeof res.size === 'number') this.user.quotaBytesUsed += res.size
-    if (res.commitHash !== commit.hash.toHex())
-      throw Error(
-        'Commit hash mismatch: server is using different hashing mechanism than client',
-      )
-    await this.indexdb.setCommit(commit, data)
-  }
-  // bookmark references are saved in memory
-  async setBookmark(bookmark: Bookmark) {
-    if (typeof this.token === 'undefined' || typeof this.user === 'undefined') {
-      this.promptLogin('Log in to create bookmarks.')
-    }
-    unwrapResponse(
-      await this.remoteClient.POST('/api/user/bookmarks', {
-        body: { name: bookmark.name, commit: bookmark.commit.toHex() },
-      }),
-    )
-    return this.indexdb.setBookmark(bookmark)
-  }
-
-  async removeBookmark(id: string) {
-    if (typeof this.token === 'undefined' || typeof this.user === 'undefined') {
-      this.promptLogin('Log in to remove bookmarks.')
-    }
-    unwrapResponse(
-      await this.remoteClient.DELETE('/api/user/bookmarks/{bookmarkName}', {
-        params: { path: { bookmarkName: id } },
-      }),
-    )
-    return this.indexdb.removeBookmark(id)
-  }
-
   /** Load a bookmark from a user into the vcs storage and return the bookmark */
-  async loadUserBookmark(
-    username: string,
+  async getUserBookmark(
     bookmarkName: string,
+    /** If not username given checkout the bookmark of current user */
+    username?: string,
   ): Promise<Bookmark | null> {
+    username ??= this.auth?.user.username
+    if (typeof username === 'undefined') throw new Error('no username given')
+
     const buffer = unwrapDataResponse(
       await this.remoteClient.GET(
         '/api/checkout/bookmarks/{username}/{bookmarkName}',
@@ -371,39 +281,11 @@ export class RemoteClientStorage implements Storage<CommitMetadata> {
     return res.value
   }
 
-  async getAllCommits() {
-    // using local, `syncCommits` fetches all missing commits on startup
-    return this.indexdb.getAllCommits()
+  import(_data: IndexdbImport): Promise<void> {
+    throw Error('import unsupported')
   }
 
-  async getAllBookmarks() {
-    if (typeof this.token === 'undefined' || typeof this.user === 'undefined') {
-      return []
-    }
-    const res = unwrapDataResponse(
-      await this.remoteClient.GET('/api/user/bookmarks'),
-    )
-    if (res == null) return []
-    return res.bookmarks
+  export(): Promise<IndexdbImport> {
+    throw Error('import unsupported')
   }
-}
-
-/** Parse response, returning null in case of 404 */
-function unwrapDataResponse<T>(r: {
-  data?: T
-  error?: unknown
-  response: Response
-}): T | null {
-  if (r.response.status === 404) return null
-  return unwrapResponse(r)
-}
-
-function unwrapResponse<T>({ data, error }: { data?: T; error?: unknown }): T {
-  if (data === undefined || error !== undefined) {
-    const msg =
-      (error as { error?: { message?: string } } | undefined)?.error?.message ??
-      'Request failed'
-    throw new Error(msg)
-  }
-  return data
 }

@@ -2,7 +2,6 @@ import { Box } from '@mui/material'
 import { useEffect, useState } from 'react'
 import { logger } from './logs/logger'
 import { Messages } from './logs/Messages'
-import { LoginPromptHandler } from './user/LoginPromptHandler'
 import { CreagenEditorContext } from './creagen-editor/CreagenContext'
 import type { CreagenEditorConfig } from './creagen-editor/CreagenEditor';
 import { CreagenEditor } from './creagen-editor/CreagenEditor'
@@ -19,6 +18,21 @@ declare global {
   interface Window {
     creagen: CreagenEditor
   }
+}
+
+export function LoadingScreen() {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+        }}
+      >
+        <Box component="img" src="/loading.webp" alt="Loading" />
+        <Messages />
+      </Box>)
 }
 
 
@@ -54,36 +68,21 @@ export function CreagenEditorView({ config }: {
     return () => window.removeEventListener('resize', checkScreenSize)
   }, [creagenEditor])
 
-  if (creagenEditor === null) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh',
-        }}
-      >
-        <Box component="img" src="/loading.webp" alt="Loading" />
-        <Messages />
-      </Box>
-    )
-  }
+  if (creagenEditor === null) return <LoadingScreen />
 
   return (
-    <CreagenEditorContext.Provider value={creagenEditor}>
-      <Theme>
-        <ErrorBoundary>
-          <WelcomeScreen />
-          {creagenEditor.storage.remote && <LoginPromptHandler />}
-          {mobile ? (
-            <CreagenEditorViewContentMobile />
-          ) : (
-            <CreagenEditorViewSplit />
-          )}
-        </ErrorBoundary>
-        <Messages />
-      </Theme>
-    </CreagenEditorContext.Provider>
+      <CreagenEditorContext.Provider value={creagenEditor}>
+        <Theme>
+          <ErrorBoundary>
+            <WelcomeScreen />
+            {mobile ? (
+              <CreagenEditorViewContentMobile />
+            ) : (
+              <CreagenEditorViewSplit />
+            )}
+          </ErrorBoundary>
+          <Messages />
+        </Theme>
+      </CreagenEditorContext.Provider>
   )
 }

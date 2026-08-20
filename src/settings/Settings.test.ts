@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { ClientStorage } from '../creagen-editor/CreagenEditor'
+import type { ClientStorage } from '../storage/ClientStorage'
 import { Settings } from './Settings'
 
 /**

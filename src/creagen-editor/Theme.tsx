@@ -46,7 +46,7 @@ const muiTheme = createTheme({
 
 // Inner component that uses useColorScheme hook
 function ThemeSync() {
-  const { mode, setColorScheme } = useColorScheme()
+  const { setColorScheme } = useColorScheme()
   const themeSetting = useSettings('editor.theme')
 
   useEffect(() => {

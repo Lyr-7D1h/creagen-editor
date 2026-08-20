@@ -1,3 +1,8 @@
+---
+title: Controller
+description: Control your sketch from a second device with the controller page
+---
+
 # Controller
 
 The controller lets you tweak your sketch from a second device, usually your phone, while the editor stays open on your main screen.

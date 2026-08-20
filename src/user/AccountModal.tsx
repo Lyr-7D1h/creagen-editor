@@ -11,7 +11,6 @@ import {
 } from '@mui/material'
 import { CircleUser } from 'lucide-react'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
-import type { RemoteClientStorage } from '../storage/RemoteClientStorage'
 
 interface AccountModalProps {
   open: boolean
@@ -26,7 +25,7 @@ export function AccountModal({
   username,
   onLogout,
 }: AccountModalProps) {
-  const storage = useCreagenEditor().storage as RemoteClientStorage
+  const storage = useCreagenEditor().storage
   const payload = storage.session()
 
   function handleLogout() {

@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { Dialog, DialogTitle, Tab, Tabs } from '@mui/material'
-import { remoteClient } from '../remote/remoteClient'
 import { LoginForm } from './LoginForm'
 import { SignupForm } from './SignupForm'
+import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 
 type Mode = 'login' | 'signup'
 
@@ -25,6 +25,7 @@ export function LoginModal({
   login,
   initialMode = 'login',
 }: LoginModalProps) {
+  const storage = useCreagenEditor().storage
   const [mode, setMode] = useState<Mode>(initialMode)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -74,28 +75,18 @@ export function LoginModal({
     password: string,
     turnstileToken: string,
   ) {
-    if (remoteClient == null) return
-
     setError(null)
     setSuccessMessage(null)
     setLoading(true)
 
     try {
-      const { error: apiError, response } = await remoteClient.POST(
-        '/api/register',
-        {
-          body: {
-            username,
-            password,
-            turnstileToken,
-          },
-        },
+      const error = await storage.register(
+        username,
+        password,
+        turnstileToken,
       )
-      if (!response.ok) {
-        const msg =
-          (apiError as { error?: { message?: string } } | undefined)?.error
-            ?.message ?? 'Registration failed'
-        setError(msg)
+      if (typeof error === "string") {
+        setError(error)
         return
       }
       setSuccessMessage('Account created! You can now log in.')
