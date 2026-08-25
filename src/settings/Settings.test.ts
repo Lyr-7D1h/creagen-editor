@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { ClientStorage } from '../storage/ClientStorage'
 import { Settings } from './Settings'
+import { SETTINGS_CONFIG } from './SettingsConfig'
 
 /**
  * Creates a mock ClientStorage for testing
@@ -317,6 +318,58 @@ describe('Settings Store', () => {
       expect(settings.get('hide_all')).toBe(true)
       expect(settings.get('show_control_panel')).toBe(true)
       expect(settings.get('show_qr')).toBe(true)
+    })
+  })
+
+  describe('Migrating settings from older versions', () => {
+    it('should keep valid old settings, add new ones with defaults, and drop removed or invalid ones', async () => {
+      const storage = createMockStorage({
+        // valid old settings: should be kept as-is
+        'editor.vim': true,
+        'editor.folding': false,
+        'editor.history_buffer_size': 25,
+        // setting that was removed from the config: should be dropped
+        'editor.removed_option': true,
+        'legacy.deprecated': 'value',
+        // setting whose stored value is no longer valid: should be replaced
+        'editor.theme': 'neon', // not light/dark/system
+        'controller.qr_size': 99999, // out of range
+      })
+      const settings = await Settings.create(storage)
+
+      // valid old settings are preserved
+      expect(settings.get('editor.vim')).toBe(true)
+      expect(settings.get('editor.folding')).toBe(false)
+      expect(settings.get('editor.history_buffer_size')).toBe(25)
+
+      // invalid stored values are replaced with defaults
+      expect(settings.get('editor.theme')).toBe('system')
+      expect(settings.get('controller.qr_size')).toBe(100)
+
+      // keys removed from the config are not carried over into the store
+      expect(settings.values).not.toHaveProperty('editor.removed_option')
+      expect(settings.values).not.toHaveProperty('legacy.deprecated')
+    })
+
+    it('should only add new settings, never remove existing valid ones from the store', async () => {
+      const storage = createMockStorage({
+        'editor.vim': true,
+        'editor.folding': false,
+        'controller.enabled': false,
+        // every other key is missing, like an old settings object
+      })
+      const settings = await Settings.create(storage)
+
+      // the store contains exactly the keys of the current config:
+      // old valid keys are still present, new keys were filled in
+      expect(Object.keys(settings.values).sort()).toEqual(
+        Object.keys(SETTINGS_CONFIG).sort(),
+      )
+
+      // and every stored value that was valid was not overwritten
+      expect(settings.get('editor.vim')).toBe(true)
+      expect(settings.get('editor.folding')).toBe(false)
+      expect(settings.get('controller.enabled')).toBe(false)
     })
   })
 

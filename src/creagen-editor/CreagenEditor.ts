@@ -2,15 +2,15 @@ import { SemVer } from 'semver'
 import type { AsyncResult } from 'typescript-result'
 import { Result } from 'typescript-result'
 import type {
-    Bookmark,
-    BookmarkAlreadyExistsError,
-    BookmarkNotFoundError,
-    Commit,
-    CommitHash,
-    IndexdbImport,
-    InvalidBookmarkNameError,
-    ParseError,
-    VersieStorageError,
+  Bookmark,
+  BookmarkAlreadyExistsError,
+  BookmarkNotFoundError,
+  Commit,
+  CommitHash,
+  IndexdbImport,
+  InvalidBookmarkNameError,
+  ParseError,
+  VersieStorageError,
 } from 'versie'
 import z from 'zod'
 import { Controller } from '../controller/Controller'
@@ -112,16 +112,12 @@ export class CreagenEditor {
     this.controller = config.controllerUrl
       ? new Controller(config.controllerUrl)
       : null
-    this.params = new Params(
-      this.controller ?? undefined,
-      this.settings,
-      () => {
-        editorEvents.emit('params:value', undefined)
-        if (this.settings.get('parameters.auto_render')) {
-          this.render().catch(logger.error)
-        }
-      },
-    )
+    this.params = new Params(this, () => {
+      editorEvents.emit('params:value', undefined)
+      if (this.settings.get('parameters.auto_render')) {
+        this.render().catch(logger.error)
+      }
+    })
 
     // add creagen types
     this.editor.addTypings(Params.TYPINGS, 'creagen-editor')
@@ -173,7 +169,7 @@ export class CreagenEditor {
       if (this.settings.isSettingsKey(key)) {
         const config = this.settings.getConfig(key)
         if ('fromQueryParam' in config) {
-          const url = new UrlMutator()
+          const url = this.mutateUrl()
           if (value === null || url.getSetting(key) === value) return
 
           // remove query param if it is also the default behavior
@@ -188,6 +184,10 @@ export class CreagenEditor {
     })
   }
 
+  mutateUrl() {
+    return new UrlMutator(undefined, this.config.basePath)
+  }
+
   /** Update creagen from url data */
   private async updateFromUrl() {
     await updateFromUrl(this)
@@ -197,11 +197,11 @@ export class CreagenEditor {
     this.activeBookmark = bookmark
     editorEvents.emit('vcs:active-bookmark-update', undefined)
 
-    const mutator = new UrlMutator()
+    const mutator = this.mutateUrl()
     if (this.activeBookmark.commit === null) {
       // Uncommitted bookmark - show commit or empty
       if (this.storage.versie.head) {
-        mutator.setCommit(this.storage.versie.head.hash.toHex())
+        mutator.setCommit(this.storage.versie.head.hash)
       } else {
         mutator.setCommit()
       }
@@ -532,7 +532,7 @@ export class CreagenEditor {
       throw updateResult.error
     }
 
-    new UrlMutator()
+    this.mutateUrl()
       .setBookmark(this.activeBookmark.name, this.storage.user?.username)
       .pushState(null, this.activeBookmark.name)
 
@@ -616,8 +616,8 @@ export class CreagenEditor {
     ) {
       const res = await this.loadCommit(commit)
       if (!res.ok) throw res.error
-      new UrlMutator()
-        .setCommit(commit.toHex())
+      this.mutateUrl()
+        .setCommit(commit)
         .pushState(undefined, this.activeBookmark.name)
       return this.activeBookmark
     }

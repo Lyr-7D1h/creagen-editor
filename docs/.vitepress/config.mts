@@ -1,8 +1,8 @@
 import { defineConfig } from 'vitepress'
 import { sidebar } from './sidebar'
 
-const SITE_URL = 'https://creagen.dev/docs'
-const SITE_TITLE = 'Creagen Docs'
+const SITE_URL = process.env.DOCS_SITE_URL ?? 'https://creagen.dev/docs'
+const SITE_TITLE = 'Creagen'
 const SITE_DESCRIPTION = 'Documentation for Creagen and its Editor'
 
 function toCanonicalUrl(relativePath: string): string {
@@ -55,6 +55,7 @@ export default defineConfig({
   },
   themeConfig: {
     logo: '/creagen-icon.png',
+    logoLink: new URL(SITE_URL).origin,
     siteTitle: SITE_TITLE,
     nav: [
       {

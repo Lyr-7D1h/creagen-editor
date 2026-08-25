@@ -1,7 +1,7 @@
 import { z } from 'zod'
-import type { Controller, ControllerMessage } from '../controller/Controller'
+import type { ControllerMessage } from '../controller/Controller'
+import type { CreagenEditor } from '../creagen-editor/CreagenEditor'
 import { generateHumanReadableName } from '../creagen-editor/generateHumanReadableName'
-import type { Settings } from '../settings/Settings'
 import { UrlMutator } from '../UrlMutator'
 import { deepEqual } from '../util'
 
@@ -304,11 +304,10 @@ declare function useParam(type: 'color', options: Omit<Extract<ParamConfig, { ty
   private regenTimerId: number | undefined
 
   constructor(
-    readonly controller: Controller | undefined,
-    private readonly settings: Settings,
+    readonly creagen: CreagenEditor,
     private readonly onRegenTick?: () => void,
   ) {
-    this.settings.on('parameters.regen_interval', (value) => {
+    creagen.settings.on('parameters.regen_interval', (value) => {
       this.restartRegenerationTimer()
       this.sendToController({
         type: 'editor:param-regen-interval',
@@ -320,9 +319,9 @@ declare function useParam(type: 'color', options: Omit<Extract<ParamConfig, { ty
   }
 
   sendToController(msg: ControllerMessage) {
-    if (!this.controller) return
-    if (!this.controller.open()) return
-    this.controller.send(msg)
+    if (!this.creagen.controller) return
+    if (!this.creagen.controller.open()) return
+    this.creagen.controller.send(msg)
   }
 
   get length(): number {
@@ -330,7 +329,7 @@ declare function useParam(type: 'color', options: Omit<Extract<ParamConfig, { ty
   }
 
   get regenInterval(): number {
-    return this.settings.get('parameters.regen_interval')
+    return this.creagen.settings.get('parameters.regen_interval')
   }
 
   /**
@@ -411,7 +410,7 @@ declare function useParam(type: 'color', options: Omit<Extract<ParamConfig, { ty
 
   save() {
     if (this.length === 0) return
-    new UrlMutator().setParams(this.store).replaceState()
+    this.creagen.mutateUrl().setParams(this.store).replaceState()
   }
 
   setValue(key: string, value: unknown): void {
@@ -424,11 +423,11 @@ declare function useParam(type: 'color', options: Omit<Extract<ParamConfig, { ty
 
   setRegenInterval(interval: number) {
     if (!Number.isFinite(interval)) {
-      this.settings.set('parameters.regen_interval', 0)
+      this.creagen.settings.set('parameters.regen_interval', 0)
       return
     }
 
-    this.settings.set(
+    this.creagen.settings.set(
       'parameters.regen_interval',
       Math.max(0, Math.floor(interval)),
     )

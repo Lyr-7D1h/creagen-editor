@@ -1,5 +1,5 @@
 import { logger } from '../logs/logger'
-import { UrlMutator } from '../UrlMutator'
+import type { UrlMutator } from '../UrlMutator'
 import { CommitMetadata } from './CommitMetadata'
 import type { CreagenEditor } from './CreagenEditor'
 import { creagenEditorVersionMismatch } from './creagenEditorVersionMatches'
@@ -7,7 +7,7 @@ import { generateHumanReadableName } from './generateHumanReadableName'
 
 /** Update creagen state from url data */
 export async function updateFromUrl(editor: CreagenEditor) {
-  const mutator = new UrlMutator()
+  const mutator = editor.mutateUrl()
   updateSettingsFromQueryParams(editor, mutator)
 
   if (await updateFromSharableLinkData(editor, mutator)) {

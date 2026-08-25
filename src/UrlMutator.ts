@@ -130,17 +130,32 @@ export type UrlVersion =
 
 /** A standardized way to mutate the url for the creagen editor */
 export class UrlMutator {
-  private readonly url: URL
+  constructor(
+    private readonly url: URL = new URL(window.location.href),
+    /** Base path must start with a `/` */
+    private readonly basePath = '/',
+  ) {}
 
-  constructor(url?: URL) {
-    this.url = url ?? new URL(window.location.href)
+  setPath(path: string) {
+    if (path.startsWith('/')) path = path.slice(1)
+    const base = this.basePath.replace(/\/+$/, '')
+    this.url.pathname = path.length > 0 ? `${base}/${path}` : base || '/'
+    return this
+  }
+
+  /** Return path without trailing `/` or `basePath` */
+  getPath() {
+    const { pathname } = this.url
+    const base = this.basePath.replace(/\/+$/, '')
+    if (base.length === 0) return pathname.slice(1)
+    if (pathname === base) return ''
+    if (pathname.startsWith(`${base}/`)) return pathname.slice(base.length + 1)
+    return pathname
   }
 
   /** returns null if no data link, error if parsing failed otherwise just data */
   getSharableLinkData(): SharableLinkData | null | Error {
-    const rawPath = this.url.pathname.startsWith('/')
-      ? this.url.pathname.slice(1)
-      : this.url.pathname
+    const rawPath = this.getPath()
 
     if (!rawPath.startsWith('~')) {
       return null
@@ -157,7 +172,7 @@ export class UrlMutator {
     return parseSharePayload(decompressed)
   }
 
-  static createShareableLink({
+  createShareableLink({
     code,
     bookmarkName,
     editorVersion,
@@ -176,32 +191,25 @@ export class UrlMutator {
     }
 
     const formatted = `${code.length}:${code}${JSON.stringify(metadata)}`
-    const url = new UrlMutator()
+    const url = new UrlMutator(undefined, this.basePath)
     const compressed = compressToEncodedURIComponent(formatted)
     url.setPath(`~${compressed}`)
     return url
   }
 
-  setPath(path: string) {
-    this.url.pathname = path.startsWith('/') ? path : `/${path}`
-    return this
-  }
-
   /** Set bookmark in url @username/bookmark */
   setBookmark(bookmark: string, username?: string) {
-    this.url.pathname = username ? `/${username}/${bookmark}` : `/${bookmark}`
+    this.setPath(username ? `${username}/${bookmark}` : bookmark)
     return this
   }
 
-  setCommit(commit?: string) {
-    this.url.pathname = `/${commit ?? ''}`
+  setCommit(commit?: CommitHash) {
+    this.setPath(commit ? commit.toHex() : '')
     return this
   }
 
   getVersion(): UrlVersion | null {
-    const path = this.url.pathname.startsWith('/')
-      ? this.url.pathname.slice(1)
-      : this.url.pathname
+    const path = this.getPath()
 
     if (path.length === 0 || path.startsWith('~')) {
       return null

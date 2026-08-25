@@ -1,15 +1,17 @@
+import { IconButton, useTheme } from '@mui/material'
 import {
-  Minimize2,
-  Maximize2,
   BookOpen,
+  Maximize2,
+  Minimize2,
+  Pin,
   Play,
   QrCode,
   Share2,
   Square,
 } from 'lucide-react'
-import { IconButton, useTheme } from '@mui/material'
 import type React from 'react'
 import { useEffect, useMemo, useState } from 'react'
+import { BAR_HEIGHT } from '../editor/EditorBar'
 import { HtmlTooltip } from '../editor/HtmlTooltip'
 import { editorEvents } from '../events/events'
 import {
@@ -18,11 +20,9 @@ import {
 } from '../events/useEditorEvents'
 import { createContextLogger, log, Severity } from '../logs/logger'
 import { KeybindHint } from '../shared/KeybindHint'
-import { UrlMutator } from '../UrlMutator'
 import { useCreagenEditor } from './CreagenContext'
 import { Export } from './Export'
 import { isMobile } from './isMobile'
-import { BAR_HEIGHT } from '../editor/EditorBar'
 
 const logger = createContextLogger('actions')
 
@@ -61,7 +61,12 @@ export function Actions({
     })
   }, [])
 
-  const size = sizeVariant === 'compact' ? BAR_HEIGHT - 6 + 'px' : isMobile() ? '60px' : '50px'
+  const size =
+    sizeVariant === 'compact'
+      ? BAR_HEIGHT - 6 + 'px'
+      : isMobile()
+        ? '60px'
+        : '50px'
   const isMobileDevice = isMobile()
 
   const fullscreenActionButtonSx = useMemo(
@@ -99,7 +104,7 @@ export function Actions({
               cursor: 'pointer',
             }}
           >
-            <QrCode size={size}  />
+            <QrCode size={size} />
           </IconButton>
         </HtmlTooltip>,
       )
@@ -136,7 +141,7 @@ export function Actions({
                     return
                   }
 
-                  const url = UrlMutator.createShareableLink({
+                  const url = creagenEditor.mutateUrl().createShareableLink({
                     code,
                     bookmarkName,
                     editorVersion: head.metadata.editorVersion,
@@ -156,7 +161,7 @@ export function Actions({
               cursor: 'pointer',
             }}
           >
-            <Share2 size={size}  />
+            <Share2 size={size} />
           </IconButton>
         </HtmlTooltip>,
       )
@@ -173,43 +178,68 @@ export function Actions({
               cursor: 'pointer',
             }}
           >
-            <BookOpen size={size}  />
+            <BookOpen size={size} />
           </IconButton>
         </HtmlTooltip>,
       )
     if (!isMobileDevice)
-      buttons.push(
-        <HtmlTooltip
-          key="fullscreen"
-          title={
-            <KeybindHint
-              label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-              keybind={creagenEditor.getKeybindKeyString(
-                'editor.toggleFullscreen',
-              )}
-              wrapInParens
-            />
-          }
-        >
-          <IconButton
-            size="small"
-            color={isFullscreen ? 'inherit' : 'primary'}
-            sx={fullscreenActionButtonSx}
-            onClick={() =>
-              creagenEditor.executeCommand('editor.toggleFullscreen')
-            }
-            style={{
-              cursor: 'pointer',
-            }}
-          >
-            {isFullscreen ? (
-              <Minimize2 size={size} />
-            ) : (
-              <Maximize2 size={size} />
+      if (creagenEditor.head) {
+        buttons.push(
+          <HtmlTooltip key="pin" title="Copy link to this current version">
+            <IconButton
+              size="small"
+              color={isFullscreen ? 'inherit' : 'primary'}
+              sx={fullscreenActionButtonSx}
+              onClick={() => {
+                void (async () => {
+                  try {
+                    const head = creagenEditor.head
+                    if (!head) return
+                    const url = creagenEditor.mutateUrl().setCommit(head.hash)
+                    await navigator.clipboard.writeText(url.toString())
+                    log(Severity.Success, 'Copied shareable link')
+                  } catch (e) {
+                    logger.error('Failed to create shareable link', e)
+                  }
+                })()
+              }}
+              style={{
+                cursor: 'pointer',
+              }}
+            >
+              <Pin size={size} />
+            </IconButton>
+          </HtmlTooltip>,
+        )
+      }
+    buttons.push(
+      <HtmlTooltip
+        key="fullscreen"
+        title={
+          <KeybindHint
+            label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+            keybind={creagenEditor.getKeybindKeyString(
+              'editor.toggleFullscreen',
             )}
-          </IconButton>
-        </HtmlTooltip>,
-      )
+            wrapInParens
+          />
+        }
+      >
+        <IconButton
+          size="small"
+          color={isFullscreen ? 'inherit' : 'primary'}
+          sx={fullscreenActionButtonSx}
+          onClick={() =>
+            creagenEditor.executeCommand('editor.toggleFullscreen')
+          }
+          style={{
+            cursor: 'pointer',
+          }}
+        >
+          {isFullscreen ? <Minimize2 size={size} /> : <Maximize2 size={size} />}
+        </IconButton>
+      </HtmlTooltip>,
+    )
     if (hasRun && !frozen) {
       buttons.push(
         <HtmlTooltip key="freeze" title="Freeze Sandbox">
@@ -248,7 +278,7 @@ export function Actions({
             cursor: 'pointer',
           }}
         >
-            <Play size={size}  />
+          <Play size={size} />
         </IconButton>
       </HtmlTooltip>,
     )

@@ -10,7 +10,7 @@ export interface ClientStorage {
   readonly versie: Versie<CommitMetadata>
   readonly user?: User
 
-  setSettings(value: Record<string, unknown>): Promise<void>
+  setSettings: (value: Record<string, unknown>) => Promise<void>
   getSettings(): Promise<Record<string, unknown> | null>
   setCustomKeybindings(keybindings: CustomKeybinding[]): Promise<void>
   getCustomKeybindings(): Promise<CustomKeybinding[] | null>

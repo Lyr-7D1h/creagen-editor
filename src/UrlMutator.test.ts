@@ -1,6 +1,6 @@
 import { decompressFromEncodedURIComponent } from 'lz-string'
 import { SemVer } from 'semver'
-import { Sha256Hash } from 'versie'
+import { Sha256Hash, commitHashSchema } from 'versie'
 import { beforeEach, describe, expect, test } from 'vitest'
 import { UrlMutator } from './UrlMutator'
 
@@ -142,7 +142,7 @@ describe('UrlMutator shareable link', () => {
       author: 'lyr',
     }
 
-    const shareable = UrlMutator.createShareableLink(source)
+    const shareable = new UrlMutator().createShareableLink(source)
     window.history.replaceState(null, '', shareable.toString())
 
     const parsed = new UrlMutator().getSharableLinkData()
@@ -190,7 +190,7 @@ describe('UrlMutator shareable link', () => {
       author: undefined,
     }
 
-    const shareable = UrlMutator.createShareableLink(source)
+    const shareable = new UrlMutator().createShareableLink(source)
     const pathname = shareable.toURL().pathname.slice(2)
     const decompressed = decompressFromEncodedURIComponent(pathname)
 
@@ -456,5 +456,176 @@ describe('UrlMutator getVersion edge cases', () => {
       username: 'user123',
       bookmark: 'my_sketch_v2',
     })
+  })
+})
+
+describe('UrlMutator with a base path', () => {
+  const BASE = '/editor'
+  const HEX = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+
+  test('setBookmark writes path under the base path', () => {
+    const url = new UrlMutator(new URL('http://localhost/'), BASE)
+      .setBookmark('my-bookmark', 'alice')
+      .toURL()
+
+    expect(url.pathname).toBe('/editor/alice/my-bookmark')
+  })
+
+  test('setBookmark without username writes under the base path', () => {
+    const url = new UrlMutator(new URL('http://localhost/'), BASE)
+      .setBookmark('my-bookmark')
+      .toURL()
+
+    expect(url.pathname).toBe('/editor/my-bookmark')
+  })
+
+  test('setCommit writes commit under the base path', () => {
+    const url = new UrlMutator(new URL('http://localhost/'), BASE)
+      .setCommit(commitHashSchema.parse(HEX))
+      .toURL()
+
+    expect(url.pathname).toBe(`/editor/${HEX}`)
+  })
+
+  test('setCommit with no commit resets to the base path', () => {
+    const url = new UrlMutator(new URL(`http://localhost/editor/${HEX}`), BASE)
+      .setCommit()
+      .toURL()
+
+    expect(url.pathname).toBe('/editor')
+  })
+
+  test('setPath ignores a leading slash', () => {
+    const url = new UrlMutator(new URL('http://localhost/'), BASE)
+      .setPath('/foo')
+      .toURL()
+
+    expect(url.pathname).toBe('/editor/foo')
+  })
+
+  test('basePath with trailing slash is normalized', () => {
+    const url = new UrlMutator(new URL('http://localhost/'), '/editor/')
+      .setBookmark('my-bookmark')
+      .toURL()
+
+    expect(url.pathname).toBe('/editor/my-bookmark')
+  })
+
+  test('getPath strips the base path', () => {
+    const mutator = new UrlMutator(
+      new URL('http://localhost/editor/alice/my-bookmark'),
+      BASE,
+    )
+
+    expect(mutator.getPath()).toBe('alice/my-bookmark')
+  })
+
+  test.each(['http://localhost/editor', 'http://localhost/editor/'])(
+    'getPath returns empty string for the bare base path %s',
+    (href) => {
+      const mutator = new UrlMutator(new URL(href), BASE)
+
+      expect(mutator.getPath()).toBe('')
+    },
+  )
+
+  test('getPath does not strip an unrelated path that merely shares the prefix', () => {
+    const mutator = new UrlMutator(
+      new URL('http://localhost/editorial/foo'),
+      BASE,
+    )
+
+    expect(mutator.getPath()).toBe('/editorial/foo')
+  })
+
+  test('getVersion parses bookmark under the base path', () => {
+    const url = new URL('http://localhost/editor/alice/her-bookmark')
+
+    expect(new UrlMutator(url, BASE).getVersion()).toEqual({
+      type: 'bookmark',
+      username: 'alice',
+      bookmark: 'her-bookmark',
+    })
+  })
+
+  test('getVersion parses commit under the base path', () => {
+    const url = new URL(`http://localhost/editor/${HEX}`)
+
+    expect(new UrlMutator(url, BASE).getVersion()).toEqual({
+      type: 'commit',
+      commit: Sha256Hash.fromHex(HEX),
+    })
+  })
+
+  test('getVersion returns null for the bare base path', () => {
+    const url = new URL('http://localhost/editor/')
+
+    expect(new UrlMutator(url, BASE).getVersion()).toBeNull()
+  })
+
+  test('getVersion returns null for shareable payload under the base path', () => {
+    const url = new URL('http://localhost/editor/~compressed-data')
+
+    expect(new UrlMutator(url, BASE).getVersion()).toBeNull()
+  })
+
+  test('roundtrips shareable link under the base path', () => {
+    const source = {
+      code: 'draw("hello")\n',
+      bookmarkName: 'base path trail',
+      editorVersion: new SemVer('1.2.3'),
+      libraries: [{ name: 'math', version: new SemVer('1.0.0') }],
+      createdOn: new Date('2024-01-03T10:20:30.000Z'),
+      author: 'lyr',
+    }
+
+    const shareable = new UrlMutator(undefined, BASE).createShareableLink(
+      source,
+    )
+    expect(shareable.toURL().pathname).toMatch(/^\/editor\/~.+/)
+
+    window.history.replaceState(null, '', shareable.toString())
+    const parsed = new UrlMutator(undefined, BASE).getSharableLinkData()
+
+    if (parsed instanceof Error) {
+      expect.fail(parsed.message)
+    }
+    if (parsed === null) {
+      expect.fail('Should contain data')
+    }
+    expect(parsed.code).toBe(source.code)
+    expect(parsed.bookmarkName).toBe(source.bookmarkName)
+    expect(parsed.author).toBe('lyr')
+  })
+
+  test('query params are readable under the base path', () => {
+    const url = new URL('http://localhost/editor/?hide_all=true&show_qr=false')
+    const entries: Array<[string, string]> = []
+
+    new UrlMutator(url, BASE).forEachQueryParam((value, key) => {
+      entries.push([key, value])
+    })
+
+    expect(entries).toEqual([
+      ['hide_all', 'true'],
+      ['show_qr', 'false'],
+    ])
+  })
+
+  test('setParams preserves the base path and writes into the hash', () => {
+    const store = new Map<string, unknown>([
+      ['play', false],
+      ['rotation', 135],
+    ])
+
+    const url = new UrlMutator(
+      new URL('http://localhost/editor/alice/bm'),
+      BASE,
+    )
+      .setParams(store)
+      .toURL()
+
+    expect(url.pathname).toBe('/editor/alice/bm')
+    expect(decodeURIComponent(url.hash)).toBe('#/play:false/rotation:135')
   })
 })
