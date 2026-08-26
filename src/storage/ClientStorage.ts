@@ -1,7 +1,6 @@
 import type { Bookmark, IndexdbImport, Versie } from 'versie'
 import type { CommitMetadata } from '../creagen-editor/CommitMetadata'
 import type { CustomKeybinding } from '../creagen-editor/keybindings'
-import type { JwtPayload } from '../user/jwt'
 
 export interface User {
   username: string
@@ -36,8 +35,6 @@ export interface ClientStorage {
     password: string,
     turnstileToken: string,
   ): Promise<string | true>
-  /** Return current session */
-  session(): JwtPayload | null
   /** Revoke the session (best effort) and clear local tokens */
   logout(): void | Promise<void>
 }

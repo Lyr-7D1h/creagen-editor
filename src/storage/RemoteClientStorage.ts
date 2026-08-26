@@ -21,12 +21,14 @@ import {
 import type { CustomKeybinding } from '../creagen-editor/keybindings'
 import { logger } from '../logs/logger'
 import {
+  authMiddleware,
+  clearTokens,
+  getAccessToken,
   unwrapDataResponse,
   unwrapResponse,
   type RemoteClient,
   type User,
 } from '../remote/remoteClient'
-import { parseJwtPayload } from '../user/jwt'
 import { promptLogin } from '../user/promptLogin'
 import type { ClientStorage } from './ClientStorage'
 import { localStorage } from './LocalStorage'
@@ -49,54 +51,34 @@ const bookmarkCheckoutResponseSchema = z.object({
   blob: z.custom<DeltizedBlob>((val) => val instanceof Uint8Array),
 })
 
-function authMiddleware(token: string) {
-  return {
-    onRequest: ({ request }: { request: Request }) => {
-      request.headers.set('Authorization', `Bearer ${token}`)
-    },
-  }
-}
-
 export interface Auth {
   token: string
   user: User
 }
 
-async function resolveAuth(remoteClient: RemoteClient): Promise<Auth | null> {
-  const token = localStorage.get('creagen-auth-token') ?? undefined
-  if (token == null) {
-    return null
-  }
-  const payload = parseJwtPayload(token)
-  if (payload === null) {
-    localStorage.remove('creagen-auth-token')
-    return null
-  }
-  if (payload.exp < Date.now() / 1000) {
-    localStorage.remove('creagen-auth-token')
-    return null
-  }
-  const auth = authMiddleware(token)
-  remoteClient.use(auth)
-  const res = await remoteClient.GET('/api/user')
-  const status = res.response.status
-  if (status === 401 || status === 404) {
-    localStorage.remove('creagen-auth-token')
-    remoteClient.eject(auth)
-    logger.error('User is unauthorized')
-    return null
-  }
-  if (res.error) {
-    logger.error(`Failed to fetch user: ${res.error.error.message}`)
-    return null
-  }
-  return { token, user: res.data.user }
-}
-
 /** Entry point for fetching all data */
 export class RemoteClientStorage implements ClientStorage {
   static async create(remoteClient: RemoteClient) {
-    const auth = await resolveAuth(remoteClient)
+    remoteClient.use(authMiddleware)
+
+    // validate and fetch user information
+    const accessToken = getAccessToken()
+    let auth: Auth | null = null
+    if (accessToken) {
+      const res = await remoteClient.GET('/api/user')
+      const status = res.response.status
+      if (status === 401 || status === 404) {
+        clearTokens()
+        logger.error('User is unauthorized')
+      } else if (res.error) {
+        logger.error(`Failed to fetch user: ${res.error.error.message}`)
+      } else if (res.data.success) {
+        auth = {
+          token: accessToken,
+          user: res.data.user,
+        }
+      }
+    }
 
     const versieStorage = await RemoteVersieStorage.create(auth, remoteClient)
     const vcsResult = await Versie.create(versieStorage, (raw) => {
@@ -145,19 +127,15 @@ export class RemoteClientStorage implements ClientStorage {
     localStorage.set('commit-seq', res.nextSeq)
   }
 
-  session() {
-    if (!this.auth) return null
-    return parseJwtPayload(this.auth.token)
-  }
-
   async login(username: string, password: string, turnstileToken: string) {
     try {
-      const { token } = unwrapResponse(
+      const { token, refreshToken } = unwrapResponse(
         await this.remoteClient.POST('/api/login', {
           body: { username, password, turnstileToken },
         }),
       )
-      localStorage.set('creagen-auth-token', token)
+      localStorage.set('creagen-access-token', token)
+      localStorage.set('creagen-refresh-token', refreshToken)
       // TODO: load user without reload of page
       window.location.reload()
       return true
@@ -187,8 +165,18 @@ export class RemoteClientStorage implements ClientStorage {
     }
   }
 
-  logout() {
-    localStorage.remove('creagen-auth-token')
+  async logout() {
+    const refreshToken = localStorage.get('creagen-refresh-token')
+    if (refreshToken != null) {
+      try {
+        await this.remoteClient.POST('/api/user/logout', {
+          body: { refreshToken },
+        })
+      } catch {
+        // best effort: always proceed with the local logout
+      }
+    }
+    clearTokens()
     window.location.reload()
   }
 

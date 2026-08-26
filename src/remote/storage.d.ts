@@ -38,6 +38,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Refresh token */
+        post: operations["post_UserTokenRefresh"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/checkout/bookmarks/{username}/{bookmarkName}": {
         parameters: {
             query?: never;
@@ -100,6 +117,24 @@ export interface paths {
         get: operations["get_UserProfile"];
         put?: never;
         post?: never;
+        /** Delete user */
+        delete: operations["delete_UserDelete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Logout */
+        post: operations["post_UserLogout"];
         delete?: never;
         options?: never;
         head?: never;
@@ -292,7 +327,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description JWT token and user profile */
+            /** @description Access token, refresh token and user profile */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -301,6 +336,7 @@ export interface operations {
                     "application/json": {
                         success: boolean;
                         token: string;
+                        refreshToken: string;
                         user: {
                             username: string;
                             /** Format: date-time */
@@ -327,6 +363,58 @@ export interface operations {
                 };
             };
             /** @description Invalid credentials */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success: boolean;
+                        error: {
+                            code: string;
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    post_UserTokenRefresh: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    refreshToken: string;
+                };
+            };
+        };
+        responses: {
+            /** @description New access token and rotated refresh token */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success: boolean;
+                        token: string;
+                        refreshToken: string;
+                        user: {
+                            username: string;
+                            /** Format: date-time */
+                            createdOn: string;
+                            quotaBytesUsed: number;
+                            quotaBytesLimit: number;
+                        };
+                    };
+                };
+            };
+            /** @description Refresh token is invalid, expired, or revoked */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -482,7 +570,7 @@ export interface operations {
                         /** @enum {boolean} */
                         success: false;
                         error: {
-                            code: "UNAUTHORIZED" | "INVALID_USER_ID";
+                            code: "UNAUTHORIZED" | "INVALID_USER_ID" | "USER_DELETED";
                             message: string;
                         };
                     };
@@ -542,7 +630,7 @@ export interface operations {
                         /** @enum {boolean} */
                         success: false;
                         error: {
-                            code: "UNAUTHORIZED" | "INVALID_USER_ID";
+                            code: "UNAUTHORIZED" | "INVALID_USER_ID" | "USER_DELETED";
                             message: string;
                         };
                     };
@@ -561,6 +649,108 @@ export interface operations {
                             code: "USER_NOT_FOUND";
                             message: string;
                         };
+                    };
+                };
+            };
+        };
+    };
+    delete_UserDelete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    password: string;
+                    turnstileToken: string;
+                };
+            };
+        };
+        responses: {
+            /** @description User deleted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success: boolean;
+                    };
+                };
+            };
+            /** @description Turnstile verification failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success: boolean;
+                        error: {
+                            code: string;
+                            message: string;
+                        };
+                    };
+                };
+            };
+            /** @description Invalid credentials */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success: boolean;
+                        error: {
+                            code: string;
+                            message: string;
+                        };
+                    };
+                };
+            };
+            /** @description User not found (already deleted) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success: boolean;
+                        error: {
+                            code: string;
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    post_UserLogout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    refreshToken: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Session revoked */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success: boolean;
                     };
                 };
             };
@@ -599,7 +789,7 @@ export interface operations {
                         /** @enum {boolean} */
                         success: false;
                         error: {
-                            code: "UNAUTHORIZED" | "INVALID_USER_ID";
+                            code: "UNAUTHORIZED" | "INVALID_USER_ID" | "USER_DELETED";
                             message: string;
                         };
                     };
@@ -655,7 +845,7 @@ export interface operations {
                         /** @enum {boolean} */
                         success: false;
                         error: {
-                            code: "UNAUTHORIZED" | "INVALID_USER_ID";
+                            code: "UNAUTHORIZED" | "INVALID_USER_ID" | "USER_DELETED";
                             message: string;
                         };
                     };
@@ -699,7 +889,7 @@ export interface operations {
                         /** @enum {boolean} */
                         success: false;
                         error: {
-                            code: "UNAUTHORIZED" | "INVALID_USER_ID";
+                            code: "UNAUTHORIZED" | "INVALID_USER_ID" | "USER_DELETED";
                             message: string;
                         };
                     };
@@ -758,7 +948,7 @@ export interface operations {
                         /** @enum {boolean} */
                         success: false;
                         error: {
-                            code: "UNAUTHORIZED" | "INVALID_USER_ID";
+                            code: "UNAUTHORIZED" | "INVALID_USER_ID" | "USER_DELETED";
                             message: string;
                         };
                     };
@@ -817,7 +1007,7 @@ export interface operations {
                         /** @enum {boolean} */
                         success: false;
                         error: {
-                            code: "UNAUTHORIZED" | "INVALID_USER_ID";
+                            code: "UNAUTHORIZED" | "INVALID_USER_ID" | "USER_DELETED";
                             message: string;
                         };
                     };
@@ -879,7 +1069,7 @@ export interface operations {
                         /** @enum {boolean} */
                         success: false;
                         error: {
-                            code: "UNAUTHORIZED" | "INVALID_USER_ID";
+                            code: "UNAUTHORIZED" | "INVALID_USER_ID" | "USER_DELETED";
                             message: string;
                         };
                     };
@@ -954,7 +1144,7 @@ export interface operations {
                         /** @enum {boolean} */
                         success: false;
                         error: {
-                            code: "UNAUTHORIZED" | "INVALID_USER_ID";
+                            code: "UNAUTHORIZED" | "INVALID_USER_ID" | "USER_DELETED";
                             message: string;
                         };
                     };
@@ -1004,7 +1194,7 @@ export interface operations {
                         /** @enum {boolean} */
                         success: false;
                         error: {
-                            code: "UNAUTHORIZED" | "INVALID_USER_ID";
+                            code: "UNAUTHORIZED" | "INVALID_USER_ID" | "USER_DELETED";
                             message: string;
                         };
                     };
@@ -1050,7 +1240,7 @@ export interface operations {
                         /** @enum {boolean} */
                         success: false;
                         error: {
-                            code: "UNAUTHORIZED" | "INVALID_USER_ID";
+                            code: "UNAUTHORIZED" | "INVALID_USER_ID" | "USER_DELETED";
                             message: string;
                         };
                     };
@@ -1107,7 +1297,7 @@ export interface operations {
                         /** @enum {boolean} */
                         success: false;
                         error: {
-                            code: "UNAUTHORIZED" | "INVALID_USER_ID";
+                            code: "UNAUTHORIZED" | "INVALID_USER_ID" | "USER_DELETED";
                             message: string;
                         };
                     };

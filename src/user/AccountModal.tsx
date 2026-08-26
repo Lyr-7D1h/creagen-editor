@@ -10,7 +10,6 @@ import {
   Typography,
 } from '@mui/material'
 import { CircleUser } from 'lucide-react'
-import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 
 interface AccountModalProps {
   open: boolean
@@ -25,9 +24,6 @@ export function AccountModal({
   username,
   onLogout,
 }: AccountModalProps) {
-  const storage = useCreagenEditor().storage
-  const payload = storage.session()
-
   function handleLogout() {
     onLogout()
     onClose()
@@ -50,24 +46,6 @@ export function AccountModal({
           <Typography variant="h6">{username}</Typography>
         </Stack>
         <Divider sx={{ mb: 2 }} />
-        <Stack spacing={0.75}>
-          <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-            <Typography variant="body2" color="text.secondary">
-              Logged in since
-            </Typography>
-            <Typography variant="body2">
-              {payload ? new Date(payload.iat * 1000).toLocaleString() : '—'}
-            </Typography>
-          </Stack>
-          <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-            <Typography variant="body2" color="text.secondary">
-              Session expires
-            </Typography>
-            <Typography variant="body2">
-              {payload ? new Date(payload.exp * 1000).toLocaleString() : '—'}
-            </Typography>
-          </Stack>
-        </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
         <Button onClick={onClose} size="small">

@@ -5,6 +5,7 @@ import { LoginModal } from './LoginModal'
 import { AccountModal } from './AccountModal'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import type { RemoteClientStorage } from '../storage/RemoteClientStorage'
+import { logger } from '../logs/logger'
 
 export function LoginButton() {
   // resolved in compile time
@@ -18,7 +19,7 @@ export function LoginButton() {
   const user = storage.user
 
   function handleLogout() {
-    storage.logout()
+    storage.logout().catch(logger.error)
   }
 
   function openWithMode(mode: 'login' | 'signup') {

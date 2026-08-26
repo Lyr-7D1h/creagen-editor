@@ -14,7 +14,7 @@ export type LocalStorageOnlyKey =
 /** LocalStorage + Remote */
 export type LocalStorageKey =
   | 'commit-seq'
-  | 'creagen-auth-token'
+  | 'creagen-access-token'
   | 'creagen-refresh-token'
   | 'editor-scroll-position'
   | 'custom-keybindings'
@@ -28,7 +28,7 @@ type LocalStorageKeyValueMap = {
   // Remote enabled keys
   /** Defines when commit synchronization was last run */
   'commit-seq': number
-  'creagen-auth-token': string
+  'creagen-access-token': string
   'creagen-refresh-token': string
 
   welcome: boolean
