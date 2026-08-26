@@ -1,10 +1,10 @@
 import type * as m from 'monaco-editor'
 import * as monaco from 'monaco-editor'
 import {
-  typescriptDefaults,
-  ScriptTarget,
   ModuleKind,
   ModuleResolutionKind,
+  ScriptTarget,
+  typescriptDefaults,
 } from 'monaco-editor/esm/vs/language/typescript/monaco.contribution'
 import { localStorage } from '../storage/LocalStorage'
 
@@ -77,7 +77,8 @@ export type EditorTheme = 'creagen-light' | 'creagen-dark'
 export const typescriptCompilerOptions: m.typescript.CompilerOptions = {
   target: ScriptTarget.ESNext,
   allowNonTsExtensions: true,
-  moduleResolution: ModuleResolutionKind.NodeJs as unknown as m.typescript.ModuleResolutionKind,
+  moduleResolution:
+    ModuleResolutionKind.NodeJs as unknown as m.typescript.ModuleResolutionKind,
   esModuleInterop: true,
   module: ModuleKind.ESNext,
   noEmit: true,
@@ -93,9 +94,7 @@ function handleBeforeMount(monaco: Monaco) {
     // 1378,1375: allow await on top level
     diagnosticCodesToIgnore: [1375, 1378],
   })
-  typescriptDefaults.setCompilerOptions(
-    typescriptCompilerOptions,
-  )
+  typescriptDefaults.setCompilerOptions(typescriptCompilerOptions)
   monaco.editor.defineTheme('creagen-light', creagenLightTheme)
   monaco.editor.defineTheme('creagen-dark', creagenDarkTheme)
   monaco.editor.defineTheme('creagen-fullscreen', creagenFullscreenTheme)
@@ -305,10 +304,7 @@ export class Editor {
   addTypings(typings: string, uri: string) {
     if (this.typingsExist(uri)) return
     logger.info(`Adding typings for ${uri}`)
-    const disposable = typescriptDefaults.addExtraLib(
-      typings,
-      uri,
-    )
+    const disposable = typescriptDefaults.addExtraLib(typings, uri)
     this.typings.set(uri, disposable)
   }
 

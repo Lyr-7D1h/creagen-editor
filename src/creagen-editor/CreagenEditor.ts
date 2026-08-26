@@ -2,15 +2,15 @@ import { SemVer } from 'semver'
 import type { AsyncResult } from 'typescript-result'
 import { Result } from 'typescript-result'
 import type {
-  Bookmark,
-  BookmarkAlreadyExistsError,
-  BookmarkNotFoundError,
-  Commit,
-  CommitHash,
-  IndexdbImport,
-  InvalidBookmarkNameError,
-  ParseError,
-  VersieStorageError,
+    Bookmark,
+    BookmarkAlreadyExistsError,
+    BookmarkNotFoundError,
+    Commit,
+    CommitHash,
+    IndexdbImport,
+    InvalidBookmarkNameError,
+    ParseError,
+    VersieStorageError,
 } from 'versie'
 import z from 'zod'
 import { Controller } from '../controller/Controller'
@@ -64,6 +64,7 @@ export interface CreagenEditorConfig {
   basePath?: string
   clientStorage?: ClientStorage
   sandboxRuntimeUrl: string
+  sandboxAllowSameOrigin?: boolean
   controllerUrl?: string
   turnstileSiteKey?: string
 }
@@ -85,7 +86,7 @@ export class CreagenEditor {
       ? config.clientStorage
       : await LocalClientStorage.create()
     const settings = await Settings.create(storage)
-    const sandbox = Sandbox.create(config.sandboxRuntimeUrl, settings)
+    const sandbox = Sandbox.create(settings, config.sandboxRuntimeUrl, config.sandboxAllowSameOrigin)
     const editor = Editor.create(settings)
 
     const customKeybindings = (await storage.getCustomKeybindings()) ?? []

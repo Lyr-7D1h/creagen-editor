@@ -19,7 +19,7 @@ export class Sandbox {
   log: SandboxLog
   isFrozen = false
 
-  static create(url: string, settings: Settings) {
+  static create(settings: Settings, url: string, allowSameOrigin = false) {
     const iframe = document.createElement('iframe')
     iframe.title = ''
     iframe.style.display = 'block'
@@ -27,7 +27,7 @@ export class Sandbox {
     iframe.style.flexGrow = '1'
     iframe.style.margin = '0px'
     iframe.style.padding = '0px'
-    iframe.sandbox = `allow-scripts ${CREAGEN_MODE === 'dev' ? 'allow-same-origin' : ''}`
+    iframe.sandbox = `allow-scripts ${allowSameOrigin ? 'allow-same-origin' : ''}`
 
     // Use the separate sandbox URL
     iframe.src = url

@@ -8,6 +8,7 @@
     "build": "vite build -m production",
     "build:sandbox": "VITE_ENTRYPOINT=sandbox vite build -m production && mv dist/sandbox-runtime/index.html dist/index.html && rm -r dist/sandbox-runtime",
     "build:lib": "vite build -m production --config vite.lib.config.mjs",
+    "build:lib:watch": "vite build -w -m production --config vite.lib.config.mjs",
     "docs:dev": "DOCS_SITE_URL=http://localhost:5173 vitepress dev docs",
     "docs:build": "vitepress build docs",
     "format": "prettier -w src/",

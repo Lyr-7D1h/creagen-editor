@@ -38,5 +38,6 @@ export interface ClientStorage {
   ): Promise<string | true>
   /** Return current session */
   session(): JwtPayload | null
-  logout(): void
+  /** Revoke the session (best effort) and clear local tokens */
+  logout(): void | Promise<void>
 }

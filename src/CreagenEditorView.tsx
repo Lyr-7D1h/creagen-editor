@@ -13,6 +13,7 @@ import { ErrorBoundary } from './creagen-editor/ErrorBoundary'
 import { isMobile } from './creagen-editor/isMobile'
 import { Theme } from './creagen-editor/Theme'
 import { WelcomeScreen } from './creagen-editor/WelcomeScreen'
+import { LoginPromptHandler } from './user/LoginPromptHandler'
 
 declare global {
   interface Window {
@@ -74,6 +75,7 @@ export function CreagenEditorView({ config }: {
       <CreagenEditorContext.Provider value={creagenEditor}>
         <Theme>
           <ErrorBoundary>
+            <LoginPromptHandler />
             <WelcomeScreen />
             {mobile ? (
               <CreagenEditorViewContentMobile />

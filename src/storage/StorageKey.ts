@@ -15,6 +15,7 @@ export type LocalStorageOnlyKey =
 export type LocalStorageKey =
   | 'commit-seq'
   | 'creagen-auth-token'
+  | 'creagen-refresh-token'
   | 'editor-scroll-position'
   | 'custom-keybindings'
   | 'settings'
@@ -28,6 +29,7 @@ type LocalStorageKeyValueMap = {
   /** Defines when commit synchronization was last run */
   'commit-seq': number
   'creagen-auth-token': string
+  'creagen-refresh-token': string
 
   welcome: boolean
   'menu-view': boolean

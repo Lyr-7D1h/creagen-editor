@@ -16,6 +16,7 @@ import { HtmlTooltip } from '../editor/HtmlTooltip'
 import { editorEvents } from '../events/events'
 import {
   useForceUpdateOnEditorEvent,
+  useHead,
   useSettings,
 } from '../events/useEditorEvents'
 import { createContextLogger, log, Severity } from '../logs/logger'
@@ -41,6 +42,7 @@ export function Actions({
 }) {
   const theme = useTheme()
   const creagenEditor = useCreagenEditor()
+  const head = useHead()
   useForceUpdateOnEditorEvent('params:config')
   const exportEnabled = useSettings('actions.export_enabled')
   const showQR = useSettings('show_qr')
@@ -183,7 +185,7 @@ export function Actions({
         </HtmlTooltip>,
       )
     if (!isMobileDevice)
-      if (creagenEditor.head) {
+      if (head) {
         buttons.push(
           <HtmlTooltip key="pin" title="Copy link to this current version">
             <IconButton

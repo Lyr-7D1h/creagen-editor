@@ -23,6 +23,7 @@ export function App() {
         setConfig({
           clientStorage,
           sandboxRuntimeUrl: CREAGEN_EDITOR_SANDBOX_RUNTIME_URL,
+          sandboxAllowSameOrigin: CREAGEN_MODE === "dev",
           controllerUrl: CREAGEN_EDITOR_CONTROLLER_URL ?? undefined,
           turnstileSiteKey: CREAGEN_TURNSTILE_SITE_KEY ?? undefined,
         })

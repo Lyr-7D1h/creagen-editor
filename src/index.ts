@@ -5,6 +5,7 @@
 // NOTE: Added so that tailwind css is also compiled as final output
 import './styles.css'
 
+export { LoginModal } from './user/LoginModal'
 export { Turnstile } from './user/Turnstile'
 
 // Main exports for npm package
@@ -16,4 +17,3 @@ export type { ClientStorage } from './storage/ClientStorage'
 export { remoteClient } from './remote/remoteClient'
 export { LocalClientStorage } from './storage/LocalClientStorage'
 export { RemoteClientStorage } from './storage/RemoteClientStorage'
-

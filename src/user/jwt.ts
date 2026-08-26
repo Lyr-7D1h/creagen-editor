@@ -7,6 +7,13 @@ const payloadSchema = z.object({
   exp: z.number(),
 })
 export type JwtPayload = z.infer<typeof payloadSchema>
+
+/** JWT segments are base64url-encoded without padding; atob only accepts base64 */
+function base64UrlToBase64(input: string): string {
+  const base64 = input.replace(/-/g, '+').replace(/_/g, '/')
+  return base64 + '='.repeat((4 - (base64.length % 4)) % 4)
+}
+
 export function parseJwtPayload(token: string) {
   try {
     const payload = token.split('.')[1]
@@ -14,7 +21,9 @@ export function parseJwtPayload(token: string) {
       return null
     }
 
-    const res = payloadSchema.safeParse(JSON.parse(atob(payload)))
+    const res = payloadSchema.safeParse(
+      JSON.parse(atob(base64UrlToBase64(payload))),
+    )
     if (res.error) {
       logger.error(res.error)
       return null
