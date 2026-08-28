@@ -334,7 +334,7 @@ export class CreagenEditor {
 
     const checkoutResult = await this.storage.versie.checkout(hash)
     if (!checkoutResult.ok) {
-      return checkoutResult
+      throw checkoutResult.error
     }
     const checkout = checkoutResult.value
 
@@ -634,8 +634,7 @@ export class CreagenEditor {
       bookmarkName === this.activeBookmark.name &&
       this.activeBookmark.commit === null
     ) {
-      const res = await this.loadCommit(commit)
-      if (!res.ok) throw res.error
+      await this.loadCommit(commit)
       this.mutateUrl()
         .setCommit(commit)
         .pushState(undefined, this.activeBookmark.name)

@@ -22,9 +22,7 @@ export const commitMetadataJsonSchema = z.object({
 })
 
 export type CommitMetadataJson = z.infer<typeof commitMetadataJsonSchema>
-export class CommitMetadata
-  implements CommitMetadataInterface<CommitMetadataJson>
-{
+export class CommitMetadata implements CommitMetadataInterface<CommitMetadataJson> {
   static parse(data: CommitMetadataJson) {
     const { editorVersion, libraries, author } =
       commitMetadataSchema.parse(data)

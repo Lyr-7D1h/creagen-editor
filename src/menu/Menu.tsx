@@ -2,7 +2,7 @@ import { GitBranch, Settings, BookOpen, Bookmark, GitCommitHorizontal, Keyboard,
 import { Box, Button, ButtonGroup, Typography } from '@mui/material'
 import type React from 'react'
 import type { RefAttributes } from 'react'
-import { useEffect } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { MenuLinks } from '../shared/MenuLinks'
 import { localStorage } from '../storage/LocalStorage'
 import { useLocalStorage } from '../storage/useLocalStorage'
@@ -13,6 +13,7 @@ import { DependenciesTab } from './tabs/DependenciesTab'
 import { ImportTab } from './tabs/ImportTab'
 import { KeybindingsTab } from './tabs/KeybindingsTab'
 import { SettingsTab } from './tabs/SettingsTab'
+import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 
 export type MenuProps = {
   width?: string
@@ -43,17 +44,6 @@ const tabs: Record<string, TabConfig> = {
     icon: <GitCommitHorizontal  />,
     parent: 'vcs',
   },
-  // TODO: add support for remote
-  ...(CREAGEN_REMOTE_URL == null
-    ? {
-        'vcs-actions': {
-          title: 'Import/Export',
-          content: <ImportTab />,
-          icon: <Upload  />,
-          parent: 'vcs',
-        },
-      }
-    : {}),
   dependencies: {
     icon: <BookOpen  />,
     title: 'Dependencies',
@@ -70,16 +60,8 @@ const tabs: Record<string, TabConfig> = {
     content: <SettingsTab />,
   },
 }
-export type TabKey = keyof typeof tabs
 
 const defaultKey = 'vcs-bookmarks'
-
-const parentTabs = Object.entries(tabs).filter(
-  ([_, c]) => typeof c.parent === 'undefined',
-)
-const childTabs = Object.entries(tabs).filter(
-  ([_, c]) => typeof c.parent !== 'undefined',
-)
 
 export function Menu<T>({ ref, width }: MenuProps & RefAttributes<T>) {
   const [selectedTabKey, setSelectedTabKey] = useLocalStorage(
@@ -87,19 +69,44 @@ export function Menu<T>({ ref, width }: MenuProps & RefAttributes<T>) {
     defaultKey,
   )
 
-  // reset in case of invalid key
-  useEffect(() => {
-    if (typeof tabs[selectedTabKey]?.content === 'undefined') {
-      setSelectedTabKey(defaultKey)
-    }
-  }, [selectedTabKey, setSelectedTabKey])
+  const creagenEditor = useCreagenEditor()
 
-  const setTab = (tab: string) => {
+  const activeTabs = useMemo<Record<string, TabConfig>>(() => {
+    if (creagenEditor.storage.remote) return tabs
+    return {
+      ...tabs,
+      'vcs-actions': {
+        title: 'Import/Export',
+        content: <ImportTab />,
+        icon: <Upload  />,
+        parent: 'vcs',
+      },
+    }
+  }, [creagenEditor.storage.remote])
+
+  const parentTabs = useMemo(
+    () => Object.entries(activeTabs).filter(([_, c]) => typeof c.parent === 'undefined'),
+    [activeTabs],
+  )
+  const childTabs = useMemo(
+    () => Object.entries(activeTabs).filter(([_, c]) => typeof c.parent !== 'undefined'),
+    [activeTabs],
+  )
+
+  const setTab = useCallback((tab: string) => {
     localStorage.set('menu-view-tab', selectedTabKey)
     setSelectedTabKey(tab)
-  }
+  }, [selectedTabKey, setSelectedTabKey])
 
-  const selectedTab = tabs[selectedTabKey]!
+  // reset in case of invalid key
+  useEffect(() => {
+    if (typeof activeTabs[selectedTabKey]?.content === 'undefined') {
+      setTab(defaultKey)
+    }
+  }, [activeTabs, selectedTabKey, setSelectedTabKey, setTab])
+
+  const selectedTab = activeTabs[selectedTabKey]
+  if (typeof selectedTab === "undefined") return ""
 
   return (
     <Box

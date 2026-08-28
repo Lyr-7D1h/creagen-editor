@@ -96,7 +96,7 @@ function injectAnalytics(mode) {
 }
 
 const commitHeadFile = './.git/FETCH_HEAD'
-function commitHash() {
+export function commitHash() {
   if (process.env.CREAGEN_EDITOR_COMMIT_HASH)
     return process.env.CREAGEN_EDITOR_COMMIT_HASH
   if (!fs.existsSync(commitHeadFile)) {

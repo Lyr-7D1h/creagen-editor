@@ -1,6 +1,14 @@
 // allow for css imports with bundler
 declare module '*.css'
 
+// allow for worker imports with bundler
+declare module '*?worker' {
+  const workerConstructor: {
+    new (): Worker
+  }
+  export default workerConstructor
+}
+
 // Non optional build variables
 declare const CREAGEN_MODE: 'dev' | 'release'
 declare const CREAGEN_EDITOR_VERSION: string
