@@ -365,7 +365,13 @@ export class CreagenEditor {
       bookmarkName,
       username,
     )) as (ActiveBookmark & { commit: CommitHash }) | null
-    if (bookmark) bookmark = { ...bookmark, username }
+    if (bookmark)
+      bookmark = {
+        ...bookmark,
+        ...(username && username !== this.storage.user?.username
+          ? { username }
+          : {}),
+      }
 
     if (bookmark === null)
       throw new Error(

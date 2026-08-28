@@ -1,5 +1,4 @@
 import {
-  Avatar,
   Button,
   Dialog,
   DialogActions,
@@ -9,7 +8,6 @@ import {
   Stack,
   Typography,
 } from '@mui/material'
-import { CircleUser } from 'lucide-react'
 
 interface AccountModalProps {
   open: boolean
