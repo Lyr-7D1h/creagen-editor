@@ -9,6 +9,7 @@ import { KeybindHint } from '../shared/KeybindHint'
 import { ActiveBookmark } from './ActiveBookmark'
 import { History } from './History'
 import { HtmlTooltip } from './HtmlTooltip'
+import { LoginButton } from '../user/LoginButton'
 
 export const BAR_HEIGHT = 18
 
@@ -150,13 +151,17 @@ export function EditorBar({
             <Plus size={16}  />
           </IconButton>
         </HtmlTooltip>
-        {showActiveBookmark ? (
+        {creagenEditor.storage.remote && (
+          <div style={{ minWidth: 0 }}>
+            <LoginButton />
+          </div>
+        )}
+        {showActiveBookmark && (
           <div>
             <ActiveBookmark color={isFullscreen ? '#fff' : undefined} />
           </div>
-        ) : (
-          ''
         )}
+
 
         {historyVisible && inlineHistoryInTopBar && (
           <div style={{ flex: 1, minWidth: 0 }}>

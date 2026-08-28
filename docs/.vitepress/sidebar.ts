@@ -1,5 +1,5 @@
 export const sidebar = [
-  { text: 'What this is', link: '/' },
+  { text: 'What is Creagen?', link: '/' },
   {
     text: 'Editor',
     items: [
@@ -12,7 +12,7 @@ export const sidebar = [
     ],
   },
   {
-    text: 'Creagen Library',
+    text: 'Library',
     items: [
       { text: 'About', link: '/creagen' },
       { text: 'Roadmap', link: '/creagen/roadmap' },

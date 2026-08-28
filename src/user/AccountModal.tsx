@@ -40,9 +40,6 @@ export function AccountModal({
       <DialogTitle sx={{ pb: 0 }}>Account</DialogTitle>
       <DialogContent>
         <Stack spacing={1.5} sx={{ py: 2, alignItems: 'center' }}>
-          <Avatar sx={{ width: 56, height: 56, bgcolor: 'primary.main' }}>
-            <CircleUser size={40}  />
-          </Avatar>
           <Typography variant="h6">{username}</Typography>
         </Stack>
         <Divider sx={{ mb: 2 }} />

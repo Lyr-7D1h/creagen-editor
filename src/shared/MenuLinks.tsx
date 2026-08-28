@@ -2,7 +2,6 @@ import { FileText, Bug, GitFork } from 'lucide-react'
 import { IconButton } from '@mui/material'
 import { HtmlTooltip } from '../editor/HtmlTooltip'
 import { DiscordIcon } from '../menu/DiscordIcon'
-import { LoginButton } from '../user/LoginButton'
 
 export function MenuLinks() {
   return (
@@ -55,7 +54,6 @@ export function MenuLinks() {
           <Bug size={18}  />
         </IconButton>
       </HtmlTooltip>
-      {CREAGEN_REMOTE_URL != null && <LoginButton />}
     </div>
   )
 }

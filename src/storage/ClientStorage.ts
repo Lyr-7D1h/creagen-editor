@@ -7,6 +7,7 @@ export interface User {
 }
 export interface ClientStorage {
   readonly versie: Versie<CommitMetadata>
+  readonly remote: boolean
   readonly user?: User
 
   setSettings: (value: Record<string, unknown>) => Promise<void>

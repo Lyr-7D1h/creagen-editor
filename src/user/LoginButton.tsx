@@ -1,5 +1,5 @@
 import { Button } from '@mui/material'
-import { CircleUser, UserPlus } from 'lucide-react'
+import {  UserPlus } from 'lucide-react'
 import { useState } from 'react'
 import { LoginModal } from './LoginModal'
 import { AccountModal } from './AccountModal'
@@ -8,8 +8,6 @@ import type { RemoteClientStorage } from '../storage/RemoteClientStorage'
 import { logger } from '../logs/logger'
 
 export function LoginButton() {
-  // resolved in compile time
-  if (CREAGEN_REMOTE_URL == null) return null
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const [open, setOpen] = useState(false)
   // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -35,7 +33,6 @@ export function LoginButton() {
         color="primary"
         onClick={() => (user ? setOpen(true) : openWithMode('login'))}
         sx={{ fontSize: '0.7rem', py: 0.25, px: 1, mr: 0.25 }}
-        startIcon={<CircleUser size={16}  />}
       >
         {user?.username ?? 'Login'}
       </Button>
