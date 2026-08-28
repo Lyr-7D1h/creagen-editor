@@ -2,15 +2,15 @@ import { SemVer } from 'semver'
 import type { AsyncResult } from 'typescript-result'
 import { Result } from 'typescript-result'
 import type {
-    Bookmark,
-    BookmarkAlreadyExistsError,
-    BookmarkNotFoundError,
-    Commit,
-    CommitHash,
-    IndexdbImport,
-    InvalidBookmarkNameError,
-    ParseError,
-    VersieStorageError,
+  Bookmark,
+  BookmarkAlreadyExistsError,
+  BookmarkNotFoundError,
+  Commit,
+  CommitHash,
+  IndexdbImport,
+  InvalidBookmarkNameError,
+  ParseError,
+  VersieStorageError,
 } from 'versie'
 import z from 'zod'
 import { Controller } from '../controller/Controller'
@@ -86,7 +86,11 @@ export class CreagenEditor {
       ? config.clientStorage
       : await LocalClientStorage.create()
     const settings = await Settings.create(storage)
-    const sandbox = Sandbox.create(settings, config.sandboxRuntimeUrl, config.sandboxAllowSameOrigin)
+    const sandbox = Sandbox.create(
+      settings,
+      config.sandboxRuntimeUrl,
+      config.sandboxAllowSameOrigin,
+    )
     const editor = Editor.create(settings)
 
     const customKeybindings = (await storage.getCustomKeybindings()) ?? []
@@ -243,6 +247,15 @@ export class CreagenEditor {
         if (!result.ok) return result
         this.setActiveBookmark(result.value)
         return Result.ok()
+      }
+
+      // add bookmark if this active bookmark is from someone else
+      if (this.activeBookmark.username) {
+        await this.storage.versie.addBookmark(
+          this.activeBookmark.name,
+          this.activeBookmark.commit,
+          new Date(),
+        )
       }
 
       // update currently active to this commit
