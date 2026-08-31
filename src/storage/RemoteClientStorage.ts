@@ -129,11 +129,13 @@ export class RemoteClientStorage implements ClientStorage {
 
   async login(username: string, password: string, turnstileToken: string) {
     try {
-      const { token, refreshToken } = unwrapResponse(
+      const res = unwrapDataResponse(
         await this.remoteClient.POST('/api/login', {
           body: { username, password, turnstileToken },
         }),
       )
+      if (res === null) return 'User not found'
+      const { token, refreshToken } = res
       localStorage.set('creagen-access-token', token)
       localStorage.set('creagen-refresh-token', refreshToken)
       // TODO: load user without reload of page
