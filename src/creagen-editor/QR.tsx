@@ -22,7 +22,7 @@ export function QR() {
   if (
     typeof activeId !== "string" ||
     !controllerEnabled ||
-    creagenEditor.controller?.open() ||
+    !creagenEditor.controller?.open() ||
     !showQR ||
     creagenEditor.params.length === 0
   )

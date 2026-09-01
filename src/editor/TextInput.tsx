@@ -48,6 +48,12 @@ export function TextInput({
         fontWeight: 'light',
         background: 'transparent',
         fontFamily: 'inherit',
+        // Keep the input from imposing a browser-default min-height that
+        // would stretch the editor bar; 18px fits within both bar modes.
+        height: 18,
+        lineHeight: '18px',
+        padding: 0,
+        boxSizing: 'border-box',
         ...style,
       }}
     />

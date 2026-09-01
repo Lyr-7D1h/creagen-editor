@@ -142,7 +142,7 @@ export function HistoryItemChip({
         sx={{
           color: 'inherit',
           // color: color != null && !active ? color : 'inherit',
-          lineHeight: 2,
+          lineHeight: 1.2,
           ...(isEditing != null || active
             ? {}
             : {
@@ -240,7 +240,9 @@ export function HistoryItemChip({
             '& .MuiChip-deleteIcon': {
               margin: '0 2px 0 0',
             },
-            height: '22px',
+            ...(fullscreen
+              ? { borderRadius: '0', height: '100%'  }
+              : {height: '100%'}),
             fontSize: '0.75rem',
             alignItems: 'center',
           }}
@@ -267,7 +269,7 @@ export function HistoryItemChip({
           color: fullscreen ? '#ddd' : 'grey',
           display: 'flex',
           alignItems: 'center',
-          height: '22px',
+          height: '100%',
           gap: '2px',
           fontSize: '0.75rem',
         }}

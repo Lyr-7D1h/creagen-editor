@@ -12,7 +12,6 @@ import {
 } from 'lucide-react'
 import type React from 'react'
 import { useEffect, useMemo, useState } from 'react'
-import { BAR_HEIGHT } from '../editor/EditorBar'
 import { HtmlTooltip } from '../editor/HtmlTooltip'
 import { editorEvents } from '../events/events'
 import {
@@ -144,7 +143,7 @@ export function Actions({
 
   const size =
     sizeVariant === 'compact'
-      ? BAR_HEIGHT - 6 + 'px'
+      ? '16px'
       : isMobile()
         ? '60px'
         : '50px'

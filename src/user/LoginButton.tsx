@@ -1,6 +1,6 @@
-import { Button } from '@mui/material'
-import {  UserPlus } from 'lucide-react'
-import { useState } from 'react'
+import { Button, useTheme } from '@mui/material'
+import { LogIn, UserPlus } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { LoginModal } from './LoginModal'
 import { AccountModal } from './AccountModal'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
@@ -15,6 +15,26 @@ export function LoginButton() {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const storage = useCreagenEditor().storage as RemoteClientStorage
   const user = storage.user
+  const theme = useTheme()
+
+  const buttonSx = useMemo(
+    () => ({
+      fontSize: '0.7rem',
+      py: 0.25,
+      px: 0.5,
+      minWidth: 0,
+       color: 'primary.main' as const,
+      '& .MuiButton-startIcon': {
+        marginRight: 0.5,
+        marginLeft: -0.5,
+        '& svg': {
+          width: 14,
+          height: 14,
+        },
+      },
+    }),
+    [ theme.palette.common.white, theme.palette.primary.main],
+  )
 
   function handleLogout() {
     storage.logout().catch(logger.error)
@@ -26,13 +46,14 @@ export function LoginButton() {
   }
 
   return (
-    <>
+    <div style={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
       <Button
         size="small"
         variant="text"
         color="primary"
         onClick={() => (user ? setOpen(true) : openWithMode('login'))}
-        sx={{ fontSize: '0.7rem', py: 0.25, px: 1, mr: 0.25 }}
+        sx={{ ...buttonSx, mr: 0.25 }}
+        startIcon={user ? undefined : <LogIn />}
       >
         {user?.username ?? 'Login'}
       </Button>
@@ -42,8 +63,8 @@ export function LoginButton() {
           variant="text"
           color="inherit"
           onClick={() => openWithMode('signup')}
-          sx={{ fontSize: '0.7rem', py: 0.25, px: 1 }}
-          startIcon={<UserPlus size={16}  />}
+          sx={buttonSx}
+          startIcon={<UserPlus />}
         >
           Sign up
         </Button>
@@ -63,6 +84,6 @@ export function LoginButton() {
           initialMode={initialMode}
         />
       )}
-    </>
+    </div>
   )
 }

@@ -1,6 +1,5 @@
 import { Plus, ChevronRight } from 'lucide-react'
 import { Box, IconButton } from '@mui/material'
-import { useEffect, useRef, useState } from 'react'
 import { Actions } from '../creagen-editor/Actions'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import { useHistory, useSettings } from '../events/useEditorEvents'
@@ -11,7 +10,7 @@ import { History } from './History'
 import { HtmlTooltip } from './HtmlTooltip'
 import { LoginButton } from '../user/LoginButton'
 
-export const BAR_HEIGHT = 18
+export const BAR_HEIGHT = (fullscreen: boolean) => (fullscreen ? 18 : 22)
 
 export function EditorBar({
   menu,
@@ -28,46 +27,16 @@ export function EditorBar({
   const hasHistory = history.length > 0
   const historyVisible = historyEnabled && hasHistory
   const isFullscreen = useSettings('editor.fullscreen')
-  const [historyExpanded, setHistoryExpanded] = useState(false)
-  const [inlineHistoryInTopBar, setInlineHistoryInTopBar] = useState(false)
-  const hasSecondHistoryRow = historyVisible && !inlineHistoryInTopBar
-  const compactSingleRow =
-    isFullscreen && !hasSecondHistoryRow && !historyExpanded
-
-  const rootRef = useRef<HTMLDivElement>(null)
-  const topRowRef = useRef<HTMLDivElement>(null)
-  const historyRowRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const root = rootRef.current
-    if (!root) return
-
-    const updateLayout = () => {
-      const hasEnoughSpace = root.clientWidth >= 960
-      setInlineHistoryInTopBar(isFullscreen && historyVisible && hasEnoughSpace)
-    }
-
-    updateLayout()
-    const observer = new ResizeObserver(updateLayout)
-    observer.observe(root)
-
-    return () => {
-      observer.disconnect()
-    }
-  }, [historyVisible, isFullscreen])
+  const barHeight = BAR_HEIGHT(isFullscreen)
 
   return (
     <Box
-      ref={rootRef}
       sx={{
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'stretch',
-        padding: 0.25,
         position: 'relative',
-        height: compactSingleRow ? BAR_HEIGHT : 'auto',
-        minHeight: BAR_HEIGHT,
-        gap: hasSecondHistoryRow ? 0.25 : 0,
+        gap: 0,
         backgroundColor: isFullscreen
           ? 'rgba(0, 0, 0, 0.8)'
           : 'background.paper',
@@ -75,14 +44,14 @@ export function EditorBar({
       }}
     >
       <div
-        ref={topRowRef}
         style={{
           display: 'flex',
           flexDirection: 'row',
-          alignItems:
-            inlineHistoryInTopBar && historyExpanded ? 'flex-start' : 'center',
-          minHeight: BAR_HEIGHT,
+          alignItems: 'center',
+          // Top bar: fixed to the mode height, content centered.
+          height: barHeight,
           width: '100%',
+          overflow: 'hidden',
         }}
       >
         <HtmlTooltip
@@ -105,8 +74,8 @@ export function EditorBar({
         >
           <IconButton
             sx={{
-              width: BAR_HEIGHT,
-              height: BAR_HEIGHT,
+              width: barHeight,
+              height: barHeight,
               padding: 0,
               margin: 0,
               color: 'inherit',
@@ -134,8 +103,8 @@ export function EditorBar({
         >
           <IconButton
             sx={{
-              width: BAR_HEIGHT,
-              height: BAR_HEIGHT,
+              width: barHeight,
+              height: barHeight,
               padding: 0,
               margin: 0,
               color: 'inherit',
@@ -163,42 +132,49 @@ export function EditorBar({
         )}
 
 
-        {historyVisible && inlineHistoryInTopBar && (
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <History
-              items={history}
-              parentRef={topRowRef}
-              onExpandedChange={setHistoryExpanded}
-            />
+        {historyVisible && isFullscreen && (
+          <div
+            style={{
+              flex: 1,
+              minWidth: 0,
+              display: 'flex',
+              alignItems: 'center',
+              // Clip so overflowing history can never bleed over the actions.
+              overflow: 'hidden',
+            }}
+          >
+            <History items={history} />
           </div>
         )}
 
-        <div style={{ flex: 1 }} />
-        <Actions
-          toggleMenu={toggleMenu}
-          sizeVariant="compact"
-          orientation="row"
-          includeMenuToggle={false}
-        />
+        {!(historyVisible && isFullscreen) && <div style={{ flex: 1 }} />}
+        {/* Never let the actions shrink away when the bar gets narrow. */}
+        <div style={{ flexShrink: 0 }}>
+          <Actions
+            toggleMenu={toggleMenu}
+            sizeVariant="compact"
+            orientation="row"
+            includeMenuToggle={false}
+          />
+        </div>
       </div>
 
-      {historyVisible && !inlineHistoryInTopBar && (
+      {/* Non-fullscreen: history gets its own bar below the main one. */}
+      {historyVisible && !isFullscreen && (
         <div
-          ref={historyRowRef}
           style={{
             display: 'flex',
             flexDirection: 'row',
-            alignItems: historyExpanded ? 'flex-start' : 'center',
-            minHeight: BAR_HEIGHT,
+            alignItems: 'center',
+            // Same fixed height as the main bar, content centered.
+            height: barHeight,
+            minWidth: 0,
+            overflow: 'hidden',
             width: '100%',
           }}
         >
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <History
-              items={history}
-              parentRef={historyRowRef}
-              onExpandedChange={setHistoryExpanded}
-            />
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center' }}>
+            <History items={history} />
           </div>
         </div>
       )}
