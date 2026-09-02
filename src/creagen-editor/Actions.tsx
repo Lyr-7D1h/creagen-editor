@@ -1,5 +1,5 @@
-import { IconButton, useTheme } from '@mui/material'
 import type { IconButtonProps } from '@mui/material'
+import { IconButton, useTheme } from '@mui/material'
 import {
   BookOpen,
   Maximize2,
@@ -21,8 +21,8 @@ import {
 } from '../events/useEditorEvents'
 import { createContextLogger, log, Severity } from '../logs/logger'
 import { KeybindHint } from '../shared/KeybindHint'
-import type { CreagenEditor } from './CreagenEditor'
 import { useCreagenEditor } from './CreagenContext'
+import type { CreagenEditor } from './CreagenEditor'
 import { Export } from './Export'
 import { isMobile } from './isMobile'
 
@@ -45,12 +45,24 @@ function ActionButton({
   size = 'small',
   sx,
 }: ActionButtonProps) {
+  const theme = useTheme()
   return (
     <HtmlTooltip title={title}>
       <IconButton
         size={size}
         color={color}
-        sx={sx}
+        sx={{
+          ...(isMobile()
+            ? {
+                padding: '8px',
+                backgroundColor: theme.palette.background.paper,
+                '&:hover': {
+                  backgroundColor: theme.palette.primary.contrastText,
+                },
+              }
+            : {}),
+          ...sx,
+        }}
         onClick={onClick}
         style={{
           cursor: 'pointer',
@@ -141,12 +153,8 @@ export function Actions({
     })
   }, [])
 
-  const size =
-    sizeVariant === 'compact'
-      ? '16px'
-      : isMobile()
-        ? '60px'
-        : '50px'
+  const iconPixelSize = sizeVariant === 'compact' ? 16 : 50
+  const iconSize = iconPixelSize + 'px'
   const isMobileDevice = isMobile()
 
   const fullscreenActionButtonSx = useMemo(
@@ -173,8 +181,8 @@ export function Actions({
           key="qr"
           title={showQR ? 'Disable controller QR' : 'Enable controller QR'}
           color={showQR ? 'primary' : isFullscreen ? 'inherit' : 'default'}
-          sx={showQR ? undefined : fullscreenActionButtonSx}
-          icon={<QrCode size={size} />}
+          sx={fullscreenActionButtonSx}
+          icon={<QrCode size={iconSize} />}
           onClick={() => creagenEditor.executeCommand('sandbox.toggleQR')}
         />
       ) : null,
@@ -186,7 +194,7 @@ export function Actions({
               ? theme.palette.common.white
               : theme.palette.primary.main
           }
-          size={size}
+          size={iconSize}
           isFullscreen={isFullscreen}
         />
       ) : null,
@@ -194,7 +202,7 @@ export function Actions({
         <ActionButton
           key="share"
           title="Copy shareable link"
-          icon={<Share2 size={size} />}
+          icon={<Share2 size={iconSize} />}
           color={color}
           sx={fullscreenActionButtonSx}
           onClick={() => shareCode(creagenEditor)}
@@ -204,9 +212,9 @@ export function Actions({
         <ActionButton
           key="menu"
           title="Toggle menu"
-          icon={<BookOpen size={size} />}
+          icon={<BookOpen size={iconPixelSize - 6 + 'px'} />}
           color={color}
-          sx={fullscreenActionButtonSx}
+          sx={{ ...fullscreenActionButtonSx, padding: '11px' }}
           onClick={toggleMenu}
         />
       ) : null,
@@ -214,35 +222,43 @@ export function Actions({
         <ActionButton
           key="pin"
           title="Copy link to this current version"
-          icon={<Pin size={size} />}
+          icon={<Pin size={iconSize} />}
           color={color}
           sx={fullscreenActionButtonSx}
           onClick={() => pinVersion(creagenEditor)}
         />
       ) : null,
-      <ActionButton
-        key="fullscreen"
-        color={color}
-        title={
-          <KeybindHint
-            label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-            keybind={creagenEditor.getKeybindKeyString(
-              'editor.toggleFullscreen',
-            )}
-            wrapInParens
-          />
-        }
-        icon={
-          isFullscreen ? <Minimize2 size={size} /> : <Maximize2 size={size} />
-        }
-        sx={fullscreenActionButtonSx}
-        onClick={() => creagenEditor.executeCommand('editor.toggleFullscreen')}
-      />,
+      !isMobileDevice ? (
+        <ActionButton
+          key="fullscreen"
+          color={color}
+          title={
+            <KeybindHint
+              label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+              keybind={creagenEditor.getKeybindKeyString(
+                'editor.toggleFullscreen',
+              )}
+              wrapInParens
+            />
+          }
+          icon={
+            isFullscreen ? (
+              <Minimize2 size={iconSize} />
+            ) : (
+              <Maximize2 size={iconSize} />
+            )
+          }
+          sx={fullscreenActionButtonSx}
+          onClick={() =>
+            creagenEditor.executeCommand('editor.toggleFullscreen')
+          }
+        />
+      ) : null,
       hasRun && !frozen ? (
         <ActionButton
           key="freeze"
           title="Freeze Sandbox"
-          icon={<Square size={size} />}
+          icon={<Square size={iconSize} />}
           color={color}
           sx={fullscreenActionButtonSx}
           onClick={() => creagenEditor.executeCommand('editor.freeze')}
@@ -258,28 +274,29 @@ export function Actions({
             wrapInParens
           />
         }
-        icon={<Play size={size} />}
+        icon={<Play size={iconSize} />}
         size="medium"
         sx={fullscreenActionButtonSx}
         onClick={() => creagenEditor.executeCommand('editor.run')}
       />,
     ].filter((button): button is React.ReactElement => button !== null)
   }, [
+    isFullscreen,
+    isMobileDevice,
     controllerEnabled,
     creagenEditor,
-    exportEnabled,
-    frozen,
-    hasRun,
-    head,
-    includeMenuToggle,
-    isMobileDevice,
-    isFullscreen,
     showQR,
-    size,
+    fullscreenActionButtonSx,
+    iconSize,
+    exportEnabled,
     theme.palette.common.white,
     theme.palette.primary.main,
+    includeMenuToggle,
+    iconPixelSize,
     toggleMenu,
-    fullscreenActionButtonSx,
+    head,
+    hasRun,
+    frozen,
   ])
 
   return (

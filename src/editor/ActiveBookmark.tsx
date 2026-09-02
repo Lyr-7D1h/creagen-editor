@@ -1,4 +1,4 @@
-import { Typography, useTheme } from '@mui/material'
+import { Typography } from '@mui/material'
 import { useMemo, useState } from 'react'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
 import { useActiveBookmark, useIsDirty } from '../events/useEditorEvents'
@@ -8,7 +8,6 @@ import { TextInput } from './TextInput'
 
 export function ActiveBookmark({ color }: { color?: string }) {
   const creagenEditor = useCreagenEditor()
-  const theme = useTheme()
   const activeBookmark = useActiveBookmark()
   const isDirty = useIsDirty(creagenEditor)
   const [isEditing, setIsEditing] = useState(false)

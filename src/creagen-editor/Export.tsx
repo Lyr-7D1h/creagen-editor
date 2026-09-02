@@ -118,6 +118,9 @@ export function Export({
             '&:hover': {
               color: isFullscreen ? theme.palette.primary.main : 'inherit',
             },
+            ...(isFullscreen && {
+              backgroundColor: 'rgba(255,255,255,0.15)',
+            }),
           }}
           onClick={() => {
             download().catch(logger.error)
@@ -127,7 +130,7 @@ export function Export({
           {downloading ? (
             <CircularProgress size={size} />
           ) : (
-            <Download size={size}  />
+            <Download size={size} />
           )}
         </IconButton>
       </HtmlTooltip>
@@ -148,11 +151,14 @@ export function Export({
                 '&:hover': {
                   color: isFullscreen ? theme.palette.primary.main : 'inherit',
                 },
+                ...(isFullscreen && {
+                  backgroundColor: 'rgba(255,255,255,0.15)',
+                }),
               }}
               onClick={() => setExpanded(!expanded)}
               size="small"
             >
-              <ChevronDown size={size}  />
+              <ChevronDown size={size} />
             </IconButton>
           </HtmlTooltip>
 

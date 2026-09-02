@@ -238,17 +238,9 @@ export function CreagenEditorViewContentMobile() {
           ))}
       </div>
 
-      {!hideAll && creagenEditor.params.length > 0 && (
+      {!hideAll && !menu && creagenEditor.params.length > 0 && (
         <div
-          style={{
-            background: '#ffffff',
-            borderTop: '1px solid rgba(0,0,0,0.08)',
-            padding: 12,
-            boxShadow: '0 -6px 18px rgba(0,0,0,0.06)',
-            minHeight: 110,
-            maxHeight: '50vh',
-            overflow: 'auto',
-          }}
+          className="min-h-27.5 max-h-[50vh] overflow-auto border-t border-(--color-border) bg-(--color-surface) p-3 shadow-[0_-6px_18px_rgba(0,0,0,0.06)]"
         >
           <ParamsView />
         </div>
