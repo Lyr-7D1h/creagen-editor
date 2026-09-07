@@ -198,7 +198,7 @@ export function Actions({
           isFullscreen={isFullscreen}
         />
       ) : null,
-      !isMobileDevice && CREAGEN_REMOTE_URL == null ? (
+      !isMobileDevice && !creagenEditor.storage.remote ? (
         <ActionButton
           key="share"
           title="Copy shareable link"
