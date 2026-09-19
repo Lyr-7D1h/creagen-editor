@@ -1,6 +1,7 @@
 import type { PackageJsonImportField } from '../importer/exportMapResolver'
 
 export interface LibraryConfig {
+  bundleImportOverwrite?: 'umd' | 'esm'
   /** Overwrite which package.json key to use to import library */
   importKeyOverwrite?: PackageJsonImportField
   /** overwrite types of package with a specific type package */
@@ -14,6 +15,7 @@ export const LIBRARY_CONFIGS: Record<string, LibraryConfig> = {
     typingsPathOverwrite: 'global.d.ts',
   },
   p5: {
+    bundleImportOverwrite: 'umd',
     importKeyOverwrite: 'browser',
     // Using p5 with global types
     typingsOverwrite: '@types/p5',

@@ -1,6 +1,7 @@
 import { SemVer } from 'semver'
 import { z } from 'zod'
 import type { Library } from '../creagen-editor/CommitMetadata'
+import { LIBRARY_CONFIGS } from '../creagen-editor/libraryConfigs'
 import { semverSchema } from '../creagen-editor/schemaUtils'
 import { fetch } from '../fetch'
 import type { ExportsField } from './exportMapResolver'
@@ -144,12 +145,16 @@ async function getLibraryFromSource(
   }
 
   if (source === 'jsdelivr') {
+    const bundleOverwrite =
+      LIBRARY_CONFIGS[packageName]?.bundleImportOverwrite === 'umd'
+        ? ''
+        : '/+esm'
     libraryImport.importMap = maps.importMap.map(([m, path]) => [
       m,
-      (relPath: string) => path + relPath + '/+esm',
+      (relPath: string) => path + relPath + bundleOverwrite,
     ])
     if (libraryImport.preload)
-      libraryImport.preload.forEach((m) => (m.path += '/+esm'))
+      libraryImport.preload.forEach((m) => (m.path += bundleOverwrite))
   }
   return libraryImport
 }
