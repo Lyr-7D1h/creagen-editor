@@ -54,7 +54,7 @@ export function ActiveBookmark({ color }: { color?: string }) {
   }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '0px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0px', height: '100%' }}>
       <Typography
         variant="body2"
         onClick={hasUsername ? undefined : () => setIsEditing(true)}
@@ -62,6 +62,9 @@ export function ActiveBookmark({ color }: { color?: string }) {
           color: color ?? 'text.primary',
           opacity: isUncommitted ? 0.7 : 1,
           fontSize: '0.95rem',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
           cursor: hasUsername ? 'default' : 'pointer',
           paddingLeft: 1,
           paddingRight: .4,

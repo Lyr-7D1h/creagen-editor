@@ -508,7 +508,12 @@ export class CreagenEditor {
   }
 
   parseCode(code: string) {
-    code = parseCode(code, this.libraryImports, this.params)
+    code = parseCode(
+      this.settings.get('editor.fileType'),
+      code,
+      this.libraryImports,
+      this.params,
+    )
     this.params.save()
     editorEvents.emit('params:config', undefined)
     return code

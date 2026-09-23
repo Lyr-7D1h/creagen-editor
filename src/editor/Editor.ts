@@ -21,6 +21,7 @@ import { editorEvents } from '../events/events'
 import { createContextLogger } from '../logs/logger'
 import type { Settings } from '../settings/Settings'
 import type { ThemeValue } from '../settings/SettingsConfig'
+import { FILE_TYPES, type FileType } from './fileTypes'
 import { registerCompletionProvider } from './registerCompletionProvider'
 
 const logger = createContextLogger('editor')
@@ -119,13 +120,14 @@ export class Editor {
   private vimRef?: HTMLElement
   private fullscreendecorators: m.editor.IEditorDecorationsCollection | null
   private readonly typings = new Map<string, monaco.IDisposable>()
-  private readonly _html
 
   private cleanAlternativeVersionId: number
   private dirty = false
 
   static create(settings: Settings) {
     handleBeforeMount(monaco)
+
+    const fileType = settings.get('editor.fileType')
 
     const html = document.createElement('div')
     html.style.width = '100%'
@@ -141,21 +143,21 @@ export class Editor {
       formatOnPaste: true,
       formatOnType: true,
       automaticLayout: true,
-      language: 'typescript',
+      language: fileType,
       theme: 'creagen',
       scrollBeyondLastLine: false,
       fixedOverflowWidgets: true,
     })
 
-    return new Editor(html, settings, editor)
+    return new Editor(html, settings, editor, fileType)
   }
 
   constructor(
-    html: HTMLElement,
+    private readonly _html: HTMLElement,
     settings: Settings,
     editor: m.editor.IStandaloneCodeEditor,
+    private fileType: FileType,
   ) {
-    this._html = html
     this.editor = editor
     registerCompletionProvider()
     this.vimMode = null
@@ -194,6 +196,7 @@ export class Editor {
     this.setFullscreenMode(settings.get('editor.fullscreen'))
     this.setVimMode(settings.get('editor.vim'))
     this.setFolding(settings.get('editor.folding'))
+    this.setFileType(settings.get('editor.fileType'))
     this.setTheme(getTheme(settings.get('editor.theme')))
   }
 
@@ -313,6 +316,29 @@ export class Editor {
       disposable.dispose()
       this.typings.delete(uri)
     }
+  }
+
+  getFileType(): FileType {
+    return this.fileType
+  }
+
+  /**
+   * Change the file type of the editor, updating the Monaco model language
+   * @param fileType The file type to switch to
+   */
+  setFileType(fileType: FileType) {
+    // The param is typed, but this is a public method that callers could
+    // invoke with an unchecked runtime value, so validate defensively.
+    if (!FILE_TYPES.some((type) => type.id === fileType)) {
+      logger.warn('Ignoring unknown file type:', fileType)
+      return
+    }
+    if (this.fileType === fileType) return
+    const model = this.editor.getModel()
+    if (!model) return
+    monaco.editor.setModelLanguage(model, fileType)
+    this.fileType = fileType
+    logger.trace(`File type changed to ${fileType}`)
   }
 
   getValue() {

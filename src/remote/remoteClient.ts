@@ -68,9 +68,8 @@ export const authMiddleware: Middleware = {
       promptLogin('You need to login for this operation')
       return request
     }
-    // if access token exists but not valid try to refresh it
+    // if access token exists but not valid in the next 5 seconds try to refresh it
     const payload = parseJwtPayload(accessToken)
-    // if not valid in the next 5 seconds already try to refresh
     if (payload === null || payload.exp < Date.now() / 1000 + 5) {
       accessToken = await refreshAccessToken()
       // if failed remove tokens and prompt login

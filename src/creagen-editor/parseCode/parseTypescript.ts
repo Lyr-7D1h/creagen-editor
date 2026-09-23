@@ -1,9 +1,8 @@
 import ts from 'typescript'
-import { typescriptCompilerOptions } from '../editor/Editor'
-import type { LibraryImport } from '../importer'
-import { logger } from '../logs/logger'
-import type { Params} from '../params/Params';
-import { paramConfigSchema } from '../params/Params'
+import { typescriptCompilerOptions } from '../../editor/Editor'
+import type { LibraryImport } from '../../importer'
+import { logger } from '../../logs/logger'
+import { paramConfigSchema, type Params } from '../../params/Params'
 
 const P5_LIFECYCLE_FUNCTIONS = [
   'preload',
@@ -99,11 +98,7 @@ function astNodeToValue(node: ts.Expression): unknown {
   return node.getText()
 }
 
-/**
- * Parse code to make it compatible for the editor
- * Uses text replacement for useParam calls, then AST transformation for imports
- */
-export function parseCode(
+export function parseTypescript(
   code: string,
   libraries: Map<string, LibraryImport>,
   params: Params,
