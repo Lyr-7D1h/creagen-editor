@@ -84,6 +84,7 @@ export function EditorBar({
             size="small"
           >
             <ChevronRight
+              size={16}
               style={{
                 transform: menu ? 'rotate(180deg)' : 'none',
                 transition: 'transform 0.3s',
@@ -121,12 +122,25 @@ export function EditorBar({
           </IconButton>
         </HtmlTooltip>
         {creagenEditor.storage.remote && (
-          <div style={{ minWidth: 0 }}>
+          <div
+            style={{
+              minWidth: 0,
+              height: barHeight,
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
             <LoginButton />
           </div>
         )}
         {showActiveBookmark && (
-          <div>
+          <div
+            style={{
+              height: barHeight,
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
             <ActiveBookmark color={isFullscreen ? '#fff' : undefined} />
           </div>
         )}
@@ -138,7 +152,8 @@ export function EditorBar({
               flex: 1,
               minWidth: 0,
               display: 'flex',
-              alignItems: 'center',
+              alignItems: 'stretch',
+              alignSelf: 'stretch',
               // Clip so overflowing history can never bleed over the actions.
               overflow: 'hidden',
             }}
@@ -165,7 +180,7 @@ export function EditorBar({
           style={{
             display: 'flex',
             flexDirection: 'row',
-            alignItems: 'center',
+            alignItems: 'stretch',
             // Same fixed height as the main bar, content centered.
             height: barHeight,
             minWidth: 0,
@@ -173,7 +188,7 @@ export function EditorBar({
             width: '100%',
           }}
         >
-          <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center' }}>
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'stretch' }}>
             <History items={history} />
           </div>
         </div>

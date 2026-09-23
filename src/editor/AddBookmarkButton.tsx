@@ -15,7 +15,7 @@ export function AddBookmarkButton({
         onClick={onClick}
         disabled={disabled}
         sx={{
-          padding: '1px',
+          padding: 0,
           margin: 0,
           marginLeft: '-2px',
           color: 'inherit',
@@ -27,7 +27,7 @@ export function AddBookmarkButton({
         }}
         size="small"
       >
-        <Plus size={12}  />
+        <Plus size={16}  />
       </IconButton>
     </HtmlTooltip>
   )

@@ -20,7 +20,9 @@ export function LoginButton() {
   const buttonSx = useMemo(
     () => ({
       fontSize: '0.7rem',
-      py: 0.25,
+      height: '100%',
+      minHeight: 0,
+      py: 0,
       px: 0.5,
       minWidth: 0,
        color: 'primary.main' as const,
@@ -28,8 +30,8 @@ export function LoginButton() {
         marginRight: 0.5,
         marginLeft: -0.5,
         '& svg': {
-          width: 14,
-          height: 14,
+          width: 16,
+          height: 16,
         },
       },
     }),
@@ -46,13 +48,22 @@ export function LoginButton() {
   }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
+    <div style={{ display: 'flex', alignItems: 'center', minWidth: 0, height: '100%' }}>
       <Button
         size="small"
         variant="text"
         color="primary"
         onClick={() => (user ? setOpen(true) : openWithMode('login'))}
-        sx={{ ...buttonSx, mr: 0.25 }}
+        sx={{
+          ...buttonSx,
+          mr: 0.25,
+          // Match the active bookmark's text settings when showing a
+          // username instead of the compact login button.
+          ...(user && {
+            typography: 'body2',
+            fontSize: '0.95rem',
+          }),
+        }}
         startIcon={user ? undefined : <LogIn />}
       >
         {user?.username ?? 'Login'}

@@ -1,5 +1,6 @@
 import { MenuItem, Select, type SelectChangeEvent } from '@mui/material'
 import { z } from 'zod'
+import { FILE_TYPES, type FileType, isFileType } from '../editor/fileTypes'
 
 export type ThemeValue = 'system' | 'light' | 'dark'
 export const SETTINGS_CONFIG = {
@@ -70,6 +71,39 @@ export const SETTINGS_CONFIG = {
       return null
     },
     default: 'system' as ThemeValue,
+  },
+  'editor.fileType': {
+    type: 'param',
+    label: 'File Type',
+    details: "Experimental use of different languages",
+    render: (value, onChangeFn) => {
+      const handleChange = (e: SelectChangeEvent<FileType>) => {
+        const newValue = e.target.value
+        if (isFileType(newValue)) {
+          onChangeFn?.(newValue)
+        }
+      }
+      return (
+        <Select<FileType>
+          value={value as FileType}
+          onChange={handleChange}
+          size="small"
+          fullWidth
+          variant="outlined"
+        >
+          {FILE_TYPES.map((type) => (
+            <MenuItem key={type.id} value={type.id}>
+              {type.label}
+            </MenuItem>
+          ))}
+        </Select>
+      )
+    },
+    validate: (value) => {
+      if (!isFileType(value)) return 'Invalid file type'
+      return null
+    },
+    default: 'typescript' as FileType,
   },
   'editor.format_on_render': {
     type: 'param' as const,
