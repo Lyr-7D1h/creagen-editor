@@ -8,6 +8,8 @@ import {
   SANDBOX_MESSAGE_HANDLER_HANDSHAKE_TIMEOUT_MS,
   SandboxMessageHandler,
   SandboxMessageHandlerMode,
+  createHandshakeNonce,
+  withHandshakeNonce,
 } from './SandboxMessageHandler'
 
 const logger = createContextLogger('sandbox')
@@ -29,15 +31,13 @@ export class Sandbox {
     iframe.style.padding = '0px'
     iframe.sandbox = `allow-scripts ${allowSameOrigin ? 'allow-same-origin' : ''}`
 
-    // Use the separate sandbox URL
-    iframe.src = url
-
-    return new Sandbox(settings, iframe)
+    return new Sandbox(settings, iframe, url)
   }
 
   private constructor(
     private readonly settings: Settings,
     private readonly iframe: HTMLIFrameElement,
+    private readonly runtimeUrl: string,
   ) {
     this.log = new SandboxLog(settings.get('console.buffer_size'))
     settings.on('console.buffer_size', (size) => {
@@ -110,9 +110,16 @@ export class Sandbox {
   }
 
   async connectMessageHandler() {
+    // Stamp a fresh nonce into the runtime URL and reload it: only a runtime
+    // document we loaded with this exact nonce can complete the handshake, so
+    // a page the sandboxed code navigated the iframe to can never receive the
+    // channel port. A navigated-away iframe is replaced by the real runtime.
+    const nonce = createHandshakeNonce()
+    this.iframe.src = withHandshakeNonce(this.runtimeUrl, nonce)
     this.messageHandler = await SandboxMessageHandler.create(
       SandboxMessageHandlerMode.Parent,
       this.iframe,
+      nonce,
     )
     editorEvents.emit('sandbox:connect', undefined)
     this.setupMessageHandlers()
@@ -129,12 +136,15 @@ export class Sandbox {
   }
 
   async render(code: string, libraryImports: LibraryImport[]) {
-    // wait for sandbox to be connected before sending anything
-    const messageHandler = await this.ensureConnection()
-
     this.log.reset()
     editorEvents.emit('sandbox:render', undefined)
     if (this.isFrozen) await this.unfreeze()
+
+    // Wait for the sandbox to be connected before sending anything. Resolve
+    // the handler *after* unfreezing: unfreeze reloads the runtime, which
+    // replaces the message handler, so one captured beforehand would hold a
+    // dead port and the render message would be silently dropped.
+    const messageHandler = await this.ensureConnection()
     messageHandler.send({
       type: 'render',
       code,
@@ -153,8 +163,11 @@ export class Sandbox {
   }
 
   /**
-   * Freeze the iframe by removing it from the DOM.
-   * This stops all JavaScript execution and resource usage.
+   * Freeze the sandbox by removing the iframe from the DOM.
+   * Stops the runtime while frozen. Note that unfreezing reloads the runtime
+   * with a fresh handshake, so any in-sandbox execution state (canvas,
+   * globals, timers) is discarded; the current code must be re-rendered
+   * afterwards.
    */
   freeze() {
     if (this.isFrozen) {
@@ -178,8 +191,10 @@ export class Sandbox {
   }
 
   /**
-   * Unfreeze the iframe by restoring it to the DOM.
-   * This resumes JavaScript execution.
+   * Unfreeze the sandbox by restoring the iframe to the DOM.
+   * The runtime is reloaded with a fresh handshake nonce (see
+   * connectMessageHandler), so execution state from before the freeze is not
+   * preserved. Callers must re-render the code after unfreezing.
    */
   async unfreeze() {
     if (!this.isFrozen) {

@@ -109,11 +109,52 @@ export enum SandboxMessageHandlerMode {
 
 export const SANDBOX_MESSAGE_HANDLER_HANDSHAKE_TIMEOUT_MS = 5000
 
+export const SANDBOX_HANDSHAKE_NONCE_PARAM = 'nonce'
+
+/**
+ * Fresh random value binding a single parent <-> runtime handshake.
+ * The parent stamps it into the runtime URL before loading the iframe; a page
+ * the sandboxed code navigated the iframe to cannot know it.
+ */
+export function createHandshakeNonce(): string {
+  if (typeof window.crypto.randomUUID === 'function') {
+    return window.crypto.randomUUID()
+  }
+  // Secure-context fallbacks for older engines (e.g. plain http dev hosts).
+  if (typeof window.crypto.getRandomValues === 'function') {
+    const bytes = new Uint8Array(16)
+    window.crypto.getRandomValues(bytes)
+    return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')
+  }
+  return Math.random().toString(36).slice(2) + Date.now().toString(36)
+}
+
+/** Runtime URL with the handshake nonce appended as a query parameter */
+export function withHandshakeNonce(runtimeUrl: string, nonce: string): string {
+  const url = new URL(runtimeUrl, window.location.origin)
+  url.searchParams.set(SANDBOX_HANDSHAKE_NONCE_PARAM, nonce)
+  return url.toString()
+}
+
+/** Nonce the parent stamped into this document's URL (runtime side) */
+function getHandshakeNonceFromUrl(): string | null {
+  return new URLSearchParams(window.location.search).get(
+    SANDBOX_HANDSHAKE_NONCE_PARAM,
+  )
+}
+
 function getMessageType(data: unknown): unknown {
   if (data === null || typeof data !== 'object' || !('type' in data)) {
     return undefined
   }
   return (data as { type: unknown }).type
+}
+
+function getMessageNonce(data: unknown): unknown {
+  if (data === null || typeof data !== 'object' || !('nonce' in data)) {
+    return undefined
+  }
+  return (data as { nonce: unknown }).nonce
 }
 
 function waitForMessage(
@@ -149,6 +190,7 @@ export class SandboxMessageHandler {
   static async create(
     mode: SandboxMessageHandlerMode.Parent,
     iframe: HTMLIFrameElement,
+    nonce: string,
   ): Promise<SandboxMessageHandler>
   static async create(
     mode: SandboxMessageHandlerMode.Iframe,
@@ -156,6 +198,7 @@ export class SandboxMessageHandler {
   static async create(
     mode: SandboxMessageHandlerMode,
     iframe?: HTMLIFrameElement,
+    nonce?: string,
   ) {
     switch (mode) {
       case SandboxMessageHandlerMode.Parent: {
@@ -163,7 +206,8 @@ export class SandboxMessageHandler {
         await waitForMessage(
           (event) =>
             event.source === iframe?.contentWindow &&
-            getMessageType(event.data) === '__runtime_ready__',
+            getMessageType(event.data) === '__runtime_ready__' &&
+            getMessageNonce(event.data) === nonce,
           'Sandbox parent handshake timeout',
         )
 
@@ -175,7 +219,11 @@ export class SandboxMessageHandler {
         }
 
         targetWindow.postMessage(
-          { type: '__init__', constants: { creagenEditorVersion: '' } },
+          {
+            type: '__init__',
+            nonce,
+            constants: { creagenEditorVersion: '' },
+          },
           '*',
           [channel.port2],
         )
@@ -189,11 +237,17 @@ export class SandboxMessageHandler {
           )
         }
 
-        window.parent.postMessage({ type: '__runtime_ready__' }, '*')
+        const expectedNonce = getHandshakeNonceFromUrl()
+        window.parent.postMessage(
+          { type: '__runtime_ready__', nonce: expectedNonce },
+          '*',
+        )
 
         const initMessage = await waitForMessage(
           (event) =>
+            event.source === window.parent &&
             getMessageType(event.data) === '__init__' &&
+            getMessageNonce(event.data) === expectedNonce &&
             Boolean(event.ports[0]),
           'Sandbox iframe handshake timeout',
         )
