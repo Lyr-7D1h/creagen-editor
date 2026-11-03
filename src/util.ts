@@ -119,8 +119,8 @@ export function deepEqual(a: unknown, b: unknown): boolean {
     return a.every((v, i) => deepEqual(v, b[i]))
   }
   if (isPlainObject(a) && isPlainObject(b)) {
-    const ka = Object.keys(a as object)
-    const kb = Object.keys(b as object)
+    const ka = Object.keys(a)
+    const kb = Object.keys(b)
     if (ka.length !== kb.length) return false
     return ka.every((k) => deepEqual(a[k], b[k]))
   }

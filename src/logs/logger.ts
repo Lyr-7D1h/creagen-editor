@@ -45,7 +45,7 @@ export function log(
   /** Set to null if you want to control when to remove the log */
   autoHideDuration?: number | null,
 ): MessageId {
-  if (CREAGEN_LOG_LEVEL > (severity as number)) return ''
+  if (CREAGEN_LOG_LEVEL > Number(severity)) return ''
   if (typeof autoHideDuration === 'undefined')
     autoHideDuration = AUTOHIDE_DURATION_DEFAULT
   const id = Date.now().toString(36) + Math.random().toString(36).substring(4)

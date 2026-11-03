@@ -1,21 +1,19 @@
-import { Button, useTheme } from '@mui/material'
+import { Button } from '@mui/material'
 import { LogIn, UserPlus } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { LoginModal } from './LoginModal'
-import { AccountModal } from './AccountModal'
 import { useCreagenEditor } from '../creagen-editor/CreagenContext'
-import type { RemoteClientStorage } from '../storage/RemoteClientStorage'
 import { logger } from '../logs/logger'
+import type { RemoteClientStorage } from '../storage/RemoteClientStorage'
+import { AccountModal } from './AccountModal'
+import { LoginModal } from './LoginModal'
 
 export function LoginButton() {
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [open, setOpen] = useState(false)
-  // eslint-disable-next-line react-hooks/rules-of-hooks
+
   const [initialMode, setInitialMode] = useState<'login' | 'signup'>('login')
-  // eslint-disable-next-line react-hooks/rules-of-hooks
+
   const storage = useCreagenEditor().storage as RemoteClientStorage
   const user = storage.user
-  const theme = useTheme()
 
   const buttonSx = useMemo(
     () => ({
@@ -23,7 +21,7 @@ export function LoginButton() {
       py: 0.25,
       px: 0.5,
       minWidth: 0,
-       color: 'primary.main' as const,
+      color: 'primary.main' as const,
       '& .MuiButton-startIcon': {
         marginRight: 0.5,
         marginLeft: -0.5,
@@ -33,7 +31,7 @@ export function LoginButton() {
         },
       },
     }),
-    [ theme.palette.common.white, theme.palette.primary.main],
+    [],
   )
 
   function handleLogout() {

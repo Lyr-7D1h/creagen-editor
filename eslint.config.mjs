@@ -11,12 +11,25 @@ export default defineConfig(
     ignores: [
       'node_modules/**',
       'dist/**',
+      'docs/.vitepress/**',
       'vite.config.mjs',
+      'vite.lib.config.mjs',
+      'vitest.config.mjs',
       'eslint.config.mjs',
     ],
   },
+  {
+    settings: {
+      react: { version: '19.0.0' },
+    },
+  },
   js.configs.recommended,
-  tseslint.configs.recommendedTypeChecked,
+  // Typed rules need type info, so apply them to TS/TSX only; the preset
+  // applied globally breaks on JS files that aren't in any tsconfig.
+  ...tseslint.configs.recommendedTypeChecked.map((c) => ({
+    ...c,
+    files: ['**/*.ts', '**/*.tsx'],
+  })),
   reactPlugin.configs.flat.recommended,
   reactPlugin.configs.flat['jsx-runtime'],
   reactHooksPlugin.configs.flat['recommended-latest'],
@@ -30,9 +43,6 @@ export default defineConfig(
         // @ts-ignore
         tsconfigRootDir: import.meta.dirname,
       },
-    },
-    settings: {
-      react: { version: '19' },
     },
     rules: {
       '@typescript-eslint/consistent-type-imports': [

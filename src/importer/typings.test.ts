@@ -51,7 +51,7 @@ describe('typings resolution', () => {
       getModuleImports: vi.fn().mockResolvedValue([]),
       getCompletionsWithImportsAtPosition: vi.fn(),
       getCompletionEntryDetailsWithImports: vi.fn(),
-    } as any)
+    })
   })
 
   describe('getTypings', () => {

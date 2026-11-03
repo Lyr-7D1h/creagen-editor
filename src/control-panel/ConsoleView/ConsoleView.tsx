@@ -47,7 +47,7 @@ function truncateLines(text: string): { visible: string; hiddenLines: number } {
 function getLogAt(log: SandboxLog, logSize: number, index: number): Log | undefined {
   if (logSize === 0 || index < 0 || index >= logSize) return undefined
   const result = log.view(logSize - 1 - index, 1).next()
-  return result.done ? undefined : (result.value as Log | undefined)
+  return result.done ? undefined : (result.value)
 }
 
 type RowProps = { log: SandboxLog; logSize: number; indexMap: number[] | null }

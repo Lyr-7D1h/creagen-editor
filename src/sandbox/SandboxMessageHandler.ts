@@ -147,14 +147,14 @@ function getMessageType(data: unknown): unknown {
   if (data === null || typeof data !== 'object' || !('type' in data)) {
     return undefined
   }
-  return (data as { type: unknown }).type
+  return (data).type
 }
 
 function getMessageNonce(data: unknown): unknown {
   if (data === null || typeof data !== 'object' || !('nonce' in data)) {
     return undefined
   }
-  return (data as { nonce: unknown }).nonce
+  return (data).nonce
 }
 
 function waitForMessage(

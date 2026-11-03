@@ -537,7 +537,7 @@ declare function useParam(type: 'color', options: Omit<Extract<ParamConfig, { ty
       case 'range-slider':
         return JSON.stringify(value)
       case 'seed': {
-        const seed = hashStringTou32(value as string)
+        const seed = hashStringTou32(value)
         // translate to a simple xorshift with given seed
         return `(() => {
           let __CREAGEN_SEED__ = ${seed} ?? 2463534242
@@ -588,7 +588,7 @@ declare function useParam(type: 'color', options: Omit<Extract<ParamConfig, { ty
     this.regenTimerId = window.setInterval(() => {
       this.randomizeAll()
       this.onRegenTick?.()
-    }, this.regenInterval) as unknown as number
+    }, this.regenInterval)
   }
 
   static generateRandomValue(config: ParamConfig): unknown {

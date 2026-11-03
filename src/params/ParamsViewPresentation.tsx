@@ -139,7 +139,7 @@ function ColorInput({
             ? localValue.substring(0, 7)
             : localValue
         }
-        onChange={(e) => handleChange((e.target as HTMLInputElement).value)}
+        onChange={(e) => handleChange((e.target).value)}
         sx={{
           width: 50,
           height: 32,
@@ -626,7 +626,7 @@ function ParamControl({
         <IntegerInput
           config={config}
           value={numValue}
-          onChange={onChange as (value: number) => void}
+          onChange={onChange}
         />
       )
       break
@@ -638,7 +638,7 @@ function ParamControl({
         <FloatInput
           config={config}
           value={numValue}
-          onChange={onChange as (value: number) => void}
+          onChange={onChange}
         />
       )
       break
@@ -659,7 +659,7 @@ function ParamControl({
         <RangeInput
           config={config}
           value={rangeValue}
-          onChange={onChange as (value: [number, number]) => void}
+          onChange={onChange}
         />
       )
       break
@@ -674,7 +674,7 @@ function ParamControl({
         <RangeSliderInput
           config={config}
           value={rangeValue}
-          onChange={onChange as (value: [number, number]) => void}
+          onChange={onChange}
         />
       )
       break
